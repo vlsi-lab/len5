@@ -16,7 +16,9 @@
 
 ## private folders ##
 private/
-.VSCodeCounter/
+
+## Visual Studio code settings
+.vscode/
 
 ## jekyll files ##
 # folder in which the processed site is put
