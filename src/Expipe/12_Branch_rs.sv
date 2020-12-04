@@ -17,8 +17,8 @@
 `include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/expipe_pkg.sv"
 `endif
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/12_branch_unit.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/12_branch_unit_rs.sv"
+`include "12_branch_unit.sv"
+`include "12_branch_unit_rs.sv"
 
 //import len5_pkg::XLEN;
 //import len5_pkg::ILEN;
@@ -81,10 +81,10 @@ module Branch_rs
     logic [BU_CTL_LEN-1:0]          bu_branch_type_o;
 
     // Handshake from/to the execution unit
-    logic                   bu_ready_i;
-    logic                   bu_valid_i;
-    logic                   bu_valid_o;
-    logic                   bu_ready_o;
+    logic                           bu_ready_i;
+    logic                           bu_valid_i;
+    logic                           bu_valid_o;
+    logic                           bu_ready_o;
 
 branch_unit_rs  #(.RS_DEPTH (RS_DEPTH)) u_Branch_generic_rs
 (

@@ -12,9 +12,9 @@
 // Author: Marco Andorno
 // Date: 05/10/2019
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
+`include "len5_pkg.sv"
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/12_branch_unit_cu.sv"
+`include "12_branch_unit_cu.sv"
 
 import len5_pkg::*;
 
@@ -73,7 +73,7 @@ module branch_unit
 
   // Assignments
   assign wrong_taken = pred_taken_i != taken;
-  assign target = (imm_i << 1) + pred_pc_i;
+  assign target = (imm_i << 1) + pred_pc_i; // add JAL and JALR
   assign wrong_target = pred_target_i != target;
 
   // Output register

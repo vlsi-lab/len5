@@ -15,28 +15,28 @@
 `define LSUNIT
 
 `ifdef ENABLE_AGE_BASED_SELECTOR
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/util/age_based_sel.sv"
+`include "age_based_sel.sv"
 `else
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/util/prio_enc.sv"
+`include "prio_enc.sv"
 `endif
 
 `ifndef SYNTHESIS
 // Packages
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/csr_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/expipe_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
+`include "csr_pkg.sv"
+`include "memory_pkg.sv"
+`include "expipe_pkg.sv"
+`include "len5_pkg.sv"
 `endif
 
 `ifdef ENABLE_STORE_PRIO_2WAY_ARBITER
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/util/prio_2way_arbiter.sv"
+`include "prio_2way_arbiter.sv"
 `else
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/util/fair_2way_arbiter.sv"
+`include "fair_2way_arbiter.sv"
 `endif
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/13_load_buffer.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/13_store_buffer.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/13_vaddr_adder.sv"
+`include "13_load_buffer.sv"
+`include "13_store_buffer.sv"
+`include "13_vaddr_adder.sv"
 
 // Sub-modules
 //`include "load_buffer.sv"
