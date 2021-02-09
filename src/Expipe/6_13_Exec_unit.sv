@@ -14,22 +14,22 @@
 
 `ifndef SYNTHESIS
 // Include packages
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/expipe_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/control_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/csr_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "len5_pkg.sv"
+`include "expipe_pkg.sv"
+`include "control_pkg.sv"
+`include "csr_pkg.sv"
+`include "memory_pkg.sv"
 `endif
 
 `include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/util/modn_counter.sv"
 //`include "issue_queue_fifo.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/6_ALU_rs.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/7_MULT_rs.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/8_DIV_rs.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/9_FPU_rs.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/10_SIMD_rs.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/12_Branch_rs.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/13_load_store_unit.sv"
+`include "6_ALU_rs.sv"
+`include "7_MULT_rs.sv"
+`include "8_DIV_rs.sv"
+`include "9_FPU_rs.sv"
+`include "10_SIMD_rs.sv"
+`include "12_Branch_rs.sv"
+`include "13_load_store_unit.sv"
 
 import len5_pkg::*;
 import control_pkg::*;

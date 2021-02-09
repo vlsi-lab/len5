@@ -13,7 +13,7 @@
 // Date: 15/10/2019
 // Description: Page Table Walker
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 `include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Memory/ptw_tpc/0_J_mmu_cache.sv"

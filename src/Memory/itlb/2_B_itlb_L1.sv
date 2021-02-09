@@ -14,8 +14,8 @@
 // Description: L1 i-TLB with zero latency for an hit. The access time should be masked by the cache access time (cache "virtually" indexed, physically tagged)
 // Details: if virtual memory is inactive, the i-TLB should remain inactive too. A valid request is shortened to the output, no exception can be raised and no valid request signal reach the control unit
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "len5_pkg.sv"
+`include "memory_pkg.sv"
 //import mmm_pkg::*;
 import len5_pkg::*;
 import memory_pkg::*;

@@ -17,7 +17,7 @@
 
 `include "util.svh"
 `include "len5_pkg.sv"
-//`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/mmm_pkg.sv"
+//`include "mmm_pkg.sv"
 
 package memory_pkg;
 

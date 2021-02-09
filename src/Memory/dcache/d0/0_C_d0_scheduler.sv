@@ -14,7 +14,7 @@
 // Description: schedule the next block to be served (the winner block)
 // Details: fixed priority from higher (left) to lower (right): D1, L2-C, UpdateL2, LSQ
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module d0_scheduler

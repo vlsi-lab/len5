@@ -13,7 +13,7 @@
 // Date: 14/10/2019
 // Description: Page Table Entry checker for exception_os or leaf page
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module pte_checker

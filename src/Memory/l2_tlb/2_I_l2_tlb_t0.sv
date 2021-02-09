@@ -14,7 +14,7 @@
 // Description: first part of the L2-TLB
 // Details: schedule the requests, control the memory, feed the t0 -> t1 registers
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module L2_tlb_t0

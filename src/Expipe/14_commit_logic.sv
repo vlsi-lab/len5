@@ -14,11 +14,11 @@
 
 // THIS FILE IS ONYL A TEMPLATE, THE COMMIT LOGIC IS NOT IMPLEMENTED YET, SINCE IT REQUIRES ALL THE PROCESSOR PARTS TO BE FUNCTIONAL
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/expipe_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/control_pkg.sv"
+`include "expipe_pkg.sv"
+`include "len5_pkg.sv"
+`include "control_pkg.sv"
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/14_commit_decoder.sv"
+`include "14_commit_decoder.sv"
 //`include "commit_decoder.sv"
 
 import expipe_pkg::*;

@@ -13,7 +13,7 @@
 // Date: 24/10/2019
 // Description: acknowledge the block to be served and say if d0 is currently enabled
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module d0_arbiter

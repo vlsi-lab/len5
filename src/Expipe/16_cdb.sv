@@ -13,11 +13,11 @@
 // Date: 11/11/2019
 
 `ifndef SYNTHESIS
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/expipe_pkg.sv"
+`include "len5_pkg.sv"
+`include "expipe_pkg.sv"
 `endif
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/16_cdb_arbiter.sv"
+`include "16_cdb_arbiter.sv"
 
 //`include "cdb_arbiter.sv"
 

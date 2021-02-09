@@ -13,7 +13,7 @@
 // Date: 28/10/2019
 // Description: auxiliary d1 block to manipulate the dirty vector and control the L2 update counter
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module d1_dirty_vec_one_hotter

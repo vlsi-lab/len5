@@ -12,11 +12,11 @@
 // Author: Marco Andorno
 // Date: 07/10/2019
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/expipe_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/control_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/csr_pkg.sv"
+`include "len5_pkg.sv"
+`include "expipe_pkg.sv"
+`include "control_pkg.sv"
+`include "memory_pkg.sv"
+`include "csr_pkg.sv"
 import len5_pkg::*;
 import control_pkg::*;
 import expipe_pkg::*;

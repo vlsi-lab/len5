@@ -12,8 +12,8 @@
 // Author: Michele Caon
 // Date: 01/11/2019
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/expipe_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
+`include "expipe_pkg.sv"
+`include "len5_pkg.sv"
 
 import expipe_pkg::*;
 import len5_pkg::XLEN;

@@ -13,7 +13,7 @@
 // Date: 27/10/2019
 // Description: One Hot encoder without priority
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module one_hot_encoder

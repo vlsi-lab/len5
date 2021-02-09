@@ -13,8 +13,8 @@
 // Date: 28/10/2019
 // Description: block to route the correct lines from d1 to d0
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
+`include "memory_pkg.sv"
+`include "len5_pkg.sv"
 import memory_pkg::*;
 import len5_pkg::*;
 

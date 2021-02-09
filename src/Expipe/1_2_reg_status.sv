@@ -13,7 +13,7 @@
 // Date: 12/11/2019
 
 `ifndef SYNTHESIS
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/expipe_pkg.sv"
+`include "expipe_pkg.sv"
 `endif
 
 import expipe_pkg::*;

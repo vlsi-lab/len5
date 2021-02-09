@@ -13,7 +13,7 @@
 // Date: 26/10/2019
 // Description: d1 part of the L1 D-Cache
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 `include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Memory/dcache/d1/0_D_d1_dirty_vec_one_hotter.sv"

@@ -14,7 +14,7 @@
 // Description: Translation Path Cache
 // Reference: Translation Caching: Skip, Don’t Walk (the Page Table) - Thomas W. Barr, Alan L. Cox, Scott Rixner
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 `include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Memory/ptw_tpc/0_J_tpc_comp_block.sv"

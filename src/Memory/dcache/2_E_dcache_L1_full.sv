@@ -13,7 +13,7 @@
 // Date: 21/10/2019
 // Description: L1 data cache top module
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 `include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Memory/dcache/0_E_dcache_rst_block.sv"

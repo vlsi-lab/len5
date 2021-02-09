@@ -13,12 +13,12 @@
 // Date: 21/10/2019
 
 `ifndef SYNTHESIS
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/expipe_pkg.sv"
+`include "len5_pkg.sv"
+`include "expipe_pkg.sv"
 `endif
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/7_MULT.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/6_ALL_generic_rs.sv"
+`include "7_MULT.sv"
+`include "6_ALL_generic_rs.sv"
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;

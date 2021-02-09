@@ -14,8 +14,8 @@
 // Description: second part of the L2-TLB
 // Details: check the output data of the memory, allocate MSHR entries, check for exceptions, answer to the lower levels
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
+`include "memory_pkg.sv"
+`include "len5_pkg.sv"
 import memory_pkg::*;
 import len5_pkg::*;
 //import mmm_pkg::*;

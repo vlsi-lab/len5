@@ -14,8 +14,8 @@
 // Description: L2-TLB
 // Details: hash-rehash for multiple page size support. L1 TLB always ready to accept answers
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
+`include "memory_pkg.sv"
+`include "len5_pkg.sv"
 import memory_pkg::*;
 import len5_pkg::*;
 //import mmm_pkg::*;

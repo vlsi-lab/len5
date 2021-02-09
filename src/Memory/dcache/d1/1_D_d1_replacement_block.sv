@@ -13,7 +13,7 @@
 // Date: 22/10/2019
 // Description: FIFO replacement policy for the cache, implemented with shift registers
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 `include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Memory/dcache/d1/0_D_decoder.sv"

@@ -13,7 +13,7 @@
 // Date: 21/10/2019
 // Description: L1 data cache top module without ssram
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 `include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Memory/dcache/d0/4_C_dcache_L1_d0.sv"

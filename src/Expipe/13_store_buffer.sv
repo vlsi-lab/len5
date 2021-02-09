@@ -13,10 +13,10 @@
 // Date: 27/10/2019
 
 `ifndef SYNTHESIS
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/expipe_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/csr_pkg.sv"
+`include "len5_pkg.sv"
+`include "expipe_pkg.sv"
+`include "memory_pkg.sv"
+`include "csr_pkg.sv"
 `endif
 
 `ifndef LSUNIT

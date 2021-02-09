@@ -13,7 +13,7 @@
 // Date: 24/10/2019
 // Description: select the incoming data and let it reach the cache and the output registers
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module d0_data_sel_block

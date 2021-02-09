@@ -12,18 +12,18 @@
 // Author: Marco Andorno
 // Date: 07/10/2019
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/expipe_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/control_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/csr_pkg.sv"
+`include "len5_pkg.sv"
+`include "expipe_pkg.sv"
+`include "control_pkg.sv"
+`include "memory_pkg.sv"
+`include "csr_pkg.sv"
 import len5_pkg::*;
 import control_pkg::*;
 import expipe_pkg::*;
 import memory_pkg::*;
 import csr_pkg::*;
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/A_Back_end.sv"
+`include "A_Back_end.sv"
 `include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Frontend/B_Front_end.sv"
 
 module Data_path

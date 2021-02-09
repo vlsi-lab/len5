@@ -13,8 +13,8 @@
 // Date: 21/10/2019
 
 `ifndef SYNTHESIS
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/expipe_pkg.sv"
+`include "len5_pkg.sv"
+`include "expipe_pkg.sv"
 `endif
 
 `ifdef ENABLE_AGE_BASED_SELECTOR

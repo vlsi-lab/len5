@@ -14,7 +14,7 @@
 // Description: replacement unit for the L2 TLB
 // Details: PLRU with invalid first
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module L2_tlb_replacement_unit

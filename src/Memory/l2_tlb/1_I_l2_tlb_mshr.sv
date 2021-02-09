@@ -14,7 +14,7 @@
 // Description: L2-TLB MSHR
 // Details: FIFO MSHR with no holes. Requests are served in-order.
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module L2_tlb_mshr

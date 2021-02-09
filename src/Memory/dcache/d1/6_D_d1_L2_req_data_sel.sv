@@ -13,7 +13,7 @@
 // Date: 28/10/2019
 // Description: block to route the correct lines MSHR/WBB to L2
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module d1_L2_req_data_sel

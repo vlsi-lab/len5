@@ -13,7 +13,7 @@
 // Date: 27/10/2019
 // Description: L1 D-Cache Write Back Victim Buffer
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
+`include "memory_pkg.sv"
 import memory_pkg::*;
 
 `include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Memory/dcache/d1/0_D_one_hot_encoder.sv"

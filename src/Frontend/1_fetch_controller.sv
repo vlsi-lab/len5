@@ -12,7 +12,7 @@
 // Author: Marco Andorno
 // Date: 27/09/2019
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
+`include "len5_pkg.sv"
 import len5_pkg::*;
 
 module fetch_controller

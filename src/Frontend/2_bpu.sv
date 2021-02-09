@@ -12,7 +12,7 @@
 // Author: Marco Andorno
 // Date: 7/8/2019
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
+`include "len5_pkg.sv"
 import len5_pkg::*;
 
 `include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Frontend/2_btb.sv"

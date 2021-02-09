@@ -14,12 +14,12 @@
 
 `ifndef SYNTHESIS
 // Include packages
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/expipe_pkg.sv"
+`include "len5_pkg.sv"
+`include "expipe_pkg.sv"
 `endif
 
 `include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/util/modn_counter.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/0_issue_queue_fifo.sv"
+`include "0_issue_queue_fifo.sv"
 //`include "issue_queue_fifo.sv"
 
 import len5_pkg::XLEN;
