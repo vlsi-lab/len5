@@ -16,9 +16,10 @@
 `include "expipe_pkg.sv"
 `endif
 
-import expipe_pkg::*;
 
-module reg_status #( 
+module reg_status 
+    import expipe_pkg::*;
+#( 
     REG_NUM = 32,
     REG_IDX_LEN = 5
 ) 
@@ -55,7 +56,7 @@ module reg_status #(
     // DEFINITIONS
 
     // Register status data
-    regstat_entry_t                 regstat_data [0:REG_NUM];
+    regstat_entry_t                 regstat_data [0:REG_NUM-1];
 
     // Operation control
     logic                           regstat_issue_upd, regstat_comm_upd;

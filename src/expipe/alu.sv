@@ -17,13 +17,10 @@
 `include "expipe_pkg.sv"
 `endif
 
-import len5_pkg::XLEN;
-import len5_pkg::ILEN;
-//import len5_pkg::HLEN;
-
-import expipe_pkg::*;
-
 module alu 
+    import len5_pkg::XLEN;
+    import len5_pkg::ILEN;
+    import expipe_pkg::*;
 #(
     RS_DEPTH = 16,
     

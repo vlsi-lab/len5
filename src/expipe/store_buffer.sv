@@ -29,28 +29,29 @@
 
 `include "modn_counter.sv"
 
-import len5_pkg::XLEN;
-import len5_pkg::S_IMM;
-import len5_pkg::STBUFF_DEPTH;
 
-import expipe_pkg::*;
+module store_buffer 
+    import len5_pkg::XLEN;
+    import len5_pkg::S_IMM;
+    import len5_pkg::STBUFF_DEPTH;
 
-import memory_pkg::VPN_LEN;
-import memory_pkg::PPN_LEN;
-import memory_pkg::VADDR_LEN;
-import memory_pkg::PADDR_LEN;
-import memory_pkg::PAGE_OFFSET_LEN;
-import memory_pkg::exception_e;
-import memory_pkg::NoException;
-import memory_pkg::PageFault;
-import memory_pkg::AccessException;
+    import expipe_pkg::*;
 
-import csr_pkg::satp_mode_t;
-import csr_pkg::BARE; 
-import csr_pkg::SV39;
-import csr_pkg::SV48;
+    import memory_pkg::VPN_LEN;
+    import memory_pkg::PPN_LEN;
+    import memory_pkg::VADDR_LEN;
+    import memory_pkg::PADDR_LEN;
+    import memory_pkg::PAGE_OFFSET_LEN;
+    import memory_pkg::exception_e;
+    import memory_pkg::NoException;
+    import memory_pkg::PageFault;
+    import memory_pkg::AccessException;
 
-module store_buffer (
+    import csr_pkg::satp_mode_t;
+    import csr_pkg::BARE; 
+    import csr_pkg::SV39;
+    import csr_pkg::SV48;
+(
     input   logic                       clk_i,
     input   logic                       rst_n_i,
     input   logic                       flush_i,
@@ -126,8 +127,8 @@ module store_buffer (
     input   logic [XLEN-1:0]            pfwd_paddr_i,
     input   ldst_type_t                 vfwd_ldtype_i,
     input   ldst_type_t                 pfwd_ldtype_i,
-    input   logic [STBUFF_IDX_LEN-1:0]  vfwd_older_stores_i,
-    input   logic [STBUFF_IDX_LEN-1:0]  pfwd_older_stores_i,
+    input   logic [STBUFF_IDX_LEN:0]    vfwd_older_stores_i,
+    input   logic [STBUFF_IDX_LEN:0]    pfwd_older_stores_i,
     output  logic [STBUFF_IDX_LEN:0]    inflight_store_cnt_o, // number of uncommitted store instructions in the store buffer
     output  logic                       lb_store_committing_o, // A store is committing in the store buffer
     output  logic                       vfwd_hit_o,
@@ -173,10 +174,10 @@ module store_buffer (
     logic                           sb_push, sb_pop, sb_vadder_req, sb_vadder_ans, sb_dtlb_req, sb_dtlb_wu, sb_dtlb_ans, sb_dcache_req, sb_dcache_wu, sb_dcache_ans, sb_cdb_req, sb_store_committing;
 
     // Store buffer data structure
-    sb_entry_t [0:STBUFF_DEPTH-1]   sb_data;
+    sb_entry_t                      sb_data[0:STBUFF_DEPTH-1];
 
     // Status signals 
-    logic [0:STBUFF_DEPTH-1]        valid_a, busy_a, rs1_ready_a, rs2_ready_a, vaddr_ready_a, paddr_ready_a, except_raised_a, completed_a;
+    logic [STBUFF_DEPTH-1:0]        valid_a, busy_a, rs1_ready_a, vaddr_ready_a, paddr_ready_a, except_raised_a, completed_a;
     `ifdef ENABLE_AGE_BASED_SELECTOR
     logic [ROB_IDX_LEN-1:0]         entry_age_a [0:STBUFF_DEPTH-1];
     `endif
@@ -191,7 +192,6 @@ module store_buffer (
             valid_a[i]          = sb_data[i].valid;
             busy_a[i]           = sb_data[i].busy;
             rs1_ready_a[i]      = sb_data[i].rs1_ready;
-            rs2_ready_a[i]      = sb_data[i].rs2_ready;
             vaddr_ready_a[i]    = sb_data[i].vaddr_ready;
             paddr_ready_a[i]    = sb_data[i].paddr_ready;
             except_raised_a[i]  = sb_data[i].except_raised;

@@ -21,20 +21,21 @@
 `include "control_pkg.sv"
 `include "issue_decoder.sv"
 
-import len5_pkg::XLEN;
-import len5_pkg::ILEN;
-import len5_pkg::EU_N;
-import len5_pkg::I_IMM;
-import len5_pkg::S_IMM;
-import len5_pkg::B_IMM;
-import len5_pkg::U_IMM;
-import len5_pkg::J_IMM;
-import len5_pkg::REG_IDX_LEN;
+module issue_logic 
+    /* Import packages content */
+    import len5_pkg::XLEN;
+    import len5_pkg::ILEN;
+    import len5_pkg::EU_N;
+    import len5_pkg::I_IMM;
+    import len5_pkg::S_IMM;
+    import len5_pkg::B_IMM;
+    import len5_pkg::U_IMM;
+    import len5_pkg::J_IMM;
+    import len5_pkg::REG_IDX_LEN;
 
-import expipe_pkg::*;
-import control_pkg::*;
-
-module issue_logic (
+    import expipe_pkg::*;
+    import control_pkg::*;
+(
     // To the main control 
     output  logic                       main_cu_stall_o,
 
@@ -91,13 +92,13 @@ module issue_logic (
     output  logic [REG_IDX_LEN-1:0]     fprf_rs2_idx_o,         // RF address of the second operand
 
     // Handshake from/to the execution pipeline
-    input   logic [0:EU_N-1]            ex_ready_i,             // valid signal from each reservation station
-    output  logic [0:EU_N-1]            ex_valid_o,             // ready signal to each reservation station
+    input   logic [EU_N-1:0]            ex_ready_i,             // valid signal from each reservation station
+    output  logic [EU_N-1:0]            ex_valid_o,             // ready signal to each reservation station
 
     // Data to the execution pipeline reservation stations
     output  logic [8-1:0]  ex_eu_ctl_o,            // controls for the associated EU
     output  logic                       ex_rs1_ready_o,         // first operand is ready at issue time (from the RF or the ROB)
-    output  logic [ROB_IDX_LEN-1:0]     ex_rs1_idx_o,           // the index of the ROB where the first operand can be found (if not ready
+    output  logic [ROB_IDX_LEN-1:0]     ex_rs1_idx_o,           // the index of the ROB where the first operand can be found (if not ready)
     output  logic [XLEN-1:0]            ex_rs1_value_o,         // the value of the first operand (if ready)
     output  logic                       ex_rs2_ready_o,         // second operand is ready at issue time (from the RF or the ROB)
     output  logic [ROB_IDX_LEN-1:0]     ex_rs2_idx_o,           // the index of the ROB where the first operand can be found (if not ready)
@@ -118,6 +119,12 @@ module issue_logic (
     input   logic                       rob_rs2_ready_i,        // the second operand is ready in the ROB
     input   logic [XLEN-1:0]            rob_rs2_value_i,        // the value of the second operand
     input   logic [ROB_IDX_LEN-1:0]     rob_tail_idx_i,         // the entry of the ROB where the instr is being allocated
+
+    // Data from the CDB (cdb_data_t)
+    input   logic [ROB_IDX_LEN-1:0]     cdb_rob_idx_i,          /* the ROB tag of the instruction in the CDB */
+    input   logic [XLEN-1:0]            cdb_value_i,            /* the result of the instruction in the CDB */
+    input   logic                       cdb_except_raised_i,    /* CDB instruction exception flag (avoid sampling ) */
+    /* the exception code is ignored */
     
     output  logic [ROB_IDX_LEN-1:0]     rob_rs1_idx_o,          // ROB entry containing rs1 value
     output  logic [ROB_IDX_LEN-1:0]     rob_rs2_idx_o,          // ROB entry containing rs2 value
@@ -135,8 +142,8 @@ module issue_logic (
     logic [I_IMM-1:0]                   instr_imm_i_value;
     logic [S_IMM-1:0]                   instr_imm_s_value;
     logic [B_IMM-1:0]                   instr_imm_b_value;
-    logic [U_IMM-1:0]                   instr_imm_u_value;
-    logic [J_IMM-1:0]                   instr_imm_j_value;
+    // logic [U_IMM-1:0]                   instr_imm_u_value;
+    // logic [J_IMM-1:0]                   instr_imm_j_value;
 
     logic [ROB_IDX_LEN-1:0]             rob_tail_idx;
 
@@ -147,7 +154,7 @@ module issue_logic (
     logic [ROB_IDX_LEN-1:0]             rob_rs1_idx, rob_rs2_idx;
     logic                               rs1_ready, rs2_ready;
     logic [XLEN-1:0]                    rs1_value, rs2_value;
-    logic [XLEN-1:0]                    imm_value;
+    // logic [XLEN-1:0]                    imm_value;
 
     // Instruction issue decoder
     logic                               id_except_raised;
@@ -180,8 +187,8 @@ module issue_logic (
     assign  instr_imm_i_value       = iq_instruction_i[31 -: I_IMM];
     assign  instr_imm_s_value       = { iq_instruction_i[31 : 25], iq_instruction_i[11:7] };
     assign  instr_imm_b_value       = { iq_instruction_i[31], iq_instruction_i[7], iq_instruction_i[30:25], iq_instruction_i[11:8] };
-    assign  instr_imm_u_value       = iq_instruction_i[31 -: U_IMM];
-    assign  instr_imm_j_value       = { iq_instruction_i[31], iq_instruction_i[19:12], iq_instruction_i[20], iq_instruction_i[30:21] };
+    // assign  instr_imm_u_value       = iq_instruction_i[31 -: U_IMM];
+    // assign  instr_imm_j_value       = { iq_instruction_i[31], iq_instruction_i[19:12], iq_instruction_i[20], iq_instruction_i[30:21] };
 
     assign rob_tail_idx             = rob_tail_idx_i;
 
@@ -189,7 +196,7 @@ module issue_logic (
     //----- HANDSHAKE CONTROL -----\\
     //-----------------------------\\
 
-    // Select the corresponfing register status register ready signal
+    // Select the corresponding register status register ready signal
     assign regstat_ready    = (id_fp_rs) ? fp_regstat_ready_i : int_regstat_ready_i;
 
     always_comb begin: issue_control_logic
@@ -204,52 +211,59 @@ module issue_logic (
             case(id_assigned_eu)
                 // IMPORTANT: check the order of the valid/ready connections to each RS
                 EU_LOAD_BUFFER: begin   // 0
-                    if (ex_ready_i[0]) begin // if the load buffer can accept the instruction
+                    if (ex_ready_i[EU_LOAD_BUFFER]) begin // if the load buffer can accept the instruction
                         rob_valid_o     = 1'b1;
                         iq_ready_o      = 1'b1;
-                        ex_valid_o [0]  = 1'b1;
+                        ex_valid_o [EU_LOAD_BUFFER]  = 1'b1;
                     end
                 end
                 EU_STORE_BUFFER: begin   // 1
-                    if (ex_ready_i[1]) begin // if the load buffer can accept the instruction
+                    if (ex_ready_i[EU_STORE_BUFFER]) begin // if the load buffer can accept the instruction
                         rob_valid_o     = 1'b1;
                         iq_ready_o      = 1'b1;
-                        ex_valid_o [1]  = 1'b1;
+                        ex_valid_o [EU_STORE_BUFFER]  = 1'b1;
                     end
                 end
                 EU_BRANCH_UNIT: begin   // 2
-                    if (ex_ready_i[2]) begin // if the load buffer can accept the instruction
+                    if (ex_ready_i[EU_BRANCH_UNIT]) begin // if the load buffer can accept the instruction
                         rob_valid_o     = 1'b1;
                         iq_ready_o      = 1'b1;
-                        ex_valid_o [2]  = 1'b1;
+                        ex_valid_o [EU_BRANCH_UNIT]  = 1'b1;
                     end
                 end
                 EU_INT_ALU: begin       // 3
-                    if (ex_ready_i[3]) begin // if the load buffer can accept the instruction
+                    if (ex_ready_i[EU_INT_ALU]) begin // if the load buffer can accept the instruction
                         rob_valid_o     = 1'b1;
                         iq_ready_o      = 1'b1;
-                        ex_valid_o [3]  = 1'b1;
+                        ex_valid_o [EU_INT_ALU]  = 1'b1;
                     end
                 end
                 EU_INT_MULT: begin   // 4
-                    if (ex_ready_i[4]) begin // if the load buffer can accept the instruction
+                    if (ex_ready_i[EU_INT_MULT]) begin // if the load buffer can accept the instruction
                         rob_valid_o     = 1'b1;
                         iq_ready_o      = 1'b1;
-                        ex_valid_o [4]  = 1'b1;
+                        ex_valid_o [EU_INT_MULT]  = 1'b1;
                     end
                 end
                 EU_INT_DIV: begin   // 5
-                    if (ex_ready_i[5]) begin // if the load buffer can accept the instruction
+                    if (ex_ready_i[EU_INT_DIV]) begin // if the load buffer can accept the instruction
                         rob_valid_o     = 1'b1;
                         iq_ready_o      = 1'b1;
-                        ex_valid_o [5]  = 1'b1;
+                        ex_valid_o [EU_INT_DIV]  = 1'b1;
                     end
                 end
                 EU_FPU: begin   // 6
-                    if (ex_ready_i[6]) begin // if the load buffer can accept the instruction
+                    if (ex_ready_i[EU_FPU]) begin // if the load buffer can accept the instruction
                         rob_valid_o     = 1'b1;
                         iq_ready_o      = 1'b1;
-                        ex_valid_o [6]  = 1'b1;
+                        ex_valid_o [EU_FPU] = 1'b1;
+                    end
+                end
+                EU_OPERANDS_ONLY: begin // 7
+                    if (ex_ready_i[EU_OPERANDS_ONLY]) begin
+                        rob_valid_o     = 1'b1;
+                        iq_ready_o      = 1'b1;
+                        ex_valid_o [EU_OPERANDS_ONLY] = 1'b1;
                     end
                 end
                 EU_NONE: begin          // the instr. is sent directly to the ROB
@@ -282,7 +296,7 @@ module issue_logic (
     //--------------------------\\
     //----- OPERANDS FETCH -----\\
     //--------------------------\\
-    // The issue logic accesses the register status to know if the source operands must be fetch from the RF or from the ROB (and from which entry of it). If the source operands are not ready yet, they will be fetched from the CDB by the reservation station as soon as they are produced by the associated EU.
+    // The issue logic accesses the register status to know if the source operands are available in the RF, the ROB (and from which entry of it), or the CDB. If the source operands are not ready yet, they will be fetched from the CDB by the reservation station as soon as they are produced by the associated EU. 
 
     // Select the correct integer/floating point register status register
     assign  rob_rs1_idx     = (id_fp_rs) ? fp_regstat_rs1_rob_idx_i : int_regstat_rs1_rob_idx_i;
@@ -295,55 +309,84 @@ module issue_logic (
         rs1_value                   = 0;
         rs2_value                   = 0;
 
+        /* INTEGER OPERANDS */
         if (!id_fp_rs) begin
-            // INTEGER OPERANDS
+            
             // Fetch rs1
             if (id_rs1_req) begin               // rs1 value is required
                 if (int_regstat_rs1_busy_i) begin   // the operand is provided by an in-flight instr.
-                    if (rob_rs1_ready_i) begin
+                    if (rob_rs1_ready_i) begin /* the operand is already available in the ROB */
                         rs1_ready   = 1'b1;
                         rs1_value   = rob_rs1_value_i;
+                    end else if (cdb_rob_idx_i == rob_rs1_idx && !cdb_except_raised_i) begin /* the operand is being broadcast on the CDB */
+                        rs1_ready   = 1'b1;
+                        rs1_value   = cdb_value_i;
+                    end else begin /* mark as not ready */
+                        rs1_ready   = 1'b0;
+                        rs1_value   = 0;
                     end
                 end else begin                  // the operand is available in the register file 
                     rs1_ready           = 1'b1;
                     rs1_value           = intrf_rs1_value_i;
                 end
             end
+
             // Fetch rs2
             if (id_rs2_req) begin               // rs2 value is required
                 if (int_regstat_rs2_busy_i) begin   // the operand is provided by an in-flight instr.
-                    if (rob_rs2_ready_i) begin
+                    if (rob_rs2_ready_i) begin /* the operand is already available in the ROB */
                         rs2_ready   = 1'b1;
                         rs2_value   = rob_rs2_value_i;
+                    end else if (cdb_rob_idx_i == rob_rs2_idx && !cdb_except_raised_i) begin /* the operand is being broadcast on the CDB */
+                        rs2_ready   = 1'b1;
+                        rs2_value   = cdb_value_i;
+                    end else begin /* mark as not ready */
+                        rs2_ready   = 1'b0;
+                        rs2_value   = 0;
                     end
                 end else begin                  // the operand is available in the register file 
-                    rs2_ready           = 1'b1;
+                    rs1_ready           = 1'b1;
                     rs2_value           = intrf_rs2_value_i;
                 end
             end
-        end else begin    
-            // FLOATING POINT 
+
+        /* FLOATING-POINT OPERANDS */
+        end else begin
+
             // Fetch rs1
             if (id_rs1_req) begin               // rs1 value is required
                 if (fp_regstat_rs1_busy_i) begin   // the operand is provided by an in-flight instr.
-                    if (rob_rs1_ready_i) begin
+                    if (rob_rs1_ready_i) begin /* the operand is already available in the ROB */
                         rs1_ready   = 1'b1;
                         rs1_value   = rob_rs1_value_i;
+                    end else if (cdb_rob_idx_i == rob_rs1_idx && !cdb_except_raised_i) begin /* the operand is being broadcast on the CDB */
+                        rs1_ready   = 1'b1;
+                        rs1_value   = cdb_value_i;
+                    end else begin /* mark as not ready */
+                        rs1_ready   = 1'b0;
+                        rs1_value   = 0;
                     end
                 end else begin                  // the operand is available in the register file 
                     rs1_ready           = 1'b1;
                     rs1_value           = fprf_rs1_value_i;
                 end
             end
+
             // Fetch rs2
             if (id_rs2_req) begin               // rs2 value is required
                 if (fp_regstat_rs2_busy_i) begin   // the operand is provided by an in-flight instr.
-                    if (rob_rs2_ready_i) begin
+                    if (rob_rs2_ready_i) begin /* the operand is already available in the ROB */
                         rs2_ready   = 1'b1;
                         rs2_value   = rob_rs2_value_i;
+                    end else if (cdb_rob_idx_i == rob_rs2_idx && !cdb_except_raised_i) begin /* the operand is being broadcast on the CDB */
+                        rs2_ready   = 1'b1;
+                        rs2_value   = cdb_value_i;
+                    end else begin /* mark as not ready */
+                        rs2_ready   = 1'b0;
+                        rs2_value   = 0;
                     end
                 end else begin                  // the operand is available in the register file 
-                    rs2_ready           = 1'b1;
+                    rs1_ready           = 1'b1;
                     rs2_value           = fprf_rs2_value_i;
                 end
             end
@@ -405,8 +448,8 @@ module issue_logic (
     // Source operands info
     assign  ex_rs1_ready_o              = rs1_ready;
     assign  ex_rs2_ready_o              = rs2_ready;
-    assign  ex_rs1_idx_o                = instr_rs1_idx;
-    assign  ex_rs2_idx_o                = instr_rs2_idx;
+    assign  ex_rs1_idx_o                = rob_rs1_idx;
+    assign  ex_rs2_idx_o                = rob_rs2_idx;
 
     // Operands value
     always_comb begin: operand_value_logic

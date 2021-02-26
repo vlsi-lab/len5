@@ -14,9 +14,8 @@
 
 `include "len5_pkg.sv"
 
-import len5_pkg::*;
-
 module branch_unit_cu
+  import len5_pkg::*;
 (
   input   logic clk_i,
   input   logic rst_n_i,
@@ -89,6 +88,10 @@ module branch_unit_cu
       BAD_NT: begin
         next_state = WAIT_OPS;
       end
+
+      default: begin
+        next_state = RESET;
+      end
     endcase
   end
 
@@ -128,6 +131,8 @@ module branch_unit_cu
         res_mispredict_o = '1;
         res_valid_o = '1;
       end
+
+      default:;
     endcase
   end
   

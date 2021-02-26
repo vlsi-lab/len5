@@ -38,20 +38,15 @@
 `include "store_buffer.sv"
 `include "vaddr_adder.sv"
 
-// Sub-modules
-//`include "load_buffer.sv"
-//`include "store_buffer.sv"
-//`include "vaddr_adder.sv"
-import expipe_pkg::*;
-import len5_pkg::*;
-import csr_pkg::satp_mode_t;
-import csr_pkg::BARE; 
-import csr_pkg::SV39;
-import csr_pkg::SV48;
-
-import memory_pkg::*;
-
-module load_store_unit (
+module load_store_unit 
+    import memory_pkg::*;
+    import expipe_pkg::*;
+    import len5_pkg::*;
+    import csr_pkg::satp_mode_t;
+    import csr_pkg::BARE; 
+    import csr_pkg::SV39;
+    import csr_pkg::SV48;
+(
     input   logic                   clk_i,
     input   logic                   rst_n_i,
     input   logic                   flush_i,
@@ -62,7 +57,7 @@ module load_store_unit (
     // Handshake from/to issue arbiter
     input   logic                   issue_lb_valid_i,
     input   logic                   issue_sb_valid_i,
-    input   logic                   lb_issue_ready_o,
+    output  logic                   lb_issue_ready_o,
     output  logic                   sb_issue_ready_o,
 
     // Data from the decode stage
@@ -114,8 +109,8 @@ module load_store_unit (
     logic [XLEN-1:0]            pfwd_paddr;
     ldst_type_t                 vfwd_ldtype;
     ldst_type_t                 pfwd_ldtype;    
-    logic [STBUFF_IDX_LEN-1:0]  vfwd_older_stores;
-    logic [STBUFF_IDX_LEN-1:0]  pfwd_older_stores;
+    logic [STBUFF_IDX_LEN:0]    vfwd_older_stores;
+    logic [STBUFF_IDX_LEN:0]    pfwd_older_stores;
     logic [STBUFF_IDX_LEN:0]    inflight_store_cnt; 
     logic                       lb_store_committing; 
     logic                       vfwd_hit;
@@ -523,8 +518,6 @@ module load_store_unit (
     `ifdef ENABLE_STORE_PRIO_2WAY_ARBITER
     // The store buffer, connected to valid_i[0] is given higher priority than the load buffer. This should increase the hit ratio of the store to load forwarding. However, it increases the load execution latency. Depending on the scenario, performance may be better or worse than the fair arbiter
     prio_2way_arbiter vadder_arbiter (
-		.clk_i          (clk_i),
-        .rst_n_i        (rst_n_i),
         .valid_i        ({ lb_vadderarb_valid, sb_vadderarb_valid }),
         .ready_i        (vadder_vadderarb_ready),
         .valid_o        (vadderarb_vadder_valid),
@@ -610,8 +603,6 @@ module load_store_unit (
     `ifdef ENABLE_STORE_PRIO_2WAY_ARBITER
     // The store buffer, connected to valid_i[0] is given higher priority than the load buffer. This should increase the hit ratio of the store to load forwarding. However, it increases the load execution latency. Depending on the scenario, performance may be better or worse than the fair arbiter
     prio_2way_arbiter dtlb_hs_arbiter (
-		.clk_i          (clk_i),
-        .rst_n_i        (rst_n_i),
         .valid_i        ({ lb_dtlbarb_valid, sb_dtlbarb_valid }),
         .ready_i        (dtlb_dtlbarb_ready),
         .valid_o        (dtlbarb_dtlb_valid),
@@ -688,7 +679,7 @@ module load_store_unit (
         if (dcache_wup_i.valid) begin
             dcache_lsb_value            = 0;
             dcache_lsb_idx              = 0;
-            dcache_lsb_paddr            = dcache_wup_i.line_addr;
+            dcache_lsb_paddr            = { {XLEN-DCACHE_L1_TAG_A_LEN-DCACHE_L1_IDX_A_LEN{1'b0}}, dcache_wup_i.line_addr};
         end else begin
             dcache_lsb_value            = dcache_ans_i.data;
             dcache_lsb_idx              = dcache_ans_i.lsq_addr;
@@ -703,8 +694,6 @@ module load_store_unit (
     `ifdef ENABLE_STORE_PRIO_2WAY_ARBITER
     // The store buffer, connected to valid_i[0] is given higher priority than the load buffer. This should increase the hit ratio of the store to load forwarding. However, it increases the load execution latency. Depending on the scenario, performance may be better or worse than the fair arbiter
     prio_2way_arbiter dcache_hs_arbiter (
-		.clk_i          (clk_i),
-        .rst_n_i        (rst_n_i),
         .valid_i        ({ lb_dcachearb_valid, sb_dcachearb_valid }),
         .ready_i        (dcache_dcachearb_ready),
         .valid_o        (dcachearb_dcache_valid),

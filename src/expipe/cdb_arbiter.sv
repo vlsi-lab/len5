@@ -19,10 +19,10 @@
 
 `include "prio_enc.sv"
 
-import expipe_pkg::*;
-import len5_pkg::EU_N;
-
-module cdb_arbiter (
+module cdb_arbiter
+    import expipe_pkg::*;
+    import len5_pkg::EU_N;
+(
     input   logic                       clk_i,
     input   logic                       rst_n_i,
     input   logic                       flush_i,
@@ -33,8 +33,8 @@ module cdb_arbiter (
     output  logic                       max_prio_ready_o,
 
     // Handshake from/to the units
-    input   logic [0:EU_N-2]            valid_i,
-    output  logic [0:EU_N-2]            ready_o,
+    input   logic [EU_N-2:0]            valid_i,
+    output  logic [EU_N-2:0]            ready_o,
 
     // Handshake from/to the ROB
     input   logic                       rob_ready_i,
@@ -42,21 +42,19 @@ module cdb_arbiter (
 
     // To the CDB MUX
     output  logic                       served_max_prio_o,
-    //output  logic [$clog2(EU_N)-1:0]    served_o
-    output  logic [3-1:0]    served_o
+    output  logic [$clog2(EU_N)-1:0]    served_o
 );
 
     // DEFINITIONS
-    logic [0:EU_N-2]            rem_valid_a, msk_valid_a;
+    logic [EU_N-2:0]                    rem_valid_a, msk_valid_a;
 
     // Valid MUX
-    logic [0:EU_N-2]            mux_valid_a;
+    logic [EU_N-2:0]                    mux_valid_a;
 
     // Valid priority encoder + decoder
-    //logic [$clog2(EU_N)-1:0]    enc_out;
-    logic [3-1:0]    enc_out;
-    logic                       enc_valid;
-    logic [0:EU_N-2]            dec_valid_a;
+    logic [$clog2(EU_N)-1:0]            enc_out;
+    logic                               enc_valid;
+    logic [EU_N-2:0]                    dec_valid_a;
 
     //---------------------\\
     //----- VALID MUX -----\\
@@ -73,10 +71,11 @@ module cdb_arbiter (
         .enc_o          (enc_out),
         .valid_o        (enc_valid)
     );
+
     // Decoder:
     always_comb begin: valid_dec
         dec_valid_a = '0; // all zeros by default 
-        if (|mux_valid_a) begin // if at least one valid is active
+        if (enc_valid) begin // if at least one valid is active
             dec_valid_a[enc_out] = 1'b1; 
         end
     end

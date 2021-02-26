@@ -16,10 +16,9 @@
 
 module prio_enc #(N = 8)
 (
-    input logic [0:N-1] lines_i,
-    //output logic [$clog2(N)-1:0] enc_o,
-    output logic [3-1:0] enc_o,
-    output logic                 valid_o
+    input   logic [N-1:0]           lines_i,
+    output  logic [$clog2(N)-1:0]   enc_o,
+    output  logic                   valid_o
 );
     // The priority decreases with the input index: lines_i[0] has the highest priority and lines_i[N] the lowest
     always_comb begin
@@ -28,8 +27,7 @@ module prio_enc #(N = 8)
         
         for (int i = N - 1; i >= 0; i = i-1) begin
             if (lines_i[i]) begin
-                //enc_o       = i[$clog2(N)-1:0];
-				enc_o       = i[3-1:0];
+                enc_o       = i[$clog2(N)-1:0];
                 valid_o     = 1'b1;
             end 
         end

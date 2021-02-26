@@ -14,7 +14,7 @@
 
 module age_based_sel #(N = 8, AGE_LEN = 4)
 (
-    input logic [0:N-1] lines_i,
+    input logic [N-1:0] lines_i,
     input logic [AGE_LEN-1:0] ages_i [0:N-1],
     //output logic [$clog2(N)-1:0] enc_o,
 output logic [3-1:0] enc_o,

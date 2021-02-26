@@ -20,13 +20,10 @@
 `include "simd.sv"
 `include "generic_rs.sv"
 
-import len5_pkg::XLEN;
-import len5_pkg::ILEN;
-//import len5_pkg::HLEN;
-
-import expipe_pkg::*;
-
 module simd_rs 
+    import len5_pkg::XLEN;
+    import len5_pkg::ILEN;
+    import expipe_pkg::*;
 #(
     RS_DEPTH = 16,
     
@@ -127,7 +124,7 @@ generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_S
     .cdb_except_o (cdb_except_o)
 );
 
-SIMD #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_SIMD
+simd #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_simd
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),

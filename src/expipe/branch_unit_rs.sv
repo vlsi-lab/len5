@@ -19,22 +19,19 @@
 
 `include "modn_counter.sv"
 
-import len5_pkg::XLEN;
-import len5_pkg::ILEN;
-//import len5_pkg::HLEN;
-import len5_pkg::B_IMM;
-
-import len5_pkg::branch_type_t;
-import len5_pkg::beq;
-import len5_pkg::bne;
-import len5_pkg::blt;
-import len5_pkg::bge;
-import len5_pkg::bltu;
-import len5_pkg::bgeu;
-
-import expipe_pkg::*;
-
 module branch_unit_rs 
+    import len5_pkg::XLEN;
+    import len5_pkg::ILEN;
+    import len5_pkg::B_IMM;
+    import len5_pkg::branch_type_t;
+    import len5_pkg::beq;
+    import len5_pkg::bne;
+    import len5_pkg::blt;
+    import len5_pkg::bge;
+    import len5_pkg::bltu;
+    import len5_pkg::bgeu;
+
+    import expipe_pkg::*;
 #(
     RS_DEPTH = 16
 )
@@ -90,8 +87,8 @@ module branch_unit_rs
 
     // DEFINITIONS
 
-    //localparam RS_IDX_LEN = $clog2(RS_DEPTH); // reservation station address width
-    localparam RS_IDX_LEN = 3;
+    localparam RS_IDX_LEN = $clog2(RS_DEPTH); // reservation station address width
+
     // Reservation station entry 
     typedef struct packed {
         logic                   valid;      // The entry contains a valid instruction
@@ -119,11 +116,11 @@ module branch_unit_rs
     logic                       head_cnt_en, head_cnt_clr, ex_cnt_en, ex_cnt_clr, tail_cnt_en, tail_cnt_clr,wr_res_cnt_en, wr_res_cnt_clr;
 
     // The actual reservation station data structure
-    rs_entry_t [0:RS_DEPTH-1]   rs_data;
+    rs_entry_t  rs_data[0:RS_DEPTH-1];
     
     // Status signals
-    logic [0:RS_DEPTH-1]        valid_a, busy_a; // valid entries, empty entries
-    logic [0:RS_DEPTH-1]        ex_ready_a, res_ready_a; // Ready operands / ready result entries 
+    logic   valid_a[0:RS_DEPTH-1], busy_a[0:RS_DEPTH-1]; // valid entries, empty entries
+    logic   ex_ready_a[0:RS_DEPTH-1], res_ready_a[0:RS_DEPTH-1]; // Ready operands / ready result entries 
 
     // RS control signals
     logic                       rs_push, rs_ex, rs_pop, rs_wr_res;
@@ -206,7 +203,7 @@ module branch_unit_rs
         end
 
         // WRITE RESULT FROM THE BRANCH UNIT 
-        if (bu_valid_i && rs_data[wr_res_idx].busy/*&& !(stall)*/) begin
+        if (bu_valid_i && busy_a[wr_res_idx]/*&& !(stall)*/) begin
             rs_wr_res              = 1'b1;
             wr_res_cnt_en          = 1'b1;
         end
@@ -247,7 +244,7 @@ module branch_unit_rs
                     if (!rs_data[i].rs2_ready) begin
                         if (cdb_valid_i && !cdb_data_i.except_raised && (rs_data[i].rs2_idx == cdb_data_i.rob_idx)) begin
                             rs_data[i].rs2_ready    <= 'b1;
-                            rs_data[i].rs2_value    <= cdb_data_i;
+                            rs_data[i].rs2_value    <= cdb_data_i.value;
                         end
                     end
                 end
@@ -283,7 +280,7 @@ module branch_unit_rs
 
             // Save the result from the branch unit
             if (rs_wr_res) begin
-                rs_data[wr_res_idx].busy            <= 1'b0; // clear the busy bit
+                busy_a[wr_res_idx]            <= 1'b0; // clear the busy bit
                 rs_data[wr_res_idx].res_ready       <= 1'b1; // mark the entry as completed
                 rs_data[wr_res_idx].mispredicted    <= mispredict_i; // misprediction info from the branch unit
             end

@@ -20,21 +20,21 @@
 
 `include "control_pkg.sv"
 
-import len5_pkg::ILEN;
-import len5_pkg::I_IMM;
-import len5_pkg::REG_IDX_LEN;
+module issue_decoder
+    import len5_pkg::ILEN;
+    import len5_pkg::I_IMM;
+    import len5_pkg::REG_IDX_LEN;
 
-import len5_pkg::beq;
-import len5_pkg::bne;
-import len5_pkg::blt;
-import len5_pkg::bge;
-import len5_pkg::bltu;
-import len5_pkg::bgeu;
+    import len5_pkg::beq;
+    import len5_pkg::bne;
+    import len5_pkg::blt;
+    import len5_pkg::bge;
+    import len5_pkg::bltu;
+    import len5_pkg::bgeu;
 
-import expipe_pkg::*;
-import control_pkg::*;
-
-module issue_decoder (
+    import expipe_pkg::*;
+    import control_pkg::*;
+(
     // Instruction from the issue logic
     input   logic [ILEN-1:0]                issue_instruction_i,    // the issuing instruction opcode
     

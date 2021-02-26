@@ -19,14 +19,14 @@
 
 `include "modn_counter.sv"
 
-import len5_pkg::XLEN;
-import len5_pkg::ILEN;
-import len5_pkg::REG_IDX_LEN;
-import len5_pkg::ROB_DEPTH;
 
-import expipe_pkg::*;
-
-module rob (
+module rob 
+    import len5_pkg::XLEN;
+    import len5_pkg::ILEN;
+    import len5_pkg::REG_IDX_LEN;
+    import len5_pkg::ROB_DEPTH;
+    import expipe_pkg::*;
+(
     input   logic                       clk_i,
     input   logic                       rst_n_i,
     input   logic                       flush_i,
@@ -91,20 +91,6 @@ module rob (
 
     // ROB data structure 
     rob_entry_t                         rob_data [0:ROB_DEPTH-1]; 
-
-    // Status signals
-    logic [0:ROB_DEPTH-1]               valid_a, res_ready_a;
-
-    //--------------------------\\
-    //----- STATUS SIGNALS -----\\
-    //--------------------------\\
-    // These are required because name selection after indexing is not supported
-    always_comb begin: status_signals_gen
-        for (int i = 0; i < ROB_DEPTH; i++) begin
-            valid_a[i]          = rob_data[i].valid;
-            res_ready_a[i]      = rob_data[i].res_ready;
-        end
-    end
 
     //-----------------------------\\
     //----- ROB CONTROL LOGIC -----\\

@@ -16,9 +16,8 @@
 
 `include "branch_unit_cu.sv"
 
-import len5_pkg::*;
-
 module branch_unit
+  import len5_pkg::*;
 (
   input   logic             clk_i,
   input   logic             rst_n_i,
@@ -52,6 +51,7 @@ module branch_unit
       bge:      taken = ($signed(rs1_i) >= $signed(rs2_i));
       bltu:     taken = (rs1_i < rs2_i);
       bgeu:     taken = (rs1_i >= rs2_i);
+      default:  taken = 0;
     endcase
   end
 
@@ -73,7 +73,7 @@ module branch_unit
 
   // Assignments
   assign wrong_taken = pred_taken_i != taken;
-  assign target = (imm_i << 1) + pred_pc_i; // add JAL and JALR
+  assign target = { {XLEN-B_IMM{1'b0}}, (imm_i << 1)} + pred_pc_i; // add JAL and JALR
   assign wrong_target = pred_target_i != target;
 
   // Output register

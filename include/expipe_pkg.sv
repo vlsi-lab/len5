@@ -25,8 +25,7 @@ package expipe_pkg;
     // Import global constants
     import len5_pkg::*;
 
-    import memory_pkg::PADDR_LEN;
-    import memory_pkg::PAGE_OFFSET_LEN;
+    import memory_pkg::PPN_LEN;
 
     //--------------------\\
     //----- SWITCHES -----\\
@@ -44,7 +43,7 @@ package expipe_pkg;
     //----- ROB -----\\
     //---------------\\
     
-    localparam ROB_IDX_LEN = 3;//$clog2(ROB_DEPTH); // ROB index width
+    localparam ROB_IDX_LEN = $clog2(ROB_DEPTH); // ROB index width
     localparam ROB_EXCEPT_LEN = 4;  // only the last four bits of the mcause/scause CSR
 
     // Width of the opcode field (decoded during issue stage)
@@ -181,8 +180,7 @@ package expipe_pkg;
     localparam MAX_EU_CTL_LEN   = BU_CTL_LEN;   // this must be set to the maximum of the previous parameters
     
     // ASSIGNED EU
-    typedef enum logic [3//$clog2(EU_N)
--1:0] { 
+    typedef enum { 
         EU_LOAD_BUFFER,     // 0
         EU_STORE_BUFFER,    // 1
         EU_BRANCH_UNIT,     // 2
@@ -190,19 +188,19 @@ package expipe_pkg;
         EU_INT_MULT,        // 4
         EU_INT_DIV,         // 5
         EU_FPU,             // 6
-        EU_NONE             // the instruction is directly sent to the ROB (csr, special instructions, etc.)
+        EU_OPERANDS_ONLY,   // 7
+        EU_NONE             // 8: the instruction is directly sent to the ROB (csr, special instructions, etc.)
     } issue_eu_t;
 
     //---------------------------\\
     //----- LOAD-STORE UNIT -----\\
     //---------------------------\\
+    localparam LDBUFF_IDX_LEN = $clog2(LDBUFF_DEPTH); // load buffer address width
+    localparam STBUFF_IDX_LEN = $clog2(STBUFF_DEPTH); // store buffer address width
+    localparam BUFF_IDX_LEN = (LDBUFF_IDX_LEN > STBUFF_IDX_LEN) ? (LDBUFF_IDX_LEN) : (STBUFF_IDX_LEN); // the lrgest of the two. Useful when comparing indexes from both
     localparam EXCEPT_TYPE_LEN = ROB_EXCEPT_LEN; // only the last four bits of the mcause/scause CSR
     localparam LDST_TYPE_LEN = LB_CTL_LEN; // 3 bits: 7 types of load (lb, lh, lw, ld, lbu, lhu, ldu), 4 types of store (sb, sh, sw and sd)
     typedef enum logic [LDST_TYPE_LEN-1:0] { LS_BYTE, LS_BYTE_U, LS_HALFWORD, LS_HALFWORD_U, LS_WORD, LS_WORD_U, LS_DOUBLEWORD } ldst_type_t;
-
-    // LOAD/STORE BUFFER INDEX LENGTH
-    localparam LDBUFF_IDX_LEN = 3;//$clog2(LDBUFF_DEPTH); // load buffer address width
-    localparam STBUFF_IDX_LEN = 3;//$clog2(STBUFF_DEPTH); // store buffer address width
     
     // LOAD BUFFER ENTRY TYPE
     typedef struct packed {
@@ -222,7 +220,7 @@ package expipe_pkg;
         logic                    vaddr_ready;       // the virtual address has already been computed
         logic [XLEN-1:0]         vaddr;             // the virtual address
         logic                    paddr_ready;       // the address translation (TLB access) has already completed
-        logic [PADDR_LEN-PAGE_OFFSET_LEN-1:0] ppn;  // the physical page number
+        logic [PPN_LEN-1:0]      ppn;  // the physical page number
         logic [ROB_IDX_LEN-1:0]  dest_idx;          // the entry of the ROB where the loaded value will be stored
         logic                    except_raised;
         except_code_t            except_code;       // exception code 
@@ -248,15 +246,12 @@ package expipe_pkg;
         logic                   vaddr_ready;        // the virtual address has already been computed
         logic [XLEN-1:0]        vaddr;              // the virtual address
         logic                   paddr_ready;        // the address translation (TLB access) has already completed
-        logic [PADDR_LEN-PAGE_OFFSET_LEN-1:0] ppn;  // the physical address (last 12 MSBs are identical to virtual address
+        logic [PPN_LEN-1:0]     ppn;  // the physical address (last 12 MSBs are identical to virtual address
         logic [ROB_IDX_LEN-1:0] dest_idx;           // the entry of the ROB where the loaded value will be stored
         logic                   except_raised;
         except_code_t           except_code;        // exception code 
         logic                   completed;          // the value has been fetched from D$
     } sb_entry_t;
-
-    // SHARED UNITS
-    localparam BUFF_IDX_LEN = (LDBUFF_IDX_LEN > STBUFF_IDX_LEN) ? (LDBUFF_IDX_LEN) : (STBUFF_IDX_LEN); // the lrgest of the two. Useful when comparing indexes from both
 
     //------------------------\\
     //----- COMMIT LOGIC -----\\

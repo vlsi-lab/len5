@@ -14,9 +14,6 @@
 
 module prio_2way_arbiter
 (
-    input logic clk_i,
-    input logic rst_n_i,
-
     // Input valid signals
     input logic [1:0] valid_i,
 

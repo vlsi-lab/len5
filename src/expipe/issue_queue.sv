@@ -20,15 +20,14 @@
 
 `include "modn_counter.sv"
 `include "issue_queue_fifo.sv"
-//`include "issue_queue_fifo.sv"
 
-import len5_pkg::XLEN;
-import len5_pkg::ILEN;
-import len5_pkg::IQ_DEPTH;
+module issue_queue 
+    import len5_pkg::XLEN;
+    import len5_pkg::ILEN;
+    import len5_pkg::IQ_DEPTH;
 
-import expipe_pkg::*;
-
-module issue_queue (
+    import expipe_pkg::*;
+(
     input   logic               clk_i,
     input   logic               rst_n_i,
     input   logic               flush_i,

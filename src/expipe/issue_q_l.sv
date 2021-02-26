@@ -23,13 +23,11 @@
 `include "issue_queue.sv"
 `include "issue_logic.sv"
 
-//`include "issue_queue_fifo.sv"
-
-import len5_pkg::*;
-import control_pkg::*;
-import expipe_pkg::*;
-
-module issue_q_l (
+module issue_q_l 
+    import len5_pkg::*;
+    import control_pkg::*;
+    import expipe_pkg::*;
+(
     input   logic               clk_i,
     input   logic               rst_n_i,
     input   logic               flush_i,
@@ -91,8 +89,8 @@ module issue_q_l (
     output  logic [REG_IDX_LEN-1:0]     fprf_rs2_idx_o,         // RF address of the second operand    
 
 	// Handshake from/to the execution pipeline
-    input   logic [0:EU_N-1]            ex_ready_i,             // valid signal from each reservation station
-    output  logic [0:EU_N-1]            ex_valid_o,             // ready signal to each reservation station
+    input   logic [EU_N-1:0]            ex_ready_i,             // valid signal from each reservation station
+    output  logic [EU_N-1:0]            ex_valid_o,             // ready signal to each reservation station
 
     // Data to the execution pipeline reservation stations
     output  logic [8-1:0]  ex_eu_ctl_o,            // controls for the associated EU
@@ -126,7 +124,13 @@ module issue_q_l (
     output  logic                       rob_except_raised_o,    // an exception has been raised
     output  logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_o,      // the exception code
     output  logic [XLEN-1:0]            rob_except_aux_o,       // exception auxilliary data (e.g. offending virtual address)
-    output  logic                       rob_res_ready_o       // force the ready-to-commit state in the ROB to handle special instr. 
+    output  logic                       rob_res_ready_o,        // force the ready-to-commit state in the ROB to handle special instr. 
+
+    // Data from the CDB (cdb_data_t)
+    input   logic [ROB_IDX_LEN-1:0]     cdb_rob_idx_i,          /* the ROB tag of the instruction in the CDB */
+    input   logic [XLEN-1:0]            cdb_value_i,            /* the result of the instruction in the CDB */
+    input   logic                       cdb_except_raised_i     /* CDB instruction exception flag (avoid sampling ) */
+    /* the exception code is ignored */
 );
 
     // DEFINITIONS
@@ -272,7 +276,13 @@ issue_logic u_issue_logic
     .rob_except_raised_o(rob_except_raised_o),    
     .rob_except_code_o(rob_except_code_o),      
     .rob_except_aux_o(rob_except_aux_o),       
-    .rob_res_ready_o(rob_res_ready_o)          
+    .rob_res_ready_o(rob_res_ready_o),
+
+    // Data from the CDB (cdb_data_t)
+    .cdb_rob_idx_i(cdb_rob_idx_i),
+    .cdb_value_i(cdb_value_i),            
+    .cdb_except_raised_i(cdb_except_raised_i)
+    /* the exception code is ignored */  
 );
 
 endmodule

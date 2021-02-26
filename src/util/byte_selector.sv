@@ -14,13 +14,12 @@
 
 `include "expipe_pkg.sv"
 `include "len5_pkg.sv"
-
-import expipe_pkg::*;
-import len5_pkg::XLEN;
     
 `define BYTE *8 // 1 byte = 8 bits
 
 module byte_selector
+    import expipe_pkg::*;
+    import len5_pkg::XLEN;
 (
     input ldst_type_t type_i, // load/store type (number of bytes to select)
     //input logic [$clog2(XLEN/8)-1:0] byte_off, // the offset of the first byte to select
@@ -80,6 +79,7 @@ input logic [3-1:0] byte_off, // the offset of the first byte to select
         case(type_i)
             LS_HALFWORD, LS_HALFWORD_U: assert (!byte_off[0]) else $warning("%s instr. with misaligned byte offset \'%b\' proceeded to cache access/fwd stage. This must be avoided!", type_i.name(), byte_off); 
             LS_WORD, LS_WORD_U: assert (byte_off[1:0] == 2'b00) else $warning("%s instr. with misaligned byte offset \'%b\' proceeded to cache access/fwd stage. This must be avoided!", type_i.name(), byte_off); 
+            default:;
         endcase
     end
     `endif

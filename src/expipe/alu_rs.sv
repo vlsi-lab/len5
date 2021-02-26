@@ -24,9 +24,8 @@ import len5_pkg::XLEN;
 import len5_pkg::ILEN;
 //import len5_pkg::HLEN;
 
-import expipe_pkg::*;
-
-module alu_rs 
+module alu_rs
+    import expipe_pkg::*;
 #(
     RS_DEPTH = 16,
     

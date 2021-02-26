@@ -31,13 +31,14 @@
 `include "branch_rs.sv"
 `include "load_store_unit.sv"
 
-import len5_pkg::*;
-import control_pkg::*;
-import expipe_pkg::*;
-import csr_pkg::*;
-import memory_pkg::*;
+module exec_unit
 
-module exec_unit (
+    import len5_pkg::*;
+    import control_pkg::*;
+    import expipe_pkg::*;
+    import csr_pkg::*;
+    import memory_pkg::*;
+(
     input   logic               clk_i,
     input   logic               rst_n_i,
     input   logic               flush_i,
@@ -187,7 +188,7 @@ mult_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_mult
     .cdb_except_o (cdb_data_o[1].except_code)//(cdb_except_o)
 );
 
-DIV_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_DIV_rs
+div_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_div_rs
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),

@@ -1,0 +1,14 @@
+-Iinclude/ 
+-Isrc/ 
+-Isrc/util/ 
+-Isrc/expipe/ 
+-Isrc/memory/ 
+-Isrc/memory/dcahce/ 
+-Isrc/memory/dtlb/ 
+-Isrc/memory/icache/ 
+-Isrc/memory/itlb/ 
+-Isrc/memory/l1_tlb_arbiter/ 
+-Isrc/memory/l2_tlb/
+-Isrc/memory/l2c_arbiter/ 
+-Isrc/memory/l2cache_emulator/
+-Isrc/memory/ptw_tpc/

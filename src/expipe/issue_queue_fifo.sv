@@ -17,10 +17,10 @@
 `include "expipe_pkg.sv"
 `endif
 
-import len5_pkg::IQ_DEPTH;
-import expipe_pkg::*;
-
-module issue_queue_fifo (
+module issue_queue_fifo 
+    import len5_pkg::IQ_DEPTH;
+    import expipe_pkg::*;
+(
     input   logic                   clk_i,
     input   logic                   rst_n_i,
     input   logic                   flush_i,
@@ -52,9 +52,9 @@ module issue_queue_fifo (
     // DEFINITIONS 
     logic                       fifo_push, fifo_pop;
     logic                       fifo_full;
-    logic [0:IQ_DEPTH-1]        valid_a;
+    logic                       valid_a[0:IQ_DEPTH-1];
 
-    iq_entry_t [0: IQ_DEPTH-1]  iq_fifo; // The actual fifo
+    iq_entry_t                  iq_fifo[0: IQ_DEPTH-1]; // The actual fifo
 
     // full and empty fifo signals
     always_comb begin

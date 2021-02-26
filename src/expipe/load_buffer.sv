@@ -29,28 +29,28 @@
 
 `include "byte_selector.sv"
 
-import len5_pkg::XLEN;
-import len5_pkg::I_IMM;
-import len5_pkg::LDBUFF_DEPTH;
+module load_buffer 
+    import len5_pkg::XLEN;
+    import len5_pkg::I_IMM;
+    import len5_pkg::LDBUFF_DEPTH;
 
-import expipe_pkg::*;
+    import expipe_pkg::*;
 
-import memory_pkg::VPN_LEN;
-import memory_pkg::PPN_LEN;
-import memory_pkg::VADDR_LEN;
-import memory_pkg::PADDR_LEN;
-import memory_pkg::PAGE_OFFSET_LEN;
-import memory_pkg::exception_e;
-import memory_pkg::NoException;
-import memory_pkg::PageFault;
-import memory_pkg::AccessException;
+    import memory_pkg::VPN_LEN;
+    import memory_pkg::PPN_LEN;
+    import memory_pkg::VADDR_LEN;
+    import memory_pkg::PADDR_LEN;
+    import memory_pkg::PAGE_OFFSET_LEN;
+    import memory_pkg::exception_e;
+    import memory_pkg::NoException;
+    import memory_pkg::PageFault;
+    import memory_pkg::AccessException;
 
-import csr_pkg::satp_mode_t;
-import csr_pkg::BARE; 
-import csr_pkg::SV39;
-import csr_pkg::SV48;
-
-module load_buffer (
+    import csr_pkg::satp_mode_t;
+    import csr_pkg::BARE; 
+    import csr_pkg::SV39;
+    import csr_pkg::SV48;
+(
     input   logic                       clk_i,
     input   logic                       rst_n_i,
     input   logic                       flush_i,
@@ -130,8 +130,8 @@ module load_buffer (
     output  logic [XLEN-1:0]            pfwd_paddr_o,
     output  ldst_type_t                 vfwd_ldtype_o,
     output  ldst_type_t                 pfwd_ldtype_o,
-    output  logic [STBUFF_IDX_LEN-1:0]  vfwd_older_stores_o,
-    output  logic [STBUFF_IDX_LEN-1:0]  pfwd_older_stores_o,
+    output  logic [STBUFF_IDX_LEN:0]    vfwd_older_stores_o,
+    output  logic [STBUFF_IDX_LEN:0]    pfwd_older_stores_o,
 
     // Hanshake from/to the CDB 
     input   logic                       cdb_ready_i,
@@ -166,10 +166,10 @@ module load_buffer (
     logic [XLEN-1:0]                dcache_value; 
 
     // The load buffer data structure
-    lb_entry_t [0:LDBUFF_DEPTH-1]   lb_data;
+    lb_entry_t                      lb_data[LDBUFF_DEPTH-1:0];
 
     // Status signals
-    logic [0:LDBUFF_DEPTH-1]        valid_a, busy_a, store_dep_a, pfwd_attempted_a, no_older_stores_a, rs1_ready_a, vaddr_ready_a, paddr_ready_a, except_raised_a, completed_a;
+    logic [LDBUFF_DEPTH-1:0]        valid_a, busy_a, store_dep_a, pfwd_attempted_a, no_older_stores_a, rs1_ready_a, vaddr_ready_a, paddr_ready_a, except_raised_a, completed_a;
     `ifdef ENABLE_AGE_BASED_SELECTOR
     logic [ROB_IDX_LEN-1:0]         entry_age_a [0:LDBUFF_DEPTH-1];
     `endif
@@ -192,6 +192,7 @@ module load_buffer (
             paddr_ready_a[i]        = lb_data[i].paddr_ready;
             except_raised_a[i]      = lb_data[i].except_raised;
             completed_a[i]          = lb_data[i].completed;
+            pfwd_attempted_a[i]     = lb_data[i].pfwd_attempted;
             `ifdef ENABLE_AGE_BASED_SELECTOR
             entry_age_a[i]          = lb_data[i].entry_age;
             `endif
@@ -333,7 +334,7 @@ module load_buffer (
                 lb_data[i].valid            <= 1'b0;
                 lb_data[i].busy             <= 1'b0;
                 lb_data[i].store_dep        <= 1'b0;
-                lb_data[i].older_stores     <= 1'b0;
+                lb_data[i].older_stores     <= '0;
                 lb_data[i].rs1_ready        <= 1'b0;
                 lb_data[i].vaddr_ready      <= 1'b0;
                 lb_data[i].paddr_ready      <= 1'b0;
@@ -701,8 +702,8 @@ module load_buffer (
     //-------------------------------------\\
     // When the virtual address adder returns the computed virtual address or and the index of the corresponding entry of the load buffer, this index is saved in a register so it can be used in the next cycle to select the entry for virtual address forwarding
     always_ff @(posedge clk_i or negedge rst_n_i) begin
-        if (!rst_n_i) vfwd_idx = 0;
-        else vfwd_idx = (vfwd_idx_reg_en) ? vadder_idx_i : vfwd_idx;
+        if (!rst_n_i) vfwd_idx <= 0;
+        else vfwd_idx <= (vfwd_idx_reg_en) ? vadder_idx_i : vfwd_idx;
     end
 
     //--------------------------\\

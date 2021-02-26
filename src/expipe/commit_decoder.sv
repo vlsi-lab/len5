@@ -17,11 +17,10 @@
 `include "expipe_pkg.sv"
 `include "len5_pkg.sv"
 `include "control_pkg.sv"
-
-import expipe_pkg::*;
-import len5_pkg::ILEN;
-
-module commit_decoder (
+module commit_decoder
+    import expipe_pkg::*;
+    import len5_pkg::ILEN;
+(
     // Data from the commit logic
     input   logic [ILEN-1:0]        instruction_i,
 

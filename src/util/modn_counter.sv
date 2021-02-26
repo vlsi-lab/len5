@@ -23,9 +23,8 @@ module modn_counter
     input logic en_i,
     input logic clr_i, // Synchronous clear
 
-    // Output signals 
-   // output logic [$clog2(N)-1:0] count_o, // Counter value 
-   output logic [3-1:0] count_o, // Counter value 
+    // Output signals
+    output logic [$clog2(N)-1:0] count_o, // Counter value 
     output logic tc_o // Terminal count: '1' when count_o = N-1
 );
 

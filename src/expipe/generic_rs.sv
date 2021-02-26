@@ -23,13 +23,10 @@
 `include "prio_enc.sv"
 `endif
 
-import len5_pkg::XLEN;
-import len5_pkg::ILEN;
-//import len5_pkg::HLEN;
-
-import expipe_pkg::*;
-
 module generic_rs 
+    import len5_pkg::XLEN;
+    import len5_pkg::ILEN;
+    import expipe_pkg::*;
 #(
     RS_DEPTH = 16,
     
@@ -64,16 +61,14 @@ module generic_rs
     output  logic                   eu_ready_o,
 
     // Data from/to the execution unit
-    //input   logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i,
-    input   logic [3-1:0] eu_entry_idx_i,
+    input   logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i,
     input   logic [XLEN-1:0]        eu_result_i,
     input   logic                   eu_except_raised_i,
     input   logic [EXCEPT_LEN-1:0]  eu_except_code_i,
     output  logic [EU_CTL_LEN-1:0]  eu_ctl_o,
     output  logic [XLEN-1:0]        eu_rs1_o,
     output  logic [XLEN-1:0]        eu_rs2_o,
-    //output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o,   // to be produced at the end of execution together with the result
-    output  logic [3-1:0] eu_entry_idx_o,
+    output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o,   // to be produced at the end of execution together with the result
 
     // Hanshake from/to the CDB 
     input   logic                   cdb_ready_i,
@@ -92,8 +87,7 @@ module generic_rs
 
     // DEFINITIONS
 
-    //localparam RS_IDX_LEN = $clog2(RS_DEPTH); // reservation station address width
-    localparam RS_IDX_LEN = 3;
+    localparam RS_IDX_LEN = $clog2(RS_DEPTH); // reservation station address width
 
     // Reservation station entry 
     typedef struct packed {
@@ -121,12 +115,11 @@ module generic_rs
     logic                       new_idx_valid, ex_idx_valid, cdb_idx_valid;
     
     // The actual reservation station data structure
-    rs_entry_t [0:RS_DEPTH-1]   rs_data;
+    rs_entry_t                  rs_data[0:RS_DEPTH-1];
     
     // Status signals
-    logic [0:RS_DEPTH-1]        valid_a, busy_a; // valid entries, empty entries
-    logic [0:RS_DEPTH-1]        ex_ready_a, res_ready_a; // Ready operands / ready result entries 
-    logic [ROB_IDX_LEN-1:0]     entry_age_a [0:RS_DEPTH-1];
+    logic   [RS_DEPTH-1:0]      valid_a, busy_a; // valid entries, empty entries
+    logic   [RS_DEPTH-1:0]      ex_ready_a, res_ready_a; // Ready operands / ready result entries 
 
     // RS control signals
     logic                       rs_insert, rs_ex, rs_pop, rs_wr_res;

@@ -17,12 +17,12 @@
 `include "expipe_pkg.sv"
 `endif 
 
-import len5_pkg::XLEN;
-import len5_pkg::XREG_NUM;
-import len5_pkg::REG_IDX_LEN;
-import expipe_pkg::*;
-
-module int_rf (
+module int_rf 
+    import len5_pkg::XLEN;
+    import len5_pkg::XREG_NUM;
+    import len5_pkg::REG_IDX_LEN;
+    import expipe_pkg::*;
+(
     input   logic                   clk_i,
     input   logic                   rst_n_i,
 

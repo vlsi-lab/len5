@@ -18,16 +18,19 @@
 `include "csr_pkg.sv"
 `endif
 
-import len5_pkg::XLEN;
-import len5_pkg::I_IMM;
-import expipe_pkg::*;
 
-import csr_pkg::satp_mode_t;
-import csr_pkg::BARE; 
-import csr_pkg::SV39;
+module vaddr_adder 
+    import len5_pkg::XLEN;
+    import len5_pkg::I_IMM;
+    import expipe_pkg::*;
+
+    import csr_pkg::satp_mode_t;
+    import csr_pkg::BARE; 
+    import csr_pkg::SV39;
 import csr_pkg::SV48;
-
-module vaddr_adder #(IDX_LEN = 8)
+#(
+    IDX_LEN = 8
+)
 (
     input   logic                       clk_i,
     input   logic                       rst_n_i,
@@ -46,11 +49,11 @@ module vaddr_adder #(IDX_LEN = 8)
     input   logic                       is_store_i,
     input   logic [XLEN-1:0]            rs1_value_i,
     input   logic [I_IMM-1:0]           imm_value_i,
-    input   logic [IDX_LEN-1:0]    lsb_idx_i,
+    input   logic [IDX_LEN-1:0]         lsb_idx_i,
     input   ldst_type_t                 ldst_type_i,
     output  logic                       is_store_o,
     output  logic [XLEN-1:0]            vaddr_o,
-    output  logic [IDX_LEN-1:0]    lsb_idx_o,
+    output  logic [IDX_LEN-1:0]         lsb_idx_o,
     output  vadder_except_t             except_o
 );
 
@@ -81,7 +84,7 @@ module vaddr_adder #(IDX_LEN = 8)
             ldst_type   <= LS_DOUBLEWORD;
             lsb_idx_o   <= 'd0;
             lsb_valid_o <= 'd0;
-        end else begin    
+        end else if (lsb_ready_i) begin /* only proceed if the LSB is ready */    
             is_store_o  <= is_store_i;
             rs1_value   <= rs1_value_i;
             imm_value   <= imm_value_i;
@@ -127,7 +130,7 @@ module vaddr_adder #(IDX_LEN = 8)
     //-------------------------\\
     //----- OTHER OUTPUTS -----\\
     //-------------------------\\
-    assign lsb_ready_o = 1'b1; // always ready
+    assign lsb_ready_o = lsb_ready_i; // ready when the LSB is
 
     //----------------------\\
     //----- ASSERTIONS -----\\
@@ -138,12 +141,14 @@ module vaddr_adder #(IDX_LEN = 8)
         case(vm_mode)
             SV39: assert (vaddr_o[63:39] == { 25{vaddr_o[38]} }) else $warning("MSBs [63:39] of virtual address are different from bit 38 while paging mode is %s", vm_mode.name());
             SV48: assert (vaddr_o[63:48] == { 16{vaddr_o[47]} }) else $warning("MSBs [63:48] of virtual address are different from bit 47 while paging mode is %s", vm_mode.name());
+            default:;
         endcase
         // Warn when virtual address is misaligned
         case(ldst_type)
             LS_HALFWORD, LS_HALFWORD_U: assert (!vaddr_o[0]) else $warning("Instruction of type %s has misaligned address \'%h\'", ldst_type.name(), vaddr_o); 
             LS_WORD, LS_WORD_U: assert (vaddr_o[1:0] == 2'b00) else $warning("Instruction of type %s has misaligned address \'%h\'", ldst_type.name(), vaddr_o); 
             LS_DOUBLEWORD: assert (vaddr_o[2:0] == 3'b000) else $warning("Instruction of type %s has misaligned address \'%h\'", ldst_type.name(), vaddr_o);
+            default:;
         endcase
     end
     `endif

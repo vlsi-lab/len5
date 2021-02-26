@@ -33,13 +33,13 @@
 `include "rob.sv"
 `include "cdb.sv"
 
-import len5_pkg::*;
-import control_pkg::*;
-import expipe_pkg::*;
-import memory_pkg::*;
-import csr_pkg::*;
-
-module back_end (
+module back_end
+    import len5_pkg::*;
+    import control_pkg::*;
+    import expipe_pkg::*;
+    import memory_pkg::*;
+    import csr_pkg::*;
+(
     input   logic               clk_i,
     input   logic               rst_n_i,
     input   logic               flush_i,

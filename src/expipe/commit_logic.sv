@@ -21,12 +21,13 @@
 `include "commit_decoder.sv"
 //`include "commit_decoder.sv"
 
-import expipe_pkg::*;
-import len5_pkg::*;
-//import len5_pkg::ILEN;
-//import len5_pkg::XLEN;
-
-module commit_logic (
+module commit_logic
+    import expipe_pkg::*;
+    // import len5_pkg::*;
+    import len5_pkg::ILEN;
+    import len5_pkg::XLEN;
+    import len5_pkg::REG_IDX_LEN;
+(
     // Control to the ROB
     input   logic                       rob_valid_i,
     output  logic                       rob_ready_o, 

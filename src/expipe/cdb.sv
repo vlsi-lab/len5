@@ -21,11 +21,11 @@
 
 //`include "cdb_arbiter.sv"
 
-import expipe_pkg::*;
-import len5_pkg::XLEN;
-import len5_pkg::EU_N;
-
-module cdb (
+module cdb
+    import expipe_pkg::*;
+    import len5_pkg::XLEN;
+    import len5_pkg::EU_N;
+(
     input   logic               clk_i,
     input   logic               rst_n_i,
     input   logic               flush_i,
@@ -44,8 +44,8 @@ module cdb (
     output  logic [0:EU_N-2]    rs_ready_o,
 
     // Data from the reservation stations or issue queue.
-    input   cdb_data_t      [0:EU_N-2]    rs_data_i,
-	output  cdb_data_t      [0:EU_N-2]    rs_data_o,
+    input   cdb_data_t          rs_data_i[0:EU_N-2],
+	output  cdb_data_t          rs_data_o[0:EU_N-2],
 
     // Handshake from/to the ROB
     input   logic               rob_ready_i,
@@ -59,12 +59,10 @@ module cdb (
 
     // CDB MUX
     cdb_data_t                  low_prio_mux_data;
-	cdb_data_t      [0:EU_N-2]    temp;
 
     // Served unit index
     logic                       served_max_prio;
-    //logic [$clog2(EU_N)-1:0]    served;
-	logic [3-1:0]    served;
+    logic [$clog2(EU_N)-1:0]    served;
 
     //-----------------------\\
     //----- CDB ARBITER -----\\
@@ -101,8 +99,6 @@ module cdb (
     
     // Low priority MUX
     assign low_prio_mux_data = rs_data_i[served];
-	//assign temp = rs_data_i;
-	//assign rs_data_o[served] = rs_data_i[served]; // temp[served];
 	assign rs_data_o = rs_data_i; // temp[served];
 	assign max_prio_data_o =  max_prio_data_i;
 

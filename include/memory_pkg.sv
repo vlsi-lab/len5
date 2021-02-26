@@ -17,16 +17,12 @@
 
 `include "util.svh"
 `include "len5_pkg.sv"
-//`include "mmm_pkg.sv"
 
 package memory_pkg;
-
-//import mmm_pkg::*;
 import len5_pkg::*;
 
   // TO BE DEFINED IN ANOTHER PLACE
   localparam ASID_LEN = 8;
-  typedef logic [1:0]          lsq_addr_t;
   typedef logic [ASID_LEN-1:0] asid_t;
 
   //-------------\\
@@ -248,6 +244,11 @@ import len5_pkg::*;
   } line_addr_t;
 
   // LSQ -> L1 D-Cache
+  localparam LDBUFF_IDX_LEN = $clog2(LDBUFF_DEPTH); // load buffer address width
+  localparam STBUFF_IDX_LEN = $clog2(STBUFF_DEPTH); // store buffer address width
+  localparam BUFF_IDX_LEN = (LDBUFF_IDX_LEN > STBUFF_IDX_LEN) ? (LDBUFF_IDX_LEN) : (STBUFF_IDX_LEN); // the lrgest of the two. Useful when comparing indexes from both
+  typedef logic [BUFF_IDX_LEN-1:0] lsq_addr_t;
+  
   typedef enum logic {
     Load,
     Store
