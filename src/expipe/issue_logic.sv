@@ -345,7 +345,7 @@ module issue_logic
                         rs2_value   = 0;
                     end
                 end else begin                  // the operand is available in the register file 
-                    rs1_ready           = 1'b1;
+                    rs2_ready           = 1'b1;
                     rs2_value           = intrf_rs2_value_i;
                 end
             end
