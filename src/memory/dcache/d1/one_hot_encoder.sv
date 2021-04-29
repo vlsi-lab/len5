@@ -18,7 +18,7 @@ import memory_pkg::*;
 module one_hot_encoder
 #(
   D = 16, // Input parallelism (decoded)
-  E = 4 // Output parallelism (encoded)
+  E = 4   // Output parallelism (encoded)
 )
 (
   // Multi-hot decoded input

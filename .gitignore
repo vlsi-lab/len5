@@ -17,8 +17,11 @@
 ## private folders ##
 private/
 
-## Visual Studio code settings
+## Visual Studio Code settings
 .vscode/
+
+## svlint configuration
+.svlint.toml
 
 ## jekyll files ##
 # folder in which the processed site is put
