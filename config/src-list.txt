@@ -1,0 +1,12 @@
+util.svh
+len5_pkg.sv
+memory_pkg.sv
+expipe_pkg.sv
+control_pkg.sv
+csr_pkg.sv
+src/util/*.sv
+src/memory/**/*.sv
+src/frontend/*.sv
+src/expipe/*.sv
+src/cu/*.sv
+src/*.sv

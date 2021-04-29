@@ -24,8 +24,8 @@ package csr_pkg;
   // generics
   //
 
-  parameter TIMER_CNT_LEN       =      64;
-  parameter CSR_ADDR_LEN      =      12;
+  localparam TIMER_CNT_LEN       =      64;
+  localparam CSR_ADDR_LEN      =      12;
 
   `define   VENDOR_ID                 0   // non-commercial
   `define   ARCHITECTURE_ID           0   // not implemented

@@ -136,7 +136,7 @@ module generic_rs
             entry_age_a[i]  = rs_data[i].entry_age;
             `endif
             
-// Execution ready entries: an entry is a valid candidate for ex. (ready) when both its operands are available and the entry is valid
+            // Execution ready entries: an entry is a valid candidate for ex. (ready) when both its operands are available and the entry is valid
             ex_ready_a[i]   = rs_data[i].rs1_ready & rs_data[i].rs2_ready & rs_data[i].valid;
             
             // Result ready entries
