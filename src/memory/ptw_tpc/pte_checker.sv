@@ -13,7 +13,6 @@
 // Date: 14/10/2019
 // Description: Page Table Entry checker for exception_os or leaf page
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module pte_checker

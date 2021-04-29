@@ -13,7 +13,6 @@
 // Date: 27/10/2019
 // Description: One Hot encoder without priority
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module one_hot_encoder

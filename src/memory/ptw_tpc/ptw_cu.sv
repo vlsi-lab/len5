@@ -13,7 +13,6 @@
 // Date: 15/10/2019
 // Description: Page Table Walker Moore CU
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module ptw_cu

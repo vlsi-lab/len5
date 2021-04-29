@@ -15,8 +15,6 @@
 
 `include "../tb/memory/memory_class.svh"
 
-`include "memory_pkg.sv"
-`include "len5_pkg.sv"
 import len5_pkg::*;
 import memory_pkg::*;
 

@@ -13,7 +13,6 @@
 // Date: 22/10/2019
 // Description: FIFO replacement policy for the cache, implemented with shift registers
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 `include "decoder.sv"

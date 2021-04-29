@@ -13,7 +13,6 @@
 // Date: 15/10/2019
 // Description: Page Table Walker
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 `include "mmu_cache.sv"

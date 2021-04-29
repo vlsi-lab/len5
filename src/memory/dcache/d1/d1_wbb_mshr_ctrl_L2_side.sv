@@ -15,7 +15,6 @@
 // Details: it can put in a waiting state the entries and write the tag into the WBB.
 //          This block, in this configuration, should be implemented with wires
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module d1_wbb_mshr_ctrl_L2_side

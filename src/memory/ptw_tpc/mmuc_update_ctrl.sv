@@ -13,7 +13,6 @@
 // Date: 14/10/2019
 // Description: controller to update the translation path cache
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module mmuc_update_ctrl

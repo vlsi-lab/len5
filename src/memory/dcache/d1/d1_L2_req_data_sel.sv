@@ -13,7 +13,6 @@
 // Date: 28/10/2019
 // Description: block to route the correct lines MSHR/WBB to L2
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module d1_L2_req_data_sel

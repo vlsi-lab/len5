@@ -13,7 +13,6 @@
 // Date: 26/10/2019
 // Description: d1 part of the L1 D-Cache
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 `include "d1_dirty_vec_one_hotter.sv"

@@ -13,8 +13,6 @@
 // Date: 29/10/2019
 // Description: select the correct data to feed the memory
 
-`include "len5_pkg.sv"
-`include "memory_pkg.sv"
 //import mmm_pkg::*;
 import len5_pkg::*;
 import memory_pkg::*;

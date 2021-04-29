@@ -13,7 +13,6 @@
 // Date: 24/10/2019
 // Description: combinatorial cache controller
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module d0_cache_ctrl

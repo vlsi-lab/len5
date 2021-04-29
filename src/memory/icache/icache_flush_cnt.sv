@@ -13,10 +13,8 @@
 // Date: 29/10/2019
 // Description: flush counter for i-Cache flushing
 
-`include "len5_pkg.sv"
 import len5_pkg::*;
 //import mmm_pkg::*;
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module icache_flush_cnt

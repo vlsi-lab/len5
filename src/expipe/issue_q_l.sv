@@ -12,13 +12,6 @@
 // Author: WALID WALID
 // Date: 17/10/2020
 
-`ifndef SYNTHESIS
-// Include packages
-`include "len5_pkg.sv"
-`include "expipe_pkg.sv"
-`include "control_pkg.sv"
-`endif
-
 `include "modn_counter.sv"
 `include "issue_queue.sv"
 `include "issue_logic.sv"

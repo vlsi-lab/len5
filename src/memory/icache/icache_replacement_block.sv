@@ -14,8 +14,6 @@
 // Description: indicate the correct line to be replaced when a replace occurs
 // Details: random replacement if all the lines of the sets are valid, otherwise invalid first
 
-`include "len5_pkg.sv"
-`include "memory_pkg.sv"
 //import mmm_pkg::*;
 import len5_pkg::*;
 import memory_pkg::*;

@@ -14,7 +14,6 @@
 // Description: L2-TLB MSHR
 // Details: FIFO MSHR with no holes. Requests are served in-order.
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module L2_tlb_mshr

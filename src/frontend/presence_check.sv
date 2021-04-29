@@ -12,7 +12,6 @@
 // Author: Marco Andorno
 // Date: 03/10/2019
 
-`include "len5_pkg.sv"
 import len5_pkg::*;
 
 module presence_check

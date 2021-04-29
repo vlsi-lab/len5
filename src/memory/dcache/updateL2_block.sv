@@ -13,7 +13,6 @@
 // Date: 23/10/2019
 // Description: block to handle an L2 update request
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module updateL2_block

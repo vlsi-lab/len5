@@ -12,8 +12,6 @@
 // Author: Marco Andorno
 // Date: 05/10/2019
 
-`include "len5_pkg.sv"
-
 `include "branch_unit_cu.sv"
 
 module branch_unit

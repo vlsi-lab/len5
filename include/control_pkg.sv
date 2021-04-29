@@ -15,10 +15,6 @@
 `ifndef CONTROL_PKG
 `define CONTROL_PKG
 
-`ifndef SYNTHESIS
-`include "len5_pkg.sv"
-`endif
-
 package control_pkg;
 
     import len5_pkg::XLEN;

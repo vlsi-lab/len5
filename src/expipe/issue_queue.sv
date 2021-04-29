@@ -12,12 +12,6 @@
 // Author: Michele Caon
 // Date: 17/10/2019
 
-`ifndef SYNTHESIS
-// Include packages
-`include "len5_pkg.sv"
-`include "expipe_pkg.sv"
-`endif
-
 `include "modn_counter.sv"
 `include "issue_queue_fifo.sv"
 

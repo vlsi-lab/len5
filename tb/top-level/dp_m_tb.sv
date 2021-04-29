@@ -1,10 +1,6 @@
 // TESTED AND WORKING
 
 `include "data_path_memory.sv"
-`include "len5_pkg.sv"
-`include "expipe_pkg.sv"
-`include "memory_pkg.sv"
-`include "csr_pkg.sv"
 
 import len5_pkg::*;
 import expipe_pkg::*;

@@ -13,7 +13,6 @@
 // Date: 14/10/2019
 // Description: dcache comparison block
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module d1_comp_block

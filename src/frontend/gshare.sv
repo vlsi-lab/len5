@@ -12,7 +12,6 @@
 // Author: Marco Andorno
 // Date: 26/07/2019
 
-`include "len5_pkg.sv"
 import len5_pkg::*;
 
 /* verilator lint_off BLKLOOPINIT */

@@ -16,7 +16,6 @@
 //          priority goes to MSHR only if its pending requests are less then the number of
 //          buffer free entries
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module d1_L2_req_arbiter

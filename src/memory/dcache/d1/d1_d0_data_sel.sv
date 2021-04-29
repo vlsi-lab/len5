@@ -13,8 +13,6 @@
 // Date: 28/10/2019
 // Description: block to route the correct lines from d1 to d0
 
-`include "memory_pkg.sv"
-`include "len5_pkg.sv"
 import memory_pkg::*;
 import len5_pkg::*;
 

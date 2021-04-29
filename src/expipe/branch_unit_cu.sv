@@ -12,8 +12,6 @@
 // Author: Marco Andorno
 // Date: 09/10/2019
 
-`include "len5_pkg.sv"
-
 module branch_unit_cu
   import len5_pkg::*;
 (

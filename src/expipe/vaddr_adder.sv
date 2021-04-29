@@ -12,13 +12,6 @@
 // Author: Michele Caon
 // Date: 29/10/2019
 
-`ifndef SYNTHESIS
-`include "len5_pkg.sv"
-`include "expipe_pkg.sv"
-`include "csr_pkg.sv"
-`endif
-
-
 module vaddr_adder 
     import len5_pkg::XLEN;
     import len5_pkg::I_IMM;

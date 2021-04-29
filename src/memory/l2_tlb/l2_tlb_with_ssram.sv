@@ -13,8 +13,6 @@
 // Date: 30/11/2019
 // Description: L2-TLB with the physical SSRAM
 
-`include "memory_pkg.sv"
-`include "len5_pkg.sv"
 import memory_pkg::*;
 import len5_pkg::*;
 //import mmm_pkg::*;

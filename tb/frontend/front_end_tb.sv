@@ -1,7 +1,6 @@
 // TESTED AND WORKING
 
 `include "/frontend/front_end.sv"
-`include "len5_pkg.sv"
 
 //import mmm_pkg::*;
 import len5_pkg::*;

@@ -13,7 +13,6 @@
 // Date: 21/10/2019
 // Description: d0 part of the L1 D-Cache
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 `include "d0_scheduler.sv"

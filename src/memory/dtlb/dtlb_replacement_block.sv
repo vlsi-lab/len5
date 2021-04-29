@@ -15,7 +15,6 @@
 // Details: tree PLRU implemented with decoders and D-FF. If a TLB entry is not valid, fill it first.
 //          Update the tree when the TLB is accessed *
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module dtlb_replacement_block

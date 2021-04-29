@@ -13,7 +13,6 @@
 // Date: 27/10/2019
 // Description: L1 D-Cache Write Back Victim Buffer
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 `include "one_hot_encoder.sv"

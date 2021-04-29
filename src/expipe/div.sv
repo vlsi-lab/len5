@@ -12,11 +12,6 @@
 // Author: Michele Caon
 // Date: 21/10/2019
 
-`ifndef SYNTHESIS
-`include "len5_pkg.sv"
-`include "expipe_pkg.sv"
-`endif
-
 module div 
     import len5_pkg::XLEN;
     import len5_pkg::ILEN;

@@ -13,7 +13,6 @@
 // Date: 14/10/2019
 // Description: possible implementation of the MMU cache with registers
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module tpc_regfile

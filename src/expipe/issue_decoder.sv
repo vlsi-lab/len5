@@ -12,14 +12,6 @@
 // Author: Michele Caon
 // Date: 13/11/2019
 
-`ifndef SYNTHESIS
-// Include packages
-`include "len5_pkg.sv"
-`include "expipe_pkg.sv"
-`endif
-
-`include "control_pkg.sv"
-
 module issue_decoder
     import len5_pkg::ILEN;
     import len5_pkg::I_IMM;

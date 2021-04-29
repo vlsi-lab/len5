@@ -14,7 +14,6 @@
 // Description: schedule the next block to be served (the winner block)
 // Details: fixed priority from higher (left) to lower (right): D1, L2-C, UpdateL2, LSQ
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module d0_scheduler

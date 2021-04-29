@@ -13,7 +13,6 @@
 // Date: 25/10/2019
 // Description: block to handle the initial dcache reset
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module dcache_rst_block

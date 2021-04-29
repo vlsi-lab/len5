@@ -14,8 +14,6 @@
 // Description: d-TLB
 // Details: fully associative to easily support multiple page sizes. It is small (clock cycle and power)
 
-`include "memory_pkg.sv"
-`include "len5_pkg.sv"
 import memory_pkg::*;
 import len5_pkg::*;
 //import mmm_pkg::*;

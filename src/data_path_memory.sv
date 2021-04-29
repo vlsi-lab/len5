@@ -12,11 +12,6 @@
 // Author: Marco Andorno
 // Date: 07/10/2019
 
-`include "len5_pkg.sv"
-`include "expipe_pkg.sv"
-`include "control_pkg.sv"
-`include "memory_pkg.sv"
-`include "csr_pkg.sv"
 import len5_pkg::*;
 import control_pkg::*;
 import expipe_pkg::*;

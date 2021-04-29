@@ -12,11 +12,6 @@
 // Author: Michele Caon
 // Date: 19/10/2019
 
-`ifndef SYNTHESIS
-`include "len5_pkg.sv"
-`include "expipe_pkg.sv"
-`endif
-
 module issue_queue_fifo 
     import len5_pkg::IQ_DEPTH;
     import expipe_pkg::*;

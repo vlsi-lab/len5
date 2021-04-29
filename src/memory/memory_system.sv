@@ -12,8 +12,6 @@
 // Author: Matteo Perotti
 // Date: 01/12/2019
 
-`include "memory_pkg.sv"
-`include "len5_pkg.sv"
 import len5_pkg::*;
 import memory_pkg::*;
 

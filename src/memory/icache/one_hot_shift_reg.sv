@@ -13,7 +13,6 @@
 // Date: 22/10/2019
 // Description: one hot shift register reset to "10...0". One bit among the others is always '1'.
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module one_hot_shift_reg

@@ -14,8 +14,6 @@
 // Description: L2-TLB
 // Details: hash-rehash for multiple page size support. L1 TLB always ready to accept answers
 
-`include "memory_pkg.sv"
-`include "len5_pkg.sv"
 import memory_pkg::*;
 import len5_pkg::*;
 //import mmm_pkg::*;

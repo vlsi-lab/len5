@@ -15,11 +15,6 @@
 `ifndef EXPIPE_PKG
 `define EXPIPE_PKG
 
-// Include packages
-`include "len5_pkg.sv"
-`include "memory_pkg.sv"
-`include "control_pkg.sv"
-
 package expipe_pkg;
 
     // Import global constants

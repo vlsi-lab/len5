@@ -14,9 +14,6 @@
 
 // THIS FILE IS ONYL A TEMPLATE, THE COMMIT LOGIC IS NOT IMPLEMENTED YET, SINCE IT REQUIRES ALL THE PROCESSOR PARTS TO BE FUNCTIONAL
 
-`include "expipe_pkg.sv"
-`include "len5_pkg.sv"
-`include "control_pkg.sv"
 module commit_decoder
     import expipe_pkg::*;
     import len5_pkg::ILEN;

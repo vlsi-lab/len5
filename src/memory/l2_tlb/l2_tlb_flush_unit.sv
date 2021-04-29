@@ -14,7 +14,6 @@
 // Description: L2-TLB flush unit
 // Details: keep a valid flush request for t0 and provide the flush index
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module l2_tlb_flush_unit

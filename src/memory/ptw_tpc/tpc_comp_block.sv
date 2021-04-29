@@ -13,7 +13,6 @@
 // Date: 14/10/2019
 // Description: mmu_cache comparison block
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module tpc_comp_block

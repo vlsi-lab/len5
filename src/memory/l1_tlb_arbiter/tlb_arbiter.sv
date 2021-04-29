@@ -14,7 +14,6 @@
 // Description: schedule the next L2 TLB request and the next L2 TLB answer and drive the data
 // Details: Fair Round Robin priority imposed with a T-FF in case of ties for the requests
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module tlb_arbiter

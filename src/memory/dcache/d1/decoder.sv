@@ -13,7 +13,6 @@
 // Date: 22/10/2019
 // Description: one hot decoder with enable
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module decoder

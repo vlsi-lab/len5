@@ -14,7 +14,6 @@
 // Description: Translation Path Cache
 // Reference: Translation Caching: Skip, Don’t Walk (the Page Table) - Thomas W. Barr, Alan L. Cox, Scott Rixner
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 `include "tpc_comp_block.sv"

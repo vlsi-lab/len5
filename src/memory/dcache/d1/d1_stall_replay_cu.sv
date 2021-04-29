@@ -16,7 +16,6 @@
 // Details: the enabling of the replay regs is not controlled by this CU, but by the d1_ctrl
 //          combinatorial network
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module d1_stall_replay_cu

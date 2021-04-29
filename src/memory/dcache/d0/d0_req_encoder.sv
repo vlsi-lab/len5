@@ -13,7 +13,6 @@
 // Date: 23/10/2019
 // Description: encode the actual scheduled request into instructions for d0 and d1
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module d0_req_encoder

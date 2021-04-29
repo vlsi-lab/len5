@@ -20,14 +20,6 @@
 `include "prio_enc.sv"
 `endif
 
-`ifndef SYNTHESIS
-// Packages
-`include "csr_pkg.sv"
-`include "memory_pkg.sv"
-`include "expipe_pkg.sv"
-`include "len5_pkg.sv"
-`endif
-
 `ifdef ENABLE_STORE_PRIO_2WAY_ARBITER
 `include "prio_2way_arbiter.sv"
 `else

@@ -14,7 +14,6 @@
 // Description: generate the tag for the WB Victim Buffer
 // Details: automatic wrapping of the cnt
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module d1_wbb_tag_gen

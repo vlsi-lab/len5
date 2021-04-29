@@ -16,7 +16,6 @@
 `define MEMORY_PKG
 
 `include "util.svh"
-`include "len5_pkg.sv"
 
 package memory_pkg;
 import len5_pkg::*;

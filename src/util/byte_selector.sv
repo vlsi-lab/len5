@@ -12,8 +12,6 @@
 // Author: Michele Caon
 // Date: 01/11/2019
 
-`include "expipe_pkg.sv"
-`include "len5_pkg.sv"
     
 `define BYTE *8 // 1 byte = 8 bits
 

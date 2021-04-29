@@ -12,7 +12,6 @@
 // Author: Marco Andorno
 // Date: 27/09/2019
 
-`include "len5_pkg.sv"
 import len5_pkg::*;
 
 module fetch_controller

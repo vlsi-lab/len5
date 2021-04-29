@@ -12,11 +12,6 @@
 // Author: Michele Caon
 // Date: 12/11/2019
 
-`ifndef SYNTHESIS
-`include "len5_pkg.sv"
-`include "expipe_pkg.sv"
-`endif 
-
 module int_rf 
     import len5_pkg::XLEN;
     import len5_pkg::XREG_NUM;

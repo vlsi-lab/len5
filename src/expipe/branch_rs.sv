@@ -12,11 +12,6 @@
 // Author: Michele Caon
 // Date: 21/10/2019
 
-`ifndef SYNTHESIS
-`include "len5_pkg.sv"
-`include "expipe_pkg.sv"
-`endif
-
 `include "branch_unit.sv"
 `include "branch_unit_rs.sv"
 

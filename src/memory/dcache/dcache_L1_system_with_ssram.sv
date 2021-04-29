@@ -13,7 +13,6 @@
 // Date: 21/10/2019
 // Description: L1 data cache top module
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 `include "dcache_L1_system.sv"

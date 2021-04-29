@@ -12,11 +12,6 @@
 // Author: Michele Caon
 // Date: 03/11/2019
 
-`ifndef SYNTHESIS
-`include "len5_pkg.sv"
-`include "expipe_pkg.sv"
-`endif
-
 `include "modn_counter.sv"
 
 

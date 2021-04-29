@@ -14,7 +14,6 @@
 // Description: multiplexer
 // Details: unpacked dimension: different input items. Packed dimension: parallelism
 
-`include "memory_pkg.sv"
 import memory_pkg::*;
 
 module mux

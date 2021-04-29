@@ -12,7 +12,6 @@
 // Author: Marco Andorno
 // Date: 07/10/2019
 
-`include "len5_pkg.sv"
 import len5_pkg::*;
 
 `include "icache_ifc.sv"

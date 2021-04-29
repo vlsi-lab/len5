@@ -16,9 +16,6 @@
 `ifndef CSR_PKG
 `define CSR_PKG
 
-// Include packages
-`include "len5_pkg.sv"
-
 package csr_pkg;
 
   import len5_pkg::XLEN;

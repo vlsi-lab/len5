@@ -12,11 +12,6 @@
 // Author: Michele Caon
 // Date: 21/10/2019
 
-`ifndef SYNTHESIS
-`include "len5_pkg.sv"
-`include "expipe_pkg.sv"
-`endif
-
 `ifdef ENABLE_AGE_BASED_SELECTOR
 `include "age_based_sel.sv"
 `else

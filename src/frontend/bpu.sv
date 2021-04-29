@@ -12,7 +12,6 @@
 // Author: Marco Andorno
 // Date: 7/8/2019
 
-`include "len5_pkg.sv"
 import len5_pkg::*;
 
 `include "btb.sv"
