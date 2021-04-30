@@ -15,7 +15,7 @@
 
 import memory_pkg::*;
 
-`include "one_hot_encoder.sv"
+//`include "one_hot_encoder.sv"
 
 module dcache_wb_victim_buffer
 (

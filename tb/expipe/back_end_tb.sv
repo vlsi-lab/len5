@@ -3,7 +3,6 @@
 //import mmm_pkg::*;
 import len5_pkg::*;
 import expipe_pkg::*;
-import control_pkg::*;
 import memory_pkg::*;
 import csr_pkg::*;
 
@@ -61,7 +60,7 @@ initial begin
     fetch_valid_i = 0;
 
 	vm_mode_i=SV39;
-	branch_type_i=beq;
+	branch_type_i=BEQ;
 	ldst_type_i=LS_WORD;
 
 	dtlb_ans_i.ppn='h0;

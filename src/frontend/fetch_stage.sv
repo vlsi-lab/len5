@@ -14,9 +14,9 @@
 
 import len5_pkg::*;
 
-`include "icache_ifc.sv"
-`include "bpu.sv"
-`include "ifu.sv"
+//`include "icache_ifc.sv"
+//`include "bpu.sv"
+//`include "ifu.sv"
 
 module fetch_stage
 #(

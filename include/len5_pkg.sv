@@ -25,11 +25,16 @@ package len5_pkg;
   localparam XLEN = 64;
   localparam FLEN = 64;
   localparam [XLEN-1:0] BOOT_PC = 'h0; // starting PC (to be defined)
-  localparam B_IMM = 12;    // B-type immediate length
-  localparam I_IMM = 12;    // I-type immediate length
-  localparam S_IMM = I_IMM; // S-type immediate length
-  localparam U_IMM = 20;    // U-type immediate length
-  localparam J_IMM = U_IMM; // J-type immediate length
+
+  /* Instruction fileds width */
+  localparam OPCODE_LEN   = 7;
+  localparam FUNCT3_LEN   = 3;
+  localparam FUNCT7_LEN   = 7;
+  localparam B_IMM        = 12;    // B-type immediate length
+  localparam I_IMM        = 12;    // I-type immediate length
+  localparam S_IMM        = I_IMM; // S-type immediate length
+  localparam U_IMM        = 20;    // U-type immediate length
+  localparam J_IMM        = U_IMM; // J-type immediate length
   localparam [ILEN-1:0] NOP = 'h13;
 
   // --------------
@@ -70,13 +75,13 @@ package len5_pkg;
   // -----------
   // Branch unit
   // -----------
-  typedef enum logic [5:0] {
-    beq   = 'h0,
-    bne   = 'h1,
-    blt   = 'h2,
-    bge   = 'h3,
-    bltu  = 'h4,
-    bgeu  = 'h5
+  typedef enum logic [2:0] {
+    BEQ   = 'h0,
+    BNE   = 'h1,
+    BLT   = 'h2,
+    BGE   = 'h3,
+    BLTU  = 'h4,
+    BGEU  = 'h5
   } branch_type_t;
 
   //-----\\

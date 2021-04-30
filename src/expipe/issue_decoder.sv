@@ -12,20 +12,13 @@
 // Author: Michele Caon
 // Date: 13/11/2019
 
+/* Include instruction macros */
+`include "instr_macros.svh"
+
+import len5_pkg::*;
+import expipe_pkg::*;
+
 module issue_decoder
-    import len5_pkg::ILEN;
-    import len5_pkg::I_IMM;
-    import len5_pkg::REG_IDX_LEN;
-
-    import len5_pkg::beq;
-    import len5_pkg::bne;
-    import len5_pkg::blt;
-    import len5_pkg::bge;
-    import len5_pkg::bltu;
-    import len5_pkg::bgeu;
-
-    import expipe_pkg::*;
-    import control_pkg::*;
 (
     // Instruction from the issue logic
     input   logic [ILEN-1:0]                issue_instruction_i,    // the issuing instruction opcode
@@ -61,18 +54,18 @@ module issue_decoder
     imm_format_t                    imm_format;
     logic                           regstat_upd;
 
-    logic [`OPCODE_LEN -1:0]        instr_opcode;
-    logic [`FUNCT3_LEN -1:0]        instr_funct3;
-    logic [`FUNCT7_LEN -1:0]        instr_funct7;
+    logic [OPCODE_LEN -1:0]        instr_opcode;
+    logic [FUNCT3_LEN -1:0]        instr_funct3;
+    logic [FUNCT7_LEN -1:0]        instr_funct7;
     logic [REG_IDX_LEN-1:0]         instr_rs1, instr_rs2, instr_rd;
     logic [I_IMM-1:0]               instr_imm;
 
     //-----------------------------\\
     //----- OPCODE EXTRACTION -----\\
     //-----------------------------\\
-    assign instr_opcode      = issue_instruction_i[`OPCODE_LEN-1 : 0];
-    assign instr_funct3      = issue_instruction_i[14 -: `FUNCT3_LEN];
-    assign instr_funct7      = issue_instruction_i[31 -: `FUNCT7_LEN];
+    assign instr_opcode      = issue_instruction_i[OPCODE_LEN-1 : 0];
+    assign instr_funct3      = issue_instruction_i[14 -: FUNCT3_LEN];
+    assign instr_funct7      = issue_instruction_i[31 -: FUNCT7_LEN];
 
     //--------------------------------------\\
     //----- OPERAND ADDRESS EXTRACTION -----\\
@@ -85,7 +78,7 @@ module issue_decoder
     //------------------------------\\
     //----- INSTRUCTION DECODE -----\\
     //------------------------------\\
-    // New supported instructions can be added here. The necessary defines must be appended to the 'control_pkg.sv' file. 
+    // New supported instructions can be added here. The necessary defines must be appended to the 'instr_macros.svh' file. 
 
     always_comb begin: instr_format_logic
         // DEFAULT VALUES 
@@ -553,7 +546,7 @@ module issue_decoder
         // BEQ
         else if ((instr_opcode == `OPCODE_BEQ) && (instr_funct3 == `FUNCT3_BEQ)) begin
             assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl[BU_CTL_LEN-1:0]      = beq;
+            eu_ctl[BU_CTL_LEN-1:0]      = BEQ;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_req                     = 1'b1;
@@ -562,7 +555,7 @@ module issue_decoder
         // BGE
         else if ((instr_opcode == `OPCODE_BGE) && (instr_funct3 == `FUNCT3_BGE)) begin
             assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl[BU_CTL_LEN-1:0]      = bge;
+            eu_ctl[BU_CTL_LEN-1:0]      = BGE;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_req                     = 1'b1;
@@ -571,7 +564,7 @@ module issue_decoder
         // BGEU
         else if ((instr_opcode == `OPCODE_BGEU) && (instr_funct3 == `FUNCT3_BGEU)) begin
             assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl[BU_CTL_LEN-1:0]      = bgeu;
+            eu_ctl[BU_CTL_LEN-1:0]      = BGEU;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_req                     = 1'b1;
@@ -580,7 +573,7 @@ module issue_decoder
         // BLT
         else if ((instr_opcode == `OPCODE_BLT) && (instr_funct3 == `FUNCT3_BLT)) begin
             assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl[BU_CTL_LEN-1:0]      = blt;
+            eu_ctl[BU_CTL_LEN-1:0]      = BLT;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_req                     = 1'b1;
@@ -589,7 +582,7 @@ module issue_decoder
         // BLTU
         else if ((instr_opcode == `OPCODE_BLTU) && (instr_funct3 == `FUNCT3_BLTU)) begin
             assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl[BU_CTL_LEN-1:0]      = bltu;
+            eu_ctl[BU_CTL_LEN-1:0]      = BLTU;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_req                     = 1'b1;
@@ -598,7 +591,7 @@ module issue_decoder
         // BNE
         else if ((instr_opcode == `OPCODE_BNE) && (instr_funct3 == `FUNCT3_BNE)) begin
             assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl[BU_CTL_LEN-1:0]      = bne;
+            eu_ctl[BU_CTL_LEN-1:0]      = BNE;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_req                     = 1'b1;

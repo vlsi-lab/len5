@@ -14,9 +14,14 @@
 
 // THIS FILE IS ONYL A TEMPLATE, THE COMMIT LOGIC IS NOT IMPLEMENTED YET, SINCE IT REQUIRES ALL THE PROCESSOR PARTS TO BE FUNCTIONAL
 
+/* Include instruction macros */
+`include "instr_macros.svh"
+
+import expipe_pkg::*;
+import len5_pkg::ILEN;
+import len5_pkg::OPCODE_LEN;
+
 module commit_decoder
-    import expipe_pkg::*;
-    import len5_pkg::ILEN;
 (
     // Data from the commit logic
     input   logic [ILEN-1:0]        instruction_i,
@@ -29,12 +34,12 @@ module commit_decoder
 );
 
     // DEFINITIONS
-    logic [`OPCODE_LEN -1:00]       instr_opcode;
+    logic [OPCODE_LEN -1:00]       instr_opcode;
     
     //-------------------------------\\
     //----- EXTRACT INSTR. INFO -----\\
     //-------------------------------\\
-    assign instr_opcode             = instruction_i[`OPCODE_LEN -1:0];
+    assign instr_opcode             = instruction_i[OPCODE_LEN -1:0];
 
     //--------------------------------\\
     //----- COMMIT DOCODER LOGIC -----\\

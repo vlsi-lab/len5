@@ -11,11 +11,12 @@
 // File: generic_rs.sv
 // Author: Michele Caon
 // Date: 21/10/2019
+    
+import len5_pkg::XLEN;
+import len5_pkg::ILEN;
+import expipe_pkg::*;
 
 module alu 
-    import len5_pkg::XLEN;
-    import len5_pkg::ILEN;
-    import expipe_pkg::*;
 #(
     RS_DEPTH = 16,
     

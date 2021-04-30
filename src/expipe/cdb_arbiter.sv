@@ -12,11 +12,10 @@
 // Author: Michele Caon
 // Date: 11/11/2019
 
-`include "prio_enc.sv"
+import expipe_pkg::*;
+import len5_pkg::EU_N;
 
 module cdb_arbiter
-    import expipe_pkg::*;
-    import len5_pkg::EU_N;
 (
     input   logic                       clk_i,
     input   logic                       rst_n_i,

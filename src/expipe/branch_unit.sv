@@ -12,10 +12,10 @@
 // Author: Marco Andorno
 // Date: 05/10/2019
 
-`include "branch_unit_cu.sv"
+//`include "branch_unit_cu.sv"
+import len5_pkg::*;
 
 module branch_unit
-  import len5_pkg::*;
 (
   input   logic             clk_i,
   input   logic             rst_n_i,
@@ -43,12 +43,12 @@ module branch_unit
   // Logic unit
   always_comb begin
     case (type_i)
-      beq:      taken = (rs1_i == rs2_i);
-      bne:      taken = (rs1_i != rs2_i);
-      blt:      taken = ($signed(rs1_i) < $signed(rs2_i));
-      bge:      taken = ($signed(rs1_i) >= $signed(rs2_i));
-      bltu:     taken = (rs1_i < rs2_i);
-      bgeu:     taken = (rs1_i >= rs2_i);
+      BEQ:      taken = (rs1_i == rs2_i);
+      BNE:      taken = (rs1_i != rs2_i);
+      BLT:      taken = ($signed(rs1_i) < $signed(rs2_i));
+      BGE:      taken = ($signed(rs1_i) >= $signed(rs2_i));
+      BLTU:     taken = (rs1_i < rs2_i);
+      BGEU:     taken = (rs1_i >= rs2_i);
       default:  taken = 0;
     endcase
   end

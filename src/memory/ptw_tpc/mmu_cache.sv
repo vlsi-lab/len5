@@ -16,8 +16,8 @@
 
 import memory_pkg::*;
 
-`include "tpc_comp_block.sv"
-`include "tpc_regfile.sv"
+//`include "tpc_comp_block.sv"
+//`include "tpc_regfile.sv"
 
 module mmu_cache
 (

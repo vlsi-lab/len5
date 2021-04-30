@@ -15,17 +15,17 @@
 import len5_pkg::*;
 import memory_pkg::*;
 
-`include "dcache/dcache_rst_block.sv"
-`include "dtlb_L1.sv"
-`include "tlb_arbiter.sv"
-`include "l2c_arbiter.sv"
-`include "mmu_cache.sv"
-`include "updateL2_block.sv"
-`include "itlb_L1.sv"
-`include "dcache_L1_system_with_ssram.sv"
-`include "l2_tlb_with_ssram.sv"
-`include "ptw.sv"
-`include "icache_L1_with_ssram.sv"
+//`include "dcache/dcache_rst_block.sv"
+//`include "dtlb/dtlb_L1.sv"
+//`include "l1_tlb_arbiter/tlb_arbiter.sv"
+//`include "l2c_arbiter/l2c_arbiter.sv"
+//`include "ptw_tpc/mmu_cache.sv"
+//`include "dcache/updateL2_block.sv"
+//`include "itlb/itlb_L1.sv"
+//`include "dcache/dcache_L1_system_with_ssram.sv"
+//`include "l2_tlb/l2_tlb_with_ssram.sv"
+//`include "ptw_tpc/ptw.sv"
+//`include "icache/icache_L1_with_ssram.sv"
 
 module memory_system_with_ssram
 (

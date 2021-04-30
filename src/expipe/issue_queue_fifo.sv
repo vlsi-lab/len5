@@ -12,9 +12,10 @@
 // Author: Michele Caon
 // Date: 19/10/2019
 
+import len5_pkg::IQ_DEPTH;
+import expipe_pkg::*;
+
 module issue_queue_fifo 
-    import len5_pkg::IQ_DEPTH;
-    import expipe_pkg::*;
 (
     input   logic                   clk_i,
     input   logic                   rst_n_i,
@@ -47,7 +48,7 @@ module issue_queue_fifo
     // DEFINITIONS 
     logic                       fifo_push, fifo_pop;
     logic                       fifo_full;
-    logic                       valid_a[0:IQ_DEPTH-1];
+    logic [0:IQ_DEPTH-1]        valid_a;
 
     iq_entry_t                  iq_fifo[0: IQ_DEPTH-1]; // The actual fifo
 

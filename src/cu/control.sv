@@ -15,13 +15,9 @@
 //
 
 import len5_pkg::*;
-import control_pkg::*;
 import expipe_pkg::*;
 import memory_pkg::*;
 import csr_pkg::*;
-
-//`include "/Data_path.sv"
-//`include "/Memory/K_memory_system_with_ssram.sv"
 
 module control
 (
@@ -90,33 +86,36 @@ module control
   	output 	logic               l2arb_l2c_ans_rdy_o 
 );
 //Perform a similar solution to this
-	flush_i 				= 	0;
-	if (main_cu_stall_o) begin	// Put it inside an always block
-		flush_i 			= 	1;
+	// flush_i 				= 	0;
+	// if (main_cu_stall_o) begin	// Put it inside an always block
+	// 	flush_i 			= 	1;
+	// end
+
+	always_comb begin : ctl_logic
+		flush_i					= 	main_cu_stall_o;
+		vm_mode_i				=	SV39;	//Use assign
+		branch_type_i			=	BEQ;
+		ldst_type_i				=	LS_WORD;
+
+		vmem_on_i  				= 	0;
+		sum_bit_i  				= 	0;
+		mxr_bit_i  				= 	0;
+		priv_mode_i  			= 	U;
+		priv_mode_ls_i  		= 	U;
+		base_asid_i  			= 	'd0;
+		csr_root_ppn_i  		= 	'd0;
+		L1TLB_flush_type_i		= 	NoFlush;
+		L2TLB_flush_type_i  	= 	NoFlush;
+		flush_asid_i  			= 	'd0;
+		flush_page_i  			= 	'd0;
+
+		abort_i  				= 	0;
+		clr_l1tlb_mshr_i  		= 	0;
+		clr_l2tlb_mshr_i  		= 	0;
+		clear_dmshr_dregs_i 	= 	0; 
+		synch_l1dc_l2c_i  		= 	0;
+
+		data_i.pc				=	icache_frontend_ans_o.vaddr;
+		data_i.line				=	icache_frontend_ans_o.line;
 	end
-	vm_mode_i				=	SV39;	//Use assign
-	branch_type_i			=	beq;
-	ldst_type_i				=	LS_WORD;
-
-	vmem_on_i  				= 	0;
-  	sum_bit_i  				= 	0;
-  	mxr_bit_i  				= 	0;
- 	priv_mode_i  			= 	U;
-  	priv_mode_ls_i  		= 	U;
-  	base_asid_i  			= 	'd0;
-  	csr_root_ppn_i  		= 	'd0;
-  	L1TLB_flush_type_i		= 	NoFlush;
-  	L2TLB_flush_type_i  	= 	NoFlush;
-  	flush_asid_i  			= 	'd0;
- 	flush_page_i  			= 	'd0;
-
-	abort_i  				= 	0;
-   	clr_l1tlb_mshr_i  		= 	0;
-   	clr_l2tlb_mshr_i  		= 	0;
-   	clear_dmshr_dregs_i 	= 	0; 
-	synch_l1dc_l2c_i  		= 	0;
-
-    assign 	data_i.pc 		= 	icache_frontend_ans_o.vaddr;
-	assign 	data_i.line 	= 	icache_frontend_ans_o.line;
-
 endmodule

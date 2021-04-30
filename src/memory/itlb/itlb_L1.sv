@@ -18,9 +18,9 @@
 import len5_pkg::*;
 import memory_pkg::*;
 
-`include "itlb_replacement_block.sv"
-`include "itlb_ctrl.sv"
-`include "itlb_moore_cu.sv"
+//`include "itlb_replacement_block.sv"
+//`include "itlb_ctrl.sv"
+//`include "itlb_moore_cu.sv"
 
 module itlb_L1 (
   // main

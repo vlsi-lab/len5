@@ -12,16 +12,17 @@
 // Author: Michele Caon
 // Date: 21/10/2019
 
-`ifdef ENABLE_AGE_BASED_SELECTOR
-`include "age_based_sel.sv"
-`else
-`include "prio_enc.sv"
-`endif
+//`ifdef ENABLE_AGE_BASED_SELECTOR
+//`include "age_based_sel.sv"
+//`else
+//`include "prio_enc.sv"
+//`endif
+
+import len5_pkg::XLEN;
+import len5_pkg::ILEN;
+import expipe_pkg::*;
 
 module generic_rs 
-    import len5_pkg::XLEN;
-    import len5_pkg::ILEN;
-    import expipe_pkg::*;
 #(
     RS_DEPTH = 16,
     

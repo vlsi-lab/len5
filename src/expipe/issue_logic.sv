@@ -12,7 +12,7 @@
 // Author: Michele Caon
 // Date: 12/11/2019
 
-`include "issue_decoder.sv"
+//`include "issue_decoder.sv"
 
 module issue_logic 
     /* Import packages content */
@@ -27,7 +27,6 @@ module issue_logic
     import len5_pkg::REG_IDX_LEN;
 
     import expipe_pkg::*;
-    import control_pkg::*;
 (
     // To the main control 
     output  logic                       main_cu_stall_o,

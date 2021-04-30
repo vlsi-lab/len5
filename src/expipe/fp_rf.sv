@@ -12,11 +12,12 @@
 // Author: Michele Caon
 // Date: 12/11/2019
 
+import len5_pkg::XLEN;
+import len5_pkg::FREG_NUM;
+import len5_pkg::FREG_IDX_LEN;
+import expipe_pkg::*;
+
 module fp_rf 
-    import len5_pkg::XLEN;
-    import len5_pkg::FREG_NUM;
-    import len5_pkg::FREG_IDX_LEN;
-    import expipe_pkg::*;
 (
     input   logic                       clk_i,
     input   logic                       rst_n_i,

@@ -18,7 +18,7 @@ import memory_pkg::*;
 import len5_pkg::*;
 //import mmm_pkg::*;
 
-`include "dtlb_replacement_block.sv"
+//`include "dtlb_replacement_block.sv"
 
 module dtlb_L1
 (

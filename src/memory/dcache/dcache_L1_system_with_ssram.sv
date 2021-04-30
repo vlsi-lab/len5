@@ -15,8 +15,8 @@
 
 import memory_pkg::*;
 
-`include "dcache_L1_system.sv"
-`include "ssram.sv"
+//`include "dcache_L1_system.sv"
+//`include "ssram.sv"
 
 module dcache_L1_system_with_ssram
 (

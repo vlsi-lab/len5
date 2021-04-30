@@ -12,37 +12,38 @@
 // Author: Michele Caon
 // Date: 24/10/2019
 
-`ifndef LSUNIT
-`ifdef ENABLE_AGE_BASED_SELECTOR
-`include "age_based_sel.sv"
-`else
-`include "prio_enc.sv"
-`endif
-`endif
+//`ifndef LSUNIT
+//`ifdef ENABLE_AGE_BASED_SELECTOR
+//`include "age_based_sel.sv"
+//`else
+//`include "prio_enc.sv"
+//`endif
+//`endif
 
-`include "byte_selector.sv"
+//`include "byte_selector.sv"
+
+import len5_pkg::XLEN;
+import len5_pkg::I_IMM;
+import len5_pkg::LDBUFF_DEPTH;
+
+import expipe_pkg::*;
+
+import memory_pkg::VPN_LEN;
+import memory_pkg::PPN_LEN;
+import memory_pkg::VADDR_LEN;
+import memory_pkg::PADDR_LEN;
+import memory_pkg::PAGE_OFFSET_LEN;
+import memory_pkg::exception_e;
+import memory_pkg::NoException;
+import memory_pkg::PageFault;
+import memory_pkg::AccessException;
+
+import csr_pkg::satp_mode_t;
+import csr_pkg::BARE; 
+import csr_pkg::SV39;
+import csr_pkg::SV48;
 
 module load_buffer 
-    import len5_pkg::XLEN;
-    import len5_pkg::I_IMM;
-    import len5_pkg::LDBUFF_DEPTH;
-
-    import expipe_pkg::*;
-
-    import memory_pkg::VPN_LEN;
-    import memory_pkg::PPN_LEN;
-    import memory_pkg::VADDR_LEN;
-    import memory_pkg::PADDR_LEN;
-    import memory_pkg::PAGE_OFFSET_LEN;
-    import memory_pkg::exception_e;
-    import memory_pkg::NoException;
-    import memory_pkg::PageFault;
-    import memory_pkg::AccessException;
-
-    import csr_pkg::satp_mode_t;
-    import csr_pkg::BARE; 
-    import csr_pkg::SV39;
-    import csr_pkg::SV48;
 (
     input   logic                       clk_i,
     input   logic                       rst_n_i,

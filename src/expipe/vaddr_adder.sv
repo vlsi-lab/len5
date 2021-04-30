@@ -12,15 +12,16 @@
 // Author: Michele Caon
 // Date: 29/10/2019
 
-module vaddr_adder 
-    import len5_pkg::XLEN;
-    import len5_pkg::I_IMM;
-    import expipe_pkg::*;
+import len5_pkg::XLEN;
+import len5_pkg::I_IMM;
+import expipe_pkg::*;
 
-    import csr_pkg::satp_mode_t;
-    import csr_pkg::BARE; 
-    import csr_pkg::SV39;
+import csr_pkg::satp_mode_t;
+import csr_pkg::BARE; 
+import csr_pkg::SV39;
 import csr_pkg::SV48;
+
+module vaddr_adder 
 #(
     IDX_LEN = 8
 )

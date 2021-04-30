@@ -14,30 +14,16 @@
 
 `define LSUNIT
 
-`ifdef ENABLE_AGE_BASED_SELECTOR
-`include "age_based_sel.sv"
-`else
-`include "prio_enc.sv"
-`endif
+import expipe_pkg::*;
 
-`ifdef ENABLE_STORE_PRIO_2WAY_ARBITER
-`include "prio_2way_arbiter.sv"
-`else
-`include "fair_2way_arbiter.sv"
-`endif
-
-`include "load_buffer.sv"
-`include "store_buffer.sv"
-`include "vaddr_adder.sv"
+import memory_pkg::*;
+import len5_pkg::*;
+import csr_pkg::satp_mode_t;
+import csr_pkg::BARE; 
+import csr_pkg::SV39;
+import csr_pkg::SV48;
 
 module load_store_unit 
-    import memory_pkg::*;
-    import expipe_pkg::*;
-    import len5_pkg::*;
-    import csr_pkg::satp_mode_t;
-    import csr_pkg::BARE; 
-    import csr_pkg::SV39;
-    import csr_pkg::SV48;
 (
     input   logic                   clk_i,
     input   logic                   rst_n_i,

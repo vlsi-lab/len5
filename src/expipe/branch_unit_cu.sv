@@ -12,8 +12,9 @@
 // Author: Marco Andorno
 // Date: 09/10/2019
 
+import len5_pkg::*;
+
 module branch_unit_cu
-  import len5_pkg::*;
 (
   input   logic clk_i,
   input   logic rst_n_i,

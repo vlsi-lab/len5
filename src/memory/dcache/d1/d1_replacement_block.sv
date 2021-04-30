@@ -15,9 +15,9 @@
 
 import memory_pkg::*;
 
-`include "decoder.sv"
-`include "mux.sv"
-`include "one_hot_shift_reg.sv"
+//`include "decoder.sv"
+//`include "mux.sv"
+//`include "one_hot_shift_reg.sv"
 
 module d1_replacement_block
 #(

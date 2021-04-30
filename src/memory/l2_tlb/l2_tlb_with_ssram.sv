@@ -17,8 +17,8 @@ import memory_pkg::*;
 import len5_pkg::*;
 //import mmm_pkg::*;
 
-`include "l2_tlb.sv"
-`include "ssram.sv"
+//`include "l2_tlb.sv"
+//`include "ssram.sv"
 
 module l2_tlb_with_ssram
 (

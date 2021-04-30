@@ -12,13 +12,14 @@
 // Author: Michele Caon
 // Date: 21/10/2019
 
-`include "fpu.sv"
-`include "generic_rs.sv"
+//`include "fpu.sv"
+//`include "generic_rs.sv"
+
+import len5_pkg::XLEN;
+import len5_pkg::ILEN;
+import expipe_pkg::*;
 
 module fpu_rs 
-    import len5_pkg::XLEN;
-    import len5_pkg::ILEN;
-    import expipe_pkg::*;
 #(
     RS_DEPTH = 16,
     

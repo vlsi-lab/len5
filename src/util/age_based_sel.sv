@@ -12,13 +12,15 @@
 // Author: Michele Caon
 // Date: 31/10/2019
 
-module age_based_sel #(N = 8, AGE_LEN = 4)
-(
-    input logic [N-1:0] lines_i,
-    input logic [AGE_LEN-1:0] ages_i [0:N-1],
+module age_based_sel #(
+    N = 8,          // power of 2
+    localparam AGE_LEN = $clog2(N) + 1
+) (
+    input   logic [N-1:0]       lines_i,
+    input   logic [AGE_LEN-1:0] ages_i [N],
     //output logic [$clog2(N)-1:0] enc_o,
-output logic [3-1:0] enc_o,
-    output logic                 valid_o
+    output  logic [3-1:0]       enc_o,
+    output  logic               valid_o
 );
     
     //------------------------------\\

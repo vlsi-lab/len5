@@ -17,6 +17,9 @@
 
 package expipe_pkg;
 
+    /* Inlcude isnstruction macros */
+    `include "instr_macros.svh"
+
     // Import global constants
     import len5_pkg::*;
 
@@ -42,7 +45,7 @@ package expipe_pkg;
     localparam ROB_EXCEPT_LEN = 4;  // only the last four bits of the mcause/scause CSR
 
     // Width of the opcode field (decoded during issue stage)
-    localparam ROB_OPCODE_LEN = `OPCODE_LEN + `FUNCT3_LEN + `FUNCT7_LEN;
+    localparam ROB_OPCODE_LEN = OPCODE_LEN + FUNCT3_LEN + FUNCT7_LEN;
 
     typedef struct packed {
         logic                       valid;          // the ROB entry contains a valid instruction
@@ -192,7 +195,7 @@ package expipe_pkg;
     //---------------------------\\
     localparam LDBUFF_IDX_LEN = $clog2(LDBUFF_DEPTH); // load buffer address width
     localparam STBUFF_IDX_LEN = $clog2(STBUFF_DEPTH); // store buffer address width
-    localparam BUFF_IDX_LEN = (LDBUFF_IDX_LEN > STBUFF_IDX_LEN) ? (LDBUFF_IDX_LEN) : (STBUFF_IDX_LEN); // the lrgest of the two. Useful when comparing indexes from both
+    localparam BUFF_IDX_LEN = (LDBUFF_IDX_LEN > STBUFF_IDX_LEN) ? (LDBUFF_IDX_LEN) : (STBUFF_IDX_LEN); // the largest of the two. Useful when comparing indexes from both
     localparam EXCEPT_TYPE_LEN = ROB_EXCEPT_LEN; // only the last four bits of the mcause/scause CSR
     localparam LDST_TYPE_LEN = LB_CTL_LEN; // 3 bits: 7 types of load (lb, lh, lw, ld, lbu, lhu, ldu), 4 types of store (sb, sh, sw and sd)
     typedef enum logic [LDST_TYPE_LEN-1:0] { LS_BYTE, LS_BYTE_U, LS_HALFWORD, LS_HALFWORD_U, LS_WORD, LS_WORD_U, LS_DOUBLEWORD } ldst_type_t;

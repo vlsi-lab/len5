@@ -12,20 +12,19 @@
 // Author: WALID WALID
 // Date: 17/10/2020
 
-`include "modn_counter.sv"
+//`include "modn_counter.sv"
 //`include "issue_queue_fifo.sv"
-`include "alu_rs.sv"
-`include "mult_rs.sv"
-`include "div_rs.sv"
-`include "fpu_rs.sv"
-`include "simd_rs.sv"
-`include "branch_rs.sv"
-`include "load_store_unit.sv"
+//`include "alu_rs.sv"
+//`include "mult_rs.sv"
+//`include "div_rs.sv"
+//`include "fpu_rs.sv"
+//`include "simd_rs.sv"
+//`include "branch_rs.sv"
+//`include "load_store_unit.sv"
 
 module exec_unit
 
     import len5_pkg::*;
-    import control_pkg::*;
     import expipe_pkg::*;
     import csr_pkg::*;
     import memory_pkg::*;

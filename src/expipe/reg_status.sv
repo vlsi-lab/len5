@@ -12,8 +12,9 @@
 // Author: Michele Caon
 // Date: 12/11/2019
 
+import expipe_pkg::*;
+
 module reg_status 
-    import expipe_pkg::*;
 #( 
     REG_NUM = 32,                               // power of 2
     localparam  REG_IDX_LEN = $clog2(REG_NUM)   // not exposed

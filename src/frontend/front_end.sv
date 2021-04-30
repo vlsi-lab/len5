@@ -14,10 +14,10 @@
 
 import len5_pkg::*;
 
-`include "pc_gen_stage.sv"
-`include "fetch_stage.sv"
+//`include "pc_gen_stage.sv"
+//`include "fetch_stage.sv"
 
-module Front_end
+module front_end
 #(
   parameter HLEN = 4,
   parameter BTB_BITS = 4

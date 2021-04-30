@@ -13,13 +13,11 @@
 // Date: 07/10/2019
 
 import len5_pkg::*;
-import control_pkg::*;
 import expipe_pkg::*;
 import memory_pkg::*;
 import csr_pkg::*;
 
-`include "data_path.sv"
-`include "memory_system_with_ssram.sv"
+`include "instr_macros.svh"
 
 module data_path_memory
 (

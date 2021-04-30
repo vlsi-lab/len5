@@ -18,7 +18,7 @@
 import len5_pkg::*;
 import memory_pkg::*;
 
-`include "one_hot_shift_reg.sv"
+//`include "one_hot_shift_reg.sv"
 
 module icache_replacement_block
 (

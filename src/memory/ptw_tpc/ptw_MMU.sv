@@ -15,9 +15,8 @@
 
 import memory_pkg::*;
 
-`include "mmu_cache.sv"
-`include "ptw.sv"
-
+//`include "mmu_cache.sv"
+//`include "ptw.sv"
 
 module ptw_MMU
 (
@@ -42,10 +41,10 @@ module ptw_MMU
 );
 
 // Signlas 
-  	ptw_mmuc_req_t      ptw_mmuc_req_o,    // first two VPNs
-  	ptw_mmuc_write_t    ptw_mmuc_write_o,  // info for mmu_cache lines replacement
-  	logic               mmuc_flush_o,      // flush the mmuc
-  	mmuc_ptw_ans_t      mmuc_ptw_ans_i,    // low_vpn, hit, full_hit, isSuperpage
+  	ptw_mmuc_req_t      ptw_mmuc_req_o;   	// first two VPNs
+  	ptw_mmuc_write_t    ptw_mmuc_write_o; 	// info for mmu_cache lines replacement
+  	logic               mmuc_flush_o;      	// flush the mmuc
+  	mmuc_ptw_ans_t      mmuc_ptw_ans_i;    	// low_vpn, hit, full_hit, isSuperpage
 
 ptw u_ptw
 (

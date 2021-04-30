@@ -13,13 +13,9 @@
 // Date: 07/10/2019
 
 import len5_pkg::*;
-import control_pkg::*;
 import expipe_pkg::*;
 import memory_pkg::*;
 import csr_pkg::*;
-
-`include "back_end.sv"
-`include "front_end.sv"
 
 module Data_path
 (

@@ -15,18 +15,18 @@
 
 import memory_pkg::*;
 
-`include "d1_dirty_vec_one_hotter.sv"
-`include "d1_d0_data_sel.sv"
-`include "d1_replacement_block.sv"
-`include "d1_comp_block.sv"
-`include "d1_stall_replay_cu.sv"
-`include "dcache_wb_victim_buffer.sv"
-`include "d1_wbb_tag_gen.sv"
-`include "dcache_mshr.sv"
-`include "d1_wbb_mshr_ctrl_L2_side.sv"
-`include "d1_L2_req_data_sel.sv"
-`include "d1_L2_req_arbiter.sv"
-`include "d1_ctrl.sv"
+//`include "d1_dirty_vec_one_hotter.sv"
+//`include "d1_d0_data_sel.sv"
+//`include "d1_replacement_block.sv"
+//`include "d1_comp_block.sv"
+//`include "d1_stall_replay_cu.sv"
+//`include "dcache_wb_victim_buffer.sv"
+//`include "d1_wbb_tag_gen.sv"
+//`include "dcache_mshr.sv"
+//`include "d1_wbb_mshr_ctrl_L2_side.sv"
+//`include "d1_L2_req_data_sel.sv"
+//`include "d1_L2_req_arbiter.sv"
+//`include "d1_ctrl.sv"
 
 module dcache_L1_d1
 (

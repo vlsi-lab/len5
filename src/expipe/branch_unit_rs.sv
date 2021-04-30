@@ -12,21 +12,22 @@
 // Author: Michele Caon
 // Date: 08/11/2019
 
-`include "modn_counter.sv"
+//`include "modn_counter.sv"
+
+import len5_pkg::XLEN;
+import len5_pkg::ILEN;
+import len5_pkg::B_IMM;
+import len5_pkg::branch_type_t;
+import len5_pkg::BEQ;
+import len5_pkg::BNE;
+import len5_pkg::BLT;
+import len5_pkg::BGE;
+import len5_pkg::BLTU;
+import len5_pkg::BGEU;
+
+import expipe_pkg::*;
 
 module branch_unit_rs 
-    import len5_pkg::XLEN;
-    import len5_pkg::ILEN;
-    import len5_pkg::B_IMM;
-    import len5_pkg::branch_type_t;
-    import len5_pkg::beq;
-    import len5_pkg::bne;
-    import len5_pkg::blt;
-    import len5_pkg::bge;
-    import len5_pkg::bltu;
-    import len5_pkg::bgeu;
-
-    import expipe_pkg::*;
 #(
     RS_DEPTH = 16
 )
@@ -356,7 +357,7 @@ module branch_unit_rs
     `ifndef SYNTHESIS
     always @(negedge clk_i) begin
         // Notice when the reservation station is full
-        assert (valid_a !== '1) else $warning("Generic RS full: you might want to increase its depth");
+        assert (valid_a == (2**RS_DEPTH - 1)) else $warning("Generic RS full: you might want to increase its depth");
         foreach (rs_data[i]) begin
             // Check if the correct order of operations is respected
             assert (!(res_ready_a[i] && !ex_ready_a[i])) else $warning("RS entry %4d has ready result before having ready operands. This should be impossible", i);

@@ -15,9 +15,9 @@
 
 import memory_pkg::*;
 
-`include "mmuc_update_ctrl.sv"
-`include "pte_checker.sv"
-`include "ptw_cu.sv"
+//`include "mmuc_update_ctrl.sv"
+//`include "pte_checker.sv"
+//`include "ptw_cu.sv"
 
 module ptw
 (

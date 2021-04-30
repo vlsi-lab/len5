@@ -14,9 +14,9 @@
 
 import len5_pkg::*;
 
-`include "instr_sel.sv"
-`include "presence_check.sv"
-`include "fetch_controller.sv"
+//`include "instr_sel.sv"
+//`include "presence_check.sv"
+//`include "fetch_controller.sv"
 
 module ifu
 (

@@ -16,13 +16,13 @@
 import len5_pkg::*;
 import memory_pkg::*;
 
-`include "icache_flush_cnt.sv"
-`include "icache_comparison_block.sv"
-`include "icache_data_sel.sv"
-`include "icache_replacement_block.sv"
-`include "icache_moore_cu.sv"
-`include "icache_mem_ctrl.sv"
-`include "icache_ctrl_en.sv"
+//`include "icache_flush_cnt.sv"
+//`include "icache_comparison_block.sv"
+//`include "icache_data_sel.sv"
+//`include "icache_replacement_block.sv"
+//`include "icache_moore_cu.sv"
+//`include "icache_mem_ctrl.sv"
+//`include "icache_ctrl_en.sv"
 
 module icache_L1 (
   // main

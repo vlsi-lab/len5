@@ -12,14 +12,14 @@
 // Author: WALID WALID
 // Date: 17/10/2020
 
-`include "modn_counter.sv"
-`include "issue_queue.sv"
-`include "issue_logic.sv"
+//`include "modn_counter.sv"
+//`include "issue_queue.sv"
+//`include "issue_logic.sv"
+
+import len5_pkg::*;
+import expipe_pkg::*;
 
 module issue_q_l 
-    import len5_pkg::*;
-    import control_pkg::*;
-    import expipe_pkg::*;
 (
     input   logic               clk_i,
     input   logic               rst_n_i,

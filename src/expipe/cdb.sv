@@ -12,14 +12,11 @@
 // Author: Michele Caon
 // Date: 11/11/2019
 
-`include "cdb_arbiter.sv"
-
-//`include "cdb_arbiter.sv"
+import expipe_pkg::*;
+import len5_pkg::XLEN;
+import len5_pkg::EU_N;
 
 module cdb
-    import expipe_pkg::*;
-    import len5_pkg::XLEN;
-    import len5_pkg::EU_N;
 (
     input   logic               clk_i,
     input   logic               rst_n_i,

@@ -18,11 +18,11 @@ import memory_pkg::*;
 import len5_pkg::*;
 //import mmm_pkg::*;
 
-`include "l2_tlb_flush_unit.sv"
-`include "l2_tlb_mshr.sv"
-`include "l2_tlb_replacement_unit.sv"
-`include "l2_tlb_t0.sv"
-`include "l2_tlb_t1.sv"
+//`include "l2_tlb_flush_unit.sv"
+//`include "l2_tlb_mshr.sv"
+//`include "l2_tlb_replacement_unit.sv"
+//`include "l2_tlb_t0.sv"
+//`include "l2_tlb_t1.sv"
 
 module l2_tlb
 (

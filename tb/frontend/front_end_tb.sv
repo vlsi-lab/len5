@@ -5,7 +5,6 @@
 //import mmm_pkg::*;
 import len5_pkg::*;
 //import expipe_pkg::*;
-//import control_pkg::*;
 //import memory_pkg::*;
 //import csr_pkg::*;
 

@@ -12,15 +12,15 @@
 // Author: Michele Caon
 // Date: 03/11/2019
 
-`include "modn_counter.sv"
+//`include "modn_counter.sv"
 
+import len5_pkg::XLEN;
+import len5_pkg::ILEN;
+import len5_pkg::REG_IDX_LEN;
+import len5_pkg::ROB_DEPTH;
+import expipe_pkg::*;
 
 module rob 
-    import len5_pkg::XLEN;
-    import len5_pkg::ILEN;
-    import len5_pkg::REG_IDX_LEN;
-    import len5_pkg::ROB_DEPTH;
-    import expipe_pkg::*;
 (
     input   logic                       clk_i,
     input   logic                       rst_n_i,

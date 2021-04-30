@@ -4,7 +4,6 @@
 
 import len5_pkg::*;
 import expipe_pkg::*;
-import control_pkg::*;
 import memory_pkg::*;
 import csr_pkg::*;
 
@@ -78,7 +77,7 @@ initial begin
     flush_i = 0;
 
 	vm_mode_i=SV39;
-	branch_type_i=beq;
+	branch_type_i=BEQ;
 	ldst_type_i=LS_WORD;
 
     except_raised_i = 'b0;

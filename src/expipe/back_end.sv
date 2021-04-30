@@ -12,24 +12,24 @@
 // Author: WALID WALID
 // Date: 17/10/2020
 
-`include "modn_counter.sv"
+//`include "modn_counter.sv"
 //`include "issue_queue_fifo.sv"
 
-`include "issue_q_l.sv"
-`include "reg_status.sv"
-`include "int_rf.sv"
-`include "fp_rf.sv"
-`include "exec_unit.sv"
-`include "commit_logic.sv"
-`include "rob.sv"
-`include "cdb.sv"
+//`include "issue_q_l.sv"
+//`include "reg_status.sv"
+//`include "int_rf.sv"
+//`include "fp_rf.sv"
+//`include "exec_unit.sv"
+//`include "commit_logic.sv"
+//`include "rob.sv"
+//`include "cdb.sv"
+
+import len5_pkg::*;
+import expipe_pkg::*;
+import memory_pkg::*;
+import csr_pkg::*;
 
 module back_end
-    import len5_pkg::*;
-    import control_pkg::*;
-    import expipe_pkg::*;
-    import memory_pkg::*;
-    import csr_pkg::*;
 (
     input   logic               clk_i,
     input   logic               rst_n_i,

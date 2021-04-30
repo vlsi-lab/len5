@@ -15,8 +15,8 @@
 
 import memory_pkg::*;
 
-`include "d0/dcache_L1_d0.sv"
-`include "d1/dcache_L1_d1.sv"
+//`include "d0/dcache_L1_d0.sv"
+//`include "d1/dcache_L1_d1.sv"
 
 module dcache_L1_system
 (

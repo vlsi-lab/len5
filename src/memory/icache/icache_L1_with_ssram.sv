@@ -16,8 +16,8 @@
 import len5_pkg::*;
 import memory_pkg::*;
 
-`include "icache_L1.sv"
-`include "ssram.sv"
+//`include "icache_L1.sv"
+//`include "ssram.sv"
 
 module icache_L1_with_ssram (
   // main

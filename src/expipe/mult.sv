@@ -12,12 +12,13 @@
 // Author: Michele Caon
 // Date: 21/10/2019
 
-module mult 
-    import len5_pkg::XLEN;
-    import len5_pkg::ILEN;
-    //import len5_pkg::HLEN;
+import len5_pkg::XLEN;
+import len5_pkg::ILEN;
+//import len5_pkg::HLEN;
 
-    import expipe_pkg::*;
+import expipe_pkg::*;
+
+module mult 
 #(
     RS_DEPTH = 16,
     

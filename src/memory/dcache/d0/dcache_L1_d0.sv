@@ -15,11 +15,6 @@
 
 import memory_pkg::*;
 
-`include "d0_scheduler.sv"
-`include "d0_arbiter.sv"
-`include "d0_req_encoder.sv"
-`include "d0_cache_ctrl.sv"
-`include "d0_data_sel_block.sv"
 module dcache_L1_d0
 (
   // Main

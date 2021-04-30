@@ -14,8 +14,8 @@
 
 import len5_pkg::*;
 
-`include "btb.sv"
-`include "gshare.sv"
+//`include "btb.sv"
+//`include "gshare.sv"
 
 module bpu
 #(
