@@ -13,7 +13,6 @@
 // Date: 31/10/2019
 // Description: combinatorial control for the i-TLB
 
-//import mmm_pkg::*;
 import len5_pkg::*;
 import memory_pkg::*;
 
@@ -30,13 +29,13 @@ module itlb_ctrl
   // Flush type
   input  tlb_flush_e   flush_type_i,
   input  asid_t        flush_asid_i,
-  input  vpn_t         flush_page_i,
+  input  var vpn_t         flush_page_i,
   // From the TLB entries
-  input  vpn_t         vpn_vec_q [N],
-  input  asid_t        asid_vec_q [N],
-  input  logic         glob_vec_q [N],
-  input  logic         mebi_vec_q [N],
-  input  logic         gibi_vec_q [N],
+  input  var vpn_t         vpn_vec_q [N],
+  input  var asid_t        asid_vec_q [N],
+  input  var logic         glob_vec_q [N],
+  input  var logic         mebi_vec_q [N],
+  input  var logic         gibi_vec_q [N],
   // From comparison block
   input  logic         icache_tlb_req_valid_i,
   input  logic         itlb_hit_i,
