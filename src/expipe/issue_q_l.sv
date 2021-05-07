@@ -12,9 +12,7 @@
 // Author: WALID WALID
 // Date: 17/10/2020
 
-//`include "modn_counter.sv"
-//`include "issue_queue.sv"
-//`include "issue_logic.sv"
+//`include "issue_queue_fifo.sv"
 
 import len5_pkg::*;
 import expipe_pkg::*;
@@ -99,6 +97,17 @@ module issue_q_l
     output  logic [XLEN-1:0]            ex_pred_target_o,  // the predicted target of the current issuing instr (branches only)
     output  logic                       ex_pred_taken_o,  // the predicted taken bit of the current issuing instr (branches only)
 
+	//new added
+	// Handshake from/to the cdb
+	input   logic                       cdb_valid_i,
+	output  logic                       cdb_ready_o,
+
+	// Data from the cdb
+	input   logic                       cdb_except_rasied_i,
+	input   logic [XLEN-1:0]            cdb_value_i,
+	input   logic [ROB_IDX_LEN-1:0]		cdb_rob_idx_i,
+//To here
+
     // Handshake from/to the ROB
     input   logic                       rob_ready_i,            // the ROB has an empty entry available
     output  logic                       rob_valid_o,            // a new instruction can be issued
@@ -117,13 +126,7 @@ module issue_q_l
     output  logic                       rob_except_raised_o,    // an exception has been raised
     output  logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_o,      // the exception code
     output  logic [XLEN-1:0]            rob_except_aux_o,       // exception auxilliary data (e.g. offending virtual address)
-    output  logic                       rob_res_ready_o,        // force the ready-to-commit state in the ROB to handle special instr. 
-
-    // Data from the CDB (cdb_data_t)
-    input   logic [ROB_IDX_LEN-1:0]     cdb_rob_idx_i,          /* the ROB tag of the instruction in the CDB */
-    input   logic [XLEN-1:0]            cdb_value_i,            /* the result of the instruction in the CDB */
-    input   logic                       cdb_except_raised_i     /* CDB instruction exception flag (avoid sampling ) */
-    /* the exception code is ignored */
+    output  logic                       rob_res_ready_o       // force the ready-to-commit state in the ROB to handle special instr. 
 );
 
     // DEFINITIONS
@@ -251,6 +254,15 @@ issue_logic u_issue_logic
     .ex_pred_target_o(ex_pred_target_o),         
     .ex_pred_taken_o(ex_pred_taken_o),          
 
+	// Handshake from/to the cdb
+	.cdb_valid_i(cdb_valid_i),
+	.cdb_ready_o(cdb_ready_o),
+
+	// Data from the cdb
+	.cdb_except_rasied_i(cdb_except_rasied_i),
+	.cdb_value_i(cdb_value_i),
+	.cdb_rob_idx_i(cdb_rob_idx_i),
+
     // Handshake from/to the ROB
     .rob_ready_i(rob_ready_i),           
     .rob_valid_o(rob_valid_o),            
@@ -269,14 +281,10 @@ issue_logic u_issue_logic
     .rob_except_raised_o(rob_except_raised_o),    
     .rob_except_code_o(rob_except_code_o),      
     .rob_except_aux_o(rob_except_aux_o),       
-    .rob_res_ready_o(rob_res_ready_o),
-
-    // Data from the CDB (cdb_data_t)
-    .cdb_rob_idx_i(cdb_rob_idx_i),
-    .cdb_value_i(cdb_value_i),            
-    .cdb_except_raised_i(cdb_except_raised_i)
-    /* the exception code is ignored */  
+    .rob_res_ready_o(rob_res_ready_o)          
 );
 
+
+    
 endmodule
 

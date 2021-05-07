@@ -12,22 +12,19 @@
 // Author: Michele Caon
 // Date: 12/11/2019
 
-//`include "issue_decoder.sv"
+import len5_pkg::XLEN;
+import len5_pkg::ILEN;
+import len5_pkg::EU_N;
+import len5_pkg::I_IMM;
+import len5_pkg::S_IMM;
+import len5_pkg::B_IMM;
+import len5_pkg::U_IMM;
+import len5_pkg::J_IMM;
+import len5_pkg::REG_IDX_LEN;
 
-module issue_logic 
-    /* Import packages content */
-    import len5_pkg::XLEN;
-    import len5_pkg::ILEN;
-    import len5_pkg::EU_N;
-    import len5_pkg::I_IMM;
-    import len5_pkg::S_IMM;
-    import len5_pkg::B_IMM;
-    import len5_pkg::U_IMM;
-    import len5_pkg::J_IMM;
-    import len5_pkg::REG_IDX_LEN;
+import expipe_pkg::*;
 
-    import expipe_pkg::*;
-(
+module issue_logic (
     // To the main control 
     output  logic                       main_cu_stall_o,
 
@@ -100,7 +97,17 @@ module issue_logic
     output  logic [XLEN-1:0]            ex_pred_pc_o,              // the PC of the current issuing instr (branches only)
     output  logic [XLEN-1:0]            ex_pred_target_o,          // the predicted target of the current issuing instr (branches only)
     output  logic                       ex_pred_taken_o,           // the predicted taken bit of the current issuing instr (branches only)
+//new added
+	// Handshake from/to the cdb
+    /* We may not need the ready because we're never writing the CDB from the issue logic */
+	input   logic                       cdb_valid_i,
+	output  logic                       cdb_ready_o,
 
+	// Data from the cdb
+	input   logic                       cdb_except_rasied_i,
+	input   logic [XLEN-1:0]            cdb_value_i,
+	input   logic [ROB_IDX_LEN-1:0]		cdb_rob_idx_i,
+//To here
     // Handshake from/to the ROB
     input   logic                       rob_ready_i,            // the ROB has an empty entry available
     output  logic                       rob_valid_o,            // a new instruction can be issued
@@ -111,12 +118,6 @@ module issue_logic
     input   logic                       rob_rs2_ready_i,        // the second operand is ready in the ROB
     input   logic [XLEN-1:0]            rob_rs2_value_i,        // the value of the second operand
     input   logic [ROB_IDX_LEN-1:0]     rob_tail_idx_i,         // the entry of the ROB where the instr is being allocated
-
-    // Data from the CDB (cdb_data_t)
-    input   logic [ROB_IDX_LEN-1:0]     cdb_rob_idx_i,          /* the ROB tag of the instruction in the CDB */
-    input   logic [XLEN-1:0]            cdb_value_i,            /* the result of the instruction in the CDB */
-    input   logic                       cdb_except_raised_i,    /* CDB instruction exception flag (avoid sampling ) */
-    /* the exception code is ignored */
     
     output  logic [ROB_IDX_LEN-1:0]     rob_rs1_idx_o,          // ROB entry containing rs1 value
     output  logic [ROB_IDX_LEN-1:0]     rob_rs2_idx_o,          // ROB entry containing rs2 value
@@ -134,8 +135,8 @@ module issue_logic
     logic [I_IMM-1:0]                   instr_imm_i_value;
     logic [S_IMM-1:0]                   instr_imm_s_value;
     logic [B_IMM-1:0]                   instr_imm_b_value;
-    // logic [U_IMM-1:0]                   instr_imm_u_value;
-    // logic [J_IMM-1:0]                   instr_imm_j_value;
+    logic [U_IMM-1:0]                   instr_imm_u_value;
+    logic [J_IMM-1:0]                   instr_imm_j_value;
 
     logic [ROB_IDX_LEN-1:0]             rob_tail_idx;
 
@@ -179,8 +180,8 @@ module issue_logic
     assign  instr_imm_i_value       = iq_instruction_i[31 -: I_IMM];
     assign  instr_imm_s_value       = { iq_instruction_i[31 : 25], iq_instruction_i[11:7] };
     assign  instr_imm_b_value       = { iq_instruction_i[31], iq_instruction_i[7], iq_instruction_i[30:25], iq_instruction_i[11:8] };
-    // assign  instr_imm_u_value       = iq_instruction_i[31 -: U_IMM];
-    // assign  instr_imm_j_value       = { iq_instruction_i[31], iq_instruction_i[19:12], iq_instruction_i[20], iq_instruction_i[30:21] };
+    assign  instr_imm_u_value       = iq_instruction_i[31 -: U_IMM];
+    assign  instr_imm_j_value       = { iq_instruction_i[31], iq_instruction_i[19:12], iq_instruction_i[20], iq_instruction_i[30:21] };
 
     assign rob_tail_idx             = rob_tail_idx_i;
 
@@ -190,6 +191,9 @@ module issue_logic
 
     // Select the corresponding register status register ready signal
     assign regstat_ready    = (id_fp_rs) ? fp_regstat_ready_i : int_regstat_ready_i;
+
+    /* remove? */
+	assign cdb_ready_o = 1'b1;
 
     always_comb begin: issue_control_logic
         // Default values 
@@ -310,13 +314,16 @@ module issue_logic
                     if (rob_rs1_ready_i) begin /* the operand is already available in the ROB */
                         rs1_ready   = 1'b1;
                         rs1_value   = rob_rs1_value_i;
-                    end else if (cdb_rob_idx_i == rob_rs1_idx && !cdb_except_raised_i) begin /* the operand is being broadcast on the CDB */
-                        rs1_ready   = 1'b1;
+				
+					//New added
+				end else if (cdb_rob_idx_i == rob_rs1_idx && !cdb_except_rasied_i /*&& cdb_valid_i*/) begin /* the operand is being broadcast on the CDB */ /* TODO: we need the valid! */
+						rs1_ready   = 1'b1;
                         rs1_value   = cdb_value_i;
-                    end else begin /* mark as not ready */
+				end else begin /* mark as not ready */
                         rs1_ready   = 1'b0;
                         rs1_value   = 0;
                     end
+				//Till here
                 end else begin                  // the operand is available in the register file 
                     rs1_ready           = 1'b1;
                     rs1_value           = intrf_rs1_value_i;
@@ -324,15 +331,18 @@ module issue_logic
             end
 
             // Fetch rs2
-            if (id_rs2_req) begin               // rs2 value is required
+            if (id_rs2_req || id_imm_req) /* TODO: handle id_imm_req separately? */begin               // rs2 value is required
                 if (int_regstat_rs2_busy_i) begin   // the operand is provided by an in-flight instr.
                     if (rob_rs2_ready_i) begin /* the operand is already available in the ROB */
                         rs2_ready   = 1'b1;
                         rs2_value   = rob_rs2_value_i;
-                    end else if (cdb_rob_idx_i == rob_rs2_idx && !cdb_except_raised_i) begin /* the operand is being broadcast on the CDB */
-                        rs2_ready   = 1'b1;
-                        rs2_value   = cdb_value_i;
-                    end else begin /* mark as not ready */
+                    
+                    //New added
+                    end else if (cdb_rob_idx_i == rob_rs2_idx && !cdb_except_rasied_i /*&& cdb_valid_i*/) begin /* TODO: we need the valid! */
+                            rs2_ready   = 1'b1;
+                            rs2_value   = cdb_value_i;
+                    //Till here
+				    end else begin /* mark as not ready */
                         rs2_ready   = 1'b0;
                         rs2_value   = 0;
                     end
@@ -342,9 +352,9 @@ module issue_logic
                 end
             end
 
-        /* FLOATING-POINT OPERANDS */
-        end else begin
-
+         /* FLOATING-POINT OPERANDS */
+        end else begin    
+            
             // Fetch rs1
             if (id_rs1_req) begin               // rs1 value is required
                 if (fp_regstat_rs1_busy_i) begin   // the operand is provided by an in-flight instr.
@@ -378,7 +388,7 @@ module issue_logic
                         rs2_value   = 0;
                     end
                 end else begin                  // the operand is available in the register file 
-                    rs1_ready           = 1'b1;
+                    rs2_ready           = 1'b1;
                     rs2_value           = fprf_rs2_value_i;
                 end
             end
@@ -389,6 +399,7 @@ module issue_logic
     //----- EXCEPTION HANDLING -----\\
     //------------------------------\\
     always_comb begin: exception_handling_logic
+		//eh_stall_possible           = 1'b0;
         // If an exception was raised during the fetch stage, keep it and discard exception raised during the issue phase (if any)
         if (iq_except_raised_i) begin
             eh_except_raised            = 1'b1;
@@ -442,6 +453,10 @@ module issue_logic
     assign  ex_rs2_ready_o              = rs2_ready;
     assign  ex_rs1_idx_o                = rob_rs1_idx;
     assign  ex_rs2_idx_o                = rob_rs2_idx;
+    
+    /* See the effect of this change */
+    //assign  ex_rs1_idx_o                = //instr_rs1_idx;
+    //assign  ex_rs2_idx_o                = //instr_rs2_idx;
 
     // Operands value
     always_comb begin: operand_value_logic

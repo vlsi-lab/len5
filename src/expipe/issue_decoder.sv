@@ -18,8 +18,7 @@
 import len5_pkg::*;
 import expipe_pkg::*;
 
-module issue_decoder
-(
+module issue_decoder (
     // Instruction from the issue logic
     input   logic [ILEN-1:0]                issue_instruction_i,    // the issuing instruction opcode
     

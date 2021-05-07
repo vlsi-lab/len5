@@ -17,8 +17,7 @@ import len5_pkg::FREG_NUM;
 import len5_pkg::FREG_IDX_LEN;
 import expipe_pkg::*;
 
-module fp_rf 
-(
+module fp_rf (
     input   logic                       clk_i,
     input   logic                       rst_n_i,
 

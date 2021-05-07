@@ -11,17 +11,15 @@
 // File: issue_queue.sv
 // Author: Michele Caon
 // Date: 17/10/2019
-
-//`include "modn_counter.sv"
 //`include "issue_queue_fifo.sv"
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
 import len5_pkg::IQ_DEPTH;
 
-module issue_queue 
+import expipe_pkg::*;
 
-    import expipe_pkg::*;
+module issue_queue 
 (
     input   logic               clk_i,
     input   logic               rst_n_i,

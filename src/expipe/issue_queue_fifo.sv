@@ -15,8 +15,7 @@
 import len5_pkg::IQ_DEPTH;
 import expipe_pkg::*;
 
-module issue_queue_fifo 
-(
+module issue_queue_fifo (
     input   logic                   clk_i,
     input   logic                   rst_n_i,
     input   logic                   flush_i,
@@ -31,7 +30,7 @@ module issue_queue_fifo
     output  logic                   issue_valid_o,
 
     // New entry data (from fetch unit)
-    input   iq_entry_t              new_entry,
+    input   var iq_entry_t              new_entry,
 
     // Issued entry
     output  iq_entry_t              issued_instr,
@@ -50,7 +49,7 @@ module issue_queue_fifo
     logic                       fifo_full;
     logic [0:IQ_DEPTH-1]        valid_a;
 
-    iq_entry_t                  iq_fifo[0: IQ_DEPTH-1]; // The actual fifo
+    iq_entry_t [0: IQ_DEPTH-1]  iq_fifo; // The actual fifo
 
     // full and empty fifo signals
     always_comb begin

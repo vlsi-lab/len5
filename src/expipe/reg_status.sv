@@ -17,7 +17,7 @@ import expipe_pkg::*;
 module reg_status 
 #( 
     REG_NUM = 32,                               // power of 2
-    localparam  REG_IDX_LEN = $clog2(REG_NUM)   // not exposed
+    localparam  REG_IDX_LEN = $clog2(REG_NUM)   //5 // not exposed
 ) 
 (
     input   logic                   clk_i,
@@ -52,7 +52,7 @@ module reg_status
     // DEFINITIONS
 
     // Register status data
-    regstat_entry_t                 regstat_data [0:REG_NUM-1];
+    regstat_entry_t                 regstat_data [0:REG_NUM-1]; /* TODO: check for error on this */
 
     // Operation control
     logic                           regstat_issue_upd, regstat_comm_upd;
@@ -76,6 +76,11 @@ module reg_status
             if (comm_head_idx_i == regstat_data[comm_rd_idx_i].rob_idx) begin
                 regstat_comm_upd        = 1'b1;
             end
+            
+            // Earlier
+            // if (comm_head_idx_i == regstat_data[comm_rd_idx_i].rob_idx && issue_rs1_idx_i !=comm_rd_idx_i && issue_rs2_idx_i !=comm_rd_idx_i) begin /* TODO: remove from '&& issue_rs1_idx_i !=comm_rd_idx_i '&& issue_rs2_idx_i !=comm_rd_idx_i' */
+            //     regstat_comm_upd        = 1'b1;
+            // end
         end
     end
 
@@ -97,6 +102,8 @@ module reg_status
             // The ROB entry assigned to the issuing instructioin (tail of the ROB) is recorded in the corresponding destination register entry
             if (regstat_issue_upd/*&& !(stall)*/) begin
                 regstat_data[issue_rd_idx_i].busy           += 1'b1;            // a new in-flight instruction is writing rd
+                
+                //regstat_data[issue_rd_idx_i].busy           <= 1'b1;            // a new in-flight instruction is writing rd
                 regstat_data[issue_rd_idx_i].rob_idx        <= issue_rob_idx_i; // rd value will be available in this ROB entry
             end
 
@@ -104,6 +111,8 @@ module reg_status
             // When an instruction commits from the ROB, its result may be written back to the register file. In this case, the busy counter is decremented. If this counter is zero, an issuing instr. sourcing one of its operand from this register can find the operand in the register file
             if (regstat_comm_upd/*&& !(stall)*/) begin
                 regstat_data[comm_rd_idx_i].busy -= 1'b0;   // one less in-flight instruction will write rd
+                
+                //regstat_data[comm_rd_idx_i].busy <= 1'b0;
             end
         end
     end
@@ -114,9 +123,13 @@ module reg_status
     // READ OPERANDS FOR THE ISSUE STAGE 
     // rs1 (READ PORT 1)
     assign issue_rs1_busy_o             = |regstat_data[issue_rs1_idx_i].busy;      // 0 only if no in-flight instructions will write that register
+    
+    //assign issue_rs1_busy_o             = regstat_data[issue_rs1_idx_i].busy;
     assign issue_rs1_rob_idx_o          = regstat_data[issue_rs1_idx_i].rob_idx;
     // rs2 (READ PORT 2)
     assign issue_rs2_busy_o             = |regstat_data[issue_rs2_idx_i].busy;      // 0 only if no in-flight instructions will write that register
+
+    //assign issue_rs2_busy_o             = regstat_data[issue_rs2_idx_i].busy;
     assign issue_rs2_rob_idx_o          = regstat_data[issue_rs2_idx_i].rob_idx;
 
     //---------------------------------------\\
