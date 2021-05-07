@@ -12,8 +12,6 @@
 // Author: Michele Caon
 // Date: 08/11/2019
 
-//`include "modn_counter.sv"
-
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
 import len5_pkg::B_IMM;
@@ -77,13 +75,13 @@ module branch_unit_rs
     output  logic                           cdb_valid_o,
 
     // Data from/to the CDB
-    input   cdb_data_t                      cdb_data_i,
+    input   var cdb_data_t                      cdb_data_i,
     output  cdb_data_t                      cdb_data_o
 );
 
     // DEFINITIONS
 
-    localparam RS_IDX_LEN = $clog2(RS_DEPTH); // reservation station address width
+    localparam RS_IDX_LEN = $clog2(RS_DEPTH); //3 reservation station address width
 
     // Reservation station entry 
     typedef struct packed {
@@ -348,8 +346,8 @@ module branch_unit_rs
     // To the CDB
     assign cdb_data_o.rob_idx       = rs_data[head_idx].res_idx;
     assign cdb_data_o.value         = { {(XLEN-1){1'b0}}, rs_data[head_idx].mispredicted }; // store the misprediction information in the value field of the CDB (result field of the ROB)
-    assign cdb_data_o.except_raised = 1'b0; // no exception can be raised 
-    assign cdb_data_o.except_code   = 0;
+    assign cdb_data_o.except_raised = 1'b0; // no exception can be raised  (Wrong, First check the Missp if ok then cheeck address misaglined)
+    assign cdb_data_o.except_code   = 0;// Fix it
 
     //----------------------\\
     //----- ASSERTIONS -----\\

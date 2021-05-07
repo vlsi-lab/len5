@@ -12,7 +12,6 @@
 // Author: Marco Andorno
 // Date: 05/10/2019
 
-//`include "branch_unit_cu.sv"
 import len5_pkg::*;
 
 module branch_unit
@@ -49,7 +48,7 @@ module branch_unit
       BGE:      taken = ($signed(rs1_i) >= $signed(rs2_i));
       BLTU:     taken = (rs1_i < rs2_i);
       BGEU:     taken = (rs1_i >= rs2_i);
-      default:  taken = 0;
+      default:  taken = 0;    
     endcase
   end
 
@@ -71,9 +70,9 @@ module branch_unit
 
   // Assignments
   assign wrong_taken = pred_taken_i != taken;
-  assign target = { {XLEN-B_IMM{1'b0}}, (imm_i << 1)} + pred_pc_i; // add JAL and JALR
+  assign target = { {XLEN-B_IMM{1'b0}}, (imm_i << 1)} + pred_pc_i; // add JAL and JALR; add a mux with jump
   assign wrong_target = pred_target_i != target;
-
+	// Add a check for missaligned address
   // Output register
   always_ff @ (posedge clk_i or negedge rst_n_i) begin: out_reg
     if (!rst_n_i) begin

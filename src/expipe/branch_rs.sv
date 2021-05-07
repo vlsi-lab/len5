@@ -15,7 +15,7 @@
 import len5_pkg::*;
 import expipe_pkg::*;
 
-module branch_rs
+module branch_rs 
 #(
     RS_DEPTH = 16
 )
@@ -55,7 +55,7 @@ module branch_rs
     output  logic                           cdb_valid_o,
 
     // Data from/to the CDB
-    input   cdb_data_t                      cdb_data_i,
+    input   var cdb_data_t                      cdb_data_i,
     output  cdb_data_t                      cdb_data_o
 );
 
@@ -74,6 +74,8 @@ module branch_rs
     logic                           bu_valid_i;
     logic                           bu_valid_o;
     logic                           bu_ready_o;
+
+	assign res_target_o = mispredict_i;
 
 branch_unit_rs  #(.RS_DEPTH (RS_DEPTH)) u_branch_generic_rs
 (
@@ -119,7 +121,7 @@ branch_unit_rs  #(.RS_DEPTH (RS_DEPTH)) u_branch_generic_rs
     .cdb_data_o(cdb_data_o)
 );
 
-branch_unit u_branch_unit
+branch_unit u_branch
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
@@ -137,7 +139,7 @@ branch_unit u_branch_unit
   	.ops_ready_o(bu_ready_i),
   	.res_valid_o(bu_valid_i),
   	.res_pc_o(res_pc_o),
-  	.res_target_o(res_target_o),
+  	.res_target_o(mispredict_i/*res_target_o*/),
   	.res_taken_o(res_taken_o),
   	.res_mispredict_o(res_mispredict_o)
 

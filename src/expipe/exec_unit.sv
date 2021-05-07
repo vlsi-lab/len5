@@ -252,7 +252,7 @@ simd_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_simd
     .cdb_except_o (cdb_data_o[4].except_code)//(cdb_except_o)
 );
 
-Branch_rs #(.RS_DEPTH (RS_DEPTH)) u_Branch_rs
+branch_rs #(.RS_DEPTH (RS_DEPTH)) u_branch_rs
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
