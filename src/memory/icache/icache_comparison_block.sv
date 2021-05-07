@@ -20,7 +20,7 @@ import memory_pkg::*;
 module icache_comparison_block
 (
   // The output of the cache
-  input  icache_mem_out_t mem_out_i,
+  input  var icache_mem_out_t mem_out_i,
   // Incoming tag to be compared
   input  icache_L1_tag_t  tag_i,
   // Cache hit

@@ -21,9 +21,9 @@ module icache_data_sel (
   // From the CU
   input icache_addr_src_e  icache_addr_src_i,
   // From the Front-End
-  input icache_L1_addr_t   vaddr_d_i,
+  input var icache_L1_addr_t   vaddr_d_i,
   // From the vaddr register
-  input icache_L1_addr_t   vaddr_q_i,
+  input var icache_L1_addr_t   vaddr_q_i,
   // From the Flush counter
   input icache_idx_addr_t  flush_addr_i,
   // To the cache

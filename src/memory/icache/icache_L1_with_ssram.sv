@@ -16,8 +16,6 @@
 import len5_pkg::*;
 import memory_pkg::*;
 
-//`include "icache_L1.sv"
-//`include "ssram.sv"
 
 module icache_L1_with_ssram (
   // main
@@ -27,17 +25,17 @@ module icache_L1_with_ssram (
   input logic                   flush_i,     // flush the whole cache
   input logic                   abort_i,     // abort current operation
   // front-end
-  input  frontend_icache_req_t  ireq_i,      // incoming front-end instruction request channel
+  input  var frontend_icache_req_t  ireq_i,      // incoming front-end instruction request channel
   output logic                  ready_o,     // ready for a front-end request
   output icache_frontend_ans_t  iresp_o,     // i-cache instruction response channel
   // TLB
   output icache_tlb_req_t       tlb_areq_o,  // address translation request to i-TLB
   input  logic                  tlb_ready_i, // TLB is ready for a request
-  input  tlb_icache_ans_t       tlb_aresp_i, // i-TLB response channel
+  input  var tlb_icache_ans_t       tlb_aresp_i, // i-TLB response channel
   // L2-arbiter
   output icache_l2_req_t        l2_req_o,    // request channel to L2-arbiter
   input  logic                  l2_ready,    // l2 level can accept requests
-  input  l2_icache_ans_t        l2_resp_i    // response channel from L2-arbiter
+  input  var l2_icache_ans_t        l2_resp_i    // response channel from L2-arbiter
 );
 
   localparam NUM_WORDS     = 1 << ICACHE_L1_IDX_A_LEN;
