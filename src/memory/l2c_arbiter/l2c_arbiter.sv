@@ -23,9 +23,9 @@ module l2c_arbiter
   input  logic            clk_i,
   input  logic            rst_ni,
   // Request channel
-  input  l1dc_l2c_req_t   l1dc_l2arb_req_i,       // D-Cache request to L2-Cache
-  input  icache_l2_req_t  icache_l2arb_req_i,     // I-Cache request to L2-Cache
-  input  ptw_l2c_req_t    ptw_l2arb_req_i,        // PTW request to L2-Cache
+  input  var l1dc_l2c_req_t   l1dc_l2arb_req_i,       // D-Cache request to L2-Cache
+  input  var icache_l2_req_t  icache_l2arb_req_i,     // I-Cache request to L2-Cache
+  input  var ptw_l2c_req_t    ptw_l2arb_req_i,        // PTW request to L2-Cache
   output l2arb_l2c_req_t  l2arb_l2c_req_o,        // Final L2-Cache request
   // Request channel ready
   input  logic            l2c_l2arb_req_rdy_i,    // L2-Cache ready for a request
@@ -33,7 +33,7 @@ module l2c_arbiter
   output logic            l2arb_icache_req_rdy_o, // L2-Cache ready for the I-Cache
   output logic            l2arb_ptw_req_rdy_o,    // L2-Cache ready for the PTW
   // Answer channel
-  input  l2c_l2arb_ans_t  l2c_l2arb_ans_i,        // L2-Cache answer to someone
+  input  var l2c_l2arb_ans_t  l2c_l2arb_ans_i,        // L2-Cache answer to someone
   output l2c_l1dc_ans_t   l2arb_l1dc_ans_o,       // L2-Cache answer to D-Cache
   output l2_icache_ans_t  l2arb_icache_ans_o,     // L2-Cache answer to I-Cache
   output l2c_ptw_ans_t    l2arb_ptw_ans_o,        // L2-Cache answer to PTW

@@ -22,15 +22,15 @@ module tlb_arbiter
   input  logic             clk_i,
   input  logic             rst_ni,
   // Request channel
-  input  itlb_l2tlb_req_t  itlb_l2tlb_req_i,
-  input  dtlb_l2tlb_req_t  dtlb_l2tlb_req_i,
+  input  var itlb_l2tlb_req_t  itlb_l2tlb_req_i,
+  input  var dtlb_l2tlb_req_t  dtlb_l2tlb_req_i,
   output l1tlb_l2tlb_req_t l1tlb_l2tlb_req_o,
   // Request channel ready
   input  logic             l2tlb_l1tlb_req_rdy_i,
   output logic             l2tlb_itlb_req_rdy_o,
   output logic             l2tlb_dtlb_req_rdy_o,
   // Answer channel
-  input  l2tlb_l1tlb_ans_t l2tlb_l1tlb_ans_i,
+  input  var l2tlb_l1tlb_ans_t l2tlb_l1tlb_ans_i,
   output l2tlb_itlb_ans_t  l2tlb_itlb_ans_o,
   output l2tlb_dtlb_ans_t  l2tlb_dtlb_ans_o,
   // Answer channel ready
