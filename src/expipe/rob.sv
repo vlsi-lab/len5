@@ -10,9 +10,7 @@
 //
 // File: rob.sv
 // Author: Michele Caon
-// Date: 03/11/2019
-
-//`include "modn_counter.sv"
+// Date: 03/11/2019ù
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
@@ -54,7 +52,7 @@ module rob
     output  logic                       cdb_ready_o,
 
     // Data from the CDB
-    input   cdb_data_t                  cdb_data_i,
+    input   var cdb_data_t                  cdb_data_i,
 
     // Handshake from/to the committing logic
     input   logic                       comm_ready_i,
@@ -68,7 +66,8 @@ module rob
 	output  logic [REG_IDX_LEN-1:0]     fp_comm_rd_idx_o,          // the destination register (rd)
     output  logic [XLEN-1:0]            fp_comm_value_o,           // the result of the instruction
     output  logic                       comm_except_raised_o,
-    output  logic [ROB_EXCEPT_LEN-1:0]  comm_except_code_o,
+    //output  logic [ROB_EXCEPT_LEN-1:0]  comm_except_code_o,
+	output  except_code_t  comm_except_code_o,
     output  logic [ROB_IDX_LEN-1:0]     comm_head_idx_o,        // ROB head idx to update register status
 
     // Data from/to the store buffer
@@ -86,6 +85,21 @@ module rob
 
     // ROB data structure 
     rob_entry_t                         rob_data [0:ROB_DEPTH-1]; 
+
+    // Status signals
+    logic [0:ROB_DEPTH-1]               valid_a, res_ready_a;
+    logic [ROB_EXCEPT_LEN-1:0]  comm_except_code_test;
+
+    //--------------------------\\
+    //----- STATUS SIGNALS -----\\
+    //--------------------------\\
+    // These are required because name selection after indexing is not supported
+    always_comb begin: status_signals_gen
+        for (int i = 0; i < ROB_DEPTH; i++) begin
+            valid_a[i]          = rob_data[i].valid;
+            res_ready_a[i]      = rob_data[i].res_ready;
+        end
+    end
 
     //-----------------------------\\
     //----- ROB CONTROL LOGIC -----\\
@@ -234,7 +248,29 @@ module rob
 	assign fp_comm_rd_idx_o        = rob_data[rob_head_idx].rd_idx;//Fix it
     assign fp_comm_value_o         = rob_data[rob_head_idx].res_value;//Fix it
     assign comm_except_raised_o = rob_data[rob_head_idx].except_raised;
-    assign comm_except_code_o   = rob_data[rob_head_idx].except_code;
+    assign comm_except_code_test   = rob_data[rob_head_idx].except_code;
     assign comm_head_idx_o      = rob_head_idx;
+
+	// Exception assignment
+  always_comb begin
+    case (comm_except_code_test)
+      4'h0: 		begin comm_except_code_o = E_I_ADDR_MISALIGNED; 	end
+      4'h1:    		begin comm_except_code_o = E_I_ACCESS_FAULT;	 	end
+      4'h2:      	begin comm_except_code_o = E_ILLEGAL_INSTRUCTION;	end
+	  4'h3: 		begin comm_except_code_o = E_BREAKPOINT; 			end
+      4'h4:    		begin comm_except_code_o = E_LD_ADDR_MISALIGNED; 	end
+      4'h5:      	begin comm_except_code_o = E_LD_ACCESS_FAULT;		end
+	  4'h6: 		begin comm_except_code_o = E_ST_ADDR_MISALIGNED;	end
+      4'h7:    		begin comm_except_code_o = E_ST_ACCESS_FAULT;	 	end
+      4'h8:      	begin comm_except_code_o = E_ENV_CALL_UMODE;		end
+	  4'h9: 		begin comm_except_code_o = E_ENV_CALL_SMODE; 		end
+	  4'ha:      	begin comm_except_code_o = E_UNKNOWN;				end
+      4'hb:    		begin comm_except_code_o = E_ENV_CALL_MMODE; 		end
+      4'hc:      	begin comm_except_code_o = E_INSTR_PAGE_FAULT;		end
+	  4'hd: 		begin comm_except_code_o = E_LD_PAGE_FAULT;			end
+      4'hf:    		begin comm_except_code_o = E_ST_PAGE_FAULT; 		end
+      default:    		begin comm_except_code_o = E_UNKNOWN; 			end
+    endcase
+  end
 
 endmodule

@@ -15,7 +15,7 @@
 import expipe_pkg::*;
 import len5_pkg::EU_N;
 
-module cdb_arbiter
+module cdb_arbiter 
 (
     input   logic                       clk_i,
     input   logic                       rst_n_i,
@@ -65,11 +65,11 @@ module cdb_arbiter
         .enc_o          (enc_out),
         .valid_o        (enc_valid)
     );
-
+    
     // Decoder:
     always_comb begin: valid_dec
         dec_valid_a = '0; // all zeros by default 
-        if (enc_valid) begin // if at least one valid is active
+        if (|mux_valid_a) begin // if at least one valid is active
             dec_valid_a[enc_out] = 1'b1; 
         end
     end

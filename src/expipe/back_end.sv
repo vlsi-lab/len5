@@ -12,24 +12,13 @@
 // Author: WALID WALID
 // Date: 17/10/2020
 
-//`include "modn_counter.sv"
-//`include "issue_queue_fifo.sv"
-
-//`include "issue_q_l.sv"
-//`include "reg_status.sv"
-//`include "int_rf.sv"
-//`include "fp_rf.sv"
-//`include "exec_unit.sv"
-//`include "commit_logic.sv"
-//`include "rob.sv"
-//`include "cdb.sv"
 
 import len5_pkg::*;
 import expipe_pkg::*;
 import memory_pkg::*;
 import csr_pkg::*;
 
-module back_end
+module back_end 
 (
     input   logic               clk_i,
     input   logic               rst_n_i,
@@ -52,7 +41,7 @@ module back_end
     // To the main control 
     output  logic                       main_cu_stall_o,
 	
-	// Data for execution unit
+	// Data for Control unit
 	input   branch_type_t               branch_type_i,
 	input   ldst_type_t             	ldst_type_i,
 
@@ -62,14 +51,23 @@ module back_end
   	output  logic             res_taken_o,
 	output  logic 			  res_mispredict_o,
 
+	output   logic                       except_raised_o,
+    //output   logic [ROB_EXCEPT_LEN-1:0]  except_code_o,
+	output   except_code_t  except_code_o,
+
+	output   logic                  except_o,
+    output   logic [XLEN-1:0]  		except_pc_o,
+
+	output logic [ROB_IDX_LEN-1:0] rob_head_idx_o,
+
 	// Handshake and data from/to the TLB
-    input   dtlb_lsq_ans_t          dtlb_ans_i,
-    input   dtlb_lsq_wup_t          dtlb_wup_i,
+    input   var dtlb_lsq_ans_t          dtlb_ans_i,
+    input   var dtlb_lsq_wup_t          dtlb_wup_i,
     output  lsq_dtlb_req_t          dtlb_req_o,
 
     // Handshake and data from/to the D$
-    input   l1dc_lsq_ans_t          dcache_ans_i,
-    input   l1dc_lsq_wup_t          dcache_wup_i,
+    input   var l1dc_lsq_ans_t          dcache_ans_i,
+    input   var l1dc_lsq_wup_t          dcache_wup_i,
     output  lsq_l1dc_req_t          dcache_req_o
 );
 
@@ -173,14 +171,14 @@ module back_end
     logic                   rf_fp_comm_ready_o;
 
 	// Data int/fp regfile from/to the commit logic
-	logic [REG_IDX_LEN-1:0] comm_rf_rd_idx_i;          // destination register of the committing instr.
-    logic [XLEN-1:0]        comm_rf_rd_value_i;
-	logic [REG_IDX_LEN-1:0] fp_comm_rf_rd_idx_i;          // destination register of the committing instr.
-	logic [XLEN-1:0]        fp_comm_rf_rd_value_i;
+	//logic [REG_IDX_LEN-1:0] comm_rf_rd_idx_i;          // destination register of the committing instr.
+    //logic [XLEN-1:0]        comm_rf_rd_value_i;
+	//logic [REG_IDX_LEN-1:0] fp_comm_rf_rd_idx_i;          // destination register of the committing instr.
+	//logic [XLEN-1:0]        fp_comm_rf_rd_value_i;
 
 	// Hanshake of Exec from/to the CDB 
     logic    [0:EU_N-1]               cdb_ready_i;
-    logic                   cdb_valid_i;        // to know if the CDB is carrying valid data
+    //logic                   cdb_valid_i;        // to know if the CDB is carrying valid data
     logic    [0:EU_N-1]               cdb_valid_o;
 
     // Data of Exec from/to the CDB
@@ -197,8 +195,8 @@ module back_end
 	// Control Exec from/to the ROB
     logic [ROB_IDX_LEN-1:0] rob_head_idx_i;
     logic                   rob_store_committing_o;
-	logic [ROB_IDX_LEN-1:0] comm_head_idx_i;
-	logic [ROB_IDX_LEN-1:0] fp_comm_head_idx_i;
+	//logic [ROB_IDX_LEN-1:0] comm_head_idx_i;
+	//logic [ROB_IDX_LEN-1:0] fp_comm_head_idx_i;
 
 	// Hanshake of Exec from/to the CDB 
     //logic                   cdb_lb_valid_i;
@@ -222,11 +220,12 @@ module back_end
     logic [XLEN-1:0]            rob_pc_i;
     logic [REG_IDX_LEN-1:0]     rob_rd_idx_o;
     logic [XLEN-1:0]            rob_value_i;
-	logic [REG_IDX_LEN-1:0]     fp_rob_rd_idx_i;
+	//logic [REG_IDX_LEN-1:0]     fp_rob_rd_idx_i;
 	logic [REG_IDX_LEN-1:0]     fp_rob_rd_idx_o;
     logic [XLEN-1:0]            fp_rob_value_i;
     logic                       rob_except_raised_o;
-    logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_o;
+    //logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_o;
+	except_code_t  rob_except_code_o;
 
 	// Hanshake of rob from/to the CDB 
     logic                   rob_cdb_ready_o;
@@ -238,6 +237,16 @@ module back_end
 	logic [ROB_IDX_LEN-1:0]     sb_head_idx_o;
 
 	//CDB
+	//new added
+	// Handshake from/to the cdb
+	logic                       cdb_valid_i;
+	logic                       cdb_ready_o;
+
+	// Data from the cdb
+	logic                       cdb_except_rasied_i;
+	logic [XLEN-1:0]            cdb_value_i;
+	logic [ROB_IDX_LEN-1:0]		cdb_rob_idx_i;
+//To here
 
 
  //---------------\\
@@ -323,6 +332,15 @@ issue_q_l u_issue_q_l
     .ex_pred_pc_o(ex_pred_pc_o),              
     .ex_pred_target_o(ex_pred_target_o),         
     .ex_pred_taken_o(ex_pred_taken_o),
+//New
+	// Handshake from/to the cdb
+	.cdb_valid_i(cdb_valid_i),
+	.cdb_ready_o(cdb_ready_o),
+
+	// Data from the cdb
+	.cdb_except_rasied_i(cdb_except_rasied_i),
+	.cdb_value_i(cdb_value_i),
+	.cdb_rob_idx_i(cdb_rob_idx_i),
 
     // Handshake from/to the ROB
     .rob_ready_i(rob_ready_i),           
@@ -342,7 +360,7 @@ issue_q_l u_issue_q_l
     .rob_except_raised_o(rob_except_raised_i),    
     .rob_except_code_o(rob_except_code_i),      
     .rob_except_aux_o(rob_except_aux_i),       
-    .rob_res_ready_o(rob_res_ready_i)
+    .rob_res_ready_o(rob_res_ready_o)
 );
 
 reg_status #( 32,5) u_reg_status_int 
@@ -368,8 +386,8 @@ reg_status #( 32,5) u_reg_status_int
     .issue_rs2_rob_idx_o(int_regstat_rs2_rob_idx_i),    // the index of the ROB where the result is found
 
     // Handshake from/to the commit logic
-    .comm_valid_i(comm_valid_i),
-    .comm_ready_o(comm_ready_o),
+    .comm_valid_i(comm_ready_o),
+    .comm_ready_o(comm_valid_i),
 
     // Data from the commit logic
     .comm_rd_idx_i(comm_rd_idx_i),          // destination register of the committing instr.
@@ -399,8 +417,8 @@ reg_status # (32,5) u_reg_status_fp
     .issue_rs2_rob_idx_o(fp_regstat_rs2_rob_idx_i),    // the index of the ROB where the result is found
 
     // Handshake from/to the commit logic
-    .comm_valid_i(fp_comm_valid_i),
-    .comm_ready_o(fp_comm_ready_o),
+    .comm_valid_i(fp_comm_ready_o),
+    .comm_ready_o(fp_comm_valid_i),
 
     // Data from the commit logic
     .comm_rd_idx_i(fp_comm_rd_idx_i),          // destination register of the committing instr.
@@ -417,8 +435,8 @@ int_rf u_int_rf(
     .comm_ready_o(rf_comm_valid_i),
 
     // Data from the commit logic (result write port)
-    .comm_rd_idx_i(comm_rf_rd_idx_i),
-    .comm_rd_value_i(comm_rf_rd_value_i),
+    .comm_rd_idx_i(comm_rd_idx_i),//(comm_rf_rd_idx_i),
+    .comm_rd_value_i(comm_rd_value_i),//(comm_rf_rd_value_i),
 
     // Data to the issue stage (operands read ports)
     .issue_rs1_idx_i(intrf_rs1_idx_o),
@@ -437,8 +455,8 @@ fp_rf u_fp_rf(
     .comm_ready_o(rf_fp_comm_valid_i),
 
     // Data from the commit logic (result write port)
-    .comm_rd_idx_i(fp_comm_rf_rd_idx_i),
-    .comm_rd_value_i(fp_comm_rf_rd_value_i),
+    .comm_rd_idx_i(fp_comm_rd_idx_i),//(fp_comm_rf_rd_idx_i),
+    .comm_rd_value_i(fp_comm_rd_value_i),//(fp_comm_rf_rd_value_i),
 
     // Data to the issue stage (operands read ports)
     .issue_rs1_idx_i(fprf_rs1_idx_o),
@@ -496,7 +514,7 @@ exec_unit u_exec_unit(
 
     // Hanshake from/to the CDB 
     .cdb_ready_i(cdb_ready_i),
-    .cdb_valid_i(cdb_valid_i),        // to know if the CDB is carrying valid data
+    .cdb_valid_i(rob_cdb_valid_i),//cdb_valid_i),        // to know if the CDB is carrying valid data
     .cdb_valid_o(cdb_valid_o),
 
     // Data from/to the CDB
@@ -529,6 +547,8 @@ exec_unit u_exec_unit(
 );
 
 commit_logic u_commit_logic(
+	.clk_i(clk_i),
+    .rst_n_i(rst_n_i),
     // Control to the ROB
     .rob_valid_i(comm_valid_ROB_i),
     .rob_ready_o(comm_ready_ROB_o), 
@@ -547,6 +567,17 @@ commit_logic u_commit_logic(
 
     // Conditions
     .sb_store_committing_i(rob_store_committing_o), // a store is ready to commit from the store buffer
+
+	.rob_except_raised_o(except_raised_o),
+	.rob_except_code_o(except_code_o),
+	.except_new_o(except_o),
+	.except_new_pc_o(except_pc_o),
+
+	// HS from to the register status
+    .int_rs_ready_i(comm_valid_i),
+    .fp_rs_ready_i(fp_comm_valid_i),
+    .int_rs_valid_o(comm_ready_o),
+    .fp_rs_valid_o(fp_comm_ready_o),
 
     // HS from to the register files
     .int_rf_ready_i(rf_comm_valid_i),
@@ -600,7 +631,9 @@ rob u_rob
     .comm_except_code_o         (rob_except_code_o),
     .comm_head_idx_o            (rob_head_idx_i), //SOlve this 
     .sb_head_idx_o              (sb_head_idx_o)
-);     
+); 
+
+	assign 	rob_head_idx_o	=	rob_head_idx_i;    
 
 cdb u_cdb(
     .clk_i(clk_i),
@@ -623,6 +656,16 @@ cdb u_cdb(
     // Data from the reservation stations or issue queue.
     .rs_data_i(cdb_data_o[1:EU_N-1]),
 	.rs_data_o(cdb_data_i[1:EU_N-1]),
+
+	//New
+	// Handshake from/to the cdb
+	.cdb_valid_i(cdb_valid_i),
+	.cdb_ready_o(cdb_ready_o),
+
+	// Data from the cdb
+	.cdb_except_rasied_i(cdb_except_rasied_i),
+	.cdb_value_i(cdb_value_i),
+	.cdb_rob_idx_i(cdb_rob_idx_i),
 
     // Handshake from/to the ROB
     .rob_ready_i(rob_cdb_ready_o),

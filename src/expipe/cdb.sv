@@ -16,7 +16,7 @@ import expipe_pkg::*;
 import len5_pkg::XLEN;
 import len5_pkg::EU_N;
 
-module cdb
+module cdb 
 (
     input   logic               clk_i,
     input   logic               rst_n_i,
@@ -28,7 +28,7 @@ module cdb
     output  logic               max_prio_ready_o,
 
     // Data from the maximum priority EU
-    input   cdb_data_t          max_prio_data_i,
+    input   var cdb_data_t          max_prio_data_i,
 	output  cdb_data_t          max_prio_data_o,
 
     // Handshake from/to the reservation stations
@@ -36,8 +36,19 @@ module cdb
     output  logic [0:EU_N-2]    rs_ready_o,
 
     // Data from the reservation stations or issue queue.
-    input   cdb_data_t          rs_data_i[0:EU_N-2],
+    input   var cdb_data_t          rs_data_i[0:EU_N-2],
 	output  cdb_data_t          rs_data_o[0:EU_N-2],
+
+	//new added
+	// Handshake from/to the IQL
+	output   logic                       cdb_valid_i,
+	input  logic                         cdb_ready_o,
+
+	// Data to the IQL
+	output   logic                       cdb_except_rasied_i,
+	output   logic [XLEN-1:0]            cdb_value_i,
+	output   logic [ROB_IDX_LEN-1:0]	 cdb_rob_idx_i,
+	//To here
 
     // Handshake from/to the ROB
     input   logic               rob_ready_i,
@@ -47,10 +58,16 @@ module cdb
     output  cdb_data_t          rob_data_o
 );
 
-    // DEFINITIONS    
+	
+    // DEFINITIONS  
+	logic                       rob_valid_k;
+	//cdb_rob_idx_i = rob_idx;
+    //cdb_value_i   = value;
+    //cdb_except_rasied_i =   except_raised; 
 
     // CDB MUX
     cdb_data_t                  low_prio_mux_data;
+	//cdb_data_t      [0:EU_N-2]    temp;
 
     // Served unit index
     logic                       served_max_prio;
@@ -76,12 +93,15 @@ module cdb
 
         // Handshake from/to the ROB
         .rob_ready_i        (rob_ready_i),
-        .rob_valid_o        (rob_valid_o),
+        .rob_valid_o        (rob_valid_k),
 
         // Served unit
         .served_max_prio_o  (served_max_prio),
         .served_o           (served)
     );
+
+	assign rob_valid_o = rob_valid_k;
+	assign cdb_valid_i = rob_valid_k;
 
     //-------------------\\
     //----- CDB MUX -----\\
@@ -91,8 +111,14 @@ module cdb
     
     // Low priority MUX
     assign low_prio_mux_data = rs_data_i[served];
+	//assign temp = rs_data_i;
+	//assign rs_data_o[served] = rs_data_i[served]; // temp[served];
 	assign rs_data_o = rs_data_i; // temp[served];
 	assign max_prio_data_o =  max_prio_data_i;
+//New
+	assign cdb_rob_idx_i = rob_data_o.rob_idx;
+    assign cdb_value_i   = rob_data_o.value;
+    assign cdb_except_rasied_i =   rob_data_o.except_raised; 
 
     
 endmodule
