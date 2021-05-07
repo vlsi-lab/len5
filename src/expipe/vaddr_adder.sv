@@ -21,10 +21,7 @@ import csr_pkg::BARE;
 import csr_pkg::SV39;
 import csr_pkg::SV48;
 
-module vaddr_adder 
-#(
-    IDX_LEN = 8
-)
+module vaddr_adder #(IDX_LEN = 8)
 (
     input   logic                       clk_i,
     input   logic                       rst_n_i,
@@ -78,7 +75,7 @@ module vaddr_adder
             ldst_type   <= LS_DOUBLEWORD;
             lsb_idx_o   <= 'd0;
             lsb_valid_o <= 'd0;
-        end else if (lsb_ready_i) begin /* only proceed if the LSB is ready */    
+        end else if (lsb_ready_i) begin /* only proceed if the LSB is ready */     
             is_store_o  <= is_store_i;
             rs1_value   <= rs1_value_i;
             imm_value   <= imm_value_i;

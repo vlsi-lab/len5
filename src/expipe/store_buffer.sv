@@ -12,15 +12,6 @@
 // Author: Michele Caon
 // Date: 27/10/2019
 
-//`ifndef LSUNIT
-//`ifdef ENABLE_AGE_BASED_SELECTOR
-//`include "age_based_sel.sv"
-//`else
-//`include "prio_enc.sv"
-//`endif
-//`endif
-
-//`include "modn_counter.sv"
 
 import len5_pkg::XLEN;
 import len5_pkg::S_IMM;
@@ -185,6 +176,7 @@ module store_buffer
             valid_a[i]          = sb_data[i].valid;
             busy_a[i]           = sb_data[i].busy;
             rs1_ready_a[i]      = sb_data[i].rs1_ready;
+            //rs2_ready_a[i]      = sb_data[i].rs2_ready;   /* TODO: do we need this? */
             vaddr_ready_a[i]    = sb_data[i].vaddr_ready;
             paddr_ready_a[i]    = sb_data[i].paddr_ready;
             except_raised_a[i]  = sb_data[i].except_raised;

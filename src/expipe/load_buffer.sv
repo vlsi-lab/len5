@@ -12,15 +12,6 @@
 // Author: Michele Caon
 // Date: 24/10/2019
 
-//`ifndef LSUNIT
-//`ifdef ENABLE_AGE_BASED_SELECTOR
-//`include "age_based_sel.sv"
-//`else
-//`include "prio_enc.sv"
-//`endif
-//`endif
-
-//`include "byte_selector.sv"
 
 import len5_pkg::XLEN;
 import len5_pkg::I_IMM;
@@ -328,7 +319,7 @@ module load_buffer
                 lb_data[i].valid            <= 1'b0;
                 lb_data[i].busy             <= 1'b0;
                 lb_data[i].store_dep        <= 1'b0;
-                lb_data[i].older_stores     <= '0;
+                lb_data[i].older_stores     <= 'b0;
                 lb_data[i].rs1_ready        <= 1'b0;
                 lb_data[i].vaddr_ready      <= 1'b0;
                 lb_data[i].paddr_ready      <= 1'b0;
@@ -380,7 +371,7 @@ module load_buffer
                             end
                             default: begin
                                 lb_data[i].busy             <= 1'b0;        // clear busy so vaddr forwarding is skipped
-                                lb_data[i].except_raised    <= 1'b1;
+                                lb_data[i].except_raised    <= 1'b1;		// This is in case the default happens, which is not ok since it should not occur in normal situations
                                 lb_data[i].except_code      <= E_UNKNOWN;   // reserved code 10
                                 lb_data[i].ld_value         <= lb_data[i].vaddr;
                                 lb_data[i].completed        <= 1'b1;
