@@ -21,7 +21,7 @@ import expipe_pkg::*;
 import len5_pkg::ILEN;
 import len5_pkg::OPCODE_LEN;
 
-module commit_decoder
+module commit_decoder 
 (
     // Data from the commit logic
     input   logic [ILEN-1:0]        instruction_i,
@@ -29,12 +29,20 @@ module commit_decoder
     // Conditions
     input   logic                   sb_store_committing_i,
 
+	input   logic                   rob_valid_i,
+	input   logic                   no_exception_i,
+	input   logic                   int_rs_ready_i,
+	input   logic                   fp_rs_ready_i,
+	input   logic                   int_rf_ready_i,
+	input   logic                   fp_rf_ready_i,
+	input   logic                   mispredict_i,
+
     // Control to the commit logic
     output  logic                   comm_possible_o    
 );
 
     // DEFINITIONS
-    logic [OPCODE_LEN -1:00]       instr_opcode;
+    logic [OPCODE_LEN -1:0]       instr_opcode;
     
     //-------------------------------\\
     //----- EXTRACT INSTR. INFO -----\\
@@ -47,11 +55,25 @@ module commit_decoder
     always_comb begin: comm_decoder
         case(instr_opcode)
             // If the committing instruction is a store, check if it is also committing from the store buffer
-            `OPCODE_SB, `OPCODE_SD, `OPCODE_SH, `OPCODE_SW: begin
+            `OPCODE_SB: begin
                 comm_possible_o = (sb_store_committing_i) ? 1'b1 : 1'b0;
             end
+			`OPCODE_BEQ: begin
+                comm_possible_o = (rob_valid_i && no_exception_i && !mispredict_i) ? 1'b1 : 1'b0;
+            end
+			`OPCODE_FENCE: begin
+                comm_possible_o = (rob_valid_i && no_exception_i) ? 1'b1 : 1'b0;
+            end
+	       	//`OPCODE_MTYPE, See it. Only mult and div types
+       		`OPCODE_ADD, `OPCODE_ADDI, `OPCODE_ADDIW, `OPCODE_ADDW, `OPCODE_LUI, `OPCODE_JAL, `OPCODE_JALR: begin // complete it later also jump
+                comm_possible_o = (rob_valid_i && no_exception_i && int_rf_ready_i && int_rs_ready_i) ? 1'b1 : 1'b0;
+            end
+			// Do here for floating point loads
+			`OPCODE_LD: begin // complete it later , `OPCODE_FTYPE, `OPCODE_DTYPE, `OPCODE_QTYPR
+                comm_possible_o = (rob_valid_i && no_exception_i && fp_rf_ready_i && fp_rs_ready_i) ? 1'b1 : 1'b0;
+            end
 
-            default: comm_possible_o = 1'b1; // normally commit without further checks
+            default: comm_possible_o = 1'b0; // normally commit without further checks
         endcase
     end
     
