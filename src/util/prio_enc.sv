@@ -17,7 +17,7 @@
 module prio_enc #(N = 8)
 (
     input   logic [N-1:0]           lines_i,
-    output  logic [$clog2(N)-1:0]   enc_o,
+    output  logic [$clog2(N)-1:0]   enc_o,  //2:0
     output  logic                   valid_o
 );
     // The priority decreases with the input index: lines_i[0] has the highest priority and lines_i[N] the lowest

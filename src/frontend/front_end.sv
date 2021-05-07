@@ -13,9 +13,8 @@
 // Date: 07/10/2019
 
 import len5_pkg::*;
-
-//`include "pc_gen_stage.sv"
-//`include "fetch_stage.sv"
+import memory_pkg::*;
+import expipe_pkg::*;
 
 module front_end
 #(
@@ -32,7 +31,7 @@ module front_end
   output  logic [XLEN-1:0]  addr_o,
   output  logic             addr_valid_o,
   input   logic             addr_ready_i,
-  input   icache_out_t      data_i,
+  input   var icache_out_t      data_i,
   input   logic             data_valid_i,
   output  logic             data_ready_o,
 
@@ -43,7 +42,16 @@ module front_end
   output  prediction_t      pred_o,
 
   // From branch unit (ex stage)
-  input   resolution_t      res_i,
+  input   var resolution_t      res_i,
+
+  // From Icache
+  input var icache_frontend_ans_t icache_frontend_ans_i,
+
+  // To backend
+  output logic except_o,
+  //output logic [ROB_EXCEPT_LEN-1:0] except_code_o,
+  output except_code_t except_code_o,
+  
 
   // For pc_gen from or to back end
   input   logic             except_i,
@@ -59,7 +67,7 @@ fetch_stage #(.HLEN(HLEN),.BTB_BITS(BTB_BITS)) u_fetch_stage
 (
   	.clk_i    (clk_i),
     .rst_n_i  (rst_n_i),
-    .flush_i  (flush),
+    .flush_i  (flush_i),
   
   // From/to PC gen stage
   .pc_i				(pc_o),
@@ -78,6 +86,11 @@ fetch_stage #(.HLEN(HLEN),.BTB_BITS(BTB_BITS)) u_fetch_stage
   .issue_valid_o	(issue_valid_o),
   .instruction_o	(instruction_o),
   .pred_o			(pred_i),
+
+  .icache_frontend_ans_i(icache_frontend_ans_i),
+
+  .except_o(except_o),
+  .except_code_o(except_code_o),
 
   // From branch unit (ex stage)
   .res_i			(res_i)  

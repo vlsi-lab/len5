@@ -24,7 +24,7 @@ module gshare
   input   logic             rst_n_i,
   input   logic             flush_i,
   input   logic [XLEN-1:0]  pc_i,
-  input   resolution_t      res_i,
+  input   var resolution_t      res_i,
 
   output  logic             taken_o
 );

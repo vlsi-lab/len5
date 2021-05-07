@@ -13,10 +13,9 @@
 // Date: 03/10/2019
 
 import len5_pkg::*;
+import memory_pkg::*;
+import expipe_pkg::*;
 
-//`include "instr_sel.sv"
-//`include "presence_check.sv"
-//`include "fetch_controller.sv"
 
 module ifu
 (
@@ -29,9 +28,17 @@ module ifu
   output  logic             fetch_ready_o,
 
   // From/to i-cache interface
-  input   icache_out_t      cache_out_i,
+  input   var icache_out_t      cache_out_i,
   input   logic             read_done_i,
   output  logic             read_req_o,
+
+  // From Icache
+  input var icache_frontend_ans_t icache_frontend_ans_i,
+
+  // To backend
+  output logic except_o,
+  //output logic [ROB_EXCEPT_LEN-1:0] except_code_o,
+  output except_code_t except_code_o,
 
   // From/to instruction decode
   input   logic             issue_ready_i,
@@ -43,10 +50,21 @@ module ifu
   icache_out_t line_reg;
   icache_out_t line_bak;
   logic fetch_ready;
+  logic except_temp;
   logic here, will_be_here, line_valid;
   pc_src_t pc_sel;
   line_src_t line_sel;
   logic [XLEN-1:0] prev_pc_d, prev_pc_q;
+
+  // Exception detector
+  always_comb begin
+    case (icache_frontend_ans_i.exception)
+      NoException: 		begin except_code_o = E_UNKNOWN; 			except_temp = '0;	end
+      PageFault:    	begin except_code_o = E_INSTR_PAGE_FAULT; 	except_temp = '1;	end
+      AccessException:  begin except_code_o = E_I_ACCESS_FAULT;		except_temp = '1;   end
+      default:    		begin except_code_o = E_UNKNOWN; 			except_temp = '1;	end
+    endcase
+  end
 
   // --------
   // Line reg
@@ -55,13 +73,17 @@ module ifu
     if (!rst_n_i) begin
       line_valid <= '0;
       line_reg <= '0;
+	    except_o <= '0;
     end else begin
       if (flush_i) begin
         line_valid <= '0;
         line_reg <= '0;
+		    except_o <= '0;
       end else if (read_done_i) begin
         line_valid <= '1;
         line_reg <= cache_out_i;
+        //except_reg <= except_type;
+        except_o <= except_temp;
       end
     end
   end
@@ -144,6 +166,6 @@ module ifu
 
   // In case of flush, be ready to fetch next PC
   // at the following cycle
-  assign fetch_ready_o = fetch_ready | flush_i;
+  assign fetch_ready_o = fetch_ready;// | flush_i;
 
 endmodule

@@ -13,10 +13,8 @@
 // Date: 07/10/2019
 
 import len5_pkg::*;
-
-//`include "icache_ifc.sv"
-//`include "bpu.sv"
-//`include "ifu.sv"
+import memory_pkg::*;
+import expipe_pkg::*;
 
 module fetch_stage
 #(
@@ -36,7 +34,7 @@ module fetch_stage
   output  logic [XLEN-1:0]  addr_o,
   output  logic             addr_valid_o,
   input   logic             addr_ready_i,
-  input   icache_out_t      data_i,
+  input   var icache_out_t      data_i,
   input   logic             data_valid_i,
   output  logic             data_ready_o,
 
@@ -46,8 +44,16 @@ module fetch_stage
   output  logic [ILEN-1:0]  instruction_o,
   output  prediction_t      pred_o,
 
+  // From Icache
+  input   var icache_frontend_ans_t icache_frontend_ans_i,
+
+  // To backend
+  output logic except_o,
+  //output logic [ROB_EXCEPT_LEN-1:0] except_code_o,
+  output except_code_t except_code_o,
+
   // From branch unit (ex stage)
-  input   resolution_t      res_i  
+  input   var resolution_t      res_i  
 );
 
   // Signal declarations
@@ -95,6 +101,11 @@ module fetch_stage
     .cache_out_i    (cache_out),
     .read_done_i    (read_done),
     .read_req_o     (read_req),
+
+	.icache_frontend_ans_i(icache_frontend_ans_i),
+
+  .except_o(except_o),
+  .except_code_o(except_code_o),
 
     // From/to instruction decode
     .issue_ready_i  (issue_ready_i),

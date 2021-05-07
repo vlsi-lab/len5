@@ -19,11 +19,14 @@ package expipe_pkg;
 
     /* Inlcude isnstruction macros */
     `include "instr_macros.svh"
-
+    
     // Import global constants
     import len5_pkg::*;
 
+    /* Add memory definitions */
     import memory_pkg::PPN_LEN;
+    import memory_pkg::PADDR_LEN;
+    import memory_pkg::PAGE_OFFSET_LEN;
 
     //--------------------\\
     //----- SWITCHES -----\\
@@ -41,7 +44,7 @@ package expipe_pkg;
     //----- ROB -----\\
     //---------------\\
     
-    localparam ROB_IDX_LEN = $clog2(ROB_DEPTH); // ROB index width
+    localparam ROB_IDX_LEN = $clog2(ROB_DEPTH);//3 // ROB index width
     localparam ROB_EXCEPT_LEN = 4;  // only the last four bits of the mcause/scause CSR
 
     // Width of the opcode field (decoded during issue stage)
@@ -178,7 +181,8 @@ package expipe_pkg;
     localparam MAX_EU_CTL_LEN   = BU_CTL_LEN;   // this must be set to the maximum of the previous parameters
     
     // ASSIGNED EU
-    typedef enum { 
+    typedef enum logic [$clog2(EU_N)
+-1:0] { //3
         EU_LOAD_BUFFER,     // 0
         EU_STORE_BUFFER,    // 1
         EU_BRANCH_UNIT,     // 2
@@ -193,8 +197,8 @@ package expipe_pkg;
     //---------------------------\\
     //----- LOAD-STORE UNIT -----\\
     //---------------------------\\
-    localparam LDBUFF_IDX_LEN = $clog2(LDBUFF_DEPTH); // load buffer address width
-    localparam STBUFF_IDX_LEN = $clog2(STBUFF_DEPTH); // store buffer address width
+    localparam LDBUFF_IDX_LEN = $clog2(LDBUFF_DEPTH); //3 // load buffer address width
+    localparam STBUFF_IDX_LEN = $clog2(STBUFF_DEPTH); //3 // store buffer address width
     localparam BUFF_IDX_LEN = (LDBUFF_IDX_LEN > STBUFF_IDX_LEN) ? (LDBUFF_IDX_LEN) : (STBUFF_IDX_LEN); // the largest of the two. Useful when comparing indexes from both
     localparam EXCEPT_TYPE_LEN = ROB_EXCEPT_LEN; // only the last four bits of the mcause/scause CSR
     localparam LDST_TYPE_LEN = LB_CTL_LEN; // 3 bits: 7 types of load (lb, lh, lw, ld, lbu, lhu, ldu), 4 types of store (sb, sh, sw and sd)

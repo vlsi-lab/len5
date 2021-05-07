@@ -12,12 +12,11 @@
 // Author: Michele Caon
 // Date: 01/11/2019
 
-    
 `define BYTE *8 // 1 byte = 8 bits
 
 import expipe_pkg::*;
 import len5_pkg::XLEN;
-
+    
 module byte_selector
 (
     input ldst_type_t type_i, // load/store type (number of bytes to select)

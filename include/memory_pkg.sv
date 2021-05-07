@@ -243,7 +243,7 @@ import len5_pkg::*;
   } line_addr_t;
 
   // LSQ -> L1 D-Cache
-  localparam LSBUFF_LEN = ($clog2(LDBUFF_DEPTH) > $clog2(STBUFF_DEPTH)) ? $clog2(LDBUFF_DEPTH) : $clog2(STBUFF_DEPTH);
+    localparam LSBUFF_LEN = ($clog2(LDBUFF_DEPTH) > $clog2(STBUFF_DEPTH)) ? $clog2(LDBUFF_DEPTH) : $clog2(STBUFF_DEPTH);
   typedef logic [LSBUFF_LEN-1:0] lsq_addr_t;
   
   typedef enum logic {

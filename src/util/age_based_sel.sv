@@ -14,10 +14,10 @@
 
 module age_based_sel #(
     N = 8,          // power of 2
-    localparam AGE_LEN = $clog2(N) + 1
+    localparam AGE_LEN = $clog2(N) + 1 //4
 ) (
     input   logic [N-1:0]       lines_i,
-    input   logic [AGE_LEN-1:0] ages_i [N],
+    input   logic [AGE_LEN-1:0] ages_i [N-1:0],
     //output logic [$clog2(N)-1:0] enc_o,
     output  logic [3-1:0]       enc_o,
     output  logic               valid_o

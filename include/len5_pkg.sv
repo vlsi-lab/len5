@@ -26,7 +26,7 @@ package len5_pkg;
   localparam FLEN = 64;
   localparam [XLEN-1:0] BOOT_PC = 'h0; // starting PC (to be defined)
 
-  /* Instruction fileds width */
+    /* Instruction fileds width */
   localparam OPCODE_LEN   = 7;
   localparam FUNCT3_LEN   = 3;
   localparam FUNCT7_LEN   = 7;
@@ -75,7 +75,7 @@ package len5_pkg;
   // -----------
   // Branch unit
   // -----------
-  typedef enum logic [2:0] {
+  typedef enum logic [5:0] {
     BEQ   = 'h0,
     BNE   = 'h1,
     BLT   = 'h2,

@@ -16,9 +16,9 @@ import len5_pkg::*;
 
 module instr_sel
 (
-  input   icache_out_t                cache_out_i,
-  input   icache_out_t                line_reg_i,
-  input   icache_out_t                line_bak_i,
+  input   var icache_out_t                cache_out_i,
+  input   var icache_out_t                line_reg_i,
+  input   var icache_out_t                line_bak_i,
   input   logic [ICACHE_OFFSET-1:0]   pc_i,
   input   logic [ICACHE_OFFSET-1:0]   prev_pc_i,
   input   pc_src_t                    pc_sel_i,
