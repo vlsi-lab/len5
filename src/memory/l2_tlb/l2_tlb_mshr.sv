@@ -33,7 +33,7 @@ module L2_tlb_mshr
   output logic         req_available_o,
   output logic         mshr_full_o,
   // Data
-  input  vpn_t         vpn_i,
+  input  var vpn_t         vpn_i,
   input  tlb_arb_tag_e destination_i,
   output vpn_t         ptw_ans_vpn_o,
   output vpn_t         ptw_req_vpn_o,

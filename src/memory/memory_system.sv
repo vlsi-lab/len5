@@ -15,17 +15,8 @@
 import len5_pkg::*;
 import memory_pkg::*;
 
-// `include "dcache/dcache_rst_block.sv"
-// `include "dtlb/dtlb_L1.sv"
-// `include "l1_tlb_arbiter/tlb_arbiter.sv"
-// `include "l2c_arbiter/l2c_arbiter.sv"
-// `include "ptw_ptc/mmu_cache.sv"
-// `include "dcache/updateL2_block.sv"
-// `include "itlb/itlb_L1.sv"
-// `include "dcache/dcache_L1_system.sv"
-// `include "l2_tlb/l2_tlb.sv"
-// `include "ptw_ptc/ptw.sv"
-// `include "icache/icache_L1.sv"
+
+
 
 module memory_system
 (

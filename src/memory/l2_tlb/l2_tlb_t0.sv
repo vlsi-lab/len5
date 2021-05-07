@@ -33,10 +33,10 @@ module L2_tlb_t0
   // (t0 -> Flush unit) control
   output logic             flush_idx_cnt_en_o,
   // (L1 TLB Arbiter -> L2 TLB) request channel
-  input  l1tlb_l2tlb_req_t l1tlb_l2tlb_req_i,
+  input  var l1tlb_l2tlb_req_t l1tlb_l2tlb_req_i,
   output logic             l2tlb_l1tlb_req_rdy_o,
   // (PTW -> L2 TLB) answer channel
-  input  ptw_l2tlb_ans_t   ptw_l2tlb_ans_i,
+  input  var ptw_l2tlb_ans_t   ptw_l2tlb_ans_i,
   output logic             l2tlb_ptw_ans_rdy_o,
   // t0 -> memory
   output l2tlb_dmem_ctrl_t data_mem_ctrl_o [N_WAY],
@@ -47,9 +47,9 @@ module L2_tlb_t0
   output t0_t1_req_t       t0_t1_req_d_o,
   output logic             t0_t1_reg_en_o,
   // (t1 -> t0) request channel
-  input  t1_t0_req_t       t1_t0_req_i,
+  input  var t1_t0_req_t       t1_t0_req_i,
   // (MSHR -> t0) data
-  input  vpn_t             mshr_vpn_i,
+  input  var vpn_t             mshr_vpn_i,
   input  tlb_arb_tag_e     mshr_destination_i,
   // (MSHR -> t0) status
   input  logic             mshr_full_i,

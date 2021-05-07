@@ -15,9 +15,6 @@
 
 import memory_pkg::*;
 
-//`include "mmuc_update_ctrl.sv"
-//`include "pte_checker.sv"
-//`include "ptw_cu.sv"
 
 module ptw
 (
@@ -25,7 +22,7 @@ module ptw
   input  logic               rst_ni,            // async reset
   input  logic               flush_i,           // flush ptw and mmuc
   // L2_tlb -> ptw
-  input  l2tlb_ptw_req_t     tlb_ptw_req_i,     // 3*9 = 27 bits of virtual page numbers
+  input  var l2tlb_ptw_req_t     tlb_ptw_req_i,     // 3*9 = 27 bits of virtual page numbers
   output logic               ptw_tlb_req_rdy_o, // ptw ready for TLB request
   // ptw -> L2_tlb
   output ptw_l2tlb_ans_t     ptw_tlb_ans_o,     // ppn, isSuperpage, exception, valid
@@ -35,12 +32,12 @@ module ptw
   output ptw_mmuc_write_t    ptw_mmuc_write_o,  // info for mmu_cache lines replacement
   output logic               mmuc_flush_o,      // flush the mmuc
   // mmu_cache -> ptw
-  input  mmuc_ptw_ans_t      mmuc_ptw_ans_i,    // low_vpn, hit, full_hit, isSuperpage
+  input  var mmuc_ptw_ans_t      mmuc_ptw_ans_i,    // low_vpn, hit, full_hit, isSuperpage
   // ptw -> L2_cache
   output ptw_l2c_req_t       ptw_l2c_req_o,     // PPN to address a PTE
   input  logic               l2c_ptw_req_rdy_i, // L2 cache ready for ptw
   // L2_cache -> ptw
-  input  l2c_ptw_ans_t       l2c_ptw_ans_i,     // PTE from L2 cache
+  input  var l2c_ptw_ans_t       l2c_ptw_ans_i,     // PTE from L2 cache
   output logic               ptw_l2c_ans_rdy_o, // ptw ready for L2 cache
   // csr -> ptw
   input  logic [PPN_LEN-1:0] csr_root_ppn_i     // the root ppn

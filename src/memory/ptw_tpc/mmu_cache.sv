@@ -16,16 +16,14 @@
 
 import memory_pkg::*;
 
-//`include "tpc_comp_block.sv"
-//`include "tpc_regfile.sv"
 
 module mmu_cache
 (
   input logic            clk_i,
   input logic            rst_ni,           // async reset
   // ptw -> mmu_cache
-  input ptw_mmuc_req_t   ptw_mmuc_req_i,   // first two VPNs
-  input ptw_mmuc_write_t ptw_mmuc_write_i, // info for mmu_cache lines replacement
+  input var ptw_mmuc_req_t   ptw_mmuc_req_i,   // first two VPNs
+  input var ptw_mmuc_write_t ptw_mmuc_write_i, // info for mmu_cache lines replacement
   input logic            mmuc_flush_i,     // flush the mmuc
   // mmu_cache -> ptw
   output mmuc_ptw_ans_t  mmuc_ptw_ans_o    // PPN, hit, full_hit, is_superpage

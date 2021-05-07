@@ -15,17 +15,6 @@
 import len5_pkg::*;
 import memory_pkg::*;
 
-//`include "dcache/dcache_rst_block.sv"
-//`include "dtlb/dtlb_L1.sv"
-//`include "l1_tlb_arbiter/tlb_arbiter.sv"
-//`include "l2c_arbiter/l2c_arbiter.sv"
-//`include "ptw_tpc/mmu_cache.sv"
-//`include "dcache/updateL2_block.sv"
-//`include "itlb/itlb_L1.sv"
-//`include "dcache/dcache_L1_system_with_ssram.sv"
-//`include "l2_tlb/l2_tlb_with_ssram.sv"
-//`include "ptw_tpc/ptw.sv"
-//`include "icache/icache_L1_with_ssram.sv"
 
 module memory_system_with_ssram
 (
@@ -52,25 +41,25 @@ module memory_system_with_ssram
   input  tlb_flush_e           L1TLB_flush_type_i,
   input  tlb_flush_e           L2TLB_flush_type_i,
   input  asid_t                flush_asid_i,
-  input  vpn_t                 flush_page_i,
+  input  var vpn_t                 flush_page_i,
   // Front End <-> i-Cache
-  input  frontend_icache_req_t frontend_icache_req_i,
+  input  var frontend_icache_req_t frontend_icache_req_i,
   output logic                 icache_frontend_rdy_o,
   output icache_frontend_ans_t icache_frontend_ans_o,
   // LSQ <-> d-TLB
-  input  lsq_dtlb_req_t        lsq_dtlb_req_i,
+  input  var lsq_dtlb_req_t        lsq_dtlb_req_i,
   output logic                 dtlb_lsq_req_rdy_o,
   output dtlb_lsq_ans_t        dtlb_lsq_ans_o,
   output dtlb_lsq_wup_t        dtlb_lsq_wup_o,
   // LSQ <-> d-Cache
-  input  lsq_l1dc_req_t        lsq_l1dc_req_i,
+  input  var lsq_l1dc_req_t        lsq_l1dc_req_i,
   output logic                 l1dc_lsq_req_rdy_o,
   output l1dc_lsq_ans_t        l1dc_lsq_ans_o,
   output l1dc_lsq_wup_t        l1dc_lsq_wup_o,
   // L2 Cache Arbiter <-> L2 Cache Emulator
   output l2arb_l2c_req_t       l2arb_l2c_req_o,
   input  logic                 l2c_l2arb_req_rdy_i,
-  input  l2c_l2arb_ans_t       l2c_l2arb_ans_i,
+  input  var l2c_l2arb_ans_t       l2c_l2arb_ans_i,
   output logic                 l2arb_l2c_ans_rdy_o
 );
 

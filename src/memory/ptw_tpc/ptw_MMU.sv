@@ -15,8 +15,8 @@
 
 import memory_pkg::*;
 
-//`include "mmu_cache.sv"
-//`include "ptw.sv"
+
+
 
 module ptw_MMU
 (
