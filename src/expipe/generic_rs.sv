@@ -12,11 +12,6 @@
 // Author: Michele Caon
 // Date: 21/10/2019
 
-//`ifdef ENABLE_AGE_BASED_SELECTOR
-//`include "age_based_sel.sv"
-//`else
-//`include "prio_enc.sv"
-//`endif
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
@@ -57,14 +52,14 @@ module generic_rs
     output  logic                   eu_ready_o,
 
     // Data from/to the execution unit
-    input   logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i,
+    input   logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i, //2:0
     input   logic [XLEN-1:0]        eu_result_i,
     input   logic                   eu_except_raised_i,
     input   logic [EXCEPT_LEN-1:0]  eu_except_code_i,
     output  logic [EU_CTL_LEN-1:0]  eu_ctl_o,
     output  logic [XLEN-1:0]        eu_rs1_o,
     output  logic [XLEN-1:0]        eu_rs2_o,
-    output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o,   // to be produced at the end of execution together with the result
+    output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o,   //2 to be produced at the end of execution together with the result
 
     // Hanshake from/to the CDB 
     input   logic                   cdb_ready_i,
@@ -83,7 +78,7 @@ module generic_rs
 
     // DEFINITIONS
 
-    localparam RS_IDX_LEN = $clog2(RS_DEPTH); // reservation station address width
+    localparam RS_IDX_LEN = $clog2(RS_DEPTH); //3 reservation station address width
 
     // Reservation station entry 
     typedef struct packed {
@@ -111,11 +106,13 @@ module generic_rs
     logic                       new_idx_valid, ex_idx_valid, cdb_idx_valid;
     
     // The actual reservation station data structure
-    rs_entry_t                  rs_data[0:RS_DEPTH-1];
-    
+    //rs_entry_t [0:RS_DEPTH-1]   rs_data;
+    rs_entry_t                  rs_data[0:RS_DEPTH-1];  /* Check if this creates issues */
+
     // Status signals
     logic   [RS_DEPTH-1:0]      valid_a, busy_a; // valid entries, empty entries
     logic   [RS_DEPTH-1:0]      ex_ready_a, res_ready_a; // Ready operands / ready result entries 
+    logic [ROB_IDX_LEN-1:0]     entry_age_a [0:RS_DEPTH-1];
 
     // RS control signals
     logic                       rs_insert, rs_ex, rs_pop, rs_wr_res;
@@ -137,7 +134,7 @@ module generic_rs
             entry_age_a[i]  = rs_data[i].entry_age;
             `endif
             
-            // Execution ready entries: an entry is a valid candidate for ex. (ready) when both its operands are available and the entry is valid
+// Execution ready entries: an entry is a valid candidate for ex. (ready) when both its operands are available and the entry is valid
             ex_ready_a[i]   = rs_data[i].rs1_ready & rs_data[i].rs2_ready & rs_data[i].valid;
             
             // Result ready entries

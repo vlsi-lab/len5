@@ -11,7 +11,7 @@
 // File: generic_rs.sv
 // Author: Michele Caon
 // Date: 21/10/2019
-    
+
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
 import expipe_pkg::*;
@@ -48,8 +48,8 @@ module alu
     input  logic [3-1:0] eu_entry_idx_o
 );
 
-logic [3-1:0]       eu_entry_idx_temp;
-logic [XLEN-1:0]     eu_result_temp;
+//logic [3-1:0]       eu_entry_idx_temp;
+//logic [XLEN-1:0]     eu_result_temp;
 	// Main counting process. The counter clears when reaching the threshold
 always_ff @ (posedge clk_i or negedge rst_n_i) begin
     if (!rst_n_i) begin
@@ -68,18 +68,92 @@ always_ff @ (posedge clk_i or negedge rst_n_i) begin
 		eu_except_raised_i <= 0;
 		eu_except_code_i <= 'd0;
     end
-    else if (eu_valid_o) begin
+    else if (eu_ready_o) begin
 		//case () begin
-        eu_result_temp <= (eu_ctl_o)? eu_rs1_o : eu_rs2_o;
-		eu_entry_idx_temp <= eu_entry_idx_o;
+        //eu_result_temp <= (eu_ctl_o)? eu_rs1_o - eu_rs2_o : eu_rs1_o + eu_rs2_o;
+		eu_entry_idx_i <= eu_entry_idx_o;
 		eu_ready_i = 1;
+		// R-FORMAT INSTRUCTIONS
+        
+        // ADD
+        if (eu_ctl_o == ALU_ADD) begin
+            eu_result_i <= eu_rs1_o + eu_rs2_o;
+        end
+        // ADDW
+        else if (eu_ctl_o == ALU_ADDW) begin
+            eu_result_i <= eu_rs1_o + eu_rs2_o;
+        end
+        // AND
+        else if (eu_ctl_o == ALU_AND) begin
+            eu_result_i <= eu_rs1_o + eu_rs2_o;
+        end
+        // OR
+        else if (eu_ctl_o == ALU_OR) begin
+            eu_result_i <= eu_rs1_o || eu_rs2_o;
+        end
+        
+        // SLL
+        else if (eu_ctl_o == ALU_SLL) begin
+            eu_result_i <= eu_rs1_o << eu_rs2_o;
+        end
+        // SLLW
+        else if (eu_ctl_o == ALU_SLLW) begin
+            eu_result_i <= eu_rs1_o << eu_rs2_o;
+        end
+        // SLT
+        else if (eu_ctl_o == ALU_SLT) begin
+            eu_result_i <= (eu_rs1_o < eu_rs2_o)? 'd1 : 'd0;
+        end
+        // SLTU
+        else if (eu_ctl_o == ALU_SLTU) begin
+            eu_result_i <= (eu_rs1_o < eu_rs2_o)? 'd1 : 'd0;
+        end
+        // SRA
+        else if (eu_ctl_o == ALU_SRA) begin
+            eu_result_i <= eu_rs1_o >>> eu_rs2_o;
+        end
+        // SRAW
+        else if (eu_ctl_o == ALU_SRAW) begin
+            eu_result_i <= eu_rs1_o >>> eu_rs2_o;
+        end
+        // SRL
+        else if (eu_ctl_o == ALU_SRL) begin
+            eu_result_i <= eu_rs1_o >> eu_rs2_o;
+        end
+        // SRLW
+        else if (eu_ctl_o == ALU_SRLW) begin
+            eu_result_i <= eu_rs1_o >> eu_rs2_o;
+        end
+        // SUB
+        else if (eu_ctl_o == ALU_SUB) begin
+            eu_result_i <= eu_rs1_o - eu_rs2_o;
+        end
+        // SUBW
+        else if (eu_ctl_o == ALU_SUBW) begin
+            eu_result_i <= eu_rs1_o - eu_rs2_o;
+        end
+        // XOR
+        else if (eu_ctl_o == ALU_XOR) begin
+            eu_result_i <= (eu_rs1_o && !eu_rs2_o) || (!eu_rs1_o && eu_rs2_o);
+        end
+        else begin
+            eu_result_i <= 'd0;
+        end
+		eu_valid_i <= (eu_valid_o)?1:0;
+		//eu_valid_i <= 0;
+		//if (eu_valid_o) begin
+		//eu_result_i <= eu_result_temp;
+		//eu_entry_idx_i <= eu_entry_idx_temp;
+		//eu_valid_i <= 1;
+		//end
+            
     end
-	else if (eu_ready_o) begin
+	/*else if (eu_valid_o) begin// Swap with above I did
 		//case () begin
         eu_result_i <= eu_result_temp;
 		eu_entry_idx_i <= eu_entry_idx_temp;
 		eu_valid_i <= 1;
-    end
+    end*/
 	else begin
 		eu_ready_i = 1;
 		eu_result_i <= 'h0000000000000000;

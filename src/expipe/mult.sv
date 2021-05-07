@@ -50,8 +50,8 @@ module mult
     input  logic [3-1:0] eu_entry_idx_o
 );
 
-logic [3-1:0]       eu_entry_idx_temp;
-logic [XLEN-1:0]     eu_result_temp;
+//logic [3-1:0]       eu_entry_idx_temp;
+//logic [XLEN-1:0]     eu_result_temp;
 	// Main counting process. The counter clears when reaching the threshold
 always_ff @ (posedge clk_i or negedge rst_n_i) begin
     if (!rst_n_i) begin
@@ -70,17 +70,21 @@ always_ff @ (posedge clk_i or negedge rst_n_i) begin
 		eu_except_raised_i <= 0;
 		eu_except_code_i <= 'd0;
     end
-    else if (eu_valid_o) begin
+   /* else if (eu_valid_o) begin
 		//case () begin
         eu_result_temp <=  eu_rs1_o * eu_rs2_o;
 		eu_entry_idx_temp <= eu_entry_idx_o;
 		eu_ready_i = 1;
-    end
+    end*/
 	else if (eu_ready_o) begin
 		//case () begin
-        eu_result_i <= eu_result_temp;
-		eu_entry_idx_i <= eu_entry_idx_temp;
+		eu_entry_idx_i <= eu_entry_idx_o;
+		eu_ready_i = 1;
+        eu_result_i <= eu_rs1_o * eu_rs2_o;
+
+		if (eu_valid_o) begin
 		eu_valid_i <= 1;
+		end
     end
 	else begin
 		eu_ready_i = 1;

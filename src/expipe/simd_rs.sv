@@ -12,8 +12,6 @@
 // Author: Michele Caon
 // Date: 21/10/2019
 
-//`include "simd.sv"
-//`include "generic_rs.sv"
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
@@ -80,7 +78,7 @@ module simd_rs
     //output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o,   // to be produced at the end of execution together with the result
     logic [3-1:0] eu_entry_idx_o;
 
-generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_SIMD_generic_rs
+generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_simd_generic_rs
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),

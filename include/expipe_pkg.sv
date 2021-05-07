@@ -190,8 +190,9 @@ package expipe_pkg;
         EU_INT_MULT,        // 4
         EU_INT_DIV,         // 5
         EU_FPU,             // 6
-        EU_OPERANDS_ONLY,   // 7
-        EU_NONE             // 8: the instruction is directly sent to the ROB (csr, special instructions, etc.)
+        EU_SIMD,            // 7
+        EU_OPERANDS_ONLY,   // 8
+        EU_NONE             // 9: the instruction is directly sent to the ROB (csr, special instructions, etc.)
     } issue_eu_t;
 
     //---------------------------\\

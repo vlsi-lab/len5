@@ -12,23 +12,13 @@
 // Author: WALID WALID
 // Date: 17/10/2020
 
-//`include "modn_counter.sv"
-//`include "issue_queue_fifo.sv"
-//`include "alu_rs.sv"
-//`include "mult_rs.sv"
-//`include "div_rs.sv"
-//`include "fpu_rs.sv"
-//`include "simd_rs.sv"
-//`include "branch_rs.sv"
-//`include "load_store_unit.sv"
 
-module exec_unit
+import len5_pkg::*;
+import expipe_pkg::*;
+import csr_pkg::*;
+import memory_pkg::*;
 
-    import len5_pkg::*;
-    import expipe_pkg::*;
-    import csr_pkg::*;
-    import memory_pkg::*;
-(
+module exec_unit (
     input   logic               clk_i,
     input   logic               rst_n_i,
     input   logic               flush_i,
@@ -64,13 +54,13 @@ module exec_unit
 	output 	logic 			  res_mispredict_o,
 
 	// Handshake and data from/to the TLB
-    input   dtlb_lsq_ans_t          dtlb_ans_i,
-    input   dtlb_lsq_wup_t          dtlb_wup_i,
+    input   var dtlb_lsq_ans_t          dtlb_ans_i,
+    input   var dtlb_lsq_wup_t          dtlb_wup_i,
     output  lsq_dtlb_req_t          dtlb_req_o,
 
     // Handshake and data from/to the D$
-    input   l1dc_lsq_ans_t          dcache_ans_i,
-    input   l1dc_lsq_wup_t          dcache_wup_i,
+    input   var l1dc_lsq_ans_t          dcache_ans_i,
+    input   var l1dc_lsq_wup_t          dcache_wup_i,
     output  lsq_l1dc_req_t          dcache_req_o,
 
     // Hanshake from/to the CDB 
@@ -85,7 +75,7 @@ module exec_unit
     //    logic                       except_raised;
     //    logic [ROB_EXCEPT_LEN-1:0]  except_code;
     //} cdb_data_t;
-    input 	cdb_data_t  [0:EU_N-1] cdb_data_i,
+    input 	var cdb_data_t  [0:EU_N-1] cdb_data_i,
 	output 	cdb_data_t  [0:EU_N-1] cdb_data_o,
     //input   logic [ROB_IDX_LEN-1:0] cdb_idx_i,
     //input   logic [XLEN-1:0]        cdb_data_i,
@@ -114,7 +104,7 @@ module exec_unit
 );
 
     // DEFINITIONS
-localparam EU_CTL_LEN = 8;
+localparam EU_CTL_LEN = 8;//4;//8;
 localparam RS_DEPTH = 8;
 localparam EXCEPT_LEN = 2;
 
@@ -122,14 +112,14 @@ localparam EXCEPT_LEN = 2;
 //----- DUT -----\\
 //---------------\\
 
-alu_rs #(.EU_CTL_LEN (8), .RS_DEPTH (8), .EXCEPT_LEN(2)) u_alu_rs
+alu_rs #(.EU_CTL_LEN (8/*4//8*/), .RS_DEPTH (8), .EXCEPT_LEN(2)) u_alu_rs
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
     .flush_i (flush_i),
 	//.stall(stall),
-    .arbiter_valid_i (ex_valid_o[0]),
-    .arbiter_ready_o (ex_ready_i[0]),
+    .arbiter_valid_i (ex_ready_i[EU_INT_ALU]),
+    .arbiter_ready_o (ex_valid_o[EU_INT_ALU]),
 	.eu_ctl_i (ex_eu_ctl_i),
     .rs1_ready_i (ex_rs1_ready_i),
     .rs1_idx_i (ex_rs1_idx_i),
@@ -156,8 +146,8 @@ mult_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_mult
     .rst_n_i (rst_n_i),
     .flush_i (flush_i),
 	//.stall(stall),
-    .arbiter_valid_i (ex_valid_o[1]),
-    .arbiter_ready_o (ex_ready_i[1]),
+    .arbiter_valid_i (ex_ready_i[EU_INT_MULT]),
+    .arbiter_ready_o (ex_valid_o[EU_INT_MULT]),
 	.eu_ctl_i (ex_eu_ctl_i),
     .rs1_ready_i (ex_rs1_ready_i),
     .rs1_idx_i (ex_rs1_idx_i),
@@ -184,8 +174,8 @@ div_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_div_r
     .rst_n_i (rst_n_i),
     .flush_i (flush_i),
 	//.stall(stall),
-    .arbiter_valid_i (ex_valid_o[2]),
-    .arbiter_ready_o (ex_ready_i[2]),
+    .arbiter_valid_i (ex_ready_i[EU_INT_DIV]),
+    .arbiter_ready_o (ex_valid_o[EU_INT_DIV]),
 	.eu_ctl_i (ex_eu_ctl_i),
     .rs1_ready_i (ex_rs1_ready_i),
     .rs1_idx_i (ex_rs1_idx_i),
@@ -212,8 +202,8 @@ fpu_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_fpu_r
     .rst_n_i (rst_n_i),
     .flush_i (flush_i),
 	//.stall(stall),
-    .arbiter_valid_i (ex_valid_o[3]),
-    .arbiter_ready_o (ex_ready_i[3]),
+    .arbiter_valid_i (ex_ready_i[EU_FPU]),
+    .arbiter_ready_o (ex_valid_o[EU_FPU]),
 	.eu_ctl_i (ex_eu_ctl_i),
     .rs1_ready_i (ex_rs1_ready_i),
     .rs1_idx_i (ex_rs1_idx_i),
@@ -240,8 +230,8 @@ simd_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_simd
     .rst_n_i (rst_n_i),
     .flush_i (flush_i),
 	//.stall(stall),
-    .arbiter_valid_i (ex_valid_o[4]),
-    .arbiter_ready_o (ex_ready_i[4]),
+    .arbiter_valid_i (ex_ready_i[EU_SIMD]),
+    .arbiter_ready_o (ex_valid_o[EU_SIMD]),
 	.eu_ctl_i (ex_eu_ctl_i),
     .rs1_ready_i (ex_rs1_ready_i),
     .rs1_idx_i (ex_rs1_idx_i),
@@ -262,14 +252,14 @@ simd_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_simd
     .cdb_except_o (cdb_data_o[4].except_code)//(cdb_except_o)
 );
 
-branch_rs #(.RS_DEPTH (RS_DEPTH)) u_branch_rs
+Branch_rs #(.RS_DEPTH (RS_DEPTH)) u_Branch_rs
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
     .flush_i (flush_i),
 	//.stall(stall),
-    .arbiter_valid_i (ex_valid_o[5]),
-    .arbiter_ready_o (ex_ready_i[5]),
+    .arbiter_valid_i (ex_ready_i[EU_BRANCH_UNIT]),
+    .arbiter_ready_o (ex_valid_o[EU_BRANCH_UNIT]),
 	.branch_type_i(branch_type_i),
 	//.eu_ctl_i (ex_eu_ctl_i),
     .rs1_ready_i (ex_rs1_ready_i),
@@ -301,10 +291,10 @@ load_store_unit u_load_store_unit
     .flush_i (flush_i),
 	//.stall(stall),
 	.vm_mode_i(vm_mode_i),
-	.issue_lb_valid_i(ex_valid_o[6]),
-    .issue_sb_valid_i(ex_valid_o[7]),
-    .lb_issue_ready_o(ex_ready_i[6]),
-    .sb_issue_ready_o(ex_ready_i[7]),
+	.issue_lb_valid_i(ex_ready_i[EU_LOAD_BUFFER]),
+    .issue_sb_valid_i(ex_ready_i[EU_STORE_BUFFER]),
+    .lb_issue_ready_o(ex_valid_o[EU_LOAD_BUFFER]),
+    .sb_issue_ready_o(ex_valid_o[EU_STORE_BUFFER]),
 	.ldst_type_i(ldst_type_i),
 	//.eu_ctl_i (ex_eu_ctl_i),
     .rs1_ready_i (ex_rs1_ready_i),
@@ -323,12 +313,12 @@ load_store_unit u_load_store_unit
     .dcache_req_o(dcache_req_o),
 	.rob_head_idx_i(rob_head_idx_i),
     .rob_store_committing_o(rob_store_committing_o),
-    .cdb_lb_valid_i(cdb_valid_o[6]),//(cdb_lb_valid_i),
-    .cdb_sb_valid_i(cdb_valid_o[7]),//(cdb_sb_valid_i),
-    .cdb_lb_ready_i(cdb_lb_ready_i),
-    .cdb_sb_ready_i(cdb_sb_ready_i),
-    .lb_cdb_valid_o(cdb_ready_i[6]),//(lb_cdb_valid_o),
-    .sb_cdb_valid_o(cdb_ready_i[7]),//(sb_cdb_valid_o),
+    .cdb_lb_valid_i(cdb_valid_i),//(cdb_lb_valid_i),
+    .cdb_sb_valid_i(cdb_valid_i),//(cdb_sb_valid_i),
+    .cdb_lb_ready_i(cdb_ready_i[6]),//cdb_lb_ready_i),
+    .cdb_sb_ready_i(cdb_ready_i[7]),//cdb_sb_ready_i),
+    .lb_cdb_valid_o(cdb_valid_o[6]),//(lb_cdb_valid_o),
+    .sb_cdb_valid_o(cdb_valid_o[7]),//(sb_cdb_valid_o),
     .cdb_lsb_data_i(cdb_data_i[6]),//(cdb_lsb_data_i),
     .lb_cdb_data_o(cdb_data_o[6]),//(lb_cdb_data_o),
     .sb_cdb_data_o(cdb_data_o[7])//(sb_cdb_data_o)

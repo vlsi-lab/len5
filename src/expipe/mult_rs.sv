@@ -12,8 +12,6 @@
 // Author: Michele Caon
 // Date: 21/10/2019
 
-//`include "mult.sv"
-//`include "generic_rs.sv"
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;

@@ -12,15 +12,13 @@
 // Author: Michele Caon
 // Date: 21/10/2019
 
-//`include "alu.sv"
-//`include "generic_rs.sv"
-
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
 //import len5_pkg::HLEN;
-    import expipe_pkg::*;
 
-module alu_rs
+import expipe_pkg::*;
+
+module alu_rs 
 #(
     RS_DEPTH = 16,
     
