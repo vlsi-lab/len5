@@ -357,7 +357,7 @@ module branch_unit_rs
     `ifndef SYNTHESIS
     always @(negedge clk_i) begin
         // Notice when the reservation station is full
-        assert (valid_a == (2**RS_DEPTH - 1)) else $warning("Generic RS full: you might want to increase its depth");
+        //assert (valid_a == ((1 << RS_DEPTH) - 1)) else $warning("Generic RS full: you might want to increase its depth");
         foreach (rs_data[i]) begin
             // Check if the correct order of operations is respected
             assert (!(res_ready_a[i] && !ex_ready_a[i])) else $warning("RS entry %4d has ready result before having ready operands. This should be impossible", i);

@@ -20,7 +20,7 @@ module mux
 #(
   PARALLELISM         = DCACHE_L1_IDX_A_LEN,
   SEL_LEN             = DCACHE_L1_ASSOCIATIVITY,
-  localparam N_INPUT  = 2**SEL_LEN
+  localparam N_INPUT  = 1 << SEL_LEN
 )
 (
   input  logic [SEL_LEN-1:0]     sel,
