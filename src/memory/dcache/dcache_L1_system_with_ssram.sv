@@ -15,9 +15,6 @@
 
 import memory_pkg::*;
 
-//`include "dcache_L1_system.sv"
-//`include "ssram.sv"
-
 module dcache_L1_system_with_ssram
 (
   // Main
@@ -25,14 +22,14 @@ module dcache_L1_system_with_ssram
   input  logic          rst_ni,
   input  logic          clr_i,              // Clear MSHR and other regs (synch clear)
   // Reset Block -> D-Cache
-  input  rst_l1dc_req_t rst_l1dc_req_i,     // Initial reset request
+  input  var rst_l1dc_req_t rst_l1dc_req_i,     // Initial reset request
   // L2-Update -> D-Cache
-  input  upd_l1dc_req_t upd_l1dc_req_i,     // UpdateL2 block request
+  input  var upd_l1dc_req_t upd_l1dc_req_i,     // UpdateL2 block request
   // D-Cache -> L2-Update
   output logic          en_cnt_o,           // Address the next set
   output logic          wbb_empty_o,        // end of the synchronization
   // LSQ -> D-Cache
-  input  lsq_l1dc_req_t lsq_l1dc_req_i,     // LSQ request to the D-Cache
+  input  var lsq_l1dc_req_t lsq_l1dc_req_i,     // LSQ request to the D-Cache
   output logic          l1dc_lsq_req_rdy_o,
   // D-Cache -> LSQ
   output l1dc_lsq_ans_t l1dc_lsq_ans_o,     // D-Cache answer to LSQ
@@ -41,7 +38,7 @@ module dcache_L1_system_with_ssram
   output l1dc_l2c_req_t l1dc_l2c_req_o,     // D-Cache request to L2-Cache
   input  logic          l2c_l1dc_req_rdy_i,
   // L2-Cache -> D-Cache
-  input  l2c_l1dc_ans_t l2c_l1dc_ans_i,     // L2-Cache answer to D-Cache
+  input  var l2c_l1dc_ans_t l2c_l1dc_ans_i,     // L2-Cache answer to D-Cache
   output logic          l1dc_l2c_ans_rdy_o
 );
 

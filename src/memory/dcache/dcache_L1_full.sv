@@ -15,10 +15,6 @@
 
 import memory_pkg::*;
 
-//`include "dcache_rst_block.sv"
-//`include "updateL2_block.sv"
-//`include "dcache_L1_system_with_ssram.sv"
-
 module dcache_L1_full
 (
   // Main
@@ -49,8 +45,9 @@ module dcache_L1_full
 
 	// Definations
 	rst_l1dc_req_t rst_l1dc_req_i;
+	//lsq_l1dc_req_t lsq_l1dc_req_i;
 	logic          en_cnt_o;           // Address the next set
-  logic          wbb_empty_o;
+  	logic          wbb_empty_o;
 	
 
 dcache_L1_system_with_ssram u_dcache_L1_system_with_ssram

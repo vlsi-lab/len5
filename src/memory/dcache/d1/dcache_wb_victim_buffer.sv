@@ -15,8 +15,6 @@
 
 import memory_pkg::*;
 
-//`include "one_hot_encoder.sv"
-
 module dcache_wb_victim_buffer
 (
   // Main control
@@ -32,7 +30,7 @@ module dcache_wb_victim_buffer
   input  wbb_tag_t          new_tag_i,                // input tag from the L2 counter
   // Input data from d1
   input  dcache_line_t      line_i,                   // d1 input line
-  input  line_addr_t        line_addr_i,              // d1 input line address (also compared)
+  input  var line_addr_t        line_addr_i,              // d1 input line address (also compared)
   input  wbb_tag_t          tag_to_be_compared_i,     // d1 input tag to be compared
   // Output line address for L2C req
   output dcache_line_t      wbb_l2c_line_o,           // next ready line

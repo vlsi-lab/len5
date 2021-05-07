@@ -23,19 +23,19 @@ module dcache_L1_d0
   // Control
   input  logic          clr_i,              // Clear MSHR and other regs
   // Reset Block -> D-Cache
-  input  rst_l1dc_req_t rst_l1dc_req_i,     // Initial reset request
+  input  var rst_l1dc_req_t rst_l1dc_req_i,     // Initial reset request
   // L2-Update -> D-Cache
-  input  upd_l1dc_req_t upd_l1dc_req_i,     // UpdateL2 block request
+  input  var upd_l1dc_req_t upd_l1dc_req_i,     // UpdateL2 block request
   // LSQ -> D-Cache
-  input  lsq_l1dc_req_t lsq_l1dc_req_i,     // LSQ request to the D-Cache
+  input  var lsq_l1dc_req_t lsq_l1dc_req_i,     // LSQ request to the D-Cache
   output logic          l1dc_lsq_req_rdy_o,
   // L2-Cache -> D-Cache
-  input  l2c_l1dc_ans_t l2c_l1dc_ans_i,     // L2-Cache answer to D-Cache
+  input  var l2c_l1dc_ans_t l2c_l1dc_ans_i,     // L2-Cache answer to D-Cache
   output logic          l1dc_l2c_ans_rdy_o,
   // D-Cache -> LSQ
   output l1dc_lsq_wup_t l1dc_lsq_wup_o,     // D-Cache wake-up signal to LSQ
   // d1 -> d0
-  input  d1_d0_req_t    d1_d0_req_i,        // d1 wants to use the cache itself (e.g. for a store)
+  input  var d1_d0_req_t    d1_d0_req_i,        // d1 wants to use the cache itself (e.g. for a store)
 //output logic          d0_d1_req_rdy_o,    // fixed '1' (d1 requests have the highest priority)
   // d0 -> d1
   output d0_d1_req_t    d0_d1_req_o,        // Cache output and request related information
@@ -47,8 +47,8 @@ module dcache_L1_d0
   output dmem_ctrl_t [DCACHE_L1_ASSOCIATIVITY-1:0] dmem_ctrl_vec_o,
   output tvd_mem_line_t                            dcache_wtvd_o,
   output dcache_line_t                             dcache_wdata_o,
-  input  tvd_mem_line_t                            tvd_mem_out_vec_i [DCACHE_L1_ASSOCIATIVITY],
-  input  dcache_line_t                             data_mem_out_vec_i [DCACHE_L1_ASSOCIATIVITY]
+  input  var tvd_mem_line_t                            tvd_mem_out_vec_i [DCACHE_L1_ASSOCIATIVITY],
+  input  var dcache_line_t                             data_mem_out_vec_i [DCACHE_L1_ASSOCIATIVITY]
 );
 
   localparam N_WAY         = DCACHE_L1_ASSOCIATIVITY;

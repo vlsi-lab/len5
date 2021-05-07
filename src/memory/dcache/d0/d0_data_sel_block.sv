@@ -21,15 +21,15 @@ module d0_data_sel_block
   input  d0_req_type_e    d0_req_type_i,
   input  d0_d1_req_type_e d1_req_type_i,
   // LSQ request
-  input  lsq_l1dc_req_t   lsq_l1dc_req_i,
+  input  var lsq_l1dc_req_t   lsq_l1dc_req_i,
   // L2C answer
-  input  l2c_l1dc_ans_t   l2c_l1dc_ans_i,
+  input  var l2c_l1dc_ans_t   l2c_l1dc_ans_i,
   // d1 request
-  input  d1_d0_req_t      d1_d0_req_i,
+  input  var d1_d0_req_t      d1_d0_req_i,
   // Update L2 request
-  input  upd_l1dc_req_t   upd_l1dc_req_i,
+  input  var upd_l1dc_req_t   upd_l1dc_req_i,
   // Reset request
-  input  rst_l1dc_req_t   rst_l1dc_req_i,
+  input  var rst_l1dc_req_t   rst_l1dc_req_i,
   // To Ouput Registers
   output d1_req_info_t    reg_out_d_o,
   // To the cache

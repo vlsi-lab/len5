@@ -15,10 +15,6 @@
 
 import memory_pkg::*;
 
-//`include "decoder.sv"
-//`include "mux.sv"
-//`include "one_hot_shift_reg.sv"
-
 module d1_replacement_block
 #(
   LOG2_N_SETS = DCACHE_L1_IDX_A_LEN

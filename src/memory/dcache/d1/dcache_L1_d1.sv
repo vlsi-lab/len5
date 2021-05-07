@@ -15,19 +15,6 @@
 
 import memory_pkg::*;
 
-//`include "d1_dirty_vec_one_hotter.sv"
-//`include "d1_d0_data_sel.sv"
-//`include "d1_replacement_block.sv"
-//`include "d1_comp_block.sv"
-//`include "d1_stall_replay_cu.sv"
-//`include "dcache_wb_victim_buffer.sv"
-//`include "d1_wbb_tag_gen.sv"
-//`include "dcache_mshr.sv"
-//`include "d1_wbb_mshr_ctrl_L2_side.sv"
-//`include "d1_L2_req_data_sel.sv"
-//`include "d1_L2_req_arbiter.sv"
-//`include "d1_ctrl.sv"
-
 module dcache_L1_d1
 (
   // Main
@@ -36,7 +23,7 @@ module dcache_L1_d1
   // Control
   input  logic          clr_i,              // Clear MSHR and other regs
   // d0 -> d1
-  input  d0_d1_req_t    d0_d1_req_i,        // Request related information from d0 output register
+  input  var d0_d1_req_t    d0_d1_req_i,        // Request related information from d0 output register
   output logic          d1_d0_req_rdy_o,    // d1 stage ready?
   output logic          d1_d0_stalled_o,    // d1 is stalled (let pass L2 answers only)
   // d1 -> d0

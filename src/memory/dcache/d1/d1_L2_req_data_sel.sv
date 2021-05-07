@@ -21,11 +21,11 @@ module d1_L2_req_data_sel
   input  mshr_wbb_winner_e winner_i,
   // From WBB
   input  dcache_line_t     wbb_l2c_line_i,
-  input  line_addr_t       wbb_l2c_line_addr_i,
+  input  var line_addr_t       wbb_l2c_line_addr_i,
   // From the tag counter
   input  wbb_tag_t         wbb_tag_i,            // the tag is valid when the transaction is done
   // From MSHR
-  input  line_addr_t       mshr_l2c_line_addr_i,
+  input  var line_addr_t       mshr_l2c_line_addr_i,
   // To L2C
   output line_addr_t       l1dc_l2c_req_line_addr_o,
   output dcache_line_t     l1dc_l2c_req_line_o,

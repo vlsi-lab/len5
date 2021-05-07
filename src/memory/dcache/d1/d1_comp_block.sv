@@ -13,6 +13,7 @@
 // Date: 14/10/2019
 // Description: dcache comparison block
 
+`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
 import memory_pkg::*;
 
 module d1_comp_block
@@ -23,7 +24,7 @@ module d1_comp_block
   // From d0 output registers
   input  dcache_tag_t            tag_i,       // input tag for comparison
   // From the cache memory
-  input dcache_tag_t [N_WAY-1:0] tag_vec_i,   // tag vector
+  input var dcache_tag_t [N_WAY-1:0] tag_vec_i,   // tag vector
   input valid_vec_t              valid_vec_i, // valid vector
   input dirty_vec_t              dirty_vec_i, // dirty vector
   // From the replace block
