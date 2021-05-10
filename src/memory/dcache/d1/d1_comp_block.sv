@@ -13,7 +13,6 @@
 // Date: 14/10/2019
 // Description: dcache comparison block
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
 import memory_pkg::*;
 
 module d1_comp_block

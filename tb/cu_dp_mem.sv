@@ -8,28 +8,16 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: fetch_stage.sv
+// File: CU_DP_MEM.sv
 // Author: WALID
 // Date: 07/10/2019
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/len5_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/expipe_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/control_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/memory_pkg.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/include/csr_pkg.sv"
 import len5_pkg::*;
-import control_pkg::*;
 import expipe_pkg::*;
 import memory_pkg::*; 
 import csr_pkg::*;
 
-//`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Data_path.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Data_path_memory.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/CU/CU1_FSM.sv"
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/CU/CU2_FSM.sv"
-//`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Memory/l2cache_emulator/cache_L2_system_emulator.sv"
-
-module CU_DP_MEM
+module cu_dp_mem
 (
 	// From :TB
   	input   logic             clk_i,

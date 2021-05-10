@@ -17,7 +17,7 @@ import expipe_pkg::*;
 import memory_pkg::*;
 import csr_pkg::*;
 
-module Data_path
+module data_path
 (
 	// From :CU
   	input   logic             clk_i,

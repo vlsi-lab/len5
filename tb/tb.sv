@@ -1,16 +1,11 @@
 // TESTED AND WORKING
-//`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Data_path_memory.sv"
-//`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/CU_DP_MEM.sv"
-//import mmm_pkg::*;
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Memory/l2cache_emulator/cache_L2_system_emulator.sv"
 import len5_pkg::*;
 import expipe_pkg::*;
-import control_pkg::*;
 import memory_pkg::*;
 import csr_pkg::*;
 
-module CU_DP_M_tb;
+module cu_dp_mem_tb;
 
 // To the main control 
     //logic    main_cu_stall_o;

@@ -1,6 +1,4 @@
 // TESTED AND WORKING
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Expipe/A_Back_end.sv"
-//import mmm_pkg::*;
 import len5_pkg::*;
 import expipe_pkg::*;
 import control_pkg::*;

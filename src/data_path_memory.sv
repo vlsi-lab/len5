@@ -98,7 +98,7 @@ module data_path_memory
     assign data_i.pc = icache_frontend_ans_o.vaddr;
 	assign data_i.line = icache_frontend_ans_o.line;
 
-Data_path  u_Data_path
+data_path  u_Data_path
 (
 	.clk_i    (clk_i),
     .rst_n_i  (rst_n_i),

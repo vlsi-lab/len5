@@ -1,13 +1,11 @@
 // TESTED AND WORKING
 
-`include "data_path_memory.sv"
-
 import len5_pkg::*;
 import expipe_pkg::*;
 import memory_pkg::*;
 import csr_pkg::*;
 
-module DP_M_tb;
+module dp_m_tb;
 
 // To the main control 
     logic    main_cu_stall_o;

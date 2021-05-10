@@ -1,13 +1,6 @@
 // TESTED AND WORKING
 
-`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Frontend/B_Front_end.sv"
-
-//import mmm_pkg::*;
 import len5_pkg::*;
-//import expipe_pkg::*;
-//import control_pkg::*;
-//import memory_pkg::*;
-//import csr_pkg::*;
 
 module Front_end_tb;
 
