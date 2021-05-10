@@ -103,7 +103,7 @@ module issue_q_l
 	output  logic                       cdb_ready_o,
 
 	// Data from the cdb
-	input   logic                       cdb_except_rasied_i,
+	input   logic                       cdb_except_raised_i,
 	input   logic [XLEN-1:0]            cdb_value_i,
 	input   logic [ROB_IDX_LEN-1:0]		cdb_rob_idx_i,
 //To here
@@ -259,7 +259,7 @@ issue_logic u_issue_logic
 	.cdb_ready_o(cdb_ready_o),
 
 	// Data from the cdb
-	.cdb_except_rasied_i(cdb_except_rasied_i),
+	.cdb_except_raised_i(cdb_except_raised_i),
 	.cdb_value_i(cdb_value_i),
 	.cdb_rob_idx_i(cdb_rob_idx_i),
 

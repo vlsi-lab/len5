@@ -14,7 +14,7 @@
 
 // THIS FILE IS ONYL A TEMPLATE, THE COMMIT LOGIC IS NOT IMPLEMENTED YET, SINCE IT REQUIRES ALL THE PROCESSOR PARTS TO BE FUNCTIONAL
 
-//`include "commit_decoder.sv"
+`include "instr_macros.svh"
 
 import expipe_pkg::*;
 import len5_pkg::*;
@@ -84,7 +84,7 @@ module commit_logic (
     //logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_t;
 	except_code_t  rob_except_code_t;
     logic [ROB_IDX_LEN-1:0]     rob_head_idx_t;
-	logic [`OPCODE_LEN -1:0]       instr_opcode;
+	logic [OPCODE_LEN -1:0]       instr_opcode;
 	logic 				sb_store_committing_t;
 	
 	//New
@@ -97,7 +97,7 @@ module commit_logic (
 	
 	assign mispredict_i				=  fp_rob_value_t[0];
 
-	 assign instr_opcode            = rob_instr_i[`OPCODE_LEN -1:0];//rob_instr_t[`OPCODE_LEN -1:0];
+	 assign instr_opcode            = rob_instr_i[OPCODE_LEN -1:0];//rob_instr_t[OPCODE_LEN -1:0];
 
 	assign except_new_pc_o			= (rob_valid_i & rob_except_raised_i) ? 'd1 : 'd0 ;
 	//assign except_new_o				= rob_except_raised_i;

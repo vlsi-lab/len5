@@ -25,8 +25,7 @@ module ssram #(
   input  logic                         we_i,    // write enable
   input  logic [(DATA_LEN+7)/8-1:0]    be_i,    // byte enable*
   // data
-  input  logic [$clog2(NUM_WORDS)-1:0] addr_i,  // address channel
-  //input  logic [10-1:0] addr_i,  // address channel
+  input  logic [$clog2(NUM_WORDS)-1:0] addr_i,  //9:0 address channel
   input  logic [DATA_LEN-1:0]          wdata_i, // write data channel
   output logic [DATA_LEN-1:0]          rdata_o  // read data channel
 );

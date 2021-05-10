@@ -104,7 +104,7 @@ module issue_logic (
 	output  logic                       cdb_ready_o,
 
 	// Data from the cdb
-	input   logic                       cdb_except_rasied_i,
+	input   logic                       cdb_except_raised_i,
 	input   logic [XLEN-1:0]            cdb_value_i,
 	input   logic [ROB_IDX_LEN-1:0]		cdb_rob_idx_i,
 //To here
@@ -316,7 +316,7 @@ module issue_logic (
                         rs1_value   = rob_rs1_value_i;
 				
 					//New added
-				end else if (cdb_rob_idx_i == rob_rs1_idx && !cdb_except_rasied_i /*&& cdb_valid_i*/) begin /* the operand is being broadcast on the CDB */ /* TODO: we need the valid! */
+				end else if (cdb_valid_i && cdb_rob_idx_i == rob_rs1_idx && !cdb_except_raised_i /*&& cdb_valid_i*/) begin /* the operand is being broadcast on the CDB */ /* TODO: we need the valid! */
 						rs1_ready   = 1'b1;
                         rs1_value   = cdb_value_i;
 				end else begin /* mark as not ready */
@@ -338,7 +338,7 @@ module issue_logic (
                         rs2_value   = rob_rs2_value_i;
                     
                     //New added
-                    end else if (cdb_rob_idx_i == rob_rs2_idx && !cdb_except_rasied_i /*&& cdb_valid_i*/) begin /* TODO: we need the valid! */
+                    end else if (cdb_valid_i && cdb_rob_idx_i == rob_rs2_idx && !cdb_except_raised_i /*&& cdb_valid_i*/) begin /* TODO: we need the valid! */
                             rs2_ready   = 1'b1;
                             rs2_value   = cdb_value_i;
                     //Till here
@@ -361,7 +361,7 @@ module issue_logic (
                     if (rob_rs1_ready_i) begin /* the operand is already available in the ROB */
                         rs1_ready   = 1'b1;
                         rs1_value   = rob_rs1_value_i;
-                    end else if (cdb_rob_idx_i == rob_rs1_idx && !cdb_except_raised_i) begin /* the operand is being broadcast on the CDB */
+                    end else if (cdb_valid_i && cdb_rob_idx_i == rob_rs1_idx && !cdb_except_raised_i) begin /* the operand is being broadcast on the CDB */
                         rs1_ready   = 1'b1;
                         rs1_value   = cdb_value_i;
                     end else begin /* mark as not ready */
@@ -380,7 +380,7 @@ module issue_logic (
                     if (rob_rs2_ready_i) begin /* the operand is already available in the ROB */
                         rs2_ready   = 1'b1;
                         rs2_value   = rob_rs2_value_i;
-                    end else if (cdb_rob_idx_i == rob_rs2_idx && !cdb_except_raised_i) begin /* the operand is being broadcast on the CDB */
+                    end else if (cdb_valid_i && cdb_rob_idx_i == rob_rs2_idx && !cdb_except_raised_i) begin /* the operand is being broadcast on the CDB */
                         rs2_ready   = 1'b1;
                         rs2_value   = cdb_value_i;
                     end else begin /* mark as not ready */

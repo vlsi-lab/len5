@@ -45,7 +45,7 @@ module cdb
 	input  logic                         cdb_ready_o,
 
 	// Data to the IQL
-	output   logic                       cdb_except_rasied_i,
+	output   logic                       cdb_except_raised_i,
 	output   logic [XLEN-1:0]            cdb_value_i,
 	output   logic [ROB_IDX_LEN-1:0]	 cdb_rob_idx_i,
 	//To here
@@ -63,7 +63,7 @@ module cdb
 	logic                       rob_valid_k;
 	//cdb_rob_idx_i = rob_idx;
     //cdb_value_i   = value;
-    //cdb_except_rasied_i =   except_raised; 
+    //cdb_except_raised_i =   except_raised; 
 
     // CDB MUX
     cdb_data_t                  low_prio_mux_data;
@@ -118,7 +118,7 @@ module cdb
 //New
 	assign cdb_rob_idx_i = rob_data_o.rob_idx;
     assign cdb_value_i   = rob_data_o.value;
-    assign cdb_except_rasied_i =   rob_data_o.except_raised; 
+    assign cdb_except_raised_i =   rob_data_o.except_raised; 
 
     
 endmodule

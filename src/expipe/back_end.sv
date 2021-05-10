@@ -243,7 +243,7 @@ module back_end
 	logic                       cdb_ready_o;
 
 	// Data from the cdb
-	logic                       cdb_except_rasied_i;
+	logic                       cdb_except_raised_i;
 	logic [XLEN-1:0]            cdb_value_i;
 	logic [ROB_IDX_LEN-1:0]		cdb_rob_idx_i;
 //To here
@@ -338,7 +338,7 @@ issue_q_l u_issue_q_l
 	.cdb_ready_o(cdb_ready_o),
 
 	// Data from the cdb
-	.cdb_except_rasied_i(cdb_except_rasied_i),
+	.cdb_except_raised_i(cdb_except_raised_i),
 	.cdb_value_i(cdb_value_i),
 	.cdb_rob_idx_i(cdb_rob_idx_i),
 
@@ -663,7 +663,7 @@ cdb u_cdb(
 	.cdb_ready_o(cdb_ready_o),
 
 	// Data from the cdb
-	.cdb_except_rasied_i(cdb_except_rasied_i),
+	.cdb_except_raised_i(cdb_except_raised_i),
 	.cdb_value_i(cdb_value_i),
 	.cdb_rob_idx_i(cdb_rob_idx_i),
 
