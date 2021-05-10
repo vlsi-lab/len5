@@ -108,7 +108,7 @@ end
 //----- DUT -----\\
 //---------------\\
 
-Back_end Back_end_IQL
+back_end Back_end_IQL
 (
     // To the main control 
     .main_cu_stall_o(main_cu_stall_o),

@@ -66,8 +66,7 @@ module d1_replacement_block
 
   mux #(
     .PARALLELISM(N_WAY),
-    .SEL_LEN(LOG2_N_SETS),
-    .N_INPUT(N_SETS)
+    .SEL_LEN(LOG2_N_SETS)
   ) i_mux (
     .sel(idx_addr_i),
     .input_i(replace_mtx_q),

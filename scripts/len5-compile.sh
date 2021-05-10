@@ -18,12 +18,10 @@ LEN5_ROOT_DIR="$(realpath $LEN5_ROOT_DIR/..)"
 LOG_FILE="$LEN5_ROOT_DIR/private/compile-script.log"
 
 # Remote LEN5 directory
-REMOTE_LEN5_DIR="~/len5-core-active"
 REMOTE_SIM_DIR="~/sim/len5"
 
 # File containing the list of LEN5 source files
 SRC_LIST_FILE="$LEN5_ROOT_DIR/config/src-list.txt"
-REMOTE_SRC_LIST_FILE="$REMOTE_SIM_DIR/$(basename $SRC_LIST_FILE)"
 
 # Default remote host informatioin for SSH connection
 USER_NAME=""
@@ -153,6 +151,7 @@ fi
 
 # Copy the source file list
 log "Copying file containing the list of LEN5 source files..."
+REMOTE_SRC_LIST_FILE="$REMOTE_SIM_DIR/$(basename $SRC_LIST_FILE)"
 rsync -e "ssh $SSH_OPT" $SRC_LIST_FILE $REMOTE_HOST:$REMOTE_SRC_LIST_FILE
 if [ $? -ne 0 ]; then
     err "ERROR while copying list of source files"

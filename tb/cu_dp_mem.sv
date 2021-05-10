@@ -99,13 +99,13 @@ module cu_dp_mem
 	assign stall = stall1 && stall2;
 	assign flush_i = flush_it;
 
-Data_path_memory U_Data_path_memory
+data_path_memory U_Data_path_memory
 (
 	// From :CU
   	.clk_i    (clk_i),
     .rst_n_i  (rst_n_i),
     .flush_i  (flush_it),
-	.ins_in(ins_in),
+	//.ins_in(ins_in),
 	//input logic stall,
 
 	// For back end :CU
@@ -125,8 +125,8 @@ Data_path_memory U_Data_path_memory
   	//.except_i(except_i),
   	//.except_pc_i(except_pc_i),
 
-	.except_raised_o(except_raised_o),
-	.except_code_o(except_code_o),
+	.except_raised_i(except_raised_o),
+	.except_code_i(except_code_o),
 	.rob_head_idx_o		(rob_head_idx_o),
 
   	// Data from intruction fetch unit cache // Fix_it from backend i.e., input from data cahce :D$
@@ -169,7 +169,7 @@ Data_path_memory U_Data_path_memory
   	.l2arb_l2c_ans_rdy_o(l2arb_l2c_ans_rdy_o) 
 );
 
-CU1_FSM U_CU1_FSM
+cu1_fsm U_CU1_FSM
 (
 	// From :TB
   	.clk_i    (clk_i),
@@ -239,7 +239,7 @@ CU1_FSM U_CU1_FSM
   	//.l2arb_l2c_ans_rdy_o(l2arb_l2c_ans_rdy_o) 
 );
 
-CU2_FSM  U_CU2_FSM
+cu2_fsm  U_CU2_FSM
 (
 	// From :TB
   	.clk_i    (clk_i),

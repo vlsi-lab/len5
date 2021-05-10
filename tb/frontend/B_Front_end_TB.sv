@@ -74,7 +74,7 @@ end
 //----- DUT -----\\
 //---------------\\
 
-Front_end #(.HLEN(4),.BTB_BITS(4)) u_Front_end
+front_end #(.HLEN(4),.BTB_BITS(4)) u_Front_end
 (
   	.clk_i    (clk_i),
     .rst_n_i  (rst_n_i),

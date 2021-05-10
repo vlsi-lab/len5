@@ -12,12 +12,15 @@
 // Author: WALID
 // Date: 07/10/2019
 
+/* Include instruction definitions */
+`include "instr_macros.svh"
+
 import len5_pkg::*;
 import expipe_pkg::*;
 import memory_pkg::*;
 import csr_pkg::*;
 
-module CU2_FSM
+module cu2_fsm
 (
 	// From :TB
   	input   logic             	clk_i,
@@ -38,10 +41,10 @@ module CU2_FSM
 );
 
 	logic [OPCODE_LEN -1:0]        instr_opcode;
-    logic [`FUNCT3_LEN -1:0]        instr_funct3;
+    logic [FUNCT3_LEN -1:0]        instr_funct3;
 
 	assign instr_opcode     = 	ins_in[OPCODE_LEN-1 : 0];
-    assign instr_funct3     = 	ins_in[14 -: `FUNCT3_LEN];
+    assign instr_funct3     = 	ins_in[14 -: FUNCT3_LEN];
 
 	typedef enum logic [2:0] { RESET, OP_STATE, EXCEPT_I_MEM_STAGE, EXCEPT_RAISE_STAGE, STALL_STAGE } state_t;
   	state_t present_state, next_state;

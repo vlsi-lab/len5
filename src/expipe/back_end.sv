@@ -363,7 +363,7 @@ issue_q_l u_issue_q_l
     .rob_res_ready_o(rob_res_ready_o)
 );
 
-reg_status #( 32,5) u_reg_status_int 
+reg_status #(32) u_reg_status_int 
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
@@ -394,7 +394,7 @@ reg_status #( 32,5) u_reg_status_int
     .comm_head_idx_i(rob_head_idx_i)//(comm_head_idx_i)         // head entry of the ROB
 );
 
-reg_status # (32,5) u_reg_status_fp
+reg_status # (32) u_reg_status_fp
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),

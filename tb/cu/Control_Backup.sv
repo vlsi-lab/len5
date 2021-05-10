@@ -85,11 +85,11 @@ module Control
 );
 
 	logic [OPCODE_LEN -1:0]        instr_opcode;
-    logic [`FUNCT3_LEN -1:0]        instr_funct3;
+    logic [FUNCT3_LEN -1:0]        instr_funct3;
 
 	assign 	vm_mode_i		= 	SV39;
 	assign instr_opcode     = 	ins_in[OPCODE_LEN-1 : 0];
-    assign instr_funct3     = 	ins_in[14 -: `FUNCT3_LEN];
+    assign instr_funct3     = 	ins_in[14 -: FUNCT3_LEN];
 
 	assign vmem_on_i  		= 	1;		// Virtual memory is on
 	assign sum_bit_i  		= 	1;		// For user mode 

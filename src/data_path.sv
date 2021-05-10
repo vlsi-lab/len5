@@ -69,7 +69,7 @@ module data_path
   	resolution_t      res_i;
 
 
-Front_end #(.HLEN(4),.BTB_BITS(4)) u_Front_end_F
+front_end #(.HLEN(4),.BTB_BITS(4)) u_Front_end_F
 (
   	.clk_i    (clk_i),
     .rst_n_i  (rst_n_i),
@@ -98,7 +98,7 @@ Front_end #(.HLEN(4),.BTB_BITS(4)) u_Front_end_F
   .except_pc_i		(except_pc_i)   
 );
 
-Back_end u_Back_end_IQL
+back_end u_Back_end_IQL
 (
     // To the main control 
     .main_cu_stall_o(main_cu_stall_o),

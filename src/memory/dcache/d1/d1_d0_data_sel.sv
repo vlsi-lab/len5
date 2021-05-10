@@ -15,6 +15,7 @@
 
 import memory_pkg::*;
 import len5_pkg::*;
+import expipe_pkg::BUFF_IDX_LEN;
 
 module d1_d0_data_sel
 (

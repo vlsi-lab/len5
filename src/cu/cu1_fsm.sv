@@ -8,16 +8,19 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: CU1_FSM.sv
+// File: cu1_fsm.sv
 // Author: WALID
 // Date: 07/10/2019
+
+/* Include instruction definitions */
+`include "instr_macros.svh"
 
 import len5_pkg::*;
 import expipe_pkg::*;
 import memory_pkg::*;
 import csr_pkg::*;
 
-module CU1_FSM
+module cu1_fsm
 (
 	// From :TB
   	input   logic             	clk_i,
@@ -89,11 +92,11 @@ module CU1_FSM
 );
 
 	logic [OPCODE_LEN -1:0]        instr_opcode;
-    logic [`FUNCT3_LEN -1:0]        instr_funct3;
+    logic [FUNCT3_LEN -1:0]        instr_funct3;
 
 	assign 	vm_mode_i		= 	SV39;
 	assign instr_opcode     = 	ins_in[OPCODE_LEN-1 : 0];
-    assign instr_funct3     = 	ins_in[14 -: `FUNCT3_LEN];
+    assign instr_funct3     = 	ins_in[14 -: FUNCT3_LEN];
 
 	assign vmem_on_i  		= 	0;		// Virtual memory is on
 	assign sum_bit_i  		= 	1;		// For user mode 
@@ -254,7 +257,7 @@ module CU1_FSM
 	// Output update
   	always_comb begin
     // Defaults
-    	branch_type_i			=	beq;
+    	branch_type_i			=	BEQ;
 		ldst_type_i				=	LS_WORD;
 		flush_i 				= 	0;
 		stall	 				= 	0;

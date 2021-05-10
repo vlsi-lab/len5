@@ -8,6 +8,8 @@ include/expipe_pkg.sv
 include/csr_pkg.sv
 src/util/*.sv
 src/memory/dcache/*.sv
+src/memory/dcache/d0/*.sv
+src/memory/dcache/d1/*.sv
 src/memory/dtlb/*.sv
 src/memory/icache/*.sv
 src/memory/itlb/*.sv
