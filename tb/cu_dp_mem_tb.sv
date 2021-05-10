@@ -42,7 +42,7 @@ end
 //----- DUT -----\\
 //---------------\\
 
-CU_DP_MEM u_CU_DP_MEM
+cu_dp_mem u_CU_DP_MEM
 (
 	.clk_i (clk_i),
     .rst_n_i (rst_n_i),

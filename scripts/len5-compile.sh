@@ -10,12 +10,12 @@
 # ----- DEFAULT CONFIGURATION ----- #
 #####################################
 
-# Script options
-LOG_FILE="$(dirname $0)/compile-script.log"
-
 # Get the LEN5 root directory
 LEN5_ROOT_DIR="$(dirname $(realpath $0))"
 LEN5_ROOT_DIR="$(realpath $LEN5_ROOT_DIR/..)"
+
+# Log file
+LOG_FILE="$LEN5_ROOT_DIR/private/compile-script.log"
 
 # Remote LEN5 directory
 REMOTE_LEN5_DIR="~/len5-core-active"
@@ -47,16 +47,22 @@ function print_usage() {
     printf -- "USAGE: $0 [OPTIONS]\n"
     printf -- "OPTIONS:\n"
     printf -- "-h:      print this message and exit.\n"
-    printf -- "-p:      set remote port (default: %d).\n" $REMOTE_PORT
-    printf -- "-s HOST: run simulation on HOST instead of '%s'.\n" "$REMOTE_HOST"
+    printf -- "-f FILE: read list of source files from FILE.\n"
+    printf -- "         Default: %s.\n" "$SRC_LIST_FILE"
+    printf -- "-l FILE: log messages to FILE.\n" 
+    printf -- "         Default: %s.\n" "$LOG_FILE"
+    printf -- "-p PORT: set remote port number.\n"
+    printf -- "         Default: %d.\n" $REMOTE_PORT
+    printf -- "-s HOST: run simulation on HOST.\n"
+    printf -- "         Default: %s.\n" "$HOST_NAME"
     printf -- "-t:      also compile top-level testbench files in 'tb/'.\n"
-    printf -- "-u:      set remote username.\n"
+    printf -- "-u USER: set remote username.\n"
 }
 
 # Log message
 function log() {
     if [ $# -eq 0 ]; then
-        printf -- "\n"
+        printf -- "\n" | tee /dev/tty >> ${LOG_FILE}
     else
         printf -- "### INFO > " | tee /dev/tty >> ${LOG_FILE}
         printf -- "$@" | tee /dev/tty >> ${LOG_FILE}
@@ -78,11 +84,17 @@ function err() {
 
 # Parse command line options
 # --------------------------
-while getopts ':hp:s:tu:' opt; do
+while getopts ':hf:l:p:s:tu:' opt; do
     case $opt in
         h) # Print usage message
             print_usage
             exit 0
+            ;;
+        f) # Read list of source files from file
+            SRC_LIST_FILE="$OPTARG"
+            ;;
+        l) # Log output to file
+            LOG_FILE="$OPTARG"
             ;;
         p) # Set the remote port
             REMOTE_PORT=$OPTARG
@@ -153,7 +165,7 @@ ssh $SSH_OPT $REMOTE_HOST "
 cd $REMOTE_SIM_DIR
 source /software/europractice-release-2019/scripts/init_questa10.7c > /dev/null
 vlog $COMPILER_OPT -f $REMOTE_SRC_LIST_FILE
-"
+" | tee /dev/tty >> ${LOG_FILE}
 if [ $? -ne 0 ]; then
     err "ERROR: there were compilation errors\n"
 else
