@@ -1,0 +1,25 @@
+[ ] fix spellong: cdb_except_rasied_i
+
+[X] remove control_pkg::
+
+[ ] fix handshake in issue logic: maybe keep valid  only and it to operand fetch logic (only fetch operands from the cdb if they are valid)
+
+[ ] handle id_imm_req separately in issue logic
+
+[ ] See the effect of rob_idx vs instr_idx change in issue logic
+
+[ ] fix register status
+
+[X] Check if the new definition of rs_data in generic_rs creates issues
+
+[X] Review the indexes to the CDB of the execution units in exec_unit.sv 
+
+[ ] Fix assertions in branch_unit_rs
+
+-----------------
+----- IDEAS -----
+-----------------
+
+Instruction replay
+------------------
+Use the issue queue like the ROB: do not remove an instruction from it until the instruction is committed. If, for some reason, the instruction must be replayed (e.g., misprediction), it is enough to flush the pipeline and move the pointer to the index inside the issue queue corresponding to the wrong instruction. 

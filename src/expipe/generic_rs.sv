@@ -106,8 +106,7 @@ module generic_rs
     logic                       new_idx_valid, ex_idx_valid, cdb_idx_valid;
     
     // The actual reservation station data structure
-    //rs_entry_t [0:RS_DEPTH-1]   rs_data;
-    rs_entry_t                  rs_data[0:RS_DEPTH-1];  /* Check if this creates issues */
+    rs_entry_t                  rs_data[0:RS_DEPTH-1];
 
     // Status signals
     logic   [RS_DEPTH-1:0]      valid_a, busy_a; // valid entries, empty entries

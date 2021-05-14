@@ -128,16 +128,16 @@ alu_rs #(.EU_CTL_LEN (8/*4//8*/), .RS_DEPTH (8), .EXCEPT_LEN(2)) u_alu_rs
     .rs2_idx_i (ex_rs2_idx_i),
     .rs2_value_i (ex_rs2_value_i),
     .dest_idx_i (ex_rob_idx_i),
-	.cdb_ready_i (cdb_ready_i[0]),
+	.cdb_ready_i (cdb_ready_i[EU_INT_ALU]),
     .cdb_valid_i (cdb_valid_i),
-    .cdb_valid_o (cdb_valid_o[0]),
-    .cdb_idx_i (cdb_data_i[0].rob_idx),//(cdb_idx_i),
-    .cdb_data_i (cdb_data_i[0].value),//(cdb_data_i),
-    .cdb_except_raised_i (cdb_data_i[0].except_raised),//(cdb_except_raised_i),
-    .cdb_idx_o (cdb_data_o[0].rob_idx),//(cdb_idx_o),
-    .cdb_data_o (cdb_data_o[0].value),//(cdb_data_o),
-    .cdb_except_raised_o (cdb_data_o[0].except_raised),//(cdb_except_raised_o),
-    .cdb_except_o (cdb_data_o[0].except_code)//(cdb_except_o)
+    .cdb_valid_o (cdb_valid_o[EU_INT_ALU]),
+    .cdb_idx_i (cdb_data_i[EU_INT_ALU].rob_idx),//(cdb_idx_i),
+    .cdb_data_i (cdb_data_i[EU_INT_ALU].value),//(cdb_data_i),
+    .cdb_except_raised_i (cdb_data_i[EU_INT_ALU].except_raised),//(cdb_except_raised_i),
+    .cdb_idx_o (cdb_data_o[EU_INT_ALU].rob_idx),//(cdb_idx_o),
+    .cdb_data_o (cdb_data_o[EU_INT_ALU].value),//(cdb_data_o),
+    .cdb_except_raised_o (cdb_data_o[EU_INT_ALU].except_raised),//(cdb_except_raised_o),
+    .cdb_except_o (cdb_data_o[EU_INT_ALU].except_code)//(cdb_except_o)
 );
 
 mult_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_mult_rs
@@ -156,16 +156,16 @@ mult_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_mult
     .rs2_idx_i (ex_rs2_idx_i),
     .rs2_value_i (ex_rs2_value_i),
     .dest_idx_i (ex_rob_idx_i),
-	.cdb_ready_i (cdb_ready_i[1]),
+	.cdb_ready_i (cdb_ready_i[EU_INT_MULT]),
     .cdb_valid_i (cdb_valid_i),
-    .cdb_valid_o (cdb_valid_o[1]),
-	.cdb_idx_i (cdb_data_i[1].rob_idx),//(cdb_idx_i),
-    .cdb_data_i (cdb_data_i[1].value),//(cdb_data_i),
-    .cdb_except_raised_i (cdb_data_i[1].except_raised),//(cdb_except_raised_i),
-    .cdb_idx_o (cdb_data_o[1].rob_idx),//(cdb_idx_o),
-    .cdb_data_o (cdb_data_o[1].value),//(cdb_data_o),
-    .cdb_except_raised_o (cdb_data_o[1].except_raised),//(cdb_except_raised_o),
-    .cdb_except_o (cdb_data_o[1].except_code)//(cdb_except_o)
+    .cdb_valid_o (cdb_valid_o[EU_INT_MULT]),
+	.cdb_idx_i (cdb_data_i[EU_INT_MULT].rob_idx),//(cdb_idx_i),
+    .cdb_data_i (cdb_data_i[EU_INT_MULT].value),//(cdb_data_i),
+    .cdb_except_raised_i (cdb_data_i[EU_INT_MULT].except_raised),//(cdb_except_raised_i),
+    .cdb_idx_o (cdb_data_o[EU_INT_MULT].rob_idx),//(cdb_idx_o),
+    .cdb_data_o (cdb_data_o[EU_INT_MULT].value),//(cdb_data_o),
+    .cdb_except_raised_o (cdb_data_o[EU_INT_MULT].except_raised),//(cdb_except_raised_o),
+    .cdb_except_o (cdb_data_o[EU_INT_MULT].except_code)//(cdb_except_o)
 );
 
 div_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_div_rs
@@ -184,16 +184,16 @@ div_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_div_r
     .rs2_idx_i (ex_rs2_idx_i),
     .rs2_value_i (ex_rs2_value_i),
     .dest_idx_i (ex_rob_idx_i),
-	.cdb_ready_i (cdb_ready_i[2]),
+	.cdb_ready_i (cdb_ready_i[EU_INT_DIV]),
     .cdb_valid_i (cdb_valid_i),
-    .cdb_valid_o (cdb_valid_o[2]),
-    .cdb_idx_i (cdb_data_i[2].rob_idx),//(cdb_idx_i),
-    .cdb_data_i (cdb_data_i[2].value),//(cdb_data_i),
-    .cdb_except_raised_i (cdb_data_i[2].except_raised),//(cdb_except_raised_i),
-    .cdb_idx_o (cdb_data_o[2].rob_idx),//(cdb_idx_o),
-    .cdb_data_o (cdb_data_o[2].value),//(cdb_data_o),
-    .cdb_except_raised_o (cdb_data_o[2].except_raised),//(cdb_except_raised_o),
-    .cdb_except_o (cdb_data_o[2].except_code)//(cdb_except_o)
+    .cdb_valid_o (cdb_valid_o[EU_INT_DIV]),
+    .cdb_idx_i (cdb_data_i[EU_INT_DIV].rob_idx),//(cdb_idx_i),
+    .cdb_data_i (cdb_data_i[EU_INT_DIV].value),//(cdb_data_i),
+    .cdb_except_raised_i (cdb_data_i[EU_INT_DIV].except_raised),//(cdb_except_raised_i),
+    .cdb_idx_o (cdb_data_o[EU_INT_DIV].rob_idx),//(cdb_idx_o),
+    .cdb_data_o (cdb_data_o[EU_INT_DIV].value),//(cdb_data_o),
+    .cdb_except_raised_o (cdb_data_o[EU_INT_DIV].except_raised),//(cdb_except_raised_o),
+    .cdb_except_o (cdb_data_o[EU_INT_DIV].except_code)//(cdb_except_o)
 );
 
 fpu_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_fpu_rs
@@ -212,16 +212,16 @@ fpu_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_fpu_r
     .rs2_idx_i (ex_rs2_idx_i),
     .rs2_value_i (ex_rs2_value_i),
     .dest_idx_i (ex_rob_idx_i),
-	.cdb_ready_i (cdb_ready_i[3]),
+	.cdb_ready_i (cdb_ready_i[EU_FPU]),
     .cdb_valid_i (cdb_valid_i),
-    .cdb_valid_o (cdb_valid_o[3]),
-    .cdb_idx_i (cdb_data_i[3].rob_idx),//(cdb_idx_i),
-    .cdb_data_i (cdb_data_i[3].value),//(cdb_data_i),
-    .cdb_except_raised_i (cdb_data_i[3].except_raised),//(cdb_except_raised_i),
-    .cdb_idx_o (cdb_data_o[3].rob_idx),//(cdb_idx_o),
-    .cdb_data_o (cdb_data_o[3].value),//(cdb_data_o),
-    .cdb_except_raised_o (cdb_data_o[3].except_raised),//(cdb_except_raised_o),
-    .cdb_except_o (cdb_data_o[3].except_code)//(cdb_except_o)
+    .cdb_valid_o (cdb_valid_o[EU_FPU]),
+    .cdb_idx_i (cdb_data_i[EU_FPU].rob_idx),//(cdb_idx_i),
+    .cdb_data_i (cdb_data_i[EU_FPU].value),//(cdb_data_i),
+    .cdb_except_raised_i (cdb_data_i[EU_FPU].except_raised),//(cdb_except_raised_i),
+    .cdb_idx_o (cdb_data_o[EU_FPU].rob_idx),//(cdb_idx_o),
+    .cdb_data_o (cdb_data_o[EU_FPU].value),//(cdb_data_o),
+    .cdb_except_raised_o (cdb_data_o[EU_FPU].except_raised),//(cdb_except_raised_o),
+    .cdb_except_o (cdb_data_o[EU_FPU].except_code)//(cdb_except_o)
 );
 
 simd_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_simd_rs
@@ -240,16 +240,16 @@ simd_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_simd
     .rs2_idx_i (ex_rs2_idx_i),
     .rs2_value_i (ex_rs2_value_i),
     .dest_idx_i (ex_rob_idx_i),
-	.cdb_ready_i (cdb_ready_i[4]),
+	.cdb_ready_i (cdb_ready_i[EU_SIMD]),
     .cdb_valid_i (cdb_valid_i),
-    .cdb_valid_o (cdb_valid_o[4]),
-    .cdb_idx_i (cdb_data_i[4].rob_idx),//(cdb_idx_i),
-    .cdb_data_i (cdb_data_i[4].value),//(cdb_data_i),
-    .cdb_except_raised_i (cdb_data_i[4].except_raised),//(cdb_except_raised_i),
-    .cdb_idx_o (cdb_data_o[4].rob_idx),//(cdb_idx_o),
-    .cdb_data_o (cdb_data_o[4].value),//(cdb_data_o),
-    .cdb_except_raised_o (cdb_data_o[4].except_raised),//(cdb_except_raised_o),
-    .cdb_except_o (cdb_data_o[4].except_code)//(cdb_except_o)
+    .cdb_valid_o (cdb_valid_o[EU_SIMD]),
+    .cdb_idx_i (cdb_data_i[EU_SIMD].rob_idx),//(cdb_idx_i),
+    .cdb_data_i (cdb_data_i[EU_SIMD].value),//(cdb_data_i),
+    .cdb_except_raised_i (cdb_data_i[EU_SIMD].except_raised),//(cdb_except_raised_i),
+    .cdb_idx_o (cdb_data_o[EU_SIMD].rob_idx),//(cdb_idx_o),
+    .cdb_data_o (cdb_data_o[EU_SIMD].value),//(cdb_data_o),
+    .cdb_except_raised_o (cdb_data_o[EU_SIMD].except_raised),//(cdb_except_raised_o),
+    .cdb_except_o (cdb_data_o[EU_SIMD].except_code)//(cdb_except_o)
 );
 
 branch_rs #(.RS_DEPTH (RS_DEPTH)) u_branch_rs
@@ -277,11 +277,11 @@ branch_rs #(.RS_DEPTH (RS_DEPTH)) u_branch_rs
   	.res_target_o(res_target_o),
   	.res_taken_o(res_taken_o),
 	.res_mispredict_o(res_mispredict_o),
-	.cdb_ready_i (cdb_ready_i[5]),
+	.cdb_ready_i (cdb_ready_i[EU_BRANCH_UNIT]),
     .cdb_valid_i (cdb_valid_i),
-    .cdb_valid_o (cdb_valid_o[5]),
-    .cdb_data_i (cdb_data_i[5]),
-    .cdb_data_o (cdb_data_o[5])
+    .cdb_valid_o (cdb_valid_o[EU_BRANCH_UNIT]),
+    .cdb_data_i (cdb_data_i[EU_BRANCH_UNIT]),
+    .cdb_data_o (cdb_data_o[EU_BRANCH_UNIT])
 );
 
 load_store_unit u_load_store_unit
@@ -315,13 +315,13 @@ load_store_unit u_load_store_unit
     .rob_store_committing_o(rob_store_committing_o),
     .cdb_lb_valid_i(cdb_valid_i),//(cdb_lb_valid_i),
     .cdb_sb_valid_i(cdb_valid_i),//(cdb_sb_valid_i),
-    .cdb_lb_ready_i(cdb_ready_i[6]),//cdb_lb_ready_i),
-    .cdb_sb_ready_i(cdb_ready_i[7]),//cdb_sb_ready_i),
-    .lb_cdb_valid_o(cdb_valid_o[6]),//(lb_cdb_valid_o),
-    .sb_cdb_valid_o(cdb_valid_o[7]),//(sb_cdb_valid_o),
-    .cdb_lsb_data_i(cdb_data_i[6]),//(cdb_lsb_data_i),
-    .lb_cdb_data_o(cdb_data_o[6]),//(lb_cdb_data_o),
-    .sb_cdb_data_o(cdb_data_o[7])//(sb_cdb_data_o)
+    .cdb_lb_ready_i(cdb_ready_i[EU_LOAD_BUFFER]),//cdb_lb_ready_i),
+    .cdb_sb_ready_i(cdb_ready_i[EU_STORE_BUFFER]),//cdb_sb_ready_i),
+    .lb_cdb_valid_o(cdb_valid_o[EU_LOAD_BUFFER]),//(lb_cdb_valid_o),
+    .sb_cdb_valid_o(cdb_valid_o[EU_STORE_BUFFER]),//(sb_cdb_valid_o),
+    .cdb_lsb_data_i(cdb_data_i[EU_LOAD_BUFFER]),//(cdb_lsb_data_i),
+    .lb_cdb_data_o(cdb_data_o[EU_LOAD_BUFFER]),//(lb_cdb_data_o),
+    .sb_cdb_data_o(cdb_data_o[EU_STORE_BUFFER])//(sb_cdb_data_o)
 );
     
 endmodule
