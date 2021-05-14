@@ -18,8 +18,9 @@
 import len5_pkg::*;
 import memory_pkg::*;
 
-module cache_L2_system_emulator
-(
+module cache_L2_system_emulator #(
+  parameter MEM_FILE_PATH = "memory.txt"
+) (
   // Main
   input  logic           clk_i,
   input  logic           rst_ni,
@@ -42,7 +43,6 @@ module cache_L2_system_emulator
   // PARAMETERS \\
   //------------\\
 
-  localparam MEM_FILE_PATH = "memory.txt";
   localparam BUF_LEN       = 3;
   localparam LOG2_BUF_LEN  = $clog2(BUF_LEN);
   localparam H_DELAY       = BUF_LEN-1;

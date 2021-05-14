@@ -127,7 +127,7 @@ data_path_memory U_Data_path_memory
 
 	.except_raised_i(except_raised_o),
 	.except_code_i(except_code_o),
-	.rob_head_idx_o		(rob_head_idx_o),
+	//.rob_head_idx_o		(rob_head_idx_o),
 
   	// Data from intruction fetch unit cache // Fix_it from backend i.e., input from data cahce :D$
   	//.except_raised_i(except_raised_i),
