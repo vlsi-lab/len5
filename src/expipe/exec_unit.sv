@@ -75,8 +75,8 @@ module exec_unit (
     //    logic                       except_raised;
     //    logic [ROB_EXCEPT_LEN-1:0]  except_code;
     //} cdb_data_t;
-    input 	var cdb_data_t  [0:EU_N-1] cdb_data_i,
-	output 	cdb_data_t  [0:EU_N-1] cdb_data_o,
+    input 	var cdb_data_t   cdb_data_i [0:EU_N-1],
+	output 	cdb_data_t   cdb_data_o [0:EU_N-1],
     //input   logic [ROB_IDX_LEN-1:0] cdb_idx_i,
     //input   logic [XLEN-1:0]        cdb_data_i,
     //input   logic                   cdb_except_raised_i,
@@ -324,5 +324,9 @@ load_store_unit u_load_store_unit
     .sb_cdb_data_o(cdb_data_o[EU_STORE_BUFFER])//(sb_cdb_data_o)
 );
     
+// TODO: add OPERANDS-ONLY
+assign cdb_valid_o[EU_OPERANDS_ONLY] = 0;
+assign ex_valid_o[EU_OPERANDS_ONLY] = 0;
+
 endmodule
 

@@ -182,8 +182,10 @@ module back_end
     logic    [0:EU_N-1]               cdb_valid_o;
 
     // Data of Exec from/to the CDB
-	cdb_data_t  [0:EU_N-1] cdb_data_i;
-	cdb_data_t  [0:EU_N-1] cdb_data_o;
+	cdb_data_t  cdb_data_i [0:EU_N-1];
+	cdb_data_t  cdb_data_o [0:EU_N-1];
+    // cdb_data_t  [0:EU_N-1] cdb_data_i_low_prio;
+    // cdb_data_t  [0:EU_N-1] cdb_data_o_low_prio;
     //logic [ROB_IDX_LEN-1:0] cdb_idx_i;
     //logic [XLEN-1:0]        cdb_data_i;
     //logic                   cdb_except_raised_i;
@@ -634,6 +636,8 @@ rob u_rob
 ); 
 
 	assign 	rob_head_idx_o	=	rob_head_idx_i;    
+    // assign  cdb_data_i_low_prio = cdb_data_i[1:EU_N-1];
+    // assign  cdb_data_o_low_prio = cdb_data_o[1:EU_N-1];
 
 cdb u_cdb(
     .clk_i(clk_i),

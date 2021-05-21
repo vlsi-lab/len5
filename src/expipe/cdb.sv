@@ -110,7 +110,7 @@ module cdb
     assign rob_data_o = (served_max_prio) ? max_prio_data_i : low_prio_mux_data;
     
     // Low priority MUX
-    assign low_prio_mux_data = rs_data_i[served];
+    assign low_prio_mux_data = rs_data_i[served-1]; // TODO: fixed indexing
 	//assign temp = rs_data_i;
 	//assign rs_data_o[served] = rs_data_i[served]; // temp[served];
 	assign rs_data_o = rs_data_i; // temp[served];

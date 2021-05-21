@@ -17,14 +17,13 @@ import expipe_pkg::*;
 import memory_pkg::*;
 import csr_pkg::*;
 
-`include "instr_macros.svh"
-
 module data_path_memory
 (
 	// From :CU
   	input   logic             clk_i,
   	input   logic             rst_n_i,
   	input   logic             flush_i,
+	output  logic [ILEN-1:0]  ins_in,
 	//input logic stall,
 
 	// For back end :CU
@@ -41,12 +40,17 @@ module data_path_memory
  	output  logic             data_ready_o,
   	
 	// For pc_gen from or to back end// Input from intruction cache :I$
-  	input   logic             except_i,
-  	input   logic [XLEN-1:0]  except_pc_i,
+  	//input   logic             except_i,
+  	//input   logic [XLEN-1:0]  except_pc_i,
 
   	// Data from intruction fetch unit cache // Fix_it from backend i.e., input from data cahce :D$
-  	input   logic             except_raised_i,
-  	input   except_code_t     except_code_i,
+  	//input   logic             except_raised_i,
+  	//input   except_code_t     except_code_i,
+
+	output   logic                       except_raised_o,
+    //output   logic [ROB_EXCEPT_LEN-1:0]  except_code_o,
+	output   except_code_t  except_code_o,
+	output logic [ROB_IDX_LEN-1:0] rob_head_idx_o,
 
 	// From main unit
    	input  logic                 abort_i,
@@ -69,7 +73,7 @@ module data_path_memory
   	input  tlb_flush_e           L1TLB_flush_type_i,
   	input  tlb_flush_e           L2TLB_flush_type_i,
   	input  asid_t                flush_asid_i,
- 	input  vpn_t                 flush_page_i,
+ 	input  var vpn_t                 flush_page_i,
 	
 	// LSQ <-> d-TLB
   	output logic                 dtlb_lsq_req_rdy_o,
@@ -80,7 +84,7 @@ module data_path_memory
   	// L2 Cache Arbiter <-> L2 Cache Emulator
 	output l2arb_l2c_req_t       l2arb_l2c_req_o,
   	input  logic                 l2c_l2arb_req_rdy_i,
-  	input  l2c_l2arb_ans_t       l2c_l2arb_ans_i,
+  	input  var l2c_l2arb_ans_t       l2c_l2arb_ans_i,
   	output logic                 l2arb_l2c_ans_rdy_o 
 );
 
@@ -103,6 +107,7 @@ data_path  u_Data_path
 	.clk_i    (clk_i),
     .rst_n_i  (rst_n_i),
     .flush_i  (flush_i),
+	.ins_in   (ins_in),
 	//.stall(stall),
     .vm_mode_i(vm_mode_i),
 	.main_cu_stall_o(main_cu_stall_o),
@@ -114,10 +119,14 @@ data_path  u_Data_path
   	.data_i(data_i),
   	.data_valid_i(icache_frontend_ans_o.valid),
  	.data_ready_o(data_ready_o),
-  	.except_i(except_i),
-  	.except_pc_i(except_pc_i),
-	.except_raised_i(except_raised_i),
-  	.except_code_i(except_code_i),
+	.icache_frontend_ans_i(icache_frontend_ans_o),
+  	//.except_i(except_i),
+  	//.except_pc_i(except_pc_i),
+	//.except_raised_i(except_raised_i),
+  	//.except_code_i(except_code_i),
+	.except_raised_o(except_raised_o),
+	.except_code_o(except_code_o),
+	.rob_head_idx_o		(rob_head_idx_o),
     .dtlb_ans_i(dtlb_lsq_ans_o),
     .dtlb_wup_i(dtlb_lsq_wup_o),
     .dtlb_req_o(lsq_dtlb_req_i),

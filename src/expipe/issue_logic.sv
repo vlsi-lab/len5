@@ -81,8 +81,8 @@ module issue_logic (
     output  logic [REG_IDX_LEN-1:0]     fprf_rs2_idx_o,         // RF address of the second operand
 
     // Handshake from/to the execution pipeline
-    input   logic [EU_N-1:0]            ex_ready_i,             // valid signal from each reservation station
-    output  logic [EU_N-1:0]            ex_valid_o,             // ready signal to each reservation station
+    input   logic [0:EU_N-1]            ex_ready_i,             // valid signal from each reservation station
+    output  logic [0:EU_N-1]            ex_valid_o,             // ready signal to each reservation station
 
     // Data to the execution pipeline reservation stations
     output  logic [8-1:0]  ex_eu_ctl_o,            // controls for the associated EU
@@ -331,7 +331,8 @@ module issue_logic (
             end
 
             // Fetch rs2
-            if (id_rs2_req || id_imm_req) /* TODO: handle id_imm_req separately? */begin               // rs2 value is required
+            if (id_imm_req)     rs2_ready   = 1'b1;
+            else if (id_rs2_req) begin               // rs2 value is required
                 if (int_regstat_rs2_busy_i) begin   // the operand is provided by an in-flight instr.
                     if (rob_rs2_ready_i) begin /* the operand is already available in the ROB */
                         rs2_ready   = 1'b1;

@@ -16,6 +16,10 @@
 
 [ ] Fix assertions in branch_unit_rs
 
+[ ] fix EU indexes (make them unpacked vectors)
+
+[ ] fix "served" indexes in CDB
+
 -----------------
 ----- IDEAS -----
 -----------------

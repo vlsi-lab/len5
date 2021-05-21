@@ -108,7 +108,7 @@ package len5_pkg;
   localparam FREG_IDX_LEN = 5;//$clog2(FREG_NUM); // Floating point register file address width
 
   // Number of execution units (and reservation stations)
-  localparam EU_N = 16; // load buffer, store buffer, branch unit, ALU, MULT, DIV, FPU, SIMD, operands only
+  localparam EU_N = 9; // load buffer, store buffer, branch unit, ALU, MULT, DIV, FPU, SIMD, operands only
 
   // ISSUE QUEUE
   localparam IQ_DEPTH = 8; // number of entries in the issue queue. This may or may not be a power of 2 (power of 2 recommended)

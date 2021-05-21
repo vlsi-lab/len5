@@ -8,7 +8,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: CU_DP_MEM.sv
+// File: fetch_stage.sv
 // Author: WALID
 // Date: 07/10/2019
 
@@ -105,7 +105,7 @@ data_path_memory U_Data_path_memory
   	.clk_i    (clk_i),
     .rst_n_i  (rst_n_i),
     .flush_i  (flush_it),
-	//.ins_in(ins_in),
+	.ins_in(ins_in),
 	//input logic stall,
 
 	// For back end :CU
@@ -125,9 +125,9 @@ data_path_memory U_Data_path_memory
   	//.except_i(except_i),
   	//.except_pc_i(except_pc_i),
 
-	.except_raised_i(except_raised_o),
-	.except_code_i(except_code_o),
-	//.rob_head_idx_o		(rob_head_idx_o),
+	.except_raised_o(except_raised_o),
+	.except_code_o(except_code_o),
+	.rob_head_idx_o		(rob_head_idx_o),
 
   	// Data from intruction fetch unit cache // Fix_it from backend i.e., input from data cahce :D$
   	//.except_raised_i(except_raised_i),

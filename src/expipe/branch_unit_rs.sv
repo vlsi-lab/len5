@@ -274,7 +274,7 @@ module branch_unit_rs
 
             // Save the result from the branch unit
             if (rs_wr_res) begin
-                busy_a[wr_res_idx]            <= 1'b0; // clear the busy bit
+                rs_data[wr_res_idx]            <= 1'b0; // clear the busy bit
                 rs_data[wr_res_idx].res_ready       <= 1'b1; // mark the entry as completed
                 rs_data[wr_res_idx].mispredicted    <= mispredict_i; // misprediction info from the branch unit
             end

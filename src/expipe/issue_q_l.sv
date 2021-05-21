@@ -80,8 +80,8 @@ module issue_q_l
     output  logic [REG_IDX_LEN-1:0]     fprf_rs2_idx_o,         // RF address of the second operand    
 
 	// Handshake from/to the execution pipeline
-    input   logic [EU_N-1:0]            ex_ready_i,             // valid signal from each reservation station
-    output  logic [EU_N-1:0]            ex_valid_o,             // ready signal to each reservation station
+    input   logic [0:EU_N-1]            ex_ready_i,             // valid signal from each reservation station
+    output  logic [0:EU_N-1]            ex_valid_o,             // ready signal to each reservation station
 
     // Data to the execution pipeline reservation stations
     output  logic [8-1:0]  ex_eu_ctl_o,            // controls for the associated EU
