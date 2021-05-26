@@ -9,7 +9,7 @@
 // specific language governing permissions and limitations under the License.
 //
 // File: generic_rs.sv
-// Author: Michele Caon
+// Author: Michele Caon 
 // Date: 21/10/2019
 
 import len5_pkg::XLEN;
