@@ -10,18 +10,20 @@
 # ----- DEFAULT CONFIGURATION ----- #
 #####################################
 
+# Script options
+LOG_FILE="$(dirname $0)/compile-script.log"
+
 # Get the LEN5 root directory
 LEN5_ROOT_DIR="$(dirname $(realpath $0))"
 LEN5_ROOT_DIR="$(realpath $LEN5_ROOT_DIR/..)"
 
-# Log file
-LOG_FILE="$LEN5_ROOT_DIR/private/compile-script.log"
-
 # Remote LEN5 directory
+REMOTE_LEN5_DIR="~/len5-core-active"
 REMOTE_SIM_DIR="~/sim/len5"
 
 # File containing the list of LEN5 source files
 SRC_LIST_FILE="$LEN5_ROOT_DIR/config/src-list.txt"
+REMOTE_SRC_LIST_FILE="$REMOTE_SIM_DIR/$(basename $SRC_LIST_FILE)"
 
 # Default remote host informatioin for SSH connection
 USER_NAME=""
@@ -45,22 +47,16 @@ function print_usage() {
     printf -- "USAGE: $0 [OPTIONS]\n"
     printf -- "OPTIONS:\n"
     printf -- "-h:      print this message and exit.\n"
-    printf -- "-f FILE: read list of source files from FILE.\n"
-    printf -- "         Default: %s.\n" "$SRC_LIST_FILE"
-    printf -- "-l FILE: log messages to FILE.\n" 
-    printf -- "         Default: %s.\n" "$LOG_FILE"
-    printf -- "-p PORT: set remote port number.\n"
-    printf -- "         Default: %d.\n" $REMOTE_PORT
-    printf -- "-s HOST: run simulation on HOST.\n"
-    printf -- "         Default: %s.\n" "$HOST_NAME"
+    printf -- "-p:      set remote port (default: %d).\n" $REMOTE_PORT
+    printf -- "-s HOST: run simulation on HOST instead of '%s'.\n" "$REMOTE_HOST"
     printf -- "-t:      also compile top-level testbench files in 'tb/'.\n"
-    printf -- "-u USER: set remote username.\n"
+    printf -- "-u:      set remote username.\n"
 }
 
 # Log message
 function log() {
     if [ $# -eq 0 ]; then
-        printf -- "\n" | tee /dev/tty >> ${LOG_FILE}
+        printf -- "\n"
     else
         printf -- "### INFO > " | tee /dev/tty >> ${LOG_FILE}
         printf -- "$@" | tee /dev/tty >> ${LOG_FILE}
@@ -82,17 +78,11 @@ function err() {
 
 # Parse command line options
 # --------------------------
-while getopts ':hf:l:p:s:tu:' opt; do
+while getopts ':hp:s:tu:' opt; do
     case $opt in
         h) # Print usage message
             print_usage
             exit 0
-            ;;
-        f) # Read list of source files from file
-            SRC_LIST_FILE="$OPTARG"
-            ;;
-        l) # Log output to file
-            LOG_FILE="$OPTARG"
             ;;
         p) # Set the remote port
             REMOTE_PORT=$OPTARG
@@ -151,7 +141,6 @@ fi
 
 # Copy the source file list
 log "Copying file containing the list of LEN5 source files..."
-REMOTE_SRC_LIST_FILE="$REMOTE_SIM_DIR/$(basename $SRC_LIST_FILE)"
 rsync -e "ssh $SSH_OPT" $SRC_LIST_FILE $REMOTE_HOST:$REMOTE_SRC_LIST_FILE
 if [ $? -ne 0 ]; then
     err "ERROR while copying list of source files"
@@ -164,7 +153,7 @@ ssh $SSH_OPT $REMOTE_HOST "
 cd $REMOTE_SIM_DIR
 source /software/europractice-release-2019/scripts/init_questa10.7c > /dev/null
 vlog $COMPILER_OPT -f $REMOTE_SRC_LIST_FILE
-" | tee /dev/tty >> ${LOG_FILE}
+"
 if [ $? -ne 0 ]; then
     err "ERROR: there were compilation errors\n"
 else
