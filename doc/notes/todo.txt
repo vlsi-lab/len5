@@ -8,7 +8,7 @@
 
 [ ] See the effect of rob_idx vs instr_idx change in issue logic
 
-[ ] fix register status
+[X] fix register status
 
 [X] Check if the new definition of rs_data in generic_rs creates issues
 
@@ -19,6 +19,8 @@
 [ ] fix EU indexes (make them unpacked vectors)
 
 [ ] fix "served" indexes in CDB
+
+[ ] Add write memory function to memory class
 
 -----------------
 ----- IDEAS -----

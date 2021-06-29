@@ -103,36 +103,60 @@ module commit_logic (
 	//assign except_new_o				= rob_except_raised_i;
 	assign except_new_o				= (rob_valid_i) ? rob_except_raised_t : 'b0;
 
-	always_ff @ (posedge clk_i or negedge rst_n_i) begin
+	// always_comb @ (posedge clk_i or negedge rst_n_i) begin
+	always_comb begin
     // Async reset
-    	if (!rst_n_i) begin
-      		rob_instr_t <= 'd0;
-    		rob_pc_t <= 'd0;
-    		rob_rd_idx_t <= 'd0;
-    		rob_value_t <= 'd0;
-		fp_rob_rd_idx_t <= 'd0;
-    		fp_rob_value_t <= 'd0;
-    		rob_except_raised_t <= 'd0;
-    		rob_except_code_t <= E_UNKNOWN;
-    		rob_head_idx_t <= 'd0;
-			sb_store_committing_t <= 0;
-    	//end else begin
-    	//if (flush_i) begin
-        	//present_state 	<= 	RESUME_STATE;
-    	end else if (rob_ready_o) begin
+    	// if (!rst_n_i) begin
+      	// 	rob_instr_t <= 'd0;
+    	// 	rob_pc_t <= 'd0;
+    	// 	rob_rd_idx_t <= 'd0;
+    	// 	rob_value_t <= 'd0;
+		//     fp_rob_rd_idx_t <= 'd0;
+    	// 	fp_rob_value_t <= 'd0;
+    	// 	rob_except_raised_t <= 'd0;
+    	// 	rob_except_code_t <= E_UNKNOWN;
+    	// 	rob_head_idx_t <= 'd0;
+		// 	sb_store_committing_t <= 0;
+    	// //end else begin
+    	// //if (flush_i) begin
+        // 	//present_state 	<= 	RESUME_STATE;
+    	// end else if (rob_ready_o) begin
+        // 	rob_instr_t <= rob_instr_i;
+    	// 	rob_pc_t <= rob_pc_i;
+    	// 	rob_rd_idx_t <= rob_rd_idx_i;
+    	// 	rob_value_t <= rob_value_i;
+		// fp_rob_rd_idx_t <= fp_rob_rd_idx_i;
+    	// 	fp_rob_value_t <= fp_rob_value_i;
+    	// 	rob_except_raised_t <= rob_except_raised_i;
+    	// 	rob_except_code_t <= rob_except_code_i;
+    	// 	rob_head_idx_t <= rob_head_idx_i;
+		// 	sb_store_committing_t <= sb_store_committing_i;
+							
+    	// end
+    	
+        if (rob_ready_o) begin
         	rob_instr_t <= rob_instr_i;
     		rob_pc_t <= rob_pc_i;
     		rob_rd_idx_t <= rob_rd_idx_i;
     		rob_value_t <= rob_value_i;
-		fp_rob_rd_idx_t <= fp_rob_rd_idx_i;
+		    fp_rob_rd_idx_t <= fp_rob_rd_idx_i;
     		fp_rob_value_t <= fp_rob_value_i;
     		rob_except_raised_t <= rob_except_raised_i;
     		rob_except_code_t <= rob_except_code_i;
     		rob_head_idx_t <= rob_head_idx_i;
 			sb_store_committing_t <= sb_store_committing_i;
-							
-    	end
-    	//end
+        end else begin
+      		rob_instr_t <= 'd0;
+    		rob_pc_t <= 'd0;
+    		rob_rd_idx_t <= 'd0;
+    		rob_value_t <= 'd0;
+		    fp_rob_rd_idx_t <= 'd0;
+    		fp_rob_value_t <= 'd0;
+    		rob_except_raised_t <= 'd0;
+    		rob_except_code_t <= E_UNKNOWN;
+    		rob_head_idx_t <= 'd0;
+			sb_store_committing_t <= 0;
+        end
   	end
 
     //------------------------\\
@@ -172,13 +196,21 @@ module commit_logic (
     //----- OUTPUT EVALUATION -----\\
     //-----------------------------\\
     // Data to the register files
-    assign rf_rd_idx_o          = rob_rd_idx_t;
-    assign rf_value_o           = rob_value_t;
-    assign fp_rd_idx_o          = fp_rob_rd_idx_t;
-    assign fp_value_o           = fp_rob_value_t;
+    // assign rf_rd_idx_o          = rob_rd_idx_t;
+    // assign rf_value_o           = rob_value_t;
+    // assign fp_rd_idx_o          = fp_rob_rd_idx_t;
+    // assign fp_value_o           = fp_rob_value_t;
 	
-	assign rob_except_raised_o	= (rob_valid_i) ? rob_except_raised_t : 'b0;
-	assign rob_except_code_o	= (rob_valid_i) ? rob_except_code_t   : E_UNKNOWN;
+	// assign rob_except_raised_o	= (rob_valid_i) ? rob_except_raised_t : 'b0;
+	// assign rob_except_code_o	= (rob_valid_i) ? rob_except_code_t   : E_UNKNOWN;
+
+    assign rf_rd_idx_o          = rob_rd_idx_i;
+    assign rf_value_o           = rob_value_i;
+    assign fp_rd_idx_o          = fp_rob_rd_idx_i;
+    assign fp_value_o           = fp_rob_value_i;
+	
+	assign rob_except_raised_o	= (rob_valid_i) ? rob_except_raised_i : 'b0;
+	assign rob_except_code_o	= (rob_valid_i) ? rob_except_code_i   : E_UNKNOWN;
 
    //assign int_rf_valid_o = (cd_comm_possible) ? ((instr_opcode == `OPCODE_ADD || instr_opcode == `OPCODE_ADDI) ? 'b1 : 'b0) : 'b0;// do it fo all cases and make it a case
 
