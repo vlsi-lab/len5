@@ -115,7 +115,7 @@ package expipe_pkg;
     //---------------------------\\
     
     typedef struct packed {
-        logic                       busy;
+        logic [ROB_IDX_LEN-1:0]     busy;
         logic [ROB_IDX_LEN-1:0]     rob_idx;
     } regstat_entry_t;
 
