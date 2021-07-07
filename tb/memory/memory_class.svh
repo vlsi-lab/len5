@@ -12,8 +12,9 @@
 // Author: Matteo Perotti
 // Date: 10/11/2019
 // Description: memory emulator
-// Details: it accesses to a file with sparse addresses and data. This way, it can emulate a large memory.
-//          The file should with the lower address and end with the highest.
+// Details: it accesses to a file with sparse addresses and data. This way, it 
+//          can emulate a large memory. The file should begin with the lowest 
+//          address and end with the highest.
 
 class memory_class;
   // Class properties
