@@ -1,4 +1,4 @@
-[ ] fix spellong: cdb_except_rasied_i
+[X] fix spellong: cdb_except_rasied_i
 
 [X] remove control_pkg::
 
