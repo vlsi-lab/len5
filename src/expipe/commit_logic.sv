@@ -74,29 +74,34 @@ module commit_logic (
     // Exception handling logic
     logic                       eh_no_except;
 
-	logic [ILEN-1:0]            rob_instr_t;
-    logic [XLEN-1:0]            rob_pc_t;
-    logic [REG_IDX_LEN-1:0]     rob_rd_idx_t;
-    logic [XLEN-1:0]            rob_value_t;
-	logic [REG_IDX_LEN-1:0]     fp_rob_rd_idx_t;
-    logic [XLEN-1:0]            fp_rob_value_t;
-    logic                       rob_except_raised_t;
+    /* NOTE: this werte added of a delayed version of the inputs (*_i) */
+	// logic [ILEN-1:0]            rob_instr_t;
+    // logic [XLEN-1:0]            rob_pc_t;
+    // logic [REG_IDX_LEN-1:0]     rob_rd_idx_t;
+    // logic [XLEN-1:0]            rob_value_t;
+	// logic [REG_IDX_LEN-1:0]     fp_rob_rd_idx_t;
+    // logic [XLEN-1:0]            fp_rob_value_t;
+    // logic                       rob_except_raised_t;
     //logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_t;
-	except_code_t  rob_except_code_t;
-    logic [ROB_IDX_LEN-1:0]     rob_head_idx_t;
+	// except_code_t  rob_except_code_t;
+    // logic [ROB_IDX_LEN-1:0]     rob_head_idx_t;
+
 	logic [OPCODE_LEN -1:0]       instr_opcode;
 	logic 				sb_store_committing_t;
 
 	logic                   mispredict_i;
 	//End
 	
-	assign mispredict_i				=  fp_rob_value_t[0];
+	// assign mispredict_i				=  fp_rob_value_t[0];
+	assign mispredict_i				=  fp_rob_value_i[0];
 
 	 assign instr_opcode            = rob_instr_i[OPCODE_LEN -1:0];//rob_instr_t[OPCODE_LEN -1:0];
 
 	assign except_new_pc_o			= (rob_valid_i & rob_except_raised_i) ? 'd1 : 'd0 ;
 	//assign except_new_o				= rob_except_raised_i;
-	assign except_new_o				= (rob_valid_i) ? rob_except_raised_t : 'b0;
+	// assign except_new_o				= (rob_valid_i) ? rob_except_raised_t : 'b0;
+	assign except_new_o				= (rob_valid_i) ? rob_except_raised_i : 'b0;
+
 
     //------------------------\\
     //----- COMMIT LOGIC -----\\
@@ -128,8 +133,8 @@ module commit_logic (
     //----- EXCEPTION HANDLING LOGIC -----\\
     //------------------------------------\\
     // The exception handling logic must be insserted here when available
-    assign eh_no_except = (rob_except_raised_t && rob_valid_i)?'b0:'b1/*& !stall*/;
-
+    // assign eh_no_except = (rob_except_raised_t && rob_valid_i)?'b0:'b1/*& !stall*/;
+    assign eh_no_except = (rob_except_raised_i && rob_valid_i)?'b0:'b1/*& !stall*/;
 
     //-----------------------------\\
     //----- OUTPUT EVALUATION -----\\
