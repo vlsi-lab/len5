@@ -115,7 +115,7 @@ package expipe_pkg;
     //---------------------------\\
     
     typedef struct packed {
-        logic [ROB_IDX_LEN:0]       busy;
+        logic [ROB_IDX_LEN-1:0]     busy;       /* at most as many entry in the ROB, the current (this instruction) */
         logic [ROB_IDX_LEN-1:0]     rob_idx;
     } regstat_entry_t;
 
