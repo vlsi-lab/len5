@@ -62,11 +62,13 @@ module data_path
 	// Handshake and data from/to the TLB :DTLB
     input   var dtlb_lsq_ans_t          dtlb_ans_i,
     input   var dtlb_lsq_wup_t          dtlb_wup_i,
+	input   logic                       dtlb_ready_i,
     output  lsq_dtlb_req_t          dtlb_req_o,
 
     // Handshake and data from/to the D$ :D$
     input   var l1dc_lsq_ans_t          dcache_ans_i,
     input   var l1dc_lsq_wup_t          dcache_wup_i,
+	input   logic                       dcache_ready_i,
     output  lsq_l1dc_req_t          dcache_req_o  
 );
 
@@ -163,11 +165,13 @@ back_end u_Back_end_IQL
 	// Handshake and data from/to the TLB
     .dtlb_ans_i(dtlb_ans_i),
     .dtlb_wup_i(dtlb_wup_i),
+    .dtlb_ready_i(dtlb_ready_i),
     .dtlb_req_o(dtlb_req_o),
 
     // Handshake and data from/to the D$
     .dcache_ans_i(dcache_ans_i),
     .dcache_wup_i(dcache_wup_i),
+	.dcache_ready_i(dcache_ready_i),
     .dcache_req_o(dcache_req_o)
 
 );

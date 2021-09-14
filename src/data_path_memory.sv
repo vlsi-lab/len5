@@ -129,9 +129,11 @@ data_path  u_Data_path
 	.rob_head_idx_o		(rob_head_idx_o),
     .dtlb_ans_i(dtlb_lsq_ans_o),
     .dtlb_wup_i(dtlb_lsq_wup_o),
+	.dtlb_ready_i(dtlb_lsq_req_rdy_o),
     .dtlb_req_o(lsq_dtlb_req_i),
     .dcache_ans_i(l1dc_lsq_ans_o),
     .dcache_wup_i(l1dc_lsq_wup_o),
+	.dcache_ready_i(l1dc_lsq_req_rdy_o),
     .dcache_req_o(lsq_l1dc_req_i)  
 );
 
