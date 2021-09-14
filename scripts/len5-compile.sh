@@ -151,7 +151,7 @@ log "Launching compilation..."
 log
 ssh $SSH_OPT $REMOTE_HOST "
 cd $REMOTE_SIM_DIR
-source /software/europractice-release-2019/scripts/init_questa10.7c > /dev/null
+source /eda/scripts/init_questa > /dev/null
 vlog $COMPILER_OPT -f $REMOTE_SRC_LIST_FILE
 "
 if [ $? -ne 0 ]; then
