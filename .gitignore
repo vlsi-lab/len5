@@ -56,8 +56,8 @@ transcript*
 sc_dpiheader.h
 vsim.dbg
 
+# Ignore logs
+scripts/*.log
+
 # ignore Verilator compilation output
 **/obj_dir
-
-# Ignore logs
-**/*.log
