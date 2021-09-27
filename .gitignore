@@ -58,3 +58,6 @@ vsim.dbg
 
 # ignore Verilator compilation output
 **/obj_dir
+
+# Ignore logs
+*.log
