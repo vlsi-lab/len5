@@ -51,12 +51,14 @@ module load_store_unit (
     // Handshake and data from/to the TLB
     input   var dtlb_lsq_ans_t          dtlb_ans_i,
     input   var dtlb_lsq_wup_t          dtlb_wup_i,
-    output  lsq_dtlb_req_t          dtlb_req_o,
+    input   logic                       dtlb_ready_i,
+    output  lsq_dtlb_req_t              dtlb_req_o,
 
     // Handshake and data from/to the D$
     input   var l1dc_lsq_ans_t          dcache_ans_i,
     input   var l1dc_lsq_wup_t          dcache_wup_i,
-    output  lsq_l1dc_req_t          dcache_req_o,
+    input   logic                       dcache_ready_i,
+    output  lsq_l1dc_req_t              dcache_req_o,
 
     // Control from/to the ROB
     input   logic [ROB_IDX_LEN-1:0] rob_head_idx_i,
@@ -577,6 +579,9 @@ module load_store_unit (
     //---------------------------\\
     //----- DTLB HS ARBITER -----\\
     //---------------------------\\
+
+    assign dtlb_dtlbarb_ready = dtlb_ready_i;
+    
     `ifdef ENABLE_STORE_PRIO_2WAY_ARBITER
     // The store buffer, connected to valid_i[0] is given higher priority than the load buffer. This should increase the hit ratio of the store to load forwarding. However, it increases the load execution latency. Depending on the scenario, performance may be better or worse than the fair arbiter
     prio_2way_arbiter dtlb_hs_arbiter (
@@ -668,6 +673,9 @@ module load_store_unit (
     //-----------------------------\\
     //----- DCACHE HS ARBITER -----\\
     //-----------------------------\\
+
+    assign dcache_dcachearb_ready = dcache_ready_i;
+
     `ifdef ENABLE_STORE_PRIO_2WAY_ARBITER
     // The store buffer, connected to valid_i[0] is given higher priority than the load buffer. This should increase the hit ratio of the store to load forwarding. However, it increases the load execution latency. Depending on the scenario, performance may be better or worse than the fair arbiter
     prio_2way_arbiter dcache_hs_arbiter (

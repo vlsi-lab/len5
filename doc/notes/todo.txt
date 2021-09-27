@@ -2,6 +2,8 @@
 
 [X] remove control_pkg::
 
+[ ] add dcache and dtlb ready signals to store buffer
+
 [ ] fix handshake in issue logic: maybe keep valid  only and it to operand fetch logic (only fetch operands from the cdb if they are valid)
 
 [ ] handle id_imm_req separately in issue logic
