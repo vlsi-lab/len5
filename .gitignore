@@ -60,4 +60,4 @@ vsim.dbg
 **/obj_dir
 
 # Ignore logs
-*.log
+**/*.log
