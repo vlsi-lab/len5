@@ -114,7 +114,7 @@ if [ "$USER_NAME" = "" ]; then
         michi)
             USER_NAME="michele.caon"
             ;;
-        walid)
+        whasn)
             USER_NAME="walid.walid"
             ;;
         *) # other
