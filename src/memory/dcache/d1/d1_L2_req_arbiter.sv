@@ -49,7 +49,7 @@ module d1_L2_req_arbiter
       // Valid request only if the buffer is not forwarding that cycle
       if (!wbb_d0_fwd_i) d1_l2c_valid_o = 1'b1;
     // Buffer can tolerate an eviction of dirty line
-    end else if (mshr_pending_req_i < wbb_free_entries_i) begin
+    end else if (mshr_pending_req_i <= wbb_free_entries_i) begin
       // MSHR -> let it pass
       if (mshr_l2c_req_valid_i && !wbb_l2c_req_valid_i) begin
         winner_o       = MSHR;
