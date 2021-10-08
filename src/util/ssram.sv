@@ -47,7 +47,7 @@ module ssram #(
           end
         end
       end else rdata_o <= ssram_cell[addr_i];
-    end else   rdata_o <= 'X;
+    end else   rdata_o <= 'x;
   end
 
   // for other situations, the behaviour is undefined

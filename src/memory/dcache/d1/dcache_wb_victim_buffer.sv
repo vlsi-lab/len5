@@ -178,7 +178,7 @@ module dcache_wb_victim_buffer
   always_comb begin
     free_entries_o = '0;
     for (int k = 0; k < WBB_ENTRIES; k++) begin
-      if (!valid_vec_n[k]) free_entries_o += 1'b1;
+      if (!valid_vec[k]) free_entries_o += 1'b1;// if (!valid_vec_n[k]) free_entries_o += 1'b1; //Changing !not to 
     end
   end
 

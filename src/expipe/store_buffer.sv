@@ -19,15 +19,16 @@ import len5_pkg::STBUFF_DEPTH;
 
 import expipe_pkg::*;
 
-import memory_pkg::VPN_LEN;
-import memory_pkg::PPN_LEN;
-import memory_pkg::VADDR_LEN;
-import memory_pkg::PADDR_LEN;
-import memory_pkg::PAGE_OFFSET_LEN;
-import memory_pkg::exception_e;
-import memory_pkg::NoException;
-import memory_pkg::PageFault;
-import memory_pkg::AccessException;
+// import memory_pkg::VPN_LEN;
+// import memory_pkg::PPN_LEN;
+// import memory_pkg::VADDR_LEN;
+// import memory_pkg::PADDR_LEN;
+// import memory_pkg::PAGE_OFFSET_LEN;
+// import memory_pkg::exception_e;
+// import memory_pkg::NoException;
+// import memory_pkg::PageFault;
+// import memory_pkg::AccessException;
+import memory_pkg::*;
 
 import csr_pkg::satp_mode_t;
 import csr_pkg::BARE; 
@@ -98,7 +99,7 @@ module store_buffer
     output  logic                       dcache_ready_o, //
 
     // Data from/to the D$
-    input   logic [XLEN-1:0]            dcache_paddr_i,
+    input   logic [DCACHE_L1_LINE_A_LEN-1:0] dcache_lineaddr_i,
     input   logic [STBUFF_IDX_LEN-1:0]  dcache_idx_i,
     output  logic                       dcache_isstore_o,
     output  logic [XLEN-1:0]            dcache_paddr_o,
@@ -535,7 +536,7 @@ module store_buffer
 
             // D$ WAKE-UP: only the head entry can be waken up being the only one that performed the cache request
             if (sb_dcache_wu) begin
-                if (sb_data[sb_head_idx].valid && sb_data[sb_head_idx].busy && sb_data[sb_head_idx].paddr_ready && (paddr_a[sb_head_idx] == dcache_paddr_i)) begin
+                if (sb_data[sb_head_idx].valid && sb_data[sb_head_idx].busy && sb_data[sb_head_idx].paddr_ready && (paddr_a[sb_head_idx][XLEN-1:(DCACHE_L1_WORD_A_LEN+DCACHE_L1_LINE_OFF_A_LEN)] == dcache_lineaddr_i)) begin
                     sb_data[sb_head_idx].busy <= 1'b0; // clear the busy bit so the instruction can be replayed
                 end
             end

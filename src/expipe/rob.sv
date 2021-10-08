@@ -78,7 +78,7 @@ module rob
     
     // Head and tail pointers
     logic [ROB_IDX_LEN-1:0]             rob_head_idx, rob_tail_idx;
-    logic                               rob_head_en, rob_head_clr, rob_tail_en, rob_tail_clr;
+    logic                               rob_tail_en1, rob_head_en, rob_head_clr, rob_tail_en, rob_tail_clr;
 
     // Operation control
     logic                               rob_push, rob_pop, rob_wr_res;
@@ -131,7 +131,8 @@ module rob
             issue_ready_o               = 1'b1; // tell the issue logic that an entry is valid
             if (issue_valid_i) begin
                 rob_push                = 1'b1; // push the new instruction in
-                rob_tail_en             = 1'b1; // increment the tail pointer
+                rob_tail_en            = 1'b1; // increment the tail pointer
+                //rob_tail_en             = rob_tail_en1;
             end
         end
 

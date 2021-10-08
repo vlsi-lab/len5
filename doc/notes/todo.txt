@@ -24,6 +24,10 @@
 
 [ ] Add write memory function to memory class
 
+[ ] Fix store instructions
+
+[ ] Fix repeated loads
+
 -----------------
 ----- IDEAS -----
 -----------------

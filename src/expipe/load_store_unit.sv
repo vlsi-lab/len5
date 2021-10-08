@@ -239,7 +239,7 @@ module load_store_unit (
 
     // (D$ --> LOAD/STORE BUFFER) DATA
     // Connected to both the load buffer and the store buffer inputs
-    logic [XLEN-1:0]            dcache_lsb_paddr;
+    logic [DCACHE_L1_LINE_A_LEN-1:0] dcache_lsb_paddr;
     logic [XLEN-1:0]            dcache_lsb_value;
     logic [BUFF_IDX_LEN-1:0]  dcache_lsb_idx;
 
@@ -312,7 +312,7 @@ module load_store_unit (
         .dcache_ready_o         (lb_dcachedec_ready), //
 
         // Data from/to the D$
-        .dcache_paddr_i         (dcache_lsb_paddr),
+        .dcache_lineaddr_i         (dcache_lsb_paddr),
         .dcache_value_i         (dcache_lsb_value),
         .dcache_idx_i           (dcache_lsb_idx[LDBUFF_IDX_LEN-1:0]),
         .dcache_isstore_o       (lb_dcachemux_isstore),
@@ -417,7 +417,7 @@ module load_store_unit (
         .dcache_ready_o         (sb_dcachedec_ready), //
 
         // Data from/to the D$
-        .dcache_paddr_i         (dcache_lsb_paddr),
+        .dcache_lineaddr_i         (dcache_lsb_paddr),
         .dcache_idx_i           (dcache_lsb_idx[STBUFF_IDX_LEN-1:0]),
         .dcache_isstore_o       (sb_dcachemux_isstore),
         .dcache_paddr_o         (sb_dcachemux_paddr),
@@ -662,6 +662,7 @@ module load_store_unit (
             dcache_lsb_value            = 0;
             dcache_lsb_idx              = 0;
             dcache_lsb_paddr            = { {XLEN-DCACHE_L1_TAG_A_LEN-DCACHE_L1_IDX_A_LEN{1'b0}}, dcache_wup_i.line_addr};
+            //dcache_lsb_paddr            = { {XLEN-DCACHE_L1_TAG_A_LEN-DCACHE_L1_IDX_A_LEN-DCACHE_L1_WORD_A_LEN-DCACHE_L1_LINE_OFF_A_LEN{1'b0}}, dcache_wup_i.line_addr, {DCACHE_L1_WORD_A_LEN+DCACHE_L1_LINE_OFF_A_LEN{1'b0}}};
         end else begin
             dcache_lsb_value            = dcache_ans_i.data;
             dcache_lsb_idx              = dcache_ans_i.lsq_addr;
