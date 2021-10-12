@@ -12,6 +12,9 @@
 // Author: Michele Caon
 // Date: 21/10/2019
 
+// Import UVM report macros
+`include "uvm_macros.svh"
+import uvm_pkg::*;
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
@@ -340,12 +343,12 @@ module generic_rs
     `ifndef SYNTHESIS
     always @(negedge clk_i) begin
         // Notice when the reservation station is full
-        assert (valid_a !== '1) else $warning("Generic RS full: you might want to increase its depth");
+        assert (valid_a !== '1) else `uvm_info("BUFFSIZE", $sformatf("Generic RS full (%0d entries): you might want to increase its depth", RS_DEPTH), UVM_HIGH)
         foreach (rs_data[i]) begin
             // Check if the correct order of operations is respected
-            assert (!(res_ready_a[i] && !ex_ready_a[i])) else $warning("RS entry %4d has ready result before having ready operands. This should be impossible", i);
+            assert (!(res_ready_a[i] && !ex_ready_a[i])) else `uvm_error("HAZARD", $sformatf("RS entry %4d has ready result before having ready operands. This should be impossible", i))
              `ifdef ENABLE_AGE_BASED_SELECTOR
-            assert (rs_data[i].entry_age < 1<<ROB_IDX_LEN) else $warning("RS entry %4d is reaching head overflow. This should be impossible.", i);
+            assert (rs_data[i].entry_age < 1<<ROB_IDX_LEN) else `uvm_error("OTHER", "RS entry %4d is reaching head overflow. This should be impossible.", i)
             `endif
         end
     end

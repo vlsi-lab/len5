@@ -14,6 +14,10 @@
 
 `define BYTE *8 // 1 byte = 8 bits
 
+// Import UVM report macros
+`include "uvm_macros.svh"
+import uvm_pkg::*;
+
 import expipe_pkg::*;
 import len5_pkg::XLEN;
     
@@ -75,8 +79,8 @@ input logic [3-1:0] byte_off, // the offset of the first byte to select
     `ifndef SYNTHESIS
     always_comb begin
         case(type_i)
-            LS_HALFWORD, LS_HALFWORD_U: assert (!byte_off[0]) else $warning("%s instr. with misaligned byte offset \'%b\' proceeded to cache access/fwd stage. This must be avoided!", type_i.name(), byte_off); 
-            LS_WORD, LS_WORD_U: assert (byte_off[1:0] == 2'b00) else $warning("%s instr. with misaligned byte offset \'%b\' proceeded to cache access/fwd stage. This must be avoided!", type_i.name(), byte_off); 
+            LS_HALFWORD, LS_HALFWORD_U: assert (!byte_off[0]) else `uvm_error("ALIGNMENT", $sformatf("%s instr. with misaligned byte offset '%b' proceeded to cache access/fwd stage. This must be avoided!", type_i.name(), byte_off))
+            LS_WORD, LS_WORD_U: assert (byte_off[1:0] == 2'b00) else `uvm_error("ALIGNMENT", $sformatf("%s instr. with misaligned byte offset '%b' proceeded to cache access/fwd stage. This must be avoided!", type_i.name(), byte_off))
             default:;
         endcase
     end

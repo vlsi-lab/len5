@@ -35,7 +35,16 @@ SSH_OPT=""
 RSYNC_OPT=""
 
 # Compiler options
-COMPILER_OPT="-msglimit error -svinputport=compat"
+COMPILER_OPT="-msglimit error -svinputport=compat +incdir+/eda/mentor/2020-21/RHELx86/QUESTA-CORE-PRIME_2020.4/questasim/verilog_src/uvm-1.1d/src/"
+
+# Simulation options
+TB_SIM=0
+WAVE_FILE="${LEN5_ROOT_DIR}/sim/waveall.do"
+REMOTE_WAVE_FILE="${REMOTE_SIM_DIR}/remote-wave.do"
+SIM_SCRIPT="${LEN5_ROOT_DIR}/private/sim/sim-script.do"
+REMOTE_SIM_SCRIPT="${REMOTE_SIM_DIR}/sim.do"
+VSIM_OPT_FILE="${LEN5_ROOT_DIR}/private/sim/sim-opt.txt"
+REMOTE_VSIM_OPT_FILE="${REMOTE_SIM_DIR}/opt.txt"
 
 ####################################
 # ----- FUNCTION DEFINITIONS ----- #
@@ -50,6 +59,7 @@ function print_usage() {
     printf -- "-p:      set remote port (default: %d).\n" $REMOTE_PORT
     printf -- "-s HOST: run simulation on HOST instead of '%s'.\n" "$REMOTE_HOST"
     printf -- "-t:      also compile top-level testbench files in 'tb/'.\n"
+    printf -- "-w FILE: add 'do FILE' (default: '%s') to simulation script.\n" "${WAVE_FILE}"
     printf -- "-u:      set remote username.\n"
 }
 
@@ -72,6 +82,18 @@ function err() {
     exit 1
 }
 
+# Send commands to remote host
+function remote_cmd() {
+    ssh $SSH_OPT $REMOTE_HOST "
+$@
+    "
+    if [ $? -ne 0 ]; then 
+        err "ERROR while executing commands on remote host"
+        return 1
+    fi
+    return 0
+}
+
 ####################################
 # ----- COMMAND-LINE OPTIONS ----- #
 ####################################
@@ -92,9 +114,13 @@ while getopts ':hp:s:tu:' opt; do
             ;;
         t) # Also compile TB files
             SRC_LIST_FILE="$LEN5_ROOT_DIR/config/tb-list.txt"
+            TB_SIM=1
             ;;
         u) # Set remote username
             USER_NAME="$OPTARG"
+            ;;
+        w) # Waveform macro
+            WAVE_FILE="$OPTARG"
             ;;
         *) # Invalid option
             print_usage "invalid option"
@@ -133,7 +159,7 @@ SSH_OPT="$SSH_OPT -i $SSH_KEY"
 
 # Copy LEN5 source
 log "Copying LEN5 source files to '%s'..." "$REMOTE_HOST"
-ssh $SSH_OPT $REMOTE_HOST "mkdir -p $REMOTE_SIM_DIR"
+remote_cmd "mkdir -p $REMOTE_SIM_DIR"
 rsync -e "ssh $SSH_OPT" -a --del $LEN5_ROOT_DIR/include $LEN5_ROOT_DIR/src $LEN5_ROOT_DIR/tb $REMOTE_HOST:$REMOTE_SIM_DIR/
 if [ $? -ne 0 ]; then
     err "ERROR while copying LEN5 files\n"
@@ -149,7 +175,7 @@ fi
 # Compile LEN5 source
 log "Launching compilation..."
 log
-ssh $SSH_OPT $REMOTE_HOST "
+remote_cmd "
 cd $REMOTE_SIM_DIR
 source /eda/scripts/init_questa > /dev/null
 vlog $COMPILER_OPT -f $REMOTE_SRC_LIST_FILE
@@ -160,6 +186,43 @@ else
     log
     log "SOURCE CODE COMPILED SUCCESSFULLY!!!"
 fi
+
+# Exit if no testbench is compiled
+[ ${TB_SIM} -eq 0 ] && exit 0
+
+#########################################
+# ----- PREPARE SIMULATION SCRIPT ----- #
+#########################################
+
+log
+log "Assembling simulation script '${SIM_SCRIPT##${LEN5_ROOT_DIR}/}'..."
+
+# Launch simulation
+echo "vsim work.tb_combined -t 10ps -voptargs=+acc" > ${SIM_SCRIPT}
+
+# Load waveforms
+echo "do ${REMOTE_WAVE_FILE}" >> ${SIM_SCRIPT}
+
+# Run the simulation for 100ns
+echo "run 100ns" >> ${SIM_SCRIPT}
+
+# Copy the simulation script on remote host
+log "Copying simualtion script on ${HOST_NAME}..."
+rsync -e "ssh $SSH_OPT" ${SIM_SCRIPT} $REMOTE_HOST:${REMOTE_SIM_SCRIPT}
+if [ $? -ne 0 ]; then
+    err "ERROR while copying simulation script"
+fi
+
+# Copy waveforms macro file on remote host
+log "Copying waveforms macro on ${HOST_NAME}..."
+rsync -e "ssh $SSH_OPT" ${WAVE_FILE} $REMOTE_HOST:${REMOTE_WAVE_FILE}
+if [ $? -ne 0 ]; then
+    err "ERROR while copying waveforms file"
+fi
+
+log
+log "DONE. You can launch the simulation on ${HOST_NAME} with:"
+log "   vsim -f ${REMOTE_VSIM_OPT_FILE} -do ${REMOTE_SIM_SCRIPT}"
 
 # Terminate
 exit 0

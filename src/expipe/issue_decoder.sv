@@ -12,6 +12,10 @@
 // Author: Michele Caon
 // Date: 13/11/2019
 
+// Import UVM report macros
+`include "uvm_macros.svh"
+import uvm_pkg::*;
+
 /* Include instruction macros */
 `include "instr_macros.svh"
 
@@ -661,7 +665,7 @@ module issue_decoder (
     `ifndef SYNTHESIS
     always @(except_code) begin
         assert ((except_code != E_ILLEGAL_INSTRUCTION) && (except_code != E_BREAKPOINT)) 
-        else   $warning("Issuing instruction has unknown opcode: %b!", issue_instruction_i);
+        else   `uvm_warning("INSTRUCTION", $sformatf("Issuing instruction has unknown opcode: %b!", issue_instruction_i))
     end
     `endif
     

@@ -12,6 +12,10 @@
 // Author: Michele Caon
 // Date: 19/10/2019
 
+// Import UVM reporting functions
+`include "uvm_macros.svh"
+import uvm_pkg::*;
+
 import len5_pkg::IQ_DEPTH;
 import expipe_pkg::*;
 
@@ -133,8 +137,8 @@ module issue_queue_fifo (
     //---------------------\\
     `ifndef SYNTHESIS
     always @(negedge clk_i) begin
-        // Notice when the issue queue is full
-        assert (fifo_full !== 'b1) else $warning("The issue queue is full. You might want to increase its size");
+        // Notify when the issue queue is full
+        assert (fifo_full !== 'b1) else `uvm_info("BUFFSIZE", $sformatf("The issue queue is full (%0d entries). You might want to increase its size", IQ_DEPTH), UVM_HIGH)
     end
     `endif
 

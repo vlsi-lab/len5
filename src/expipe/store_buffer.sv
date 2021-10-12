@@ -12,6 +12,9 @@
 // Author: Michele Caon
 // Date: 27/10/2019
 
+// Import UVM report macros
+`include "uvm_macros.svh"
+import uvm_pkg::*;
 
 import len5_pkg::XLEN;
 import len5_pkg::S_IMM;
@@ -885,10 +888,10 @@ module store_buffer
     `ifndef SYNTHESIS
     always @(negedge clk_i) begin
         // Notice when the load buffer is full
-        assert (valid_a !== '1) else $warning("Store buffer full: you might want to increase its depth");
+        assert (valid_a !== '1) else `uvm_info("BUFFSIZE", $sformatf("Store buffer full (%0d entries): you might want to increase its depth", STBUFF_DEPTH), UVM_HIGH)
         foreach (sb_data[i]) begin
             // Check if the correct order of operations is respected
-            assert (sb_data[i].except_code != E_UNKNOWN) else $warning("Store buffer entry %4d has encountered an unknown exception", i);
+            assert (sb_data[i].except_code != E_UNKNOWN) else `uvm_error("EXCEPTION", $sformatf("Store buffer entry %4d has encountered an unknown exception", i))
         end
     end
     `endif

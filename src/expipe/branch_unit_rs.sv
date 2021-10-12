@@ -12,6 +12,10 @@
 // Author: Michele Caon
 // Date: 08/11/2019
 
+// Import UVM report macros
+`include "uvm_macros.svh"
+import uvm_pkg::*;
+
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
 import len5_pkg::B_IMM;
@@ -358,7 +362,7 @@ module branch_unit_rs
         //assert (valid_a == ((1 << RS_DEPTH) - 1)) else $warning("Generic RS full: you might want to increase its depth");
         foreach (rs_data[i]) begin
             // Check if the correct order of operations is respected
-            assert (!(res_ready_a[i] && !ex_ready_a[i])) else $warning("RS entry %4d has ready result before having ready operands. This should be impossible", i);
+            assert (!(res_ready_a[i] && !ex_ready_a[i])) else `uvm_error("HAZARD", $sformatf("RS entry %4d has ready result before having ready operands. This should be impossible", i))
         end
     end
     `endif
