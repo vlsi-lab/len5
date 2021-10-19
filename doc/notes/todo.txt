@@ -28,7 +28,7 @@
 
 [X] Fix repeated loads
 
-[ ] Do not execute nop instructions
+[X] Do not execute nop instructions
 
 -----------------
 ----- IDEAS -----

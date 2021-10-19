@@ -249,6 +249,13 @@ module issue_decoder (
             
         // I-FORMAT INSTRUCTIONS
             
+        // NOP
+        else if ((instr_opcode == `OPCODE_ADDI) && (instr_funct3 == `FUNCT3_ADDI) && (instr_rs1 == 0) && (instr_imm == 0)) begin
+            assigned_eu                 = EU_NONE;
+            res_ready                   = 1'b1;
+            stall_possible              = 1'b1;
+        end
+
         // ADDI
         else if ((instr_opcode == `OPCODE_ADDI) && (instr_funct3 == `FUNCT3_ADDI)) begin
             assigned_eu                 = EU_INT_ALU;
@@ -257,7 +264,8 @@ module issue_decoder (
             imm_req                     = 1'b1;
             imm_format                  = IMM_SEXT;
             regstat_upd                 = 1'b1;
-        end
+        end        
+
         // ADDIW
         else if ((instr_opcode == `OPCODE_ADDIW) && (instr_funct3 == `FUNCT3_ADDIW)) begin
             assigned_eu                 = EU_INT_ALU;

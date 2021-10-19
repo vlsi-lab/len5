@@ -204,7 +204,7 @@ module cache_L2_system_emulator #(
     end else if (ans_valid_idx_valid && !buf_stalled) begin
       unique case (req_vec[ans_valid_idx].req_type)
         IReadLine: begin
-          i_memory.ReadLine(memory_line_addr);
+          void'(i_memory.ReadLine(memory_line_addr));
           l2c_l2arb_ans_o.line      <= i_memory.read_line;
           l2c_l2arb_ans_o.data      <= '0;
           l2c_l2arb_ans_o.paddr     <= req_vec[ans_valid_idx].paddr;
@@ -213,7 +213,7 @@ module cache_L2_system_emulator #(
           l2c_l2arb_ans_o.valid     <= 1'b1;
         end
         DReadLine: begin
-          i_memory.ReadLine(memory_line_addr);
+          void'(i_memory.ReadLine(memory_line_addr));
           l2c_l2arb_ans_o.line      <= i_memory.read_line;
           l2c_l2arb_ans_o.data      <= '0;
           l2c_l2arb_ans_o.paddr     <= req_vec[ans_valid_idx].paddr;
@@ -231,7 +231,7 @@ module cache_L2_system_emulator #(
           // TODO i_memory.WriteLine(memory_line_addr, line)
         end
         PTWLoad: begin
-          i_memory.ReadDW(memory_dw_addr);
+          void'(i_memory.ReadDW(memory_dw_addr));
           l2c_l2arb_ans_o.line      <= '0;
           l2c_l2arb_ans_o.data      <= i_memory.read_doubleword;
           l2c_l2arb_ans_o.paddr     <= req_vec[ans_valid_idx].paddr;
