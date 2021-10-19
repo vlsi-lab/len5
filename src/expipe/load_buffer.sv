@@ -21,16 +21,6 @@ import len5_pkg::I_IMM;
 import len5_pkg::LDBUFF_DEPTH;
 
 import expipe_pkg::*;
-
-// import memory_pkg::VPN_LEN;
-// import memory_pkg::PPN_LEN;
-// import memory_pkg::VADDR_LEN;
-// import memory_pkg::PADDR_LEN;
-// import memory_pkg::PAGE_OFFSET_LEN;
-// import memory_pkg::exception_e;
-// import memory_pkg::NoException;
-// import memory_pkg::PageFault;
-// import memory_pkg::AccessException;
 import memory_pkg::*;
 
 import csr_pkg::satp_mode_t;
@@ -446,11 +436,11 @@ module load_buffer
             end
 
             // FORWARD ON VIRTUAL ADDRESS
-            // Clear busy bits is forwarding has already finished
-            if (lb_data[vfwd_idx].valid && lb_data[vfwd_idx].busy) lb_data[vfwd_idx].busy <= 1'b0;
+            // Clear busy bits if forwarding has already finished
+            if (lb_data[vfwd_idx].valid && lb_data[vfwd_idx].busy && !lb_data[vfwd_idx].vaddr_ready) lb_data[vfwd_idx].busy <= 1'b0;
 
             // FORWARD ON PHYSICAL ADDRESS
-            // Clear busy bits is forwarding has already finished
+            // Clear busy bits if forwarding has already finished
             if (pfwd_req) begin
                 lb_data[pfwd_idx].pfwd_attempted <= 1'b1; 
             end
