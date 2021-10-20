@@ -1,0 +1,6 @@
+{ 
+    curr_line = sprintf("%s%s%s%s", $5, $4, $3, $2);
+    if((NR-1)%2 == 0) printf("%016x ", (NR-1)*4);
+    else printf("%s%s\n", curr_line, prev_line);
+    prev_line = curr_line;
+}

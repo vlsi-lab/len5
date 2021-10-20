@@ -30,6 +30,8 @@
 
 [X] Do not execute nop instructions
 
+[ ] Fix width of EU control signals
+
 -----------------
 ----- IDEAS -----
 -----------------

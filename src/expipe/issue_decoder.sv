@@ -49,7 +49,7 @@ module issue_decoder (
     logic                           res_ready;
     logic                           stall_possible;
     issue_eu_t                      assigned_eu;
-    logic [8-1:0]      eu_ctl;
+    logic [8-1:0]                   eu_ctl;
     logic                           rs_fp;
     logic                           rs1_req; 
     logic                           rs2_req;
@@ -673,7 +673,7 @@ module issue_decoder (
     `ifndef SYNTHESIS
     always @(except_code) begin
         assert ((except_code != E_ILLEGAL_INSTRUCTION) && (except_code != E_BREAKPOINT)) 
-        else   `uvm_warning("INSTRUCTION", $sformatf("Issuing instruction has unknown opcode: %b!", issue_instruction_i))
+        else   `uvm_warning("ISSUE", $sformatf("Issuing instruction has unknown opcode: %b!", issue_instruction_i))
     end
     `endif
     

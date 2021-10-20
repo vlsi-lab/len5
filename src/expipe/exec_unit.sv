@@ -30,7 +30,7 @@ module exec_unit (
     output  logic [0:EU_N-1]    ex_valid_o,             // ready signal to each reservation station
 
     // Data oto the Back end
-    input   logic [8-1:0]  ex_eu_ctl_i,    // controls for the associated EU
+    input   logic [8-1:0]               ex_eu_ctl_i,    // controls for the associated EU
     input   logic                       ex_rs1_ready_i, // first operand is ready at issue time (from the RF or the ROB)
     input   logic [ROB_IDX_LEN-1:0]     ex_rs1_idx_i,   // the index of the ROB where the first operand can be found (if not ready
     input   logic [XLEN-1:0]            ex_rs1_value_i, // the value of the first operand (if ready)

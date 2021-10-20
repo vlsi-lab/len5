@@ -181,8 +181,7 @@ package expipe_pkg;
     localparam MAX_EU_CTL_LEN   = BU_CTL_LEN;   // this must be set to the maximum of the previous parameters
     
     // ASSIGNED EU
-    typedef enum logic [$clog2(EU_N)
--1:0] { //3
+    typedef enum logic [$clog2(EU_N)-1:0] { //3
         EU_LOAD_BUFFER,     // 0
         EU_STORE_BUFFER,    // 1
         EU_BRANCH_UNIT,     // 2
@@ -203,7 +202,15 @@ package expipe_pkg;
     localparam BUFF_IDX_LEN = (LDBUFF_IDX_LEN > STBUFF_IDX_LEN) ? (LDBUFF_IDX_LEN) : (STBUFF_IDX_LEN); // the largest of the two. Useful when comparing indexes from both
     localparam EXCEPT_TYPE_LEN = ROB_EXCEPT_LEN; // only the last four bits of the mcause/scause CSR
     localparam LDST_TYPE_LEN = LB_CTL_LEN; // 3 bits: 7 types of load (lb, lh, lw, ld, lbu, lhu, ldu), 4 types of store (sb, sh, sw and sd)
-    typedef enum logic [LDST_TYPE_LEN-1:0] { LS_BYTE, LS_BYTE_U, LS_HALFWORD, LS_HALFWORD_U, LS_WORD, LS_WORD_U, LS_DOUBLEWORD } ldst_type_t;
+    typedef enum logic [LDST_TYPE_LEN-1:0] { 
+        LS_BYTE, 
+        LS_BYTE_U, 
+        LS_HALFWORD, 
+        LS_HALFWORD_U, 
+        LS_WORD, 
+        LS_WORD_U, 
+        LS_DOUBLEWORD 
+    } ldst_type_t;
     
     // LOAD BUFFER ENTRY TYPE
     typedef struct packed {

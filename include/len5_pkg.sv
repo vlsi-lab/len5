@@ -75,7 +75,8 @@ package len5_pkg;
   // -----------
   // Branch unit
   // -----------
-  typedef enum logic [5:0] {
+  localparam BRANCH_TYPE_LEN = 3;
+  typedef enum logic [BRANCH_TYPE_LEN-1:0] {
     BEQ   = 'h0,
     BNE   = 'h1,
     BLT   = 'h2,
