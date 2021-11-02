@@ -21,16 +21,16 @@ import memory_pkg::*;
 module cache_L2_system_emulator #(
   parameter MEM_FILE_PATH = "memory.txt"
 ) (
-  // Main
-  input  logic           clk_i,
-  input  logic           rst_ni,
-  input  logic           flush_i,
-  // (L2 arbiter -> L2 Cache) request channel
-  input  var l2arb_l2c_req_t l2arb_l2c_req_i,
-  output logic           l2c_l2arb_req_rdy_o,
-  // (L2 Cache -> L2 arbiter) answer channel
-  output l2c_l2arb_ans_t l2c_l2arb_ans_o,
-  input  logic           l2arb_l2c_ans_rdy_i
+    // Main
+    input   logic           clk_i,
+    input   logic           rst_ni,
+    input   logic           flush_i,
+    // (L2 arbiter -> L2 Cache) request channel
+    input   var l2arb_l2c_req_t l2arb_l2c_req_i,
+    output  logic           l2c_l2arb_req_rdy_o,
+    // (L2 Cache -> L2 arbiter) answer channel
+    output  l2c_l2arb_ans_t l2c_l2arb_ans_o,
+    input   logic           l2arb_l2c_ans_rdy_i
 );
 
   //--------------------\\

@@ -14,8 +14,7 @@
 LOG_FILE="$(dirname $0)/compile-script.log"
 
 # Get the LEN5 root directory
-LEN5_ROOT_DIR="$(dirname $(realpath $0))"
-LEN5_ROOT_DIR="$(realpath $LEN5_ROOT_DIR/..)"
+LEN5_ROOT_DIR="$(realpath $(dirname $(realpath $0))/..)"
 
 # Remote LEN5 directory
 REMOTE_SIM_DIR="~/sim/len5"
@@ -35,18 +34,21 @@ RSYNC_OPT=""
 
 # Compiler options
 QUESTA_INIT_SCRIPT="/eda/scripts/init_questa"
-COMPILER_OPT="-msglimit error -svinputport=compat +incdir+/eda/mentor/2020-21/RHELx86/QUESTA-CORE-PRIME_2020.4/questasim/verilog_src/uvm-1.1d/src/"
+COMPILER_OPTS="-msglimit error -svinputport=compat +incdir+/eda/mentor/2020-21/RHELx86/QUESTA-CORE-PRIME_2020.4/questasim/verilog_src/uvm-1.1d/src/"
 
 # Simulation options
 TB_SRC=0
 LAUNCH_SIM=0
 WAVE_FILE="${LEN5_ROOT_DIR}/sim/waveall.do"
+MEMORY_FILE="${LEN5_ROOT_DIR}/tb/memory/memory.txt"
 REMOTE_WAVE_FILE="${REMOTE_SIM_DIR}/remote-wave.do"
 SIM_SCRIPT="${LEN5_ROOT_DIR}/private/sim/sim-script.do"
 REMOTE_SIM_SCRIPT="${REMOTE_SIM_DIR}/sim.do"
 VSIM_OPT_FILE="${LEN5_ROOT_DIR}/private/sim/sim-opt.txt"
-REMOTE_VSIM_OPT_FILE="${REMOTE_SIM_DIR}/opt.txt"
+REMOTE_VSIM_OPT_FILE="${REMOTE_SIM_DIR}/sim-opt.txt"
 SIM_TIME=100 # ns
+SIM_OPTS="-t 10ps -voptargs=+acc"
+GUI_OPT="-gui"
 
 ####################################
 # ----- FUNCTION DEFINITIONS ----- #
@@ -60,10 +62,12 @@ function print_usage() {
     printf -- "-h:      print this message and exit.\n"
     printf -- "-t:      also compile top-level testbench files in 'tb/'.\n"
     printf -- "-r:      also run simulation (implies '-t')\n"
-    printf -- "-p:      set remote port (default: %d).\n" $REMOTE_PORT
+    printf -- "-p:      set remote port. Default: %d.\n" $REMOTE_PORT
     printf -- "-u:      set remote username.\n"
-    printf -- "-s HOST: run simulation on HOST instead of '%s'.\n" "$REMOTE_HOST"
-    printf -- "-w FILE: add 'do FILE' (default: '%s') to simulation script.\n" "${WAVE_FILE}"
+    printf -- "-c:      launch vsim in command-line mode (no GUI).\n"
+    printf -- "-s HOST: run simulation on HOST instead of '%s'.\n" "$HOST_NAME"
+    printf -- "-w FILE: add 'do FILE' to simulation script. Default:\n\t%s\n" "${WAVE_FILE}"
+    printf -- "-m FILE: use FILE as memory file.\n"
 }
 
 # Log message
@@ -103,7 +107,7 @@ $@
 
 # Parse command line options
 # --------------------------
-while getopts ':htrpus:w:' opt; do
+while getopts ':htrpucs:w:m:' opt; do
     case $opt in
         h) # Print usage message
             print_usage
@@ -122,11 +126,18 @@ while getopts ':htrpus:w:' opt; do
         u) # Set remote username
             USER_NAME="$OPTARG"
             ;;
+        c) # Launch vsim in command-line mode
+            GUI_OPT="-c"
+            ;;
         s) # Override default remote host
             HOST_NAME="$OPTARG"
             ;;
         w) # Waveform macro
             WAVE_FILE="$OPTARG"
+            ;;
+        m) # Memory file to load
+            MEMORY_FILE="${OPTARG}"
+            COMPILER_OPTS="${COMPILER_OPTS} +define+MEMORY_FILE=\\\"${MEMORY_FILE}\\\""
             ;;
         *) # Invalid option
             print_usage "invalid option"
@@ -169,7 +180,7 @@ SSH_OPT="$SSH_OPT -i $SSH_KEY"
 # Copy LEN5 source
 log "Copying LEN5 source files to '%s'..." "$REMOTE_HOST"
 remote_cmd "mkdir -p $REMOTE_SIM_DIR"
-rsync -e "ssh $SSH_OPT" -a --del $LEN5_ROOT_DIR/include $LEN5_ROOT_DIR/src $LEN5_ROOT_DIR/tb $REMOTE_HOST:$REMOTE_SIM_DIR/
+rsync -e "ssh $SSH_OPT" --relative -rlt --del $LEN5_ROOT_DIR/./include $LEN5_ROOT_DIR/./src $LEN5_ROOT_DIR/./tb $LEN5_ROOT_DIR/./test-files/txt $REMOTE_HOST:$REMOTE_SIM_DIR/
 if [ $? -ne 0 ]; then
     err "ERROR while copying LEN5 files\n"
 fi
@@ -187,7 +198,8 @@ log
 remote_cmd "
 cd $REMOTE_SIM_DIR
 source ${QUESTA_INIT_SCRIPT} > /dev/null
-vlog $COMPILER_OPT -f $REMOTE_SRC_LIST_FILE
+[ -d work ] && vdel -lib work -all
+vlog ${COMPILER_OPTS} -f $REMOTE_SRC_LIST_FILE
 "
 if [ $? -ne 0 ]; then
     err "ERROR: there were compilation errors\n"
@@ -208,7 +220,7 @@ if [ ${LAUNCH_SIM} -ne 0 ]; then
     log "Assembling simulation script '${SIM_SCRIPT##${LEN5_ROOT_DIR}/}'..."
 
     # Launch simulation
-    echo "vsim work.tb_combined -t 10ps -voptargs=+acc" > ${SIM_SCRIPT}
+    echo "vsim work.tb_combined ${SIM_OPTS}" > ${SIM_SCRIPT}
 
     # Load waveforms
     echo "do ${REMOTE_WAVE_FILE}" >> ${SIM_SCRIPT}
@@ -223,24 +235,27 @@ if [ ${LAUNCH_SIM} -ne 0 ]; then
         err "ERROR while copying simulation script"
     fi
 
-    # Copy waveforms macro file on remote host
+    # Copy waveforms macro file on the remote host
     log "Copying waveforms macro on ${HOST_NAME}..."
     rsync -e "ssh $SSH_OPT" ${WAVE_FILE} $REMOTE_HOST:${REMOTE_WAVE_FILE}
     if [ $? -ne 0 ]; then
         err "ERROR while copying waveforms file"
     fi
 
-    # log
-    # log "DONE. You can launch the simulation on ${HOST_NAME} with:"
-    # log "   vsim -f ${REMOTE_VSIM_OPT_FILE} -do ${REMOTE_SIM_SCRIPT}"
+    # Copy simulation options file on the remote host
+    log "Copying options file on ${HOST_NAME}..."
+    rsync -e "ssh $SSH_OPT" ${VSIM_OPT_FILE} $REMOTE_HOST:${REMOTE_VSIM_OPT_FILE}
+    if [ $? -ne 0 ]; then
+        err "ERROR while copying options file"
+    fi
 
     # Launch the simulation
     log "Launching simulation on ${HOST_NAME}..."
-    SSH_OPT="-X ${SSH_OPT}"
+    [ "${GUI_OPT}" = "-gui" ] && SSH_OPT="-X ${SSH_OPT}"
     remote_cmd "
     cd ${REMOTE_SIM_DIR}
     source ${QUESTA_INIT_SCRIPT} > /dev/null
-    vsim -gui -f ${REMOTE_VSIM_OPT_FILE} -do ${REMOTE_SIM_SCRIPT}
+    vsim ${GUI_OPT} -f ${REMOTE_VSIM_OPT_FILE} ${SIM_OPTS} -do ${REMOTE_SIM_SCRIPT}
     "
     if [ $? -ne 0 ]; then
         err "ERROR while launching simulation"

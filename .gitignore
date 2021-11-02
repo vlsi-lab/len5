@@ -17,6 +17,10 @@
 ## private folders ##
 private/
 
+# Test objects and test files
+test-files/obj
+test-files/txt
+
 ## Visual Studio Code settings
 .vscode/
 
@@ -46,7 +50,7 @@ work/
 *.html
 *.bsf
 
-# ignore Modelsim simulation output
+# Modelsim simulation output
 wlf*
 *.wlf
 *.vstf
@@ -56,8 +60,8 @@ transcript*
 sc_dpiheader.h
 vsim.dbg
 
-# Ignore logs
+# Compilation logs
 scripts/*.log
 
-# ignore Verilator compilation output
+# Verilator compilation output
 **/obj_dir
