@@ -7,7 +7,6 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-// `include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Memory/l2cache_emulator/cache_L2_system_emulator.sv"
 import len5_pkg::*;
 import expipe_pkg::*;
 import memory_pkg::*;
@@ -44,19 +43,6 @@ module tb_combined;
 always #5 clk_i = ~clk_i;
 
 initial begin
-	/* Set the memory addressing mode */
-	string 		mem_mode_str;
-	satp_mode_t mem_mode;
-	if ($value$plusargs("MEM_MODE=%s", mem_mode_str)) begin
-		if (mem_mode_str == "BARE") mem_mode = BARE;
-		else if (mem_mode_str == "SV39") mem_mode = SV39;
-		else if (mem_mode_str == "SV48") mem_mode = SV48;
-		else `uvm_fatal("CONFIG", $sformatf("Invalid memory mode specified: %d", mem_mode));
-	end else mem_mode = BARE;
-
-	/* Print memory mode being used */
-	`uvm_info("CONFIG", $sformatf("Memory mode: %s", mem_mode.name()), UVM_MEDIUM)
-
 	/* Print memory file being used */
 	`uvm_info("CONFIG", $sformatf("Memory file: %s", `MEMORY_FILE), UVM_MEDIUM)
 

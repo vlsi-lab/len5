@@ -21,6 +21,7 @@ import len5_pkg::B_IMM;
 import len5_pkg::U_IMM;
 import len5_pkg::J_IMM;
 import len5_pkg::REG_IDX_LEN;
+import len5_pkg::instr_t;
 
 import expipe_pkg::*;
 
@@ -34,7 +35,7 @@ module issue_logic (
 
     // Data from the issue queue
     input   logic [XLEN-1:0]            iq_curr_pc_i,           // the PC of the current instruction
-    input   logic [ILEN-1:0]            iq_instruction_i,
+    input   instr_t                     iq_instruction_i,
     input   logic [XLEN-1:0]            iq_pred_target_i,
     input   logic                       iq_pred_taken_i,
     input   logic                       iq_except_raised_i,
@@ -121,7 +122,7 @@ module issue_logic (
     
     output  logic [ROB_IDX_LEN-1:0]     rob_rs1_idx_o,          // ROB entry containing rs1 value
     output  logic [ROB_IDX_LEN-1:0]     rob_rs2_idx_o,          // ROB entry containing rs2 value
-    output  logic [ILEN-1:0]            rob_instr_o,            // to identify the instruction
+    output  instr_t                     rob_instr_o,            // to identify the instruction
     output  logic [REG_IDX_LEN-1:0]     rob_rd_idx_o,           // the destination register index (rd)
     output  logic                       rob_except_raised_o,    // an exception has been raised
     output  logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_o,      // the exception code
@@ -173,15 +174,15 @@ module issue_logic (
     //----- INSTRUCTION INFO EXTRACTION -----\\
     //---------------------------------------\\
     // Source and destination registers
-    assign  instr_rs1_idx           = iq_instruction_i[19 -: REG_IDX_LEN];
-    assign  instr_rs2_idx           = iq_instruction_i[24 -: REG_IDX_LEN];
-    assign  instr_rd_idx            = iq_instruction_i[11 -: REG_IDX_LEN];
+    assign  instr_rs1_idx           = iq_instruction_i.r.rs1;
+    assign  instr_rs2_idx           = iq_instruction_i.r.rs2;
+    assign  instr_rd_idx            = iq_instruction_i.r.rd;
     // Immediate values
-    assign  instr_imm_i_value       = iq_instruction_i[31 -: I_IMM];
-    assign  instr_imm_s_value       = { iq_instruction_i[31 : 25], iq_instruction_i[11:7] };
-    assign  instr_imm_b_value       = { iq_instruction_i[31], iq_instruction_i[7], iq_instruction_i[30:25], iq_instruction_i[11:8] };
-    assign  instr_imm_u_value       = iq_instruction_i[31 -: U_IMM];
-    assign  instr_imm_j_value       = { iq_instruction_i[31], iq_instruction_i[19:12], iq_instruction_i[20], iq_instruction_i[30:21] };
+    assign  instr_imm_i_value       = iq_instruction_i.i.imm11;
+    assign  instr_imm_s_value       = { iq_instruction_i.s.imm11, iq_instruction_i.s.imm4 };
+    assign  instr_imm_b_value       = { iq_instruction_i.b.imm12, iq_instruction_i.b.imm11, iq_instruction_i.b.imm10, iq_instruction_i.b.imm4 };
+    assign  instr_imm_u_value       = iq_instruction_i.u.imm31;
+    assign  instr_imm_j_value       = { iq_instruction_i.j.imm20, iq_instruction_i.j.imm19, iq_instruction_i.j.imm11, iq_instruction_i.j.imm10 };
 
     assign rob_tail_idx             = rob_tail_idx_i;
 

@@ -20,11 +20,12 @@
 import expipe_pkg::*;
 import len5_pkg::ILEN;
 import len5_pkg::OPCODE_LEN;
+import len5_pkg::instr_t;
 
 module commit_decoder 
 (
     // Data from the commit logic
-    input   logic [ILEN-1:0]        instruction_i,
+    input   instr_t                 instruction_i,
 
     // Conditions
     input   logic                   sb_store_committing_i,
@@ -47,7 +48,7 @@ module commit_decoder
     //-------------------------------\\
     //----- EXTRACT INSTR. INFO -----\\
     //-------------------------------\\
-    assign instr_opcode             = instruction_i[OPCODE_LEN -1:0];
+    assign instr_opcode             = instruction_i.r.opcode;
 
     //--------------------------------\\
     //----- COMMIT DOCODER LOGIC -----\\

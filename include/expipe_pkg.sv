@@ -52,7 +52,7 @@ package expipe_pkg;
 
     typedef struct packed {
         logic                       valid;          // the ROB entry contains a valid instruction
-        logic [ILEN-1:0]            instruction;    // the instruction
+        instr_t                     instruction;    // the instruction
         logic [XLEN-1:0]            instr_pc;       // the program counter if the instruction
         logic                       res_ready;      // the result of the instruction is ready
         logic [XLEN-1:0]            res_value;      // the value of the result (from the EU)
@@ -98,7 +98,7 @@ package expipe_pkg;
     //-----------------------\\
     //----- ISSUE QUEUE -----\\
     //-----------------------\\
-    localparam IQ_IDX_LEN = 3;//$clog2(IQ_DEPTH); // issue queue index width
+    localparam IQ_IDX_LEN = $clog2(IQ_DEPTH); // issue queue index width
 
     typedef struct packed {
         logic               valid; // The entry contains a valid instruction

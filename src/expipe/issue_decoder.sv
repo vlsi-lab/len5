@@ -24,7 +24,7 @@ import expipe_pkg::*;
 
 module issue_decoder (
     // Instruction from the issue logic
-    input   logic [ILEN-1:0]                issue_instruction_i,    // the issuing instruction opcode
+    input   instr_t                         issue_instruction_i,    // the issuing instruction
     
     // Information to the issue logic
     output  logic                           issue_except_raised_o,  // an exception occurred during decoding
@@ -66,17 +66,17 @@ module issue_decoder (
     //-----------------------------\\
     //----- OPCODE EXTRACTION -----\\
     //-----------------------------\\
-    assign instr_opcode      = issue_instruction_i[OPCODE_LEN-1 : 0];
-    assign instr_funct3      = issue_instruction_i[14 -: FUNCT3_LEN];
-    assign instr_funct7      = issue_instruction_i[31 -: FUNCT7_LEN];
+    assign instr_opcode      = issue_instruction_i.r.opcode;
+    assign instr_funct3      = issue_instruction_i.r.funct3;
+    assign instr_funct7      = issue_instruction_i.r.funct7;
 
     //--------------------------------------\\
     //----- OPERAND ADDRESS EXTRACTION -----\\
     //--------------------------------------\\
-    assign instr_rs1                = issue_instruction_i[19 -: REG_IDX_LEN];
-    assign instr_rs2                = issue_instruction_i[24 -: REG_IDX_LEN];
-    assign instr_rd                 = issue_instruction_i[11 -: REG_IDX_LEN];
-    assign instr_imm                = issue_instruction_i[31 -: I_IMM];
+    assign instr_rs1                = issue_instruction_i.r.rs1;
+    assign instr_rs2                = issue_instruction_i.r.rs2;
+    assign instr_rd                 = issue_instruction_i.r.rd;
+    assign instr_imm                = issue_instruction_i.i.imm11;
 
     //------------------------------\\
     //----- INSTRUCTION DECODE -----\\

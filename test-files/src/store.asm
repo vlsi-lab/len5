@@ -1,3 +1,3 @@
-addi t0, zero, 15
-sd t0, 140(x0)
-ld t1, 140(x0)
+addi x1, zero, 15
+sd x1, 140(x0)
+ld x2, 140(x0)

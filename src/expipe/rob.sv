@@ -16,6 +16,7 @@ import len5_pkg::XLEN;
 import len5_pkg::ILEN;
 import len5_pkg::REG_IDX_LEN;
 import len5_pkg::ROB_DEPTH;
+import len5_pkg::instr_t;
 import expipe_pkg::*;
 
 module rob 
@@ -37,7 +38,7 @@ module rob
     output  logic                       issue_rs2_ready_o,      // the result is ready
     output  logic [XLEN-1:0]            issue_rs2_value_o,      // the value of the second operand
 
-    input   logic [ILEN-1:0]            issue_instr_i,         // to identify the instruction
+    input   instr_t                     issue_instr_i,         // to identify the instruction
     input   logic [XLEN-1:0]            issue_pc_i,             // the PC of the instruction being issued, needed for exception handling
     input   logic [REG_IDX_LEN-1:0]     issue_rd_idx_i,         // the destination register index (rd)
     input   logic                       issue_except_raised_i,  // an exception has been raised
@@ -59,7 +60,7 @@ module rob
     output  logic                       comm_valid_o,
 
     // Data to the commit logic
-    output  logic [ILEN-1:0]            comm_instr_o,
+    output  instr_t                     comm_instr_o,
     output  logic [XLEN-1:0]            comm_pc_o,
     output  logic [REG_IDX_LEN-1:0]     comm_rd_idx_o,          // the destination register (rd)
     output  logic [XLEN-1:0]            comm_value_o,           // the result of the instruction

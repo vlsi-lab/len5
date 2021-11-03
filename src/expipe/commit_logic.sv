@@ -28,7 +28,7 @@ module commit_logic (
 	//input logic stall,   
 
     // Data from the ROB
-    input   logic [ILEN-1:0]            rob_instr_i,
+    input   instr_t                     rob_instr_i,
     input   logic [XLEN-1:0]            rob_pc_i,
     input   logic [REG_IDX_LEN-1:0]     rob_rd_idx_i,
     input   logic [XLEN-1:0]            rob_value_i,
@@ -92,10 +92,9 @@ module commit_logic (
 	logic                   mispredict_i;
 	//End
 	
-	// assign mispredict_i				=  fp_rob_value_t[0];
 	assign mispredict_i				=  fp_rob_value_i[0];
 
-	 assign instr_opcode            = rob_instr_i[OPCODE_LEN -1:0];//rob_instr_t[OPCODE_LEN -1:0];
+	 assign instr_opcode            = rob_instr_i.r.opcode;
 
 	assign except_new_pc_o			= (rob_valid_i & rob_except_raised_i) ? 'd1 : 'd0 ;
 	//assign except_new_o				= rob_except_raised_i;
