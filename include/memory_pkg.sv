@@ -12,9 +12,6 @@
 // Author: Matteo Perotti
 // Date: 23/08/2019
 
-`ifndef MEMORY_PKG
-`define MEMORY_PKG
-
 `include "util.svh"
 
 package memory_pkg;
@@ -981,5 +978,3 @@ import len5_pkg::*;
   } l2arb_cache_ptw_winner_e;
 
 endpackage
-
-`endif

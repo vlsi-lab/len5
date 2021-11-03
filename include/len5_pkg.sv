@@ -95,18 +95,16 @@ package len5_pkg;
     U  // user mode
   } priv_e;
 
-
-
   //------------------------------\\
   //----- EXECUTION PIPELINE -----\\
   //------------------------------\\
   
   // GLOBAL
   localparam XREG_NUM = 32; // number of integer gp registers
-  localparam REG_IDX_LEN = 5;//$clog2(XREG_NUM); // Register file address width
+  localparam REG_IDX_LEN = $clog2(XREG_NUM); // Register file address width
 
   localparam FREG_NUM = 32; // number of floating-point registers
-  localparam FREG_IDX_LEN = 5;//$clog2(FREG_NUM); // Floating point register file address width
+  localparam FREG_IDX_LEN = $clog2(FREG_NUM); // Floating point register file address width
 
   // Number of execution units (and reservation stations)
   localparam EU_N = 9; // load buffer, store buffer, branch unit, ALU, MULT, DIV, FPU, SIMD, operands only

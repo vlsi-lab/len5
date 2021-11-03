@@ -14,7 +14,6 @@
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
-//import len5_pkg::HLEN;
 
 import expipe_pkg::*;
 

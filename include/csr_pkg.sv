@@ -13,19 +13,15 @@
 //         Michele Caon
 // Date: 03/08/2019
 
-`ifndef CSR_PKG
-`define CSR_PKG
-
 package csr_pkg;
-
   import len5_pkg::XLEN;
+  
+  // ----
+  // Misc
+  // ----
 
-  //
-  // generics
-  //
-
-  localparam TIMER_CNT_LEN       =      64;
-  localparam CSR_ADDR_LEN      =      12;
+  localparam TIMER_CNT_LEN      =      64;
+  localparam CSR_ADDR_LEN       =      12;
 
   `define   VENDOR_ID                 0   // non-commercial
   `define   ARCHITECTURE_ID           0   // not implemented
@@ -34,9 +30,22 @@ package csr_pkg;
 
   `define   MISA_MXL                  2   // XLEN: 64 bit
 
-  //
+  // -----------
+  // CSR Control
+  // -----------
+
+  // CSR instruction type
+  typedef enum logic [1:0] {
+    CSR_INSTR,    // explicit CSR instruction
+    FP_INSTR      // floating-point instruction
+  } csr_instr_t;
+
+  // ---------------
   // CSR declaration
-  //
+  // ---------------
+
+  // COUNTERS
+  // --------
 
   // Cycle counter
   typedef logic [TIMER_CNT_LEN-1:0]   csr_cycle_t;
@@ -46,6 +55,13 @@ package csr_pkg;
 
   // Retired instruction counter
   typedef logic [TIMER_CNT_LEN-1:0] csr_instret_t;
+
+  // FLOATING-POINT
+  // --------------
+
+  localparam FCSR_FFLAGS_LEN = 5;
+  localparam FCSR_FRM_LEN = 3;
+  localparam FCSR_LEN = FCSR_FFLAGS_LEN + FCSR_FRM_LEN;
 
   // floating point CSR
   typedef struct packed {
@@ -57,10 +73,12 @@ package csr_pkg;
   } fcsr_fflags_t;
 
   typedef struct packed {
-    logic         [31:8] reserved;
-    logic         [ 7:5]      frm; // rounding mode
-    fcsr_fflags_t          fflags; // accrued exceptions
+    logic [FCSR_LEN-1:FCSR_FFLAGS_LEN]  frm; // rounding mode
+    fcsr_fflags_t                       fflags; // accrued exceptions
   } csr_fcsr_t;
+
+  // MACHINE FEATURES
+  // ----------------
 
   // Machine ISA register
   typedef struct packed {
@@ -186,72 +204,10 @@ package csr_pkg;
     logic                   ssie;
     logic                   usie;
   } csr_mie_t;
-
-  //
-  // ADDRESS
-  //
-
-  // USER SPACE
-  // User trap setup
-  `define   CSR_ADDR_USTATUS    12'h000
-  `define   CSR_ADDR_UUIE       12'h004
-  `define   CSR_ADDR_UTVEC      12'h005
-  // User trap handling 
-  `define   CSR_ADDR_USCRATCH   12'h040
-  `define   CSR_ADDR_UEPC       12'h041
-  `define   CSR_ADDR_UCAUSE     12'h042
-  `define   CSR_ADDR_UTVAL      12'h043
-  `define   CSR_ADDR_UIP        12'h044
-  // User floating point
-  `define   CSR_ADDR_FFLAGS     12'h001
-  `define   CSR_ADDR_FRM        12'h002
-  `define   CSR_ADDR_FCSR       12'h003
-  // User performance counters
-  `define   CSR_ADDR_UCYCLE     12'hc00
-  `define   CSR_ADDR_UTIME      12'hc01
-  `define   CSR_ADDR_UINSTRET   12'hc02
-
-  // SUPERVISOR SPACE
-  // Supervisor trap setup
-  `define   CSR_ADDR_SSTATUS    12'h100
-  `define   CSR_ADDR_SEDELEG    12'h102
-  `define   CSR_ADDR_SIDELEG    12'h103
-  `define   CSR_ADDR_SIE        12'h104
-  `define   CSR_ADDR_STVEC      12'h105
-  `define   CSR_ADDR_SCOUNTEREN 12'h106
-  // Supervisor trap handling
-  `define   CSR_ADDR_SSCRATCH   12'h140
-  `define   CSR_ADDR_SEPC       12'h141
-  `define   CSR_ADDR_SCAUSE     12'h142
-  `define   CSR_ADDR_STVAL      12'h143
-  `define   CSR_ADDR_SIP        12'h144
-  // SUPERVISOR PROTECTION AND TRANSLATION
-  `define   CSR_ADDR_SATP       12'h180
   
-  // MACHINE SPACE
-  // Machine information CSRs
-  `define   CSR_ADDR_MVENDORID  12'hf11
-  `define   CSR_ADDR_MARCHID    12'hf12
-  `define   CSR_ADDR_MIMPID     12'hf13
-  `define   CSR_ADDR_MHARTID    12'hf14
-  // Machine trap setup
-  `define   CSR_ADDR_MSTATUS    12'h300
-  `define   CSR_ADDR_MISA       12'h301
-  `define   CSR_ADDR_MEDELEG    12'h302
-  `define   CSR_ADDR_MIDELEG    12'h303
-  `define   CSR_ADDR_MIE        12'h304
-  `define   CSR_ADDR_MTVEC      12'h305
-  `define   CSR_ADDR_MCOUNTEREN 12'h306
-  // Machine trap handling
-  `define   CSR_ADDR_MSCRATCH   12'h340
-  `define   CSR_ADDR_MEPC       12'h341
-  `define   CSR_ADDR_MCAUSE     12'h342
-  `define   CSR_ADDR_MTVAL      12'h343
-  `define   CSR_ADDR_MIP        12'h344
-  
-  //--------------------------\\
-  //----- VIRTUAL MEMORY -----\\
-  //--------------------------\\
+  // --------------
+  // VIRTUAL MEMORY
+  // --------------
   
   typedef enum logic [3:0] {
     BARE = 4'b0000, 
@@ -265,9 +221,9 @@ package csr_pkg;
     logic       [43:0]  ppn;
   } csr_satp_t;
 
-  //----------------------\\
-  //----- EXCEPTIONS -----\\
-  //----------------------\\
+  // ----------
+  // EXCEPTIONS
+  // ----------
 
   typedef enum logic[1:0] { 
     CSR_PRIV_U = 2'b00, // user
@@ -300,5 +256,3 @@ package csr_pkg;
   } csr_cause_t;
 
 endpackage
-
-`endif

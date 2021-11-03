@@ -12,8 +12,8 @@
 // Author: Michele Caon
 // Date: 12/11/2019
 
-`ifndef CONTROL_PKG
-`define CONTROL_PKG
+`ifndef INSTR_MACROS_
+`define INSTR_MACROS_
 
 import len5_pkg::XLEN;
 
@@ -214,4 +214,5 @@ import len5_pkg::XLEN;
 `define ECALL_RD            5'b00000
 `define ECALL_IMM           12'b000000000000
 
-`endif
+`endif /* INSTR_MACROS_ */
+

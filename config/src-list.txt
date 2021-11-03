@@ -6,6 +6,7 @@ include/instr_macros.svh
 include/memory_pkg.sv
 include/expipe_pkg.sv
 include/csr_pkg.sv
+include/csr_macros.svh
 src/util/*.sv
 src/memory/dcache/*.sv
 src/memory/dcache/d0/*.sv

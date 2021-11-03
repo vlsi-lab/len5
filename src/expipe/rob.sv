@@ -255,22 +255,22 @@ module rob
 	// Exception assignment
   always_comb begin
     case (comm_except_code_test)
-      4'h0: 		begin comm_except_code_o = E_I_ADDR_MISALIGNED; 	end
-      4'h1:    		begin comm_except_code_o = E_I_ACCESS_FAULT;	 	end
-      4'h2:      	begin comm_except_code_o = E_ILLEGAL_INSTRUCTION;	end
-	  4'h3: 		begin comm_except_code_o = E_BREAKPOINT; 			end
-      4'h4:    		begin comm_except_code_o = E_LD_ADDR_MISALIGNED; 	end
-      4'h5:      	begin comm_except_code_o = E_LD_ACCESS_FAULT;		end
-	  4'h6: 		begin comm_except_code_o = E_ST_ADDR_MISALIGNED;	end
-      4'h7:    		begin comm_except_code_o = E_ST_ACCESS_FAULT;	 	end
-      4'h8:      	begin comm_except_code_o = E_ENV_CALL_UMODE;		end
-	  4'h9: 		begin comm_except_code_o = E_ENV_CALL_SMODE; 		end
-	  4'ha:      	begin comm_except_code_o = E_UNKNOWN;				end
-      4'hb:    		begin comm_except_code_o = E_ENV_CALL_MMODE; 		end
-      4'hc:      	begin comm_except_code_o = E_INSTR_PAGE_FAULT;		end
-	  4'hd: 		begin comm_except_code_o = E_LD_PAGE_FAULT;			end
-      4'hf:    		begin comm_except_code_o = E_ST_PAGE_FAULT; 		end
-      default:    		begin comm_except_code_o = E_UNKNOWN; 			end
+      4'h0: 		comm_except_code_o = E_I_ADDR_MISALIGNED;
+      4'h1:    		comm_except_code_o = E_I_ACCESS_FAULT;
+      4'h2:      	comm_except_code_o = E_ILLEGAL_INSTRUCTION;
+	  4'h3: 		comm_except_code_o = E_BREAKPOINT;
+      4'h4:    		comm_except_code_o = E_LD_ADDR_MISALIGNED;
+      4'h5:      	comm_except_code_o = E_LD_ACCESS_FAULT;
+	  4'h6: 		comm_except_code_o = E_ST_ADDR_MISALIGNED;
+      4'h7:    		comm_except_code_o = E_ST_ACCESS_FAULT;
+      4'h8:      	comm_except_code_o = E_ENV_CALL_UMODE;
+	  4'h9: 		comm_except_code_o = E_ENV_CALL_SMODE;
+	  4'ha:      	comm_except_code_o = E_UNKNOWN;
+      4'hb:    		comm_except_code_o = E_ENV_CALL_MMODE;
+      4'hc:      	comm_except_code_o = E_INSTR_PAGE_FAULT;
+	  4'hd: 		comm_except_code_o = E_LD_PAGE_FAULT;
+      4'hf:    		comm_except_code_o = E_ST_PAGE_FAULT;
+      default:    	comm_except_code_o = E_UNKNOWN;
     endcase
   end
 

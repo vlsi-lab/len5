@@ -45,7 +45,7 @@ package expipe_pkg;
     //---------------\\
     
     localparam ROB_IDX_LEN = $clog2(ROB_DEPTH);//3 // ROB index width
-    localparam ROB_EXCEPT_LEN = 4;  // only the last four bits of the mcause/scause CSR
+    localparam ROB_EXCEPT_LEN = 5;  // to fit the last four bits of the mcause/scause CSR and the fflags of the fcsr CSR
 
     // Width of the opcode field (decoded during issue stage)
     localparam ROB_OPCODE_LEN = OPCODE_LEN + FUNCT3_LEN + FUNCT7_LEN;
@@ -77,22 +77,22 @@ package expipe_pkg;
     //---------------------------\\
     // This are the LSBs of the entire exception codes defined by the specs. This are used in the execution pipeline to save area. This code can be directly appended when writing mcause/scause CSRs during exception handling
     typedef enum logic [ROB_EXCEPT_LEN-1:0] {
-        E_I_ADDR_MISALIGNED   = 4'h0,
-        E_I_ACCESS_FAULT      = 4'h1,
-        E_ILLEGAL_INSTRUCTION = 4'h2,
-        E_BREAKPOINT          = 4'h3,
-        E_LD_ADDR_MISALIGNED  = 4'h4,
-        E_LD_ACCESS_FAULT     = 4'h5,
-        E_ST_ADDR_MISALIGNED  = 4'h6,
-        E_ST_ACCESS_FAULT     = 4'h7,
-        E_ENV_CALL_UMODE      = 4'h8,
-        E_ENV_CALL_SMODE      = 4'h9,
-        E_ENV_CALL_MMODE      = 4'hb,
-        E_INSTR_PAGE_FAULT    = 4'hc,
-        E_LD_PAGE_FAULT       = 4'hd,
-        E_ST_PAGE_FAULT       = 4'hf,
+        E_I_ADDR_MISALIGNED   = 'h0,
+        E_I_ACCESS_FAULT      = 'h1,
+        E_ILLEGAL_INSTRUCTION = 'h2,
+        E_BREAKPOINT          = 'h3,
+        E_LD_ADDR_MISALIGNED  = 'h4,
+        E_LD_ACCESS_FAULT     = 'h5,
+        E_ST_ADDR_MISALIGNED  = 'h6,
+        E_ST_ACCESS_FAULT     = 'h7,
+        E_ENV_CALL_UMODE      = 'h8,
+        E_ENV_CALL_SMODE      = 'h9,
+        E_ENV_CALL_MMODE      = 'hb,
+        E_INSTR_PAGE_FAULT    = 'hc,
+        E_LD_PAGE_FAULT       = 'hd,
+        E_ST_PAGE_FAULT       = 'hf,
         
-        E_UNKNOWN             = 4'ha    // reserved code 10, used for debugging
+        E_UNKNOWN             = 'ha    // reserved code 10, used for debugging
     } except_code_t;
 
     //-----------------------\\
