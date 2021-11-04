@@ -3,6 +3,9 @@
 //`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/CU_DP_MEM.sv"
 //import mmm_pkg::*;
 
+// Include LEN5 configuration
+`include "len5_config.svh"
+
 /* Import UVM macros and package */
 `include "uvm_macros.svh"
 import uvm_pkg::*;
@@ -24,7 +27,7 @@ module tb_combined;
 `endif /* MEMORY_FILE */
 
 // Initial program counter
-localparam [XLEN-1:0] BOOT_PC = 'h0;
+localparam [XLEN-1:0] BOOT_PC = `BOOT_PC;
 
 /******************/
 /* ---- BODY ---- */
@@ -46,13 +49,13 @@ localparam [XLEN-1:0] BOOT_PC = 'h0;
 always #5 clk_i = ~clk_i;
 
 initial begin
-	/* Set the memory addressing mode */
-	if (0 == $value$plusargs("BOOT_PC=%x", BOOT_PC)) begin
-		`uvm_fatal("CONFIG", $sformatf("Invalid memory mode specified: %d", mem_mode));
-	end 
+	// /* Set the memory addressing mode */
+	// if (0 == $value$plusargs("BOOT_PC=%x", BOOT_PC)) begin
+	// 	`uvm_fatal("CONFIG", $sformatf("Invalid boot program counter specified"));
+	// end
 
 	/* Print boot program counter */
-	`uvm_info("CONFIG", $sformatf("Boot program counter: %x", boot_pc), UVM_MEDIUM);
+	`uvm_info("CONFIG", $sformatf("Boot program counter: %x", BOOT_PC), UVM_MEDIUM);
 
 	/* Print memory file being used */
 	`uvm_info("CONFIG", $sformatf("Memory file: %s", `MEMORY_FILE), UVM_MEDIUM);

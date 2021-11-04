@@ -16,6 +16,11 @@
 `define LEN5_CONFIG
 
 // --------------------
+// GLOBAL CONFIGURATION
+// --------------------
+`define BOOT_PC 'h0
+
+// --------------------
 // COMPILATION SWITCHES
 // --------------------
 

@@ -12,6 +12,8 @@
 // Author: WALID WALID
 // Date: 17/10/2020
 
+// Include LEN5 configuration
+`include "len5_config.svh"
 
 import len5_pkg::*;
 import expipe_pkg::*;
@@ -88,6 +90,7 @@ module back_end
 	logic [REG_IDX_LEN-1:0]     int_regstat_rs1_idx_o;      
 	logic [REG_IDX_LEN-1:0]     int_regstat_rs2_idx_o;  
 
+`ifdef LEN5_FP_EN
 	// Handshake of issue from/to the floating point register status register
 	logic                       fp_regstat_ready_i;
 	logic                       fp_regstat_valid_o;
@@ -101,6 +104,7 @@ module back_end
 	logic [ROB_IDX_LEN-1:0]     fp_regstat_rob_idx_o;     
 	logic [REG_IDX_LEN-1:0]     fp_regstat_rs1_idx_o;     
 	logic [REG_IDX_LEN-1:0]     fp_regstat_rs2_idx_o; 
+`endif /* LEN5_FP_EN */
 
     // Data of issue from/to the integer register file
     logic [XLEN-1:0]            intrf_rs1_value_i;      // value of the first operand
@@ -108,11 +112,13 @@ module back_end
     logic [REG_IDX_LEN-1:0]     intrf_rs1_idx_o;        // RF address of the first operand 
     logic [REG_IDX_LEN-1:0]     intrf_rs2_idx_o;        // RF address of the second operand
 
+`ifdef LEN5_FP_EN
     // Data of issue from/to the floating point register file
     logic [XLEN-1:0]            fprf_rs1_value_i;       // value of the first operand
     logic [XLEN-1:0]            fprf_rs2_value_i;       // value of the second operand
     logic [REG_IDX_LEN-1:0]     fprf_rs1_idx_o;         // RF address of the first operand 
     logic [REG_IDX_LEN-1:0]     fprf_rs2_idx_o;         // RF address of the second operand  
+`endif /* LEN5_FP_EN */
 
 	// Handshake of issue from/to the execution pipeline
     logic [0:EU_N-1]            ex_ready_i;             // valid signal from each reservation station
@@ -163,14 +169,18 @@ module back_end
     // Data int/fp regstate from the commit logic
     logic [REG_IDX_LEN-1:0] comm_rd_idx_i;          // destination register of the committing instr.
     logic [XLEN-1:0]        comm_rd_value_i;
+`ifdef LEN5_FP_EN
 	logic [REG_IDX_LEN-1:0] fp_comm_rd_idx_i;          // destination register of the committing instr.
 	logic [XLEN-1:0]        fp_comm_rd_value_i;
+`endif /* LEN5_FP_EN */
 
 	// Handshake int/fp regfile from/to the commit logic
 	logic                   rf_comm_valid_i;
     logic                   rf_comm_ready_o;
-	logic                   rf_fp_comm_valid_i;
-    logic                   rf_fp_comm_ready_o;
+`ifdef LEN5_FP_EN
+	logic                   fp_rf_comm_valid_i;
+    logic                   fp_rf_comm_ready_o;
+`endif /* LEN5_FP_EN */
 
 	// Data int/fp regfile from/to the commit logic
 	//logic [REG_IDX_LEN-1:0] comm_rf_rd_idx_i;          // destination register of the committing instr.
@@ -253,7 +263,7 @@ module back_end
 //To here
 
 
- //---------------\\
+//---------------\\
 //----- DUT -----\\
 //---------------\\
 
@@ -293,6 +303,7 @@ issue_q_l u_issue_q_l
     .int_regstat_rs1_idx_o(int_regstat_rs1_idx_o),      
     .int_regstat_rs2_idx_o(int_regstat_rs2_idx_o),     
 
+`ifdef LEN5_FP_EN
     // Handshake from/to the floating point register status register
     .fp_regstat_ready_i(fp_regstat_ready_i),
     .fp_regstat_valid_o(fp_regstat_valid_o),
@@ -306,6 +317,7 @@ issue_q_l u_issue_q_l
     .fp_regstat_rob_idx_o(fp_regstat_rob_idx_o),    
     .fp_regstat_rs1_idx_o(fp_regstat_rs1_idx_o),    
     .fp_regstat_rs2_idx_o(fp_regstat_rs2_idx_o),
+`endif /* LEN5_FP_EN */
 
     // Data from/to the integer register file
     .intrf_rs1_value_i(intrf_rs1_value_i),     
@@ -313,11 +325,13 @@ issue_q_l u_issue_q_l
     .intrf_rs1_idx_o(intrf_rs1_idx_o), 
     .intrf_rs2_idx_o(intrf_rs2_idx_o),       
 
+`ifdef LEN5_FP_EN
     // Data from/to the floating point register file
     .fprf_rs1_value_i(fprf_rs1_value_i),       
     .fprf_rs2_value_i(fprf_rs2_value_i),      
     .fprf_rs1_idx_o(fprf_rs1_idx_o),       
     .fprf_rs2_idx_o(fprf_rs2_idx_o), 
+`endif /* LEN5_FP_EN */
   
     // Handshake from/to the execution pipeline
     .ex_ready_i(ex_ready_i),           
@@ -398,6 +412,7 @@ reg_status #(32) u_reg_status_int
     .comm_head_idx_i(rob_head_idx_i)//(comm_head_idx_i)         // head entry of the ROB
 );
 
+`ifdef LEN5_FP_EN
 reg_status # (32) u_reg_status_fp
 (
     .clk_i (clk_i),
@@ -428,6 +443,7 @@ reg_status # (32) u_reg_status_fp
     .comm_rd_idx_i(fp_comm_rd_idx_i),          // destination register of the committing instr.
     .comm_head_idx_i(rob_head_idx_i)//(fp_comm_head_idx_i)         // head entry of the ROB
 ); 
+`endif /* LEN5_FP_EN */
 
 int_rf u_int_rf(
     .clk_i(clk_i),
@@ -449,14 +465,15 @@ int_rf u_int_rf(
     .issue_rs2_value_o(intrf_rs2_value_i)
 );
 
+`ifdef LEN5_FP_EN
 fp_rf u_fp_rf(
     .clk_i(clk_i),
     .rst_n_i(rst_n_i),
 	//.stall(stall),
 
     // Handshake from the commit logic 
-    .comm_valid_i(rf_fp_comm_ready_o),
-    .comm_ready_o(rf_fp_comm_valid_i),
+    .comm_valid_i(fp_rf_comm_ready_o),
+    .comm_ready_o(fp_rf_comm_valid_i),
 
     // Data from the commit logic (result write port)
     .comm_rd_idx_i(fp_comm_rd_idx_i),//(fp_comm_rf_rd_idx_i),
@@ -468,8 +485,7 @@ fp_rf u_fp_rf(
     .issue_rs1_value_o(fprf_rs1_value_i),
     .issue_rs2_value_o(fprf_rs2_value_i)
 );
-
-//Done until here
+`endif /* LEN5_FP_EN */
 
 exec_unit u_exec_unit(
     .clk_i(clk_i),
@@ -565,8 +581,10 @@ commit_logic u_commit_logic(
     .rob_pc_i(rob_pc_i),
     .rob_rd_idx_i(rob_rd_idx_o),
     .rob_value_i(rob_value_i),
+`ifdef LEN5_FP_EN
 	.fp_rob_rd_idx_i(fp_rob_rd_idx_o),
 	.fp_rob_value_i(fp_rob_value_i),
+`endif /* LEN5_FP_EN */
     .rob_except_raised_i(rob_except_raised_o),
     .rob_except_code_i(rob_except_code_o),
     .rob_head_idx_i(rob_head_idx_i),
@@ -581,23 +599,31 @@ commit_logic u_commit_logic(
 
 	// HS from to the register status
     .int_rs_ready_i(comm_valid_i),
-    .fp_rs_ready_i(fp_comm_valid_i),
     .int_rs_valid_o(comm_ready_o),
+`ifdef LEN5_FP_EN
+    .fp_rs_ready_i(fp_comm_valid_i),
     .fp_rs_valid_o(fp_comm_ready_o),
+`endif /* LEN5_FP_EN */
 
     // HS from to the register files
     .int_rf_ready_i(rf_comm_valid_i),
-    .fp_rf_ready_i(rf_fp_comm_valid_i),
     .int_rf_valid_o(rf_comm_ready_o),
-    .fp_rf_valid_o(rf_fp_comm_ready_o),
+    
+`ifdef LEN5_FP_EN
+    .fp_rf_ready_i(fp_rf_comm_valid_i),
+    .fp_rf_valid_o(fp_rf_comm_ready_o),
+`endif /* LEN5_FP_EN */
 
     // Data to the register files
     .rf_rd_idx_o(comm_rd_idx_i),        // the index of the destination register (rd)
-    .rf_value_o(comm_rd_value_i),          // the value to be stored in rd
+    .rf_value_o(comm_rd_value_i)        // the value to be stored in rd
 
+`ifdef LEN5_FP_EN
+,
 	// Data to the fp register files
     .fp_rd_idx_o(fp_comm_rd_idx_i),        // the index of the destination register (rd)
     .fp_value_o(fp_comm_rd_value_i)          // the value to be stored in rd
+`endif /* LEN5_FP_EN */
 );
 
 rob u_rob
@@ -631,8 +657,10 @@ rob u_rob
     .comm_pc_o					(rob_pc_i),
     .comm_rd_idx_o              (rob_rd_idx_o),          // the destination register (rd)
     .comm_value_o               (rob_value_i),           // the result of the instruction
+`ifdef LEN5_FP_EN
 	.fp_comm_rd_idx_o           (fp_rob_rd_idx_o),          // the destination register (rd)
     .fp_comm_value_o            (fp_rob_value_i),           // the result of the instruction
+`endif /* LEN5_FP_EN */
     .comm_except_raised_o       (rob_except_raised_o),
     .comm_except_code_o         (rob_except_code_o),
     .comm_head_idx_o            (rob_head_idx_i), //SOlve this 

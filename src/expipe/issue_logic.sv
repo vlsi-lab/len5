@@ -58,6 +58,7 @@ module issue_logic (
     output  logic [REG_IDX_LEN-1:0]     int_regstat_rs1_idx_o,      // first source register index
     output  logic [REG_IDX_LEN-1:0]     int_regstat_rs2_idx_o,      // second source register index
 
+`ifdef LEN5_FP_EN
     // Handshake from/to the floating point register status register
     input   logic                       fp_regstat_ready_i,
     output  logic                       fp_regstat_valid_o,
@@ -71,6 +72,7 @@ module issue_logic (
     output  logic [ROB_IDX_LEN-1:0]     fp_regstat_rob_idx_o,      // ROB index where the instruction is being allocated (tail pointer of the ROB)
     output  logic [REG_IDX_LEN-1:0]     fp_regstat_rs1_idx_o,      // first source register index
     output  logic [REG_IDX_LEN-1:0]     fp_regstat_rs2_idx_o,      // second source register index
+`endif /* LEN5_FP_EN */
 
     // Data from/to the integer register file
     input   logic [XLEN-1:0]            intrf_rs1_value_i,      // value of the first operand
@@ -78,11 +80,13 @@ module issue_logic (
     output  logic [REG_IDX_LEN-1:0]     intrf_rs1_idx_o,        // RF address of the first operand 
     output  logic [REG_IDX_LEN-1:0]     intrf_rs2_idx_o,        // RF address of the second operand
 
+`ifdef LEN5_FP_EN
     // Data from/to the floating point register file
     input   logic [XLEN-1:0]            fprf_rs1_value_i,       // value of the first operand
     input   logic [XLEN-1:0]            fprf_rs2_value_i,       // value of the second operand
     output  logic [REG_IDX_LEN-1:0]     fprf_rs1_idx_o,         // RF address of the first operand 
     output  logic [REG_IDX_LEN-1:0]     fprf_rs2_idx_o,         // RF address of the second operand
+`endif /* LEN5_FP_EN */
 
     // Handshake from/to the execution pipeline
     input   logic [0:EU_N-1]            ex_ready_i,             // valid signal from each reservation station
@@ -160,8 +164,10 @@ module issue_logic (
     logic                               id_stall_possible;
     
     issue_eu_t                          id_assigned_eu;
-    logic [8-1:0]          id_eu_ctl;
+    logic [8-1:0]                       id_eu_ctl;
+`ifdef LEN5_FP_EN
     logic                               id_fp_rs;
+`endif /* LEN5_FP_EN */
     logic                               id_rs1_req;
     logic                               id_rs2_req;
 `ifdef LEN5_FP_EN
@@ -197,7 +203,11 @@ module issue_logic (
     //-----------------------------\\
 
     // Select the corresponding register status register ready signal
+`ifdef LEN5_FP_EN
     assign regstat_ready    = (id_fp_rs) ? fp_regstat_ready_i : int_regstat_ready_i;
+`else
+    assign regstat_ready    = int_regstat_ready_i;
+`endif /* LEN5_FP_EN */
 
     /* remove? */
 	assign cdb_ready_o = 1'b1;
@@ -255,6 +265,7 @@ module issue_logic (
                         ex_valid_o [EU_INT_DIV]  = 1'b1;
                     end
                 end
+            `ifdef LEN5_FP_EN
                 EU_FPU: begin   // 6
                     if (ex_ready_i[EU_FPU]) begin // if the load buffer can accept the instruction
                         rob_valid_o     = 1'b1;
@@ -262,6 +273,7 @@ module issue_logic (
                         ex_valid_o [EU_FPU] = 1'b1;
                     end
                 end
+            `endif /* LEN5_FP_EN */
                 EU_OPERANDS_ONLY: begin // 7
                     if (ex_ready_i[EU_OPERANDS_ONLY]) begin
                         rob_valid_o     = 1'b1;
@@ -287,12 +299,18 @@ module issue_logic (
     //----------------------------------\\
     always_comb begin: regstat_upd_logic
         // default values
+    `ifdef LEN5_FP_EN
         fp_regstat_valid_o      = 1'b0;
+    `endif /* LEN5_FP_EN */
         int_regstat_valid_o      = 1'b0;
         
         if (iq_valid_i && id_regstat_upd) begin
+        `ifdef LEN5_FP_EN
             if (id_fp_rs)   fp_regstat_valid_o      = 1'b1;
             else            int_regstat_valid_o     = 1'b1;
+        `else
+            int_regstat_valid_o     = 1'b1;
+        `endif /* LEN5_FP_EN */
         end
     end
 
@@ -302,8 +320,13 @@ module issue_logic (
     // The issue logic accesses the register status to know if the source operands are available in the RF, the ROB (and from which entry of it), or the CDB. If the source operands are not ready yet, they will be fetched from the CDB by the reservation station as soon as they are produced by the associated EU. 
 
     // Select the correct integer/floating point register status register
+    `ifdef LEN5_FP_EN
     assign  rob_rs1_idx     = (id_fp_rs) ? fp_regstat_rs1_rob_idx_i : int_regstat_rs1_rob_idx_i;
     assign  rob_rs2_idx     = (id_fp_rs) ? fp_regstat_rs2_rob_idx_i : int_regstat_rs2_rob_idx_i;
+    `else
+    assign  rob_rs1_idx     = int_regstat_rs1_rob_idx_i;
+    assign  rob_rs2_idx     = int_regstat_rs2_rob_idx_i;
+    `endif /* LEN5_FP_EN */
 
     always_comb begin: operand_fetch_logic
         // Default values 
@@ -313,7 +336,9 @@ module issue_logic (
         rs2_value                   = 0;
 
         /* INTEGER OPERANDS */
+        `ifdef LEN5_FP_EN
         if (!id_fp_rs) begin
+        `endif /* LEN5_FP_EN */
             
             // Fetch rs1
             if (id_rs1_req) begin               // rs1 value is required
@@ -360,8 +385,9 @@ module issue_logic (
                 end
             end
 
-         /* FLOATING-POINT OPERANDS */
-        end else begin    
+        /* FLOATING-POINT OPERANDS */
+        `ifdef LEN5_FP_EN
+        end else begin  
             
             // Fetch rs1
             if (id_rs1_req) begin               // rs1 value is required
@@ -404,6 +430,7 @@ module issue_logic (
             // Fetch rs3
             // ADD RS3 TO FP RF AND RS
         end
+        `endif /* LEN5_FP_EN */
     end
     
     //------------------------------\\
@@ -484,16 +511,19 @@ module issue_logic (
                 ex_rs1_value_o          = rs1_value;
                 ex_imm_value_o          = instr_imm_i_value;
             end
+
             EU_STORE_BUFFER: begin      // 1
                 ex_rs1_value_o          = rs1_value;
                 ex_rs2_value_o          = rs2_value;
                 ex_imm_value_o          = instr_imm_s_value;
             end
+
             EU_BRANCH_UNIT: begin       // 2
                 ex_rs1_value_o          = rs1_value;
                 ex_rs2_value_o          = rs2_value;
                 ex_imm_value_o          = instr_imm_b_value;
             end
+
             EU_INT_ALU: begin           // 3
                 ex_rs1_value_o          = rs1_value;
                 if (id_imm_req) begin
@@ -506,15 +536,25 @@ module issue_logic (
                     ex_rs2_value_o      = rs2_value;
                 end
             end
-            EU_INT_MULT, EU_INT_DIV, EU_FPU: begin // 4, 5, 6
+
+            EU_INT_MULT, EU_INT_DIV: begin // 4, 5
                 ex_rs1_value_o          = rs1_value;
                 ex_rs2_value_o          = rs2_value;
             end
+
+            `ifdef LEN5_FP_EN
+            EU_FPU: begin // 6
+                ex_rs1_value_o          = rs1_value;
+                ex_rs2_value_o          = rs2_value;
+            end
+            `endif /* LEN5_FP_EN */
+            
             EU_NONE: begin              // the instr. is sent directly to the ROB
                 ex_rs1_value_o          = 0;
                 ex_rs2_value_o          = 0;
                 ex_imm_value_o                  = 0;
             end
+
             default: begin
                 ex_rs1_value_o                  = 0;
                 ex_rs2_value_o                  = 0;
@@ -543,19 +583,23 @@ module issue_logic (
     assign  int_regstat_rd_idx_o        = instr_rd_idx;
     assign  int_regstat_rob_idx_o       = rob_tail_idx;
 
+    `ifdef LEN5_FP_EN
     // To the floating point register status register
     assign  fp_regstat_rs1_idx_o        = instr_rs1_idx;
     assign  fp_regstat_rs2_idx_o        = instr_rs2_idx; 
     assign  fp_regstat_rd_idx_o         = instr_rd_idx;
     assign  fp_regstat_rob_idx_o        = rob_tail_idx;
+    `endif /* LEN5_FP_EN */
 
     // To the integer register file
     assign  intrf_rs1_idx_o             = instr_rs1_idx;
     assign  intrf_rs2_idx_o             = instr_rs2_idx;
 
+    `ifdef LEN5_FP_EN
     // To the floating point register file
     assign  fprf_rs1_idx_o              = instr_rs1_idx;
     assign  fprf_rs2_idx_o              = instr_rs2_idx;
+    `endif /* LEN5_FP_EN */
 
     // To the ROB
     assign  rob_rs1_idx_o               = rob_rs1_idx;

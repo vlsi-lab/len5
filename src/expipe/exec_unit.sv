@@ -12,6 +12,8 @@
 // Author: WALID WALID
 // Date: 17/10/2020
 
+// Include LEN5 configuration
+`include "len5_config.svh"
 
 import len5_pkg::*;
 import expipe_pkg::*;
@@ -198,6 +200,7 @@ div_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_div_r
     .cdb_except_o (cdb_data_o[EU_INT_DIV].except_code)//(cdb_except_o)
 );
 
+`ifdef LEN5_FP_EN
 fpu_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_fpu_rs
 (
     .clk_i (clk_i),
@@ -225,34 +228,7 @@ fpu_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_fpu_r
     .cdb_except_raised_o (cdb_data_o[EU_FPU].except_raised),//(cdb_except_raised_o),
     .cdb_except_o (cdb_data_o[EU_FPU].except_code)//(cdb_except_o)
 );
-
-simd_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_simd_rs
-(
-    .clk_i (clk_i),
-    .rst_n_i (rst_n_i),
-    .flush_i (flush_i),
-	//.stall(stall),
-    .arbiter_valid_i (ex_ready_i[EU_SIMD]),
-    .arbiter_ready_o (ex_valid_o[EU_SIMD]),
-	.eu_ctl_i (ex_eu_ctl_i),
-    .rs1_ready_i (ex_rs1_ready_i),
-    .rs1_idx_i (ex_rs1_idx_i),
-    .rs1_value_i (ex_rs1_value_i),
-    .rs2_ready_i (ex_rs2_ready_i),
-    .rs2_idx_i (ex_rs2_idx_i),
-    .rs2_value_i (ex_rs2_value_i),
-    .dest_idx_i (ex_rob_idx_i),
-	.cdb_ready_i (cdb_ready_i[EU_SIMD]),
-    .cdb_valid_i (cdb_valid_i),
-    .cdb_valid_o (cdb_valid_o[EU_SIMD]),
-    .cdb_idx_i (cdb_data_i[EU_SIMD].rob_idx),//(cdb_idx_i),
-    .cdb_data_i (cdb_data_i[EU_SIMD].value),//(cdb_data_i),
-    .cdb_except_raised_i (cdb_data_i[EU_SIMD].except_raised),//(cdb_except_raised_i),
-    .cdb_idx_o (cdb_data_o[EU_SIMD].rob_idx),//(cdb_idx_o),
-    .cdb_data_o (cdb_data_o[EU_SIMD].value),//(cdb_data_o),
-    .cdb_except_raised_o (cdb_data_o[EU_SIMD].except_raised),//(cdb_except_raised_o),
-    .cdb_except_o (cdb_data_o[EU_SIMD].except_code)//(cdb_except_o)
-);
+`endif /* LEN5_FP_EN */
 
 branch_rs #(.RS_DEPTH (RS_DEPTH)) u_branch_rs
 (

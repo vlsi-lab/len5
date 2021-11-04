@@ -53,6 +53,7 @@ module issue_q_l
     output  logic [REG_IDX_LEN-1:0]     int_regstat_rs1_idx_o,      // first source register index
     output  logic [REG_IDX_LEN-1:0]     int_regstat_rs2_idx_o,      // second source register index
 
+`ifdef LEN5_FP_EN
 	// Handshake from/to the floating point register status register
     input   logic                       fp_regstat_ready_i,
     output  logic                       fp_regstat_valid_o,
@@ -66,6 +67,7 @@ module issue_q_l
     output  logic [ROB_IDX_LEN-1:0] fp_regstat_rob_idx_o,//ROB index where the instruction is being allocated(tail pointer of the ROB)
     output  logic [REG_IDX_LEN-1:0]     fp_regstat_rs1_idx_o,      // first source register index
     output  logic [REG_IDX_LEN-1:0]     fp_regstat_rs2_idx_o,      // second source register index
+`endif /* LEN5_FP_EN */
 
 	// Data from/to the integer register file
     input   logic [XLEN-1:0]            intrf_rs1_value_i,      // value of the first operand
@@ -73,11 +75,13 @@ module issue_q_l
     output  logic [REG_IDX_LEN-1:0]     intrf_rs1_idx_o,        // RF address of the first operand 
     output  logic [REG_IDX_LEN-1:0]     intrf_rs2_idx_o,        // RF address of the second operand
 
+`ifdef LEN5_FP_EN
     // Data from/to the floating point register file
     input   logic [XLEN-1:0]            fprf_rs1_value_i,       // value of the first operand
     input   logic [XLEN-1:0]            fprf_rs2_value_i,       // value of the second operand
     output  logic [REG_IDX_LEN-1:0]     fprf_rs1_idx_o,         // RF address of the first operand 
     output  logic [REG_IDX_LEN-1:0]     fprf_rs2_idx_o,         // RF address of the second operand    
+`endif /* LEN5_FP_EN */
 
 	// Handshake from/to the execution pipeline
     input   logic [0:EU_N-1]            ex_ready_i,             // valid signal from each reservation station
@@ -136,9 +140,9 @@ logic               issue_ready_i;
 logic               issue_valid_o;
 
 // Data to the execution pipeline
-logic [XLEN-1:0] curr_pc_o;
-logic [ILEN-1:0] instruction_o;
-logic [XLEN-1:0] pred_target_o;
+logic [XLEN-1:0]    curr_pc_o;
+logic [ILEN-1:0]    instruction_o;
+logic [XLEN-1:0]    pred_target_o;
 logic               pred_taken_o;
 logic               except_raised_o;
 except_code_t       except_code_o; 
@@ -210,6 +214,7 @@ issue_logic u_issue_logic
     .int_regstat_rs1_idx_o(int_regstat_rs1_idx_o),      
     .int_regstat_rs2_idx_o(int_regstat_rs2_idx_o),     
 
+`ifdef LEN5_FP_EN
     // Handshake from/to the floating point register status register
     .fp_regstat_ready_i(fp_regstat_ready_i),
     .fp_regstat_valid_o(fp_regstat_valid_o),
@@ -223,6 +228,7 @@ issue_logic u_issue_logic
     .fp_regstat_rob_idx_o(fp_regstat_rob_idx_o),    
     .fp_regstat_rs1_idx_o(fp_regstat_rs1_idx_o),    
     .fp_regstat_rs2_idx_o(fp_regstat_rs2_idx_o),    
+`endif /* LEN5_FP_EN */
 
     // Data from/to the integer register file
     .intrf_rs1_value_i(intrf_rs1_value_i),     
@@ -230,11 +236,13 @@ issue_logic u_issue_logic
     .intrf_rs1_idx_o(intrf_rs1_idx_o), 
     .intrf_rs2_idx_o(intrf_rs2_idx_o),       
 
+`ifdef LEN5_FP_EN
     // Data from/to the floating point register file
     .fprf_rs1_value_i(fprf_rs1_value_i),       
     .fprf_rs2_value_i(fprf_rs2_value_i),      
     .fprf_rs1_idx_o(fprf_rs1_idx_o),       
     .fprf_rs2_idx_o(fprf_rs2_idx_o),     
+`endif /* LEN5_FP_EN */
 
     // Handshake from/to the execution pipeline
     .ex_ready_i(ex_ready_i),           
@@ -283,8 +291,6 @@ issue_logic u_issue_logic
     .rob_except_aux_o(rob_except_aux_o),       
     .rob_res_ready_o(rob_res_ready_o)          
 );
-
-
-    
+ 
 endmodule
 

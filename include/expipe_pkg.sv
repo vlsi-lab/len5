@@ -172,17 +172,18 @@ package expipe_pkg;
     localparam MAX_EU_CTL_LEN   = BU_CTL_LEN;   // this must be set to the maximum of the previous parameters
     
     // ASSIGNED EU
-    typedef enum logic [$clog2(EU_N)-1:0] { //3
-        EU_LOAD_BUFFER,     // 0
-        EU_STORE_BUFFER,    // 1
-        EU_BRANCH_UNIT,     // 2
-        EU_INT_ALU,         // 3
-        EU_INT_MULT,        // 4
-        EU_INT_DIV,         // 5
-        EU_FPU,             // 6
-        EU_SIMD,            // 7
-        EU_OPERANDS_ONLY,   // 8
-        EU_NONE             // 9: the instruction is directly sent to the ROB (csr, special instructions, etc.)
+    typedef enum logic [$clog2(EU_N)-1:0] {
+        EU_LOAD_BUFFER,
+        EU_STORE_BUFFER,
+        EU_BRANCH_UNIT,
+        EU_INT_ALU,
+        EU_INT_MULT,
+        EU_INT_DIV,
+        `ifdef LEN5_FP_EN
+        EU_FPU,
+        `endif /* LEN5_FP_EN */
+        EU_OPERANDS_ONLY,
+        EU_NONE             //the instruction is directly sent to the ROB (csr, special instructions, etc.)
     } issue_eu_t;
 
     //---------------------------\\

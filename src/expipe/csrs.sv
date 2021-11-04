@@ -43,10 +43,13 @@ module csrs (
     input   logic [ROB_EXCEPT_LEN-1:0]  exc_data_i, // exception data (e.g., FPU exceptions)
     input   logic [REG_IDX_LEN-1:0]     rd_idx_i,   // destination register
     output  logic [XLEN-1:0]            data_o,
-    output  logic                       acc_exc_o,  // ILLEGAL INSTRUCTION flag (invalid address or access permission)
+    output  logic                       acc_exc_o   // ILLEGAL INSTRUCTION flag (invalid address or access permission)
 
     // Data to the FPU
+    `ifdef LEN5_FP_EN
+    ,
     output  logic [FCSR_FRM_LEN-1:0]    fpu_frm_o   // dynamic rounding mode
+    `endif /* LEN5_FP_EN */
 );
 
 // CSR read value
@@ -64,7 +67,9 @@ logic                   inv_op_exc;     // invalid operation (from funct3)
 // ----
 
 // Floating-point status
+`ifdef LEN5_FP_EN
 csr_fcsr_t      fcsr;
+`endif /* LEN5_FP_EN */
 
 // --------
 // CSR READ
@@ -83,11 +88,13 @@ always_comb begin : csr_read
              funct3_i == `FUNCT3_CSRRWI) &&
              rd_idx_i != '0) begin
             case (addr_i)
+            `ifdef LEN5_FP_EN
                 // fcsr
                 `CSR_ADDR_FCSR:     csr_rd_val = { '0, fcsr };
                 `CSR_ADDR_FRM:      csr_rd_val = { '0, fcsr.frm };
                 `CSR_ADDR_FFLAGS:   csr_rd_val = { '0, fcsr.fflags };
-                
+            `endif /* LEN5_FP_EN */
+
                 // Default
                 default:;   // use default value (see Exception Handling)
             endcase
@@ -100,10 +107,12 @@ always_comb begin : csr_read
                      funct3_i == `FUNCT3_CSRRC ||
                      funct3_i == `FUNCT3_CSRRCI) begin
             case (addr_i)
+            `ifdef LEN5_FP_EN
                 // fcsr
                 `CSR_ADDR_FCSR:     csr_rd_val = { '0, fcsr };
                 `CSR_ADDR_FRM:      csr_rd_val = { '0, fcsr.frm };
                 `CSR_ADDR_FFLAGS:   csr_rd_val = { '0, fcsr.fflags };
+            `endif /* LEN5_FP_EN */
                 
                 // Default
                 default:;   // use default value (see Exception Handling)
@@ -117,14 +126,18 @@ end
 // ---------
 
 always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
-    if (!rst_n_i) fcsr <= '0;
-
+    if (!rst_n_i) begin
+    `ifdef LEN5_FP_EN
+        fcsr <= '0;
+    `endif /* LEN5_FP_EN */
+    end
+    
     // Explicit CSR instructions
     else if (valid_i && instr_type_i == CSR_INSTR) begin
-
-        // FLOATING-POINT CSR
-        // ------------------
         case (addr_i)
+            // FLOATING-POINT CSR
+            // ------------------
+        `ifdef LEN5_FP_EN
             `CSR_ADDR_FCSR: begin
                 case (funct3_i)
                     `FUNCT3_CSRRW:  fcsr <= rs1_data_i[7:0];
@@ -158,6 +171,7 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
                     default:;   // do not modify the CSR value
                 endcase
             end
+        `endif /* LEN5_FP_EN */
             default:;   // do not modify the CSR values
         endcase
     
@@ -190,9 +204,11 @@ always_comb begin : exc_handling
     if (valid_i) begin
         case (addr_i)
             // fcsr (no access restrictions)
+        `ifdef LEN5_FP_EN
             `CSR_ADDR_FFLAGS,
             `CSR_ADDR_FRM,
             `CSR_ADDR_FCSR: inv_acc_exc = 1'b0; 
+        `endif /* LEN5_FP_EN */
             
             // Invalid address
             default:        inv_acc_exc = 1'b1;
@@ -229,6 +245,8 @@ end
 // -----------
 
 // Data to FPU
+`ifdef LEN5_FP_EN
 assign fpu_frm_o = fcsr.frm;
+`endif /* LEN5_FP_EN */
 
 endmodule

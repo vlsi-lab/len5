@@ -1,4 +1,8 @@
 onerror {resume}
+
+# Comment the following line to disable floating point waves
+#set fp_enable 1
+
 quietly WaveActivateNextPane {} 0
 add wave -noupdate -radix hexadecimal /tb_combined/clk_i
 add wave -noupdate -radix hexadecimal /tb_combined/rst_n_i
@@ -1131,6 +1135,9 @@ add wave -noupdate -expand -group BE -expand -group EXEC -group EX_DIV -radix he
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_DIV -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_div_rs/u_div/eu_rs1_o
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_DIV -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_div_rs/u_div/eu_rs2_o
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_DIV -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_div_rs/u_div/eu_entry_idx_o
+
+if {[info exists fp_enable]}
+{
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_FPU_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_fpu_rs/clk_i
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_FPU_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_fpu_rs/rst_n_i
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_FPU_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_fpu_rs/flush_i
@@ -1239,114 +1246,8 @@ add wave -noupdate -expand -group BE -expand -group EXEC -group EX_FPU -radix he
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_FPU -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_fpu_rs/u_fpu/eu_rs1_o
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_FPU -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_fpu_rs/u_fpu/eu_rs2_o
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_FPU -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_fpu_rs/u_fpu/eu_entry_idx_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/clk_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/rst_n_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/flush_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/arbiter_valid_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/arbiter_ready_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/eu_ctl_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/rs1_ready_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/rs1_idx_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/rs1_value_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/rs2_ready_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/rs2_idx_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/rs2_value_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/dest_idx_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/cdb_ready_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/cdb_valid_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/cdb_valid_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/cdb_idx_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/cdb_data_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/cdb_except_raised_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/cdb_idx_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/cdb_data_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/cdb_except_raised_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/cdb_except_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/eu_ready_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/eu_valid_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/eu_valid_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/eu_ready_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/eu_entry_idx_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/eu_result_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/eu_except_raised_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/eu_except_code_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/eu_ctl_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/eu_rs1_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/eu_rs2_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/eu_entry_idx_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/clk_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/rst_n_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/flush_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/arbiter_valid_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/arbiter_ready_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/eu_ctl_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/rs1_ready_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/rs1_idx_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/rs1_value_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/rs2_ready_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/rs2_idx_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/rs2_value_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/dest_idx_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/eu_ready_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/eu_valid_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/eu_valid_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/eu_ready_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/eu_entry_idx_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/eu_result_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/eu_except_raised_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/eu_except_code_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/eu_ctl_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/eu_rs1_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/eu_rs2_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/eu_entry_idx_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/cdb_ready_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/cdb_valid_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/cdb_valid_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/cdb_idx_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/cdb_data_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/cdb_except_raised_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/cdb_idx_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/cdb_data_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/cdb_except_raised_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/cdb_except_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/new_idx
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/ex_idx
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/cdb_idx
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/new_idx_valid
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/ex_idx_valid
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/cdb_idx_valid
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/valid_a
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/busy_a
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/ex_ready_a
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/res_ready_a
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/rs_insert
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/rs_ex
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/rs_pop
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/rs_wr_res
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/new_entry_prio_enc/lines_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/new_entry_prio_enc/enc_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/new_entry_prio_enc/valid_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/ex_sel_prio_enc/lines_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/ex_sel_prio_enc/enc_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/ex_sel_prio_enc/valid_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/cdb_sel_prio_enc/lines_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/cdb_sel_prio_enc/enc_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD_RS -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd_generic_rs/cdb_sel_prio_enc/valid_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd/clk_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd/rst_n_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd/flush_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd/eu_ready_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd/eu_valid_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd/eu_valid_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd/eu_ready_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd/eu_entry_idx_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd/eu_result_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd/eu_except_raised_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd/eu_except_code_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd/eu_ctl_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd/eu_rs1_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd/eu_rs2_o
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_SIMD -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_simd_rs/u_simd/eu_entry_idx_o
+}
+
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_B_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_branch_rs/clk_i
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_B_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_branch_rs/rst_n_i
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_B_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_branch_rs/flush_i
