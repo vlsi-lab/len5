@@ -12,7 +12,8 @@
 // Author: Michele Caon
 // Date: 27/10/2019
 
-`define LSUNIT
+// Include LEN5 configuration
+`include "len5_config.svh"
 
 import expipe_pkg::*;
 

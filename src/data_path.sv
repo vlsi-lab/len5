@@ -18,7 +18,9 @@ import memory_pkg::*;
 import csr_pkg::*;
 
 module data_path
-(
+#(
+	parameter [XLEN-1:0] BOOT_PC = 'h0
+) (
 	// From :CU
   	input   logic             clk_i,
   	input   logic             rst_n_i,
@@ -87,7 +89,7 @@ module data_path
 	assign ins_in = instruction_o;
 
 
-front_end #(.HLEN(4),.BTB_BITS(4)) u_Front_end_F
+front_end #(.HLEN(4),.BTB_BITS(4), .BOOT_PC(BOOT_PC)) u_Front_end_F
 (
   	.clk_i    (clk_i),
     .rst_n_i  (rst_n_i),

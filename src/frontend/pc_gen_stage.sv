@@ -15,13 +15,15 @@
 import len5_pkg::*;
 
 module pc_gen_stage
-(
+#(
+  parameter [XLEN-1:0] BOOT_PC = 'h0
+) (
   input   logic             clk_i,
   input   logic             rst_n_i,
   input   logic             except_i,
   input   logic [XLEN-1:0]  except_pc_i,
-  input   var resolution_t      res_i,
-  input   var prediction_t      pred_i,
+  input   var resolution_t  res_i,
+  input   var prediction_t  pred_i,
   input   logic             fetch_ready_i,
 
   output  logic [XLEN-1:0]  pc_o

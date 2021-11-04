@@ -12,6 +12,9 @@
 // Author: Michele Caon
 // Date: 27/10/2019
 
+// Include LEN5 configuration
+`include "len5_config.svh"
+
 // Import UVM report macros
 `include "uvm_macros.svh"
 import uvm_pkg::*;

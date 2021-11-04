@@ -12,6 +12,9 @@
 // Author: Michele Caon
 // Date: 12/11/2019
 
+// Include LEN5 configuration
+`include "len5_config.svh"
+
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
 import len5_pkg::EU_N;
@@ -161,6 +164,9 @@ module issue_logic (
     logic                               id_fp_rs;
     logic                               id_rs1_req;
     logic                               id_rs2_req;
+`ifdef LEN5_FP_EN
+    logic                               id_rs3_req;
+`endif /* LEN5_FP_EN */
     logic                               id_imm_req;
     imm_format_t                        id_imm_format; 
     logic                               id_regstat_upd;
@@ -332,7 +338,7 @@ module issue_logic (
             end
 
             // Fetch rs2
-            if (id_imm_req)     rs2_ready   = 1'b1;
+            if (id_imm_req)     rs2_ready   = 1'b1; // FIX STORES!
             else if (id_rs2_req) begin               // rs2 value is required
                 if (int_regstat_rs2_busy_i) begin   // the operand is provided by an in-flight instr.
                     if (rob_rs2_ready_i) begin /* the operand is already available in the ROB */
@@ -394,6 +400,9 @@ module issue_logic (
                     rs2_value           = fprf_rs2_value_i;
                 end
             end
+
+            // Fetch rs3
+            // ADD RS3 TO FP RF AND RS
         end
     end
     
@@ -438,7 +447,10 @@ module issue_logic (
         .issue_eu_ctl_o             (id_eu_ctl), 
         .issue_fp_rs_o              (id_fp_rs),       
         .issue_rs1_req_o            (id_rs1_req),     
-        .issue_rs2_req_o            (id_rs2_req),     
+        .issue_rs2_req_o            (id_rs2_req),
+    `ifdef LEN5_FP_EN
+        .issue_rs3_req_o            (id_rs3_req),  
+    `endif /* LEN5_FP_EN */
         .issue_imm_req_o            (id_imm_req),     
         .issue_imm_format_o         (id_imm_format),  
         .issue_regstat_upd_o        (id_regstat_upd)  

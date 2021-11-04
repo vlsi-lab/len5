@@ -18,7 +18,9 @@ import memory_pkg::*;
 import csr_pkg::*;
 
 module data_path_memory
-(
+#(
+	parameter [XLEN-1:0] BOOT_PC = 'h0
+) (
 	// From :CU
   	input   logic             clk_i,
   	input   logic             rst_n_i,
@@ -102,7 +104,7 @@ module data_path_memory
     assign data_i.pc = icache_frontend_ans_o.vaddr;
 	assign data_i.line = icache_frontend_ans_o.line;
 
-data_path  u_Data_path
+data_path #(.BOOT_PC(BOOT_PC)) u_Data_path
 (
 	.clk_i    (clk_i),
     .rst_n_i  (rst_n_i),

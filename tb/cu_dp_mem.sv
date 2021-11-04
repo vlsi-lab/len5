@@ -18,7 +18,9 @@ import memory_pkg::*;
 import csr_pkg::*;
 
 module cu_dp_mem
-(
+#(
+	parameter [XLEN-1:0] BOOT_PC = 'h0
+) (
 	// From :TB
   	input   logic             clk_i,
   	input   logic             rst_n_i,
@@ -99,7 +101,7 @@ module cu_dp_mem
 	assign stall = stall1 && stall2;
 	assign flush_i = flush_it;
 
-data_path_memory U_Data_path_memory
+data_path_memory #(.BOOT_PC(BOOT_PC)) U_Data_path_memory
 (
 	// From :CU
   	.clk_i    (clk_i),

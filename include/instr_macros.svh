@@ -46,6 +46,8 @@ import len5_pkg::XLEN;
 `define OPCODE_ECALL        7'b1110011
 `define OPCODE_FENCE        7'b0001111
 `define OPCODE_FENCE_I      7'b0001111
+`define OPCODE_HFENCE_BVMA  7'b1110011
+`define OPCODE_HFENCE_GVMA  7'b1110011
 `define OPCODE_JAL          7'b1101111
 `define OPCODE_JALR         7'b1100111
 `define OPCODE_LB           7'b0000011
@@ -83,6 +85,7 @@ import len5_pkg::XLEN;
 `define OPCODE_SRLW         7'b0111011
 `define OPCODE_SUB          7'b0110011
 `define OPCODE_SUBW         7'b0111011
+`define OPCODE_URET         7'b0111011
 `define OPCODE_WFI          7'b1110011
 `define OPCODE_XOR          7'b0110011
 `define OPCODE_XORI         7'b0010011
@@ -111,6 +114,8 @@ import len5_pkg::XLEN;
 `define FUNCT3_ECALL        3'b000
 `define FUNCT3_FENCE        3'b000
 `define FUNCT3_FENCE_I      3'b001
+`define FUNCT3_HFENCE_BVMA  3'b000
+`define FUNCT3_HFENCE_GVMA  3'b000
 `define FUNCT3_JALR         3'b000
 `define FUNCT3_LB           3'b000
 `define FUNCT3_LBU          3'b100
@@ -146,6 +151,7 @@ import len5_pkg::XLEN;
 `define FUNCT3_SRLW         3'b101
 `define FUNCT3_SUB          3'b000
 `define FUNCT3_SUBW         3'b000
+`define FUNCT3_URET         3'b000
 `define FUNCT3_WFI          3'b000
 `define FUNCT3_XOR          3'b100
 `define FUNCT3_XORI         3'b100
@@ -155,6 +161,8 @@ import len5_pkg::XLEN;
 `define FUNCT7_ADD          7'b0000000
 `define FUNCT7_ADDW         7'b0000000
 `define FUNCT7_AND          7'b0000000
+`define FUNCT7_HFENCE_BVMA  7'b0010001
+`define FUNCT7_HFENCE_GVMA  7'b1010001
 `define FUNCT7_MRET         7'b0011000
 `define FUNCT7_OR           7'b0000000
 `define FUNCT7_SFENCE_VMA   7'b0001001
@@ -169,6 +177,7 @@ import len5_pkg::XLEN;
 `define FUNCT7_SRLW         7'b0000000
 `define FUNCT7_SUB          7'b0100000
 `define FUNCT7_SUBW         7'b0100000
+`define FUNCT7_URET         7'b0011000
 `define FUNCT7_WFI          7'b0001000
 `define FUNCT7_XOR          7'b0000000
 
@@ -176,10 +185,15 @@ import len5_pkg::XLEN;
 //----- SPECIAL CODES -----\\
 //-------------------------\\
 
+// URET
+`define URET_RS2            5'b00010
+`define URET_RS1            5'b00000
+`define URET_RD             5'b00000
+
 // MRET
-`define MRET_RS2            5'b00010
-`define MRET_RS1            5'b00000
-`define MRET_RD             5'b00000
+`define MRET_RS2            `URET_RS2
+`define MRET_RS1            `URET_RS1
+`define MRET_RD             `URET_RD
 
 // SRET
 `define SRET_RS2            `MRET_RS2
@@ -203,6 +217,12 @@ import len5_pkg::XLEN;
 
 // SFENCE.VMA
 `define SFENCE_VMA_RD       5'b00000
+
+// HFENCE.BVMA
+`define HFENCE_BVMA_RD      5'b00000
+
+// HFENCE.GVMA
+`define HFENCE_GVMA_RD      5'b00000
 
 // EBREAK
 `define EBREAK_RS1          5'b00000

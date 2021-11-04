@@ -18,10 +18,13 @@ module tb_combined;
 /* ---- TB CONFIGURATION ---- */
 /******************************/
 
-/* Set memory file path */
+// Set memory file path
 `ifndef MEMORY_FILE
 `define MEMORY_FILE "tb/memory/memory.txt"
 `endif /* MEMORY_FILE */
+
+// Initial program counter
+localparam [XLEN-1:0] BOOT_PC = 'h0;
 
 /******************/
 /* ---- BODY ---- */
@@ -43,8 +46,16 @@ module tb_combined;
 always #5 clk_i = ~clk_i;
 
 initial begin
+	/* Set the memory addressing mode */
+	if (0 == $value$plusargs("BOOT_PC=%x", BOOT_PC)) begin
+		`uvm_fatal("CONFIG", $sformatf("Invalid memory mode specified: %d", mem_mode));
+	end 
+
+	/* Print boot program counter */
+	`uvm_info("CONFIG", $sformatf("Boot program counter: %x", boot_pc), UVM_MEDIUM);
+
 	/* Print memory file being used */
-	`uvm_info("CONFIG", $sformatf("Memory file: %s", `MEMORY_FILE), UVM_MEDIUM)
+	`uvm_info("CONFIG", $sformatf("Memory file: %s", `MEMORY_FILE), UVM_MEDIUM);
 
     //$monitor("Time = %0t -- instruction = 0x%8x, fetch ready = %0b", $time, instruction_i, fetch_ready_o);
     clk_i = 1;
@@ -64,7 +75,7 @@ end
 //----- DUT -----\\
 //---------------\\
 
-cu_dp_mem u_CU_DP_MEM
+cu_dp_mem #(.BOOT_PC(BOOT_PC)) u_CU_DP_MEM
 (
 	.clk_i (clk_i),
     .rst_n_i (rst_n_i),

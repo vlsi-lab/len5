@@ -14,8 +14,8 @@
 //         Michele Caon
 // Date: 26/07/2019
 
-`ifndef LEN5_PKG
-`define LEN5_PKG
+`ifndef LEN5_PKG_
+`define LEN5_PKG_
 
 package len5_pkg;
 
@@ -24,10 +24,10 @@ package len5_pkg;
     localparam OFFSET = $clog2(ILEN/8); // 2 LSB of addresses are always 0, so no use in using them for indexing
     localparam XLEN = 64;
     localparam FLEN = 64;
-    localparam [XLEN-1:0] BOOT_PC = 'h0; // starting PC (to be defined)
 
-        /* Instruction fileds width */
+    /* Instruction fileds width */
     localparam OPCODE_LEN   = 7;
+    localparam FUNCT2_LEN   = 2;
     localparam FUNCT3_LEN   = 3;
     localparam FUNCT7_LEN   = 7;
     localparam B_IMM        = 12;    // B-type immediate length
@@ -205,4 +205,4 @@ package len5_pkg;
 
 endpackage
 
-`endif
+`endif /* LEN5_PKG_ */

@@ -19,7 +19,8 @@ import expipe_pkg::*;
 module front_end
 #(
   parameter HLEN = 4,
-  parameter BTB_BITS = 4
+  parameter BTB_BITS = 4,
+  parameter [XLEN-1:0] BOOT_PC = 'h0
 )
 (
   input   logic             clk_i,
@@ -96,7 +97,7 @@ fetch_stage #(.HLEN(HLEN),.BTB_BITS(BTB_BITS)) u_fetch_stage
   .res_i			(res_i)  
 );
 
-pc_gen_stage u_pc_gen_stage
+pc_gen_stage #(.BOOT_PC(BOOT_PC)) u_pc_gen_stage
 (
   .clk_i    		(clk_i),
   .rst_n_i  		(rst_n_i),

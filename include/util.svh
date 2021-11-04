@@ -12,9 +12,14 @@
 // Author: Matteo Perotti
 // Date: 02/09/2019
 
+`ifndef UTIL_SVH_
+`define UTIL_SVH_
+
 // binary multipliers for Bytes
 `define B   *1
 `define KiB *1024`B
 `define MiB *1024`KiB
 `define GiB *1024`MiB
 `define TiB *1024`GiB
+
+`endif /* UTIL_SVH_ */

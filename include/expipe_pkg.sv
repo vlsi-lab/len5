@@ -15,6 +15,9 @@
 `ifndef EXPIPE_PKG
 `define EXPIPE_PKG
 
+// Include LEN5 configuration
+`include "len5_config.svh"
+
 package expipe_pkg;
 
     /* Inlcude isnstruction macros */
@@ -27,18 +30,6 @@ package expipe_pkg;
     import memory_pkg::PPN_LEN;
     import memory_pkg::PADDR_LEN;
     import memory_pkg::PAGE_OFFSET_LEN;
-
-    //--------------------\\
-    //----- SWITCHES -----\\
-    //--------------------\\
-
-    // RESERVATION STATION
-    // Enable age-based selectors in the reservation station. If not defined, simple fixed priority encoders will be used instead. This should lead to worse performance in terms of latency (and possibly throughput with certain code sequences) while reducing area and power consumption
-    //`define ENABLE_AGE_BASED_SELECTOR
-
-    // LOAD-STORE UNIT
-    // If defined, the arbiters of the shared virtual address adder, the DTLB and the DCACHE will give the highest priority to the store buffer in case of conflict. This might slightly increase the forwarding hit ration from the store buffer to the load buffer, while decreasing the latency of loads execution. 
-    `define ENABLE_STORE_PRIO_2WAY_ARBITER
 
     //---------------\\
     //----- ROB -----\\
