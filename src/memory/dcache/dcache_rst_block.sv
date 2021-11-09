@@ -60,6 +60,10 @@ module dcache_rst_block
         rst_l1dc_req_o.valid = 1'b0;
         state_d = StDone;
       end
+      default: begin
+        rst_l1dc_req_o.valid = 1'b0;
+        state_d = StReset;
+      end
     endcase
   end
 
