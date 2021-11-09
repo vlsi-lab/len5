@@ -45,6 +45,7 @@ module rob
     input   logic [ROB_EXCEPT_LEN-1:0]  issue_except_code_i,    // the exception code
     input   logic [XLEN-1:0]            issue_except_aux_i,     // exception auxilliary data (e.g. offending virtual address)
     input   logic                       issue_res_ready_i,      // to force result ready in special cases that are ready to commit from the issue phase
+    input   logic [XLEN-1:0]            issue_res_value_i,
 
     output  logic [ROB_IDX_LEN-1:0]     issue_tail_idx_o,       // the ROB entry where the new instruction is being allocated
 
@@ -175,9 +176,12 @@ module rob
                 rob_data[rob_tail_idx].instr_pc         <= issue_pc_i;
                 rob_data[rob_tail_idx].rd_idx           <= issue_rd_idx_i;
                 rob_data[rob_tail_idx].except_raised    <= issue_except_raised_i;
-                if (issue_except_raised_i || issue_res_ready_i) begin
+                if (issue_except_raised_i) begin
                     rob_data[rob_tail_idx].res_value    <= issue_except_aux_i;  // copy auxiliary data in result field so they can be used at commit to handle the exception or special instr. tha don't have to wait for a result
                     rob_data[rob_tail_idx].except_code  <= issue_except_code_i;
+                    rob_data[rob_tail_idx].res_ready    <= 1'b1;
+                end else if (issue_res_ready_i) begin
+                    rob_data[rob_tail_idx].res_value    <= issue_res_value_i;
                     rob_data[rob_tail_idx].res_ready    <= 1'b1;
                 end else begin
                     rob_data[rob_tail_idx].res_ready    <= 1'b0;

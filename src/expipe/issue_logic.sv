@@ -100,7 +100,7 @@ module issue_logic (
     output  logic                       ex_rs2_ready_o,         // second operand is ready at issue time (from the RF or the ROB)
     output  logic [ROB_IDX_LEN-1:0]     ex_rs2_idx_o,           // the index of the ROB where the first operand can be found (if not ready)
     output  logic [XLEN-1:0]            ex_rs2_value_o,         // the value of the first operand (if ready)
-    output  logic [I_IMM-1:0]           ex_imm_value_o,         // the value of the immediate field (for stores and branches)                   
+    output  logic [I_IMM-1:0]           ex_imm_value_o,         // the value of the immediate field
     output  logic [ROB_IDX_LEN-1:0]     ex_rob_idx_o,           // the location of the ROB assigned to the instruction
     output  logic [XLEN-1:0]            ex_pred_pc_o,              // the PC of the current issuing instr (branches only)
     output  logic [XLEN-1:0]            ex_pred_target_o,          // the predicted target of the current issuing instr (branches only)
@@ -134,17 +134,20 @@ module issue_logic (
     output  logic                       rob_except_raised_o,    // an exception has been raised
     output  logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_o,      // the exception code
     output  logic [XLEN-1:0]            rob_except_aux_o,       // exception auxilliary data (e.g. offending virtual address)
-    output  logic                       rob_res_ready_o         // force the ready-to-commit state in the ROB to handle special instr. 
+    output  logic                       rob_res_ready_o,        // force the ready-to-commit state in the ROB to handle special instr. 
+    output  logic [XLEN-1:0]            rob_res_value_o         // result to save in the rob (when available, e.g., immediate)
 );
 
     // DEFINITIONS
     // Instruction data 
     logic [REG_IDX_LEN-1:0]             instr_rs1_idx, instr_rs2_idx, instr_rd_idx;
-    logic [I_IMM-1:0]                   instr_imm_i_value;
-    logic [S_IMM-1:0]                   instr_imm_s_value;
-    logic [B_IMM-1:0]                   instr_imm_b_value;
-    logic [U_IMM-1:0]                   instr_imm_u_value;
-    logic [J_IMM-1:0]                   instr_imm_j_value;
+    logic [XLEN-1:0]                    instr_imm_i_value;
+    logic [XLEN-1:0]                    instr_imm_s_value;
+    logic [XLEN-1:0]                    instr_imm_b_value;
+    logic [XLEN-1:0]                    instr_imm_u_value;
+    logic [XLEN-1:0]                    instr_imm_j_value;
+    logic [XLEN-1:0]                    instr_imm_rs1_value;    // for CSR immediate instr.
+    logic [XLEN-1:0]                    imm_value;              // selected immediate
 
     logic [ROB_IDX_LEN-1:0]             rob_tail_idx;
 
@@ -169,11 +172,12 @@ module issue_logic (
     logic                               id_fp_rs;
 `endif /* LEN5_FP_EN */
     logic                               id_rs1_req;
+    logic                               id_rs1_is_pc;
     logic                               id_rs2_req;
+    logic                               id_rs2_is_imm;
 `ifdef LEN5_FP_EN
     logic                               id_rs3_req;
 `endif /* LEN5_FP_EN */
-    logic                               id_imm_req;
     imm_format_t                        id_imm_format; 
     logic                               id_regstat_upd;
 
@@ -190,11 +194,12 @@ module issue_logic (
     assign  instr_rs2_idx           = iq_instruction_i.r.rs2;
     assign  instr_rd_idx            = iq_instruction_i.r.rd;
     // Immediate values
-    assign  instr_imm_i_value       = iq_instruction_i.i.imm11;
-    assign  instr_imm_s_value       = { iq_instruction_i.s.imm11, iq_instruction_i.s.imm4 };
-    assign  instr_imm_b_value       = { iq_instruction_i.b.imm12, iq_instruction_i.b.imm11, iq_instruction_i.b.imm10, iq_instruction_i.b.imm4 };
-    assign  instr_imm_u_value       = iq_instruction_i.u.imm31;
-    assign  instr_imm_j_value       = { iq_instruction_i.j.imm20, iq_instruction_i.j.imm19, iq_instruction_i.j.imm11, iq_instruction_i.j.imm10 };
+    assign  instr_imm_i_value       = { {52{iq_instruction_i.i.imm11[31]}}, iq_instruction_i.i.imm11 };
+    assign  instr_imm_s_value       = { {52{iq_instruction_i.s.imm11[31]}}, iq_instruction_i.s.imm11, iq_instruction_i.s.imm4 };
+    assign  instr_imm_b_value       = { {51{iq_instruction_i.b.imm12}},  iq_instruction_i.b.imm12, iq_instruction_i.b.imm11, iq_instruction_i.b.imm10, iq_instruction_i.b.imm4, 1'b0 };
+    assign  instr_imm_u_value       = { {32{iq_instruction_i.u.imm31[31]}},  iq_instruction_i.u.imm31, 12'b0 };
+    assign  instr_imm_j_value       = { {43{iq_instruction_i.j.imm20}}, iq_instruction_i.j.imm20, iq_instruction_i.j.imm19, iq_instruction_i.j.imm11, iq_instruction_i.j.imm10, 1'b0 };
+    assign  instr_imm_rs1_value     = { '0, iq_instruction_i.r.rs1 };
 
     assign rob_tail_idx             = rob_tail_idx_i;
 
@@ -332,8 +337,8 @@ module issue_logic (
         // Default values 
         rs1_ready                   = 1'b0;
         rs2_ready                   = 1'b0;
-        rs1_value                   = 0;
-        rs2_value                   = 0;
+        rs1_value                   = '0;
+        rs2_value                   = '0;
 
         /* INTEGER OPERANDS */
         `ifdef LEN5_FP_EN
@@ -341,21 +346,21 @@ module issue_logic (
         `endif /* LEN5_FP_EN */
             
             // Fetch rs1
-            if (id_rs1_req) begin               // rs1 value is required
+            if (id_rs1_is_pc) begin
+                rs1_ready       = 1'b1;
+                rs1_value       = iq_curr_pc_i;
+            end else if (id_rs1_req) begin               // rs1 value is required
                 if (int_regstat_rs1_busy_i) begin   // the operand is provided by an in-flight instr.
                     if (rob_rs1_ready_i) begin /* the operand is already available in the ROB */
                         rs1_ready   = 1'b1;
                         rs1_value   = rob_rs1_value_i;
-				
-					//New added
-				end else if (cdb_valid_i && cdb_rob_idx_i == rob_rs1_idx && !cdb_except_raised_i /*&& cdb_valid_i*/) begin /* the operand is being broadcast on the CDB */ /* TODO: we need the valid! */
-						rs1_ready   = 1'b1;
-                        rs1_value   = cdb_value_i;
-				end else begin /* mark as not ready */
-                        rs1_ready   = 1'b0;
-                        rs1_value   = 0;
+                    end else if (cdb_valid_i && cdb_rob_idx_i == rob_rs1_idx && !cdb_except_raised_i) begin /* the operand is being broadcast on the CDB */
+                            rs1_ready   = 1'b1;
+                            rs1_value   = cdb_value_i;
+                    end else begin /* mark as not ready */
+                            rs1_ready   = 1'b0;
+                            rs1_value   = 0;
                     end
-				//Till here
                 end else begin                  // the operand is available in the register file 
                     rs1_ready           = 1'b1;
                     rs1_value           = intrf_rs1_value_i;
@@ -363,8 +368,10 @@ module issue_logic (
             end
 
             // Fetch rs2
-            if (id_imm_req)     rs2_ready   = 1'b1; // FIX STORES!
-            else if (id_rs2_req) begin               // rs2 value is required
+            if (id_rs2_is_imm) begin
+                rs2_ready       = 1'b1;
+                rs2_value       = imm_value; 
+            end else if (id_rs2_req) begin               // rs2 value is required
                 if (int_regstat_rs2_busy_i) begin   // the operand is provided by an in-flight instr.
                     if (rob_rs2_ready_i) begin /* the operand is already available in the ROB */
                         rs2_ready   = 1'b1;
@@ -432,6 +439,23 @@ module issue_logic (
         end
         `endif /* LEN5_FP_EN */
     end
+
+    // ------------------
+    // IMMEDIATE SELECTOR
+    // ------------------
+
+    // Immediate mux
+    always_comb begin : imm_sel_logic
+        case (id_imm_format)
+            IMM_TYPE_I:     imm_value   = instr_imm_i_value;
+            IMM_TYPE_S:     imm_value   = instr_imm_s_value;
+            IMM_TYPE_B:     imm_value   = instr_imm_b_value;
+            IMM_TYPE_U:     imm_value   = instr_imm_u_value;    
+            IMM_TYPE_J:     imm_value   = instr_imm_j_value;
+            IMM_TYPE_RS1:   imm_value   = instr_imm_rs1_value;
+            default:        imm_value   = instr_imm_i_value;
+        endcase
+    end
     
     // ------------------
     // EXCEPTION HANDLING
@@ -473,12 +497,13 @@ module issue_logic (
         .issue_eu_o                 (id_assigned_eu),     
         .issue_eu_ctl_o             (id_eu_ctl), 
         .issue_fp_rs_o              (id_fp_rs),       
-        .issue_rs1_req_o            (id_rs1_req),     
+        .issue_rs1_req_o            (id_rs1_req), 
+        .issue_rs1_is_pc_o          (id_rs1_is_pc),
         .issue_rs2_req_o            (id_rs2_req),
+        .issue_rs2_is_imm_o         (id_rs2_is_imm),
     `ifdef LEN5_FP_EN
         .issue_rs3_req_o            (id_rs3_req),  
-    `endif /* LEN5_FP_EN */
-        .issue_imm_req_o            (id_imm_req),     
+    `endif /* LEN5_FP_EN */     
         .issue_imm_format_o         (id_imm_format),  
         .issue_regstat_upd_o        (id_regstat_upd)  
     );
@@ -499,69 +524,9 @@ module issue_logic (
     //assign  ex_rs1_idx_o                = //instr_rs1_idx;
     //assign  ex_rs2_idx_o                = //instr_rs2_idx;
 
-    // Operands value
-    always_comb begin: operand_value_logic
-        // Default values
-        ex_rs1_value_o                  = 0;
-        ex_rs2_value_o                  = 0;
-        ex_imm_value_o                  = 0;
-        case(id_assigned_eu)
-            // IMPORTANT: check the order of the valid/ready connections to each RS
-            EU_LOAD_BUFFER: begin       // 0
-                ex_rs1_value_o          = rs1_value;
-                ex_imm_value_o          = instr_imm_i_value;
-            end
-
-            EU_STORE_BUFFER: begin      // 1
-                ex_rs1_value_o          = rs1_value;
-                ex_rs2_value_o          = rs2_value;
-                ex_imm_value_o          = instr_imm_s_value;
-            end
-
-            EU_BRANCH_UNIT: begin       // 2
-                ex_rs1_value_o          = rs1_value;
-                ex_rs2_value_o          = rs2_value;
-                ex_imm_value_o          = instr_imm_b_value;
-            end
-
-            EU_INT_ALU: begin           // 3
-                ex_rs1_value_o          = rs1_value;
-                if (id_imm_req) begin
-                    if (id_imm_format == IMM_SHAMT) begin
-                        ex_rs2_value_o  = { {58{1'b0}}, instr_imm_i_value[5:0] };
-                    end else begin      // sign extended imm.
-                        ex_rs2_value_o  = { {(XLEN-I_IMM){instr_imm_i_value[I_IMM-1]}}, instr_imm_i_value };
-                    end
-                end else begin
-                    ex_rs2_value_o      = rs2_value;
-                end
-            end
-
-            EU_INT_MULT, EU_INT_DIV: begin // 4, 5
-                ex_rs1_value_o          = rs1_value;
-                ex_rs2_value_o          = rs2_value;
-            end
-
-            `ifdef LEN5_FP_EN
-            EU_FPU: begin // 6
-                ex_rs1_value_o          = rs1_value;
-                ex_rs2_value_o          = rs2_value;
-            end
-            `endif /* LEN5_FP_EN */
-            
-            EU_NONE: begin              // the instr. is sent directly to the ROB
-                ex_rs1_value_o          = 0;
-                ex_rs2_value_o          = 0;
-                ex_imm_value_o                  = 0;
-            end
-
-            default: begin
-                ex_rs1_value_o                  = 0;
-                ex_rs2_value_o                  = 0;
-                ex_imm_value_o                  = 0;
-            end
-        endcase
-    end
+    assign  ex_rs1_value_o              = rs1_value;
+    assign  ex_rs2_value_o              = rs2_value;
+    assign  ex_imm_value_o              = imm_value;
 
     // Destination ROB entry
     assign  ex_rob_idx_o                = rob_tail_idx;
@@ -612,5 +577,6 @@ module issue_logic (
     assign  rob_except_aux_o            = eh_except_aux;
 
     assign  rob_res_ready_o             = id_res_ready;
+    assign  rob_res_value_o             = imm_value;
     
 endmodule

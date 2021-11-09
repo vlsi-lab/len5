@@ -181,9 +181,9 @@ import len5_pkg::XLEN;
 `define FUNCT7_WFI          7'b0001000
 `define FUNCT7_XOR          7'b0000000
 
-// -------------
+//-------------------
 // SPECIAL CODES
-// -------------
+//-------------------
 
 // URET
 `define URET_RS2            5'b00010
@@ -208,7 +208,7 @@ import len5_pkg::XLEN;
 // FENCE
 `define FENCE_RS1           5'b00000
 `define FENCE_RD            5'b00000
-`define FENCE_MSBS          4'b0000
+`define FENCE_FM_LSBS       3'b000
 
 // FENCE.I
 `define FENCE_I_RS1         `FENCE_RS1

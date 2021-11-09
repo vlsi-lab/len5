@@ -159,6 +159,7 @@ module back_end
 	logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_i;
 	logic [XLEN-1:0]            rob_except_aux_i;
 	logic                       rob_res_ready_o;
+    logic [XLEN-1:0]            rob_res_value;
 
 	// Handshake int/fp regstate from/to the commit logic fp
 	logic                   comm_valid_i;
@@ -378,7 +379,8 @@ issue_q_l u_issue_q_l
     .rob_except_raised_o(rob_except_raised_i),    
     .rob_except_code_o(rob_except_code_i),      
     .rob_except_aux_o(rob_except_aux_i),       
-    .rob_res_ready_o(rob_res_ready_o)
+    .rob_res_ready_o(rob_res_ready_o),
+    .rob_res_value_o(rob_res_value)
 );
 
 reg_status #(32) u_reg_status_int 
@@ -647,6 +649,7 @@ rob u_rob
     .issue_except_code_i        (rob_except_code_i),       // the exception code
     .issue_except_aux_i         (rob_except_aux_i),  
     .issue_res_ready_i          (rob_res_ready_o),
+    .issue_res_value_i          (rob_res_value),
     .issue_tail_idx_o           (rob_tail_idx_o),
     .cdb_valid_i                (rob_cdb_valid_i),
     .cdb_ready_o                (rob_cdb_ready_o),

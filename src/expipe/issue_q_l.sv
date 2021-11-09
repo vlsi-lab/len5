@@ -130,7 +130,8 @@ module issue_q_l
     output  logic                       rob_except_raised_o,    // an exception has been raised
     output  logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_o,      // the exception code
     output  logic [XLEN-1:0]            rob_except_aux_o,       // exception auxilliary data (e.g. offending virtual address)
-    output  logic                       rob_res_ready_o       // force the ready-to-commit state in the ROB to handle special instr. 
+    output  logic                       rob_res_ready_o,       // force the ready-to-commit state in the ROB to handle special instr. 
+    output  logic [XLEN-1:0]            rob_res_value_o
 );
 
     // DEFINITIONS
@@ -289,7 +290,8 @@ issue_logic u_issue_logic
     .rob_except_raised_o(rob_except_raised_o),    
     .rob_except_code_o(rob_except_code_o),      
     .rob_except_aux_o(rob_except_aux_o),       
-    .rob_res_ready_o(rob_res_ready_o)          
+    .rob_res_ready_o(rob_res_ready_o),   
+    .rob_res_value_o(rob_res_value_o)
 );
  
 endmodule

@@ -112,9 +112,13 @@ package expipe_pkg;
     // -----------
 
     // IMMEDIATE TYPE
-    typedef enum logic {  
-        IMM_SEXT,       // sign extended to 64 bits
-        IMM_SHAMT       // zero pad the 6 LSBs to 64 bits
+    typedef enum logic [2:0] {
+        IMM_TYPE_I,
+        IMM_TYPE_S,
+        IMM_TYPE_B,
+        IMM_TYPE_U,
+        IMM_TYPE_J,
+        IMM_TYPE_RS1
     } imm_format_t;
 
     // --------------------

@@ -64,7 +64,7 @@ module front_end
   prediction_t      pred_i;
   logic [XLEN-1:0]  pc_o;
 
-fetch_stage #(.HLEN(HLEN),.BTB_BITS(BTB_BITS)) u_fetch_stage
+fetch_stage #(.HLEN(HLEN),.BTB_BITS(BTB_BITS)) fetch_stage_u
 (
   	.clk_i    (clk_i),
     .rst_n_i  (rst_n_i),
@@ -97,7 +97,7 @@ fetch_stage #(.HLEN(HLEN),.BTB_BITS(BTB_BITS)) u_fetch_stage
   .res_i			(res_i)  
 );
 
-pc_gen_stage #(.BOOT_PC(BOOT_PC)) u_pc_gen_stage
+pc_gen_stage #(.BOOT_PC(BOOT_PC)) pc_gen_stage_u
 (
   .clk_i    		(clk_i),
   .rst_n_i  		(rst_n_i),
