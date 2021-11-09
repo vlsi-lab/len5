@@ -62,9 +62,9 @@ module issue_queue_fifo (
     end
     assign fifo_full = &valid_a; // 1 if all entries are valid
     
-    //----------------------------\\
-    //----- POINTERS CONTROL -----\\
-    //----------------------------\\
+    // ----------------
+    // POINTERS CONTROL
+    // ----------------
     always_comb begin: idx_control_logic
         // Default values
         head_cnt_en     = 'b0;
@@ -81,9 +81,9 @@ module issue_queue_fifo (
         end
     end
 
-    //------------------------\\
-    //----- FIFO CONTROL -----\\
-    //------------------------\\
+    // ------------
+    // FIFO CONTROL
+    // ------------
     always_comb begin: fifo_control_logic
         // Default values
         fifo_push           = 'b0;
@@ -106,9 +106,9 @@ module issue_queue_fifo (
         end
     end
 
-    //-----------------------\\
-    //----- FIFO UPDATE -----\\
-    //-----------------------\\
+    // -----------
+    // FIFO UPDATE
+    // -----------
     always_ff @(posedge clk_i or negedge rst_n_i) begin: fifo_update
         if (!rst_n_i) begin // Asynchronous reset
             foreach (iq_fifo[i]) begin
@@ -126,15 +126,15 @@ module issue_queue_fifo (
         end
     end 
 
-    //----------------------------------\\
-    //----- OUTPUT DATA EVALUATION -----\\
-    //----------------------------------\\ 
+    // ----------------------
+    // OUTPUT DATA EVALUATION
+    // ---------------------- 
     // Issued instruction (to execution pipeline)
     assign issued_instr     = iq_fifo[head_idx]; // READ PORT 1
 
-    //---------------------\\
-    //----- ASSERTION -----\\
-    //---------------------\\
+    // ---------
+    // ASSERTION
+    // ---------
     `ifndef SYNTHESIS
     always @(negedge clk_i) begin
         // Notify when the issue queue is full

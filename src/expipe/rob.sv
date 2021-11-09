@@ -91,9 +91,9 @@ module rob
     logic [0:ROB_DEPTH-1]               valid_a, res_ready_a;
     logic [ROB_EXCEPT_LEN-1:0]  comm_except_code_test;
 
-    //--------------------------\\
-    //----- STATUS SIGNALS -----\\
-    //--------------------------\\
+    // --------------
+    // STATUS SIGNALS
+    // --------------
     // These are required because name selection after indexing is not supported
     always_comb begin: status_signals_gen
         for (int i = 0; i < ROB_DEPTH; i++) begin
@@ -102,9 +102,9 @@ module rob
         end
     end
 
-    //-----------------------------\\
-    //----- ROB CONTROL LOGIC -----\\
-    //-----------------------------\\
+    // -----------------
+    // ROB CONTROL LOGIC
+    // -----------------
     always_comb begin: rob_control_logic
         // DEFAULT VALUES
         // Operation control
@@ -123,9 +123,9 @@ module rob
         rob_tail_en         = 1'b0; 
         rob_tail_clr        = flush_i;    
 
-        //--------------------------\\
-        //----- ROB OPERATIONS -----\\
-        //--------------------------\\
+        // --------------
+        // ROB OPERATIONS
+        // --------------
         
         // PUSH A NEW INSTRUCTION IN THE QUEUE
         if (!rob_data[rob_tail_idx].valid/*&& !stall*/) begin
@@ -152,9 +152,9 @@ module rob
         end
     end
     
-    //---------------------------\\
-    //----- ROB DATA UPDATE -----\\
-    //---------------------------\\
+    // ---------------
+    // ROB DATA UPDATE
+    // ---------------
     always_ff @(posedge clk_i or negedge rst_n_i) begin: rob_data_update
         if (!rst_n_i) begin
             foreach (rob_data[i]) begin
@@ -198,9 +198,9 @@ module rob
         end
     end
 
-    //----------------------------------\\
-    //----- HEAD AND TAIL POINTERS -----\\
-    //----------------------------------\\
+    // ----------------------
+    // HEAD AND TAIL POINTERS
+    // ----------------------
     modn_counter #(.N(ROB_DEPTH)) head_counter
     (
         .clk_i      (clk_i),
@@ -221,9 +221,9 @@ module rob
         .tc_o       ()              // Not needed
     );
 
-    //-------------------------------------------\\
-    //----- ISSUE STAGE OPERANDS READ PORTS -----\\
-    //-------------------------------------------\\
+    // -------------------------------
+    // ISSUE STAGE OPERANDS READ PORTS
+    // -------------------------------
     // During issue, if the register status register reports that the result 
     // rs1 port
     assign issue_rs1_ready_o    = rob_data[issue_rs1_idx_i].res_ready;
@@ -232,9 +232,9 @@ module rob
     assign issue_rs2_ready_o    = rob_data[issue_rs2_idx_i].res_ready;
     assign issue_rs2_value_o    = rob_data[issue_rs2_idx_i].res_value; // READ PORT 2 (res_value)
 
-    //-----------------------------\\
-    //----- OUTPUT EVALUATION -----\\
-    //-----------------------------\\
+    // -----------------
+    // OUTPUT EVALUATION
+    // -----------------
     
     // To the store buffer
     assign sb_head_idx_o        = rob_head_idx;

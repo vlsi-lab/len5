@@ -57,9 +57,9 @@ module reg_status
     // Operation control
     logic                           regstat_issue_upd, regstat_comm_upd;
 
-    //-----------------------------------------\\
-    //----- REGISTER STATUS CONTROL LOGIC -----\\
-    //-----------------------------------------\\
+    // -----------------------------
+    // REGISTER STATUS CONTROL LOGIC
+    // -----------------------------
     always_comb begin: regstat_control_logic
         // DEFAULT VALUES:
         regstat_issue_upd           = 1'b0;
@@ -84,9 +84,9 @@ module reg_status
         end
     end
 
-    //---------------------------------------\\
-    //----- REGISTER STATUS DATA UPDATE -----\\
-    //---------------------------------------\\
+    // ---------------------------
+    // REGISTER STATUS DATA UPDATE
+    // ---------------------------
     always_ff @(posedge clk_i or negedge rst_n_i) begin: rs_data_update
         if (!rst_n_i) begin // Asynchronous reset
             foreach (regstat_data[i]) begin
@@ -117,9 +117,9 @@ module reg_status
         end
     end
 
-    //--------------------------------------\\
-    //----- REGISTER STATUS READ PORTS -----\\
-    //--------------------------------------\\
+    // --------------------------
+    // REGISTER STATUS READ PORTS
+    // --------------------------
     // READ OPERANDS FOR THE ISSUE STAGE 
     // rs1 (READ PORT 1)
     assign issue_rs1_busy_o             = |regstat_data[issue_rs1_idx_i].busy;      // 0 only if no in-flight instructions will write that register
@@ -132,9 +132,9 @@ module reg_status
     //assign issue_rs2_busy_o             = regstat_data[issue_rs2_idx_i].busy;
     assign issue_rs2_rob_idx_o          = regstat_data[issue_rs2_idx_i].rob_idx;
 
-    //---------------------------------------\\
-    //----- OUTPUT HANDSHAKE GENERATION -----\\
-    //---------------------------------------\\
+    // ---------------------------
+    // OUTPUT HANDSHAKE GENERATION
+    // ---------------------------
     // The register status data structure is always ready to accept requests from both the issue stage and the commit stage
     assign issuel_ready_o                = 1'b1;
     assign comm_ready_o                 = 1'b1;

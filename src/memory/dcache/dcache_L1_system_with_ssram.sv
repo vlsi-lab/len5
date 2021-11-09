@@ -57,9 +57,9 @@ module dcache_L1_system_with_ssram
   tvd_mem_line_t          tvd_mem_out_vec [N_WAY];
   dcache_line_t           data_mem_out_vec [N_WAY];
 
-  //----------------------\\
+  //----------------
   // Cache Infrastructure \\
-  //----------------------\\
+  //----------------
 
   dcache_L1_system i_dcache_L1_system (
     .clk_i(clk_i),
@@ -86,9 +86,9 @@ module dcache_L1_system_with_ssram
     .data_mem_out_vec_i(data_mem_out_vec)
   );
 
-  //----------------\\
+  //----------
   // PHYSICAL CACHE \\
-  //----------------\\
+  //----------
 
   // Physical ssram memory for TAG, VALID BIT, DIRTY BIT
   for (genvar k = 0; k < N_WAY; k++) begin : tag_valid_dirty_ssram

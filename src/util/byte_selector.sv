@@ -35,9 +35,9 @@ input logic [3-1:0] byte_off, // the offset of the first byte to select
     logic [2`BYTE-1:0] selected_h;
     logic [1`BYTE-1:0] selected_b;
 
-    //-------------------------\\
-    //----- BYTE SELECTOR -----\\
-    //-------------------------\\
+    // -------------
+    // BYTE SELECTOR
+    // -------------
     // Three levels of multiplexer select the word, the halfword and the byte according to each offset bit.
     always_comb begin: byte_selector 
         // First level MUX: select the first or the last word
@@ -48,9 +48,9 @@ input logic [3-1:0] byte_off, // the offset of the first byte to select
         selected_b = (byte_off[0]) ? selected_h[2`BYTE-1 -: 1`BYTE] : selected_h[1`BYTE-1 -: 1`BYTE];
     end
 
-    //---------------------------------------\\
-    //----- SIGN EXTENSION/ZERO PADDING -----\\
-    //---------------------------------------\\
+    // ---------------------------
+    // SIGN EXTENSION/ZERO PADDING
+    // ---------------------------
     // Perform the sign extension or the zero padding of the correct portion to generate the output line
     always_comb begin: line_generation
         case(type_i)
@@ -73,9 +73,9 @@ input logic [3-1:0] byte_off, // the offset of the first byte to select
         endcase
     end
 
-    //----------------------\\
-    //----- ASSERTIONS -----\\
-    //----------------------\\
+    // ----------
+    // ASSERTIONS
+    // ----------
     `ifndef SYNTHESIS
     always_comb begin
         case(type_i)

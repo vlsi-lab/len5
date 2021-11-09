@@ -116,9 +116,9 @@ initial begin
     #600 $finish;
 end
 
-//---------------\\
-//----- DUT -----\\
-//---------------\\
+// ---
+// DUT
+// ---
 
 data_path_memory u_data_path_memory
 (

@@ -122,9 +122,9 @@ module generic_rs
     // RS control signals
     logic                       rs_insert, rs_ex, rs_pop, rs_wr_res;
 
-    //--------------------------\\
-    //----- STATUS SIGNALS -----\\
-    //--------------------------\\
+    // --------------
+    // STATUS SIGNALS
+    // --------------
     // These are required because name selection after indexing is not supported
     always_comb begin
         for (int i = 0; i < RS_DEPTH; i++) begin
@@ -147,9 +147,9 @@ module generic_rs
         end
     end
 
-    //----------------------------\\
-    //----- RS CONTROL LOGIC -----\\
-    //----------------------------\\
+    // ----------------
+    // RS CONTROL LOGIC
+    // ----------------
     always_comb begin: rs_control_logic
         // Default values
         rs_ex           = 'b0;
@@ -185,9 +185,9 @@ module generic_rs
         end
     end
 
-    //-------------------------------------------\\
-    //----- RESERVATION STATION DATA UPDATE -----\\
-    //-------------------------------------------\\
+    // -------------------------------
+    // RESERVATION STATION DATA UPDATE
+    // -------------------------------
     always_ff @(posedge clk_i or negedge rst_n_i) begin: rs_data_update
         if (!rst_n_i) begin // Asynchronous reset
             foreach (rs_data[i]) begin
@@ -268,9 +268,9 @@ module generic_rs
         end
     end
 
-    //------------------------------\\
-    //----- NEW ENTRY SELECTOR -----\\
-    //------------------------------\\
+    // ------------------
+    // NEW ENTRY SELECTOR
+    // ------------------
     // The entry where the next instruction will be allocated is the first free one (i.e. not valid) in the structure, so the selector is a priority encoder
     prio_enc #(.N(RS_DEPTH)) new_entry_prio_enc
     (
@@ -279,9 +279,9 @@ module generic_rs
         .valid_o    (new_idx_valid)
     );
     
-    //------------------------------\\
-    //----- EXECUTION SELECTOR -----\\
-    //------------------------------\\
+    // ------------------
+    // EXECUTION SELECTOR
+    // ------------------
     `ifdef ENABLE_AGE_BASED_SELECTOR
     age_based_sel #(.N(RS_DEPTH), .AGE_LEN(ROB_IDX_LEN)) ex_selector
     (
@@ -301,9 +301,9 @@ module generic_rs
     );
     `endif
 
-    //------------------------\\
-    //----- CDB SELECTOR -----\\
-    //------------------------\\
+    // ------------
+    // CDB SELECTOR
+    // ------------
     `ifdef ENABLE_AGE_BASED_SELECTOR
     // The selector is mostly equal to the execution selector. The only difference is that here the candidates are choosen among the entries whose result is ready (i.e. it has already been written back by the EU)
     age_based_sel #(.N(RS_DEPTH), .AGE_LEN(ROB_IDX_LEN)) cdb_selector
@@ -324,9 +324,9 @@ module generic_rs
     );
     `endif
 
-    //-----------------------------\\
-    //----- OUTPUT EVALUATION -----\\
-    //-----------------------------\\
+    // -----------------
+    // OUTPUT EVALUATION
+    // -----------------
     
     // To EU (READ PORT 1)
     assign eu_ctl_o             = rs_data[ex_idx].eu_ctl;
@@ -340,9 +340,9 @@ module generic_rs
     assign cdb_except_raised_o  = rs_data[cdb_idx].except_raised;
     assign cdb_except_o         = { {(ROB_EXCEPT_LEN-EXCEPT_LEN){1'b0} }, rs_data[cdb_idx].except };
 
-    //----------------------\\
-    //----- ASSERTIONS -----\\
-    //----------------------\\
+    // ----------
+    // ASSERTIONS
+    // ----------
     `ifndef SYNTHESIS
     always @(negedge clk_i) begin
         // Notice when the reservation station is full

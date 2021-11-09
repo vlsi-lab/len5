@@ -66,9 +66,9 @@ module issue_decoder (
     imm_format_t                    imm_format;
     logic                           regstat_upd;
 
-    //------------------------------\\
-    //----- INSTRUCTION DECODE -----\\
-    //------------------------------\\
+    // ------------------
+    // INSTRUCTION DECODE
+    // ------------------
     // New supported instructions can be added here. The necessary defines must
     // be appended to the 'instr_macros.svh' file. 
     // The reporting order is the the one from Chapter 24 of the Specs.
@@ -875,9 +875,9 @@ module issue_decoder (
         end
     end
 
-    //-----------------------------\\
-    //----- OUTPUT GENERATION -----\\
-    //-----------------------------\\
+    // -----------------
+    // OUTPUT GENERATION
+    // -----------------
     assign issue_except_raised_o            = except_raised;
     assign issue_except_code_o              = except_code;
     assign issue_res_ready_o                = res_ready;
@@ -895,9 +895,9 @@ module issue_decoder (
     assign issue_imm_format_o               = imm_format;
     assign issue_regstat_upd_o              = regstat_upd;
 
-    //----------------------\\
-    //----- ASSERTIONS -----\\
-    //----------------------\\
+    // ----------
+    // ASSERTIONS
+    // ----------
     `ifndef SYNTHESIS
     always @(except_code) begin
         assert ((except_code != E_ILLEGAL_INSTRUCTION) && (except_code != E_BREAKPOINT)) 

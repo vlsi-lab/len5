@@ -45,14 +45,14 @@ module commit_decoder
     // DEFINITIONS
     logic [OPCODE_LEN -1:0]       instr_opcode;
     
-    //-------------------------------\\
-    //----- EXTRACT INSTR. INFO -----\\
-    //-------------------------------\\
+    // -------------------
+    // EXTRACT INSTR. INFO
+    // -------------------
     assign instr_opcode             = instruction_i.r.opcode;
 
-    //--------------------------------\\
-    //----- COMMIT DOCODER LOGIC -----\\
-    //--------------------------------\\
+    // --------------------
+    // COMMIT DOCODER LOGIC
+    // --------------------
     always_comb begin: comm_decoder
         case(instr_opcode)
             // If the committing instruction is a store, check if it is also committing from the store buffer

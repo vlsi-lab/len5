@@ -74,9 +74,9 @@ initial begin
     // #600 $finish;
 end
 
-//---------------\\
-//----- DUT -----\\
-//---------------\\
+// ---
+// DUT
+// ---
 
 cu_dp_mem #(.BOOT_PC(BOOT_PC)) u_CU_DP_MEM
 (

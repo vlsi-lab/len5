@@ -76,9 +76,9 @@ initial begin
     #600 $finish;
 end
 
-//---------------\\
-//----- DUT -----\\
-//---------------\\
+// ---
+// DUT
+// ---
 
 front_end #(.HLEN(4),.BTB_BITS(4)) u_front_end
 (

@@ -31,15 +31,12 @@ package expipe_pkg;
     import memory_pkg::PADDR_LEN;
     import memory_pkg::PAGE_OFFSET_LEN;
 
-    //---------------\\
-    //----- ROB -----\\
-    //---------------\\
+    // ----
+    // ROB
+    // ----
     
     localparam ROB_IDX_LEN = $clog2(ROB_DEPTH);//3 // ROB index width
     localparam ROB_EXCEPT_LEN = 5;  // to fit the last four bits of the mcause/scause CSR and the fflags of the fcsr CSR
-
-    // Width of the opcode field (decoded during issue stage)
-    localparam ROB_OPCODE_LEN = OPCODE_LEN + FUNCT3_LEN + FUNCT7_LEN;
 
     typedef struct packed {
         logic                       valid;          // the ROB entry contains a valid instruction
@@ -52,9 +49,9 @@ package expipe_pkg;
         logic [ROB_EXCEPT_LEN-1:0]  except_code;    // the exception code
     } rob_entry_t;
 
-    //---------------\\
-    //----- CDB -----\\
-    //---------------\\
+    // ----
+    // CDB
+    // ----
     
     typedef struct packed {
         logic [ROB_IDX_LEN-1:0]     rob_idx;
@@ -63,9 +60,9 @@ package expipe_pkg;
         logic [ROB_EXCEPT_LEN-1:0]  except_code;
     } cdb_data_t;
 
-    //---------------------------\\
-    //----- EXCEPTION CODES -----\\
-    //---------------------------\\
+    // ----------------
+    // EXCEPTION CODES
+    // ----------------
     // This are the LSBs of the entire exception codes defined by the specs. This are used in the execution pipeline to save area. This code can be directly appended when writing mcause/scause CSRs during exception handling
     typedef enum logic [ROB_EXCEPT_LEN-1:0] {
         E_I_ADDR_MISALIGNED   = 'h0,
@@ -86,9 +83,9 @@ package expipe_pkg;
         E_UNKNOWN             = 'ha    // reserved code 10, used for debugging
     } except_code_t;
 
-    //-----------------------\\
-    //----- ISSUE QUEUE -----\\
-    //-----------------------\\
+    // -----------
+    // ISSUE QUEUE
+    // -----------
     localparam IQ_IDX_LEN = $clog2(IQ_DEPTH); // issue queue index width
 
     typedef struct packed {
@@ -101,18 +98,18 @@ package expipe_pkg;
         except_code_t       except_code;
     } iq_entry_t;
     
-    //---------------------------\\
-    //----- REGISTER STATUS -----\\
-    //---------------------------\\
+    // ---------------
+    // REGISTER STATUS
+    // ---------------
     
     typedef struct packed {
         logic [ROB_IDX_LEN-1:0]     busy;       /* at most as many entry in the ROB, the current (this instruction) */
         logic [ROB_IDX_LEN-1:0]     rob_idx;
     } regstat_entry_t;
 
-    //-----------------------\\
-    //----- ISSUE LOGIC -----\\
-    //-----------------------\\
+    // -----------
+    // ISSUE LOGIC
+    // -----------
 
     // IMMEDIATE TYPE
     typedef enum logic {  
@@ -120,9 +117,9 @@ package expipe_pkg;
         IMM_SHAMT       // zero pad the 6 LSBs to 64 bits
     } imm_format_t;
 
-    //--------------------------------\\
-    //----- RESERVATION STATIONS -----\\
-    //--------------------------------\\
+    // --------------------
+    // RESERVATION STATIONS
+    // --------------------
     // WIDTH OF THE CONTROL FIELDS IN THE DIFFERENT EUs
     // LOAD BUFFER
     localparam  LB_CTL_LEN      = 3;            // load type, see load buffer section below
@@ -134,6 +131,7 @@ package expipe_pkg;
     localparam  BU_CTL_LEN      = 6;            // size of 'branch_type_t' from len5_pkg
 
     // ALU
+    localparam  ALU_EXCEPT_LEN  = 2;
     localparam  ALU_CTL_LEN     = 5;            // ALU operation control
     // ALU opcodes
     typedef enum logic [ALU_CTL_LEN-1:0] {
@@ -160,12 +158,15 @@ package expipe_pkg;
     } alu_ctl_t;
 
     // MULT
+    localparam  MULT_EXCEPT_LEN = 2;
     localparam  MULT_CTL_LEN    = 2;            // integer multiplier operation control
 
     // DIV
+    localparam  DIV_EXCEPT_LEN  = 2;
     localparam  DIV_CTL_LEN     = 2;            // integer divider operation control
 
     // FPU
+    localparam  FPU_EXCEPT_LEN  = 2;
     localparam  FPU_CTL_LEN     = 4;            // floating point multiplier operation control
 
     // MAXIMUM DIMENSION OF EU_CONTROL FIELDS
@@ -186,9 +187,9 @@ package expipe_pkg;
         EU_NONE             //the instruction is directly sent to the ROB (csr, special instructions, etc.)
     } issue_eu_t;
 
-    //---------------------------\\
-    //----- LOAD-STORE UNIT -----\\
-    //---------------------------\\
+    // ---------------
+    // LOAD-STORE UNIT
+    // ---------------
     localparam LDBUFF_IDX_LEN = $clog2(LDBUFF_DEPTH); //3 // load buffer address width
     localparam STBUFF_IDX_LEN = $clog2(STBUFF_DEPTH); //3 // store buffer address width
     localparam BUFF_IDX_LEN = (LDBUFF_IDX_LEN > STBUFF_IDX_LEN) ? (LDBUFF_IDX_LEN) : (STBUFF_IDX_LEN); // the largest of the two. Useful when comparing indexes from both
@@ -255,9 +256,9 @@ package expipe_pkg;
         logic                   completed;          // the value has been fetched from D$
     } sb_entry_t;
 
-    //------------------------\\
-    //----- COMMIT LOGIC -----\\
-    //------------------------\\
+    // ------------
+    // COMMIT LOGIC
+    // ------------
     localparam CL_CTL_SIZE = 4;
 
     // Virtual address adder exception codes

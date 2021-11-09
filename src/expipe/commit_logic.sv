@@ -102,17 +102,17 @@ module commit_logic (
 	assign except_new_o				= (rob_valid_i) ? rob_except_raised_i : 'b0;
 
 
-    //------------------------\\
-    //----- COMMIT LOGIC -----\\
-    //------------------------\\
+    // ------------
+    // COMMIT LOGIC
+    // ------------
     always_comb begin: commit_control_logic
         // Pop the head instruction from the ROB if commit actions have been perf
         rob_ready_o          = cd_comm_possible & eh_no_except /*& !stall*/; // I think it is wrong
     end
 
-    //--------------------------\\
-    //----- COMMIT DECODER -----\\
-    //--------------------------\\
+    // --------------
+    // COMMIT DECODER
+    // --------------
     commit_decoder u_comm_decoder (
 	.instruction_i              (rob_instr_i),
     //.instruction_i              (rob_instr_t),
@@ -128,16 +128,16 @@ module commit_logic (
     .comm_possible_o            (cd_comm_possible)    
     );
 
-    //------------------------------------\\
-    //----- EXCEPTION HANDLING LOGIC -----\\
-    //------------------------------------\\
+    // ------------------------
+    // EXCEPTION HANDLING LOGIC
+    // ------------------------
     // The exception handling logic must be insserted here when available
     // assign eh_no_except = (rob_except_raised_t && rob_valid_i)?'b0:'b1/*& !stall*/;
     assign eh_no_except = (rob_except_raised_i && rob_valid_i)?'b0:'b1/*& !stall*/;
 
-    //-----------------------------\\
-    //----- OUTPUT EVALUATION -----\\
-    //-----------------------------\\
+    // -----------------
+    // OUTPUT EVALUATION
+    // -----------------
     // Data to the register files
     // assign rf_rd_idx_o          = rob_rd_idx_t;
     // assign rf_value_o           = rob_value_t;

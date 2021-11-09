@@ -30,9 +30,9 @@ module prio_2way_arbiter
     output logic select_o
 );
 
-    //----------------------------\\
-    //----- READY GENERATION -----\\
-    //----------------------------\\
+    // ----------------
+    // READY GENERATION
+    // ----------------
     // - No ready signal is asserted if the input ready signal is not
     // - If only one of the inputs is valid, that request is accepted
     // - If both request are valid, the lower-order one is accepted (valid_i[0])

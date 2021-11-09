@@ -23,9 +23,9 @@ module age_based_sel #(
     output  logic               valid_o
 );
     
-    //------------------------------\\
-    //----- EXECUTION SELECTOR -----\\
-    //------------------------------\\
+    // ------------------
+    // EXECUTION SELECTOR
+    // ------------------
     // The selector follows a "first come first served" scheduling policy. The oldest entry whose request is valid is selected.
     logic [AGE_LEN-1:0] oldest_age;
     always_comb begin: ex_selector

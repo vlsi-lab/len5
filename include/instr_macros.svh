@@ -17,9 +17,9 @@
 
 import len5_pkg::XLEN;
 
-//-----------------------------\\
-//----- INSTRUCTION CODES -----\\
-//-----------------------------\\
+// -----------------
+// INSTRUCTION CODES
+// -----------------
 
 // OPCODE: all instructions 
 // RV64I
@@ -181,9 +181,9 @@ import len5_pkg::XLEN;
 `define FUNCT7_WFI          7'b0001000
 `define FUNCT7_XOR          7'b0000000
 
-//-------------------------\\
-//----- SPECIAL CODES -----\\
-//-------------------------\\
+// -------------
+// SPECIAL CODES
+// -------------
 
 // URET
 `define URET_RS2            5'b00010

@@ -73,9 +73,9 @@ module cdb
     logic                       served_max_prio;
     logic [$clog2(EU_N)-1:0]    served;
 
-    //-----------------------\\
-    //----- CDB ARBITER -----\\
-    //-----------------------\\
+    // -----------
+    // CDB ARBITER
+    // -----------
     cdb_arbiter u_cdb_arbiter
     (
         .clk_i              (clk_i),
@@ -103,9 +103,9 @@ module cdb
 	assign rob_valid_o = rob_valid_k;
 	assign cdb_valid_i = rob_valid_k;
 
-    //-------------------\\
-    //----- CDB MUX -----\\
-    //-------------------\\
+    // -------
+    // CDB MUX
+    // -------
     // Max priority MUX
     assign rob_data_o = (served_max_prio) ? max_prio_data_i : low_prio_mux_data;
     

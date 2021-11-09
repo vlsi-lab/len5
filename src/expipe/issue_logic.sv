@@ -182,9 +182,9 @@ module issue_logic (
     except_code_t                       eh_except_code;
     logic [XLEN-1:0]                    eh_except_aux;
 
-    //---------------------------------------\\
-    //----- INSTRUCTION INFO EXTRACTION -----\\
-    //---------------------------------------\\
+    // ---------------------------
+    // INSTRUCTION INFO EXTRACTION
+    // ---------------------------
     // Source and destination registers
     assign  instr_rs1_idx           = iq_instruction_i.r.rs1;
     assign  instr_rs2_idx           = iq_instruction_i.r.rs2;
@@ -198,9 +198,9 @@ module issue_logic (
 
     assign rob_tail_idx             = rob_tail_idx_i;
 
-    //-----------------------------\\
-    //----- HANDSHAKE CONTROL -----\\
-    //-----------------------------\\
+    // -----------------
+    // HANDSHAKE CONTROL
+    // -----------------
 
     // Select the corresponding register status register ready signal
 `ifdef LEN5_FP_EN
@@ -294,9 +294,9 @@ module issue_logic (
         end
     end
 
-    //----------------------------------\\
-    //----- REGISTER STATUS UPDATE -----\\
-    //----------------------------------\\
+    // ----------------------
+    // REGISTER STATUS UPDATE
+    // ----------------------
     always_comb begin: regstat_upd_logic
         // default values
     `ifdef LEN5_FP_EN
@@ -314,9 +314,9 @@ module issue_logic (
         end
     end
 
-    //--------------------------\\
-    //----- OPERANDS FETCH -----\\
-    //--------------------------\\
+    // --------------
+    // OPERANDS FETCH
+    // --------------
     // The issue logic accesses the register status to know if the source operands are available in the RF, the ROB (and from which entry of it), or the CDB. If the source operands are not ready yet, they will be fetched from the CDB by the reservation station as soon as they are produced by the associated EU. 
 
     // Select the correct integer/floating point register status register
@@ -433,9 +433,9 @@ module issue_logic (
         `endif /* LEN5_FP_EN */
     end
     
-    //------------------------------\\
-    //----- EXCEPTION HANDLING -----\\
-    //------------------------------\\
+    // ------------------
+    // EXCEPTION HANDLING
+    // ------------------
     always_comb begin: exception_handling_logic
 		//eh_stall_possible           = 1'b0;
         // If an exception was raised during the fetch stage, keep it and discard exception raised during the issue phase (if any)
@@ -457,9 +457,9 @@ module issue_logic (
         end
     end
 
-    //-------------------------------------\\
-    //----- ISSUE INSTRUCTION DECODER -----\\
-    //-------------------------------------\\
+    // -------------------------
+    // ISSUE INSTRUCTION DECODER
+    // -------------------------
     issue_decoder u_issue_decoder (
          // Instruction from the issue logic
         .issue_instruction_i        (iq_instruction_i),     
@@ -483,9 +483,9 @@ module issue_logic (
         .issue_regstat_upd_o        (id_regstat_upd)  
     );
 
-    //------------------------------------------------\\
-    //----- EXECUTION PIPELINE OUTPUT EVALUATION -----\\
-    //------------------------------------------------\\
+    // ------------------------------------
+    // EXECUTION PIPELINE OUTPUT EVALUATION
+    // ------------------------------------
     // EU control
     assign  ex_eu_ctl_o                 = id_eu_ctl;
 
@@ -571,9 +571,9 @@ module issue_logic (
     assign  ex_pred_target_o            = iq_pred_target_i;
     assign  ex_pred_taken_o             = iq_pred_taken_i;
 
-    //-----------------------------\\
-    //----- OUTPUT EVALUATION -----\\
-    //-----------------------------\\
+    // -----------------
+    // OUTPUT EVALUATION
+    // -----------------
     // To the main control 
     assign  main_cu_stall_o             = id_stall_possible || eh_stall_possible;
 

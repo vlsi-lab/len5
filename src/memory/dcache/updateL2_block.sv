@@ -92,7 +92,7 @@ module updateL2_block
         state_d = StIdle;
         done    = 1'b1;
       end
-      default: sate_d = StIdle;
+      default: state_d = StIdle;
     endcase
   end
 

@@ -35,9 +35,9 @@ module fair_2way_arbiter
     // DEFINITIONS
     logic last_served;
 
-    //----------------------------\\
-    //----- READY GENERATION -----\\
-    //----------------------------\\
+    // ----------------
+    // READY GENERATION
+    // ----------------
     // - No ready signal is asserted if the input ready signal is not
     // - If only one of the inputs is valid, that request is accepted
     // - If both requests are valid (conflict), the one that wasn't served on last conflict is served
@@ -56,9 +56,9 @@ module fair_2way_arbiter
         valid_o = |valid_i; // 1 if at least one input is valid
     end
 
-    //-----------------------------------\\
-    //----- LAST SERVED ON CONFLICT -----\\
-    //-----------------------------------\\
+    // -----------------------
+    // LAST SERVED ON CONFLICT
+    // -----------------------
     // This flip-flop stores the last input that was accepted during a conflict (both valid asserted). When a new conflict takes place, the other input is served instead.
     always @(posedge clk_i or negedge rst_n_i) begin: last_served_ff
         if (!rst_n_i) begin

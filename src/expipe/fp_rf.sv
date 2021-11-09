@@ -41,9 +41,9 @@ module fp_rf (
     // Register file data
     logic [XLEN-1:0] rf_data [0:FREG_NUM-1];
 
-    //------------------------------------\\
-    //----- REGISTER FILE WRITE PORT -----\\
-    //------------------------------------\\
+    // ------------------------
+    // REGISTER FILE WRITE PORT
+    // ------------------------
     // Synchronous write
     always_ff @(posedge clk_i or negedge rst_n_i) begin: res_write_port
         if (!rst_n_i) begin // Asynchronous reset
@@ -57,18 +57,18 @@ module fp_rf (
         end
     end
 
-    //------------------------------------\\
-    //----- REGISTER FILE READ PORTS -----\\
-    //------------------------------------\\
+    // ------------------------
+    // REGISTER FILE READ PORTS
+    // ------------------------
     // Asynchronous read
     always_comb begin: operands_read_ports
         issue_rs1_value_o                   = rf_data[issue_rs1_idx_i]; // READ PORT 1 (rs1)
         issue_rs2_value_o                   = rf_data[issue_rs2_idx_i]; // READ PORT 2 (rs2)
     end
 
-    //---------------------\\
-    //----- READY OUT -----\\
-    //---------------------\\
+    // ---------
+    // READY OUT
+    // ---------
     // Always ready to accept data
     assign comm_ready_o                     = 1'b1;
     

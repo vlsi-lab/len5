@@ -107,16 +107,11 @@ module exec_unit (
     //output  cdb_data_t              sb_cdb_data_o
 );
 
-    // DEFINITIONS
-localparam EU_CTL_LEN = 8;//4;//8;
-localparam RS_DEPTH = 8;
-localparam EXCEPT_LEN = 2;
+// ---
+// DUT
+// ---
 
- //---------------\\
-//----- DUT -----\\
-//---------------\\
-
-alu_rs #(.EU_CTL_LEN (8/*4//8*/), .RS_DEPTH (8), .EXCEPT_LEN(2)) u_alu_rs
+alu_rs #(.EU_CTL_LEN (ALU_CTL_LEN), .RS_DEPTH (ALU_RS_DEPTH), .EXCEPT_LEN(ALU_EXCEPT_LEN)) u_alu_rs
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
@@ -144,7 +139,7 @@ alu_rs #(.EU_CTL_LEN (8/*4//8*/), .RS_DEPTH (8), .EXCEPT_LEN(2)) u_alu_rs
     .cdb_except_o (cdb_data_o[EU_INT_ALU].except_code)//(cdb_except_o)
 );
 
-mult_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_mult_rs
+mult_rs #(.EU_CTL_LEN (MULT_CTL_LEN), .RS_DEPTH (MULT_RS_DEPTH), .EXCEPT_LEN(MULT_EXCEPT_LEN)) u_mult_rs
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
@@ -172,7 +167,7 @@ mult_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_mult
     .cdb_except_o (cdb_data_o[EU_INT_MULT].except_code)//(cdb_except_o)
 );
 
-div_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_div_rs
+div_rs #(.EU_CTL_LEN (DIV_CTL_LEN), .RS_DEPTH (DIV_RS_DEPTH), .EXCEPT_LEN(DIV_EXCEPT_LEN)) u_div_rs
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
@@ -201,7 +196,7 @@ div_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_div_r
 );
 
 `ifdef LEN5_FP_EN
-fpu_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_fpu_rs
+fpu_rs #(.EU_CTL_LEN (FPU_CTL_LEN), .RS_DEPTH (FPU_RS_DEPTH), .EXCEPT_LEN(FPU_EXCEPT_LEN)) u_fpu_rs
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
@@ -230,7 +225,7 @@ fpu_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_fpu_r
 );
 `endif /* LEN5_FP_EN */
 
-branch_rs #(.RS_DEPTH (RS_DEPTH)) u_branch_rs
+branch_rs #(.RS_DEPTH (BU_RS_DEPTH)) u_branch_rs
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),

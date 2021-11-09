@@ -51,15 +51,15 @@ module cdb_arbiter
     logic                               enc_valid;
     logic [0:EU_N-1]                    dec_valid_a;
 
-    //---------------------\\
-    //----- VALID MUX -----\\
-    //---------------------\\
+    // ---------
+    // VALID MUX
+    // ---------
     // If there's no remaining valid signal, than select the new valids from the input
     assign mux_valid_a = (|rem_valid_a) ? rem_valid_a : valid_i;
 
-    //----------------------------------\\
-    //----- VALID PRIORITY ENCODER -----\\
-    //----------------------------------\\
+    // ----------------------
+    // VALID PRIORITY ENCODER
+    // ----------------------
     prio_enc_inv #( .N(EU_N-1) ) vaild_prio_enc
     (
         .lines_i        (mux_valid_a),
@@ -76,9 +76,9 @@ module cdb_arbiter
         end
     end
 
-    //-------------------------------\\
-    //----- VALID MASKING LOGIC -----\\
-    //-------------------------------\\
+    // -------------------
+    // VALID MASKING LOGIC
+    // -------------------
     always_comb begin: valid_msk_logic
         // If the maximum priority line is active, keep all other requests
         if (max_prio_valid_i) msk_valid_a = mux_valid_a;
@@ -86,9 +86,9 @@ module cdb_arbiter
         else msk_valid_a = mux_valid_a & ~dec_valid_a;
     end
 
-    //-----------------------------\\
-    //----- OUTPUT GENERATION -----\\
-    //-----------------------------\\
+    // -----------------
+    // OUTPUT GENERATION
+    // -----------------
     // Output valid
     assign rob_valid_o = max_prio_valid_i | (|dec_valid_a);
 
@@ -103,9 +103,9 @@ module cdb_arbiter
     assign served_max_prio_o    = max_prio_valid_i;
     assign served_o             = served_temp;
 
-    //------------------------------------\\
-    //----- REMAINING VALID REGISTER -----\\
-    //------------------------------------\\
+    // ------------------------
+    // REMAINING VALID REGISTER
+    // ------------------------
     always_ff @(posedge clk_i or negedge rst_n_i) begin: last_served_reg
         if (!rst_n_i) begin
             rem_valid_a         <= 0;

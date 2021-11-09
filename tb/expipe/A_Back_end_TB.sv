@@ -103,9 +103,9 @@ initial begin
     #600 $finish;
 end
 
-//---------------\\
-//----- DUT -----\\
-//---------------\\
+// ---
+// DUT
+// ---
 
 back_end Back_end_IQL
 (

@@ -182,9 +182,9 @@ package len5_pkg;
         U  // user mode
     } priv_e;
 
-    //------------------------------\\
-    //----- EXECUTION PIPELINE -----\\
-    //------------------------------\\
+    // ------------------
+    // EXECUTION PIPELINE
+    // ------------------
 
     // GLOBAL
     localparam XREG_NUM = 32; // number of integer gp registers
@@ -209,6 +209,13 @@ package len5_pkg;
 
     // ROB
     localparam ROB_DEPTH = 4; // Number of entries in the ROB. This also tells the number of instruction that coexist in the execution pipeline at the same time
+
+    // RESERVATION STATIONS
+    localparam ALU_RS_DEPTH     = 4;
+    localparam MULT_RS_DEPTH    = 4;
+    localparam DIV_RS_DEPTH     = 4;
+    localparam FPU_RS_DEPTH     = 4;
+    localparam BU_RS_DEPTH      = 4;
 
 endpackage
 

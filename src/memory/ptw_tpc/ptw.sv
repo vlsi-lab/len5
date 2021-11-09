@@ -288,9 +288,9 @@ module ptw
     end
   end
 
-  //---------------------\\
+  //---------------
   // COMBINATORIAL LOGIC \\
-  //---------------------\\
+  //---------------
 
   // PTE physical address maker
   assign pp_offset   = {chosen_vpn_part, 3'b0};

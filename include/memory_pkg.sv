@@ -21,9 +21,9 @@ import len5_pkg::*;
   localparam ASID_LEN = 8;
   typedef logic [ASID_LEN-1:0] asid_t;
 
-  //-------------\\
+  // -------\\
   // RISC-V spec \\
-  //-------------\\
+  // -------\\
 
   localparam VADDR_LEN       = 39; // 512 GiB of virtual address space
   localparam PADDR_LEN       = 56; // 2^16 TiB of physical address space

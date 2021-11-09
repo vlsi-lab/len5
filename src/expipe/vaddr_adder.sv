@@ -59,9 +59,9 @@ module vaddr_adder #(IDX_LEN = 8)
     satp_mode_t         vm_mode;
     logic               align_except, pfault_except;
 
-    //---------------------------\\
-    //----- INPUT REGISTERS -----\\
-    //---------------------------\\
+    // ---------------
+    // INPUT REGISTERS
+    // ---------------
     always_ff @(posedge clk_i or negedge rst_n_i) begin: input_registers
         if (!rst_n_i) begin
             is_store_o  <= 1'b0;    
@@ -93,14 +93,14 @@ module vaddr_adder #(IDX_LEN = 8)
     // Immediate field sign extension
     assign sext_imm_value = { {(XLEN-I_IMM){imm_value[I_IMM-1]}}, imm_value };
 
-    //---------------------------------\\
-    //----- VIRTUAL ADDRESS ADDER -----\\
-    //---------------------------------\\
+    // ---------------------
+    // VIRTUAL ADDRESS ADDER
+    // ---------------------
     assign vaddr_o = rs1_value + sext_imm_value;
     
-    //-------------------------------------------\\
-    //----- VIRTUAL ADDRESS EXCEPTION CHECK -----\\
-    //-------------------------------------------\\
+    // -------------------------------
+    // VIRTUAL ADDRESS EXCEPTION CHECK
+    // -------------------------------
     always_comb begin: vaddr_exception
         // Check if the computed address is compliant to the SV39 or SV48 format. If not, an exception is registered. Upon commit, this will be interpreted as load/store PAGE FAULT EXCEPTION.
         case(vm_mode)
@@ -122,14 +122,14 @@ module vaddr_adder #(IDX_LEN = 8)
         else                        except_o = VADDER_NO_EXCEPT;
     end
 
-    //-------------------------\\
-    //----- OTHER OUTPUTS -----\\
-    //-------------------------\\
+    // -------------
+    // OTHER OUTPUTS
+    // -------------
     assign lsb_ready_o = lsb_ready_i; // ready when the LSB is
 
-    //----------------------\\
-    //----- ASSERTIONS -----\\
-    //----------------------\\
+    // ----------
+    // ASSERTIONS
+    // ----------
     `ifndef SYNTHESIS
     always @(negedge clk_i) begin
         // Warn when an address exception is raised

@@ -62,9 +62,9 @@ module issue_queue
     logic                       head_cnt_en, tail_cnt_en;
     logic                       head_cnt_clr, tail_cnt_clr;
 
-    //----------------------------------\\
-    //----- HEAD AND TAIL POINTERS -----\\
-    //----------------------------------\\
+    // ----------------------
+    // HEAD AND TAIL POINTERS
+    // ----------------------
     
     modn_counter #(.N(IQ_DEPTH)) head_counter
     (
@@ -86,9 +86,9 @@ module issue_queue
         .tc_o       () // Not needed
     );
 
-    //----------------------------\\
-    //----- ISSUE QUEUE FIFO -----\\
-    //----------------------------\\
+    // ----------------
+    // ISSUE QUEUE FIFO
+    // ----------------
     // Assemble new queue entry with the data from the fetch unit
     assign new_entry.valid          = fetch_valid_i;
     assign new_entry.curr_pc        = curr_pc_i;

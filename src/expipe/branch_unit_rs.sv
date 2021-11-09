@@ -123,9 +123,9 @@ module branch_unit_rs
     // RS control signals
     logic                       rs_push, rs_ex, rs_pop, rs_wr_res;
 
-    //--------------------------\\
-    //----- STATUS SIGNALS -----\\
-    //--------------------------\\
+    // --------------
+    // STATUS SIGNALS
+    // --------------
     // These are required because name selection after indexing is not supported
     always_comb begin
         for (int i = 0; i < RS_DEPTH; i++) begin
@@ -143,9 +143,9 @@ module branch_unit_rs
         end
     end
 
-    //----------------------------\\
-    //----- RS CONTROL LOGIC -----\\
-    //----------------------------\\
+    // ----------------
+    // RS CONTROL LOGIC
+    // ----------------
     always_comb begin: rs_control_logic
         // DEFAULT VALUES:
 
@@ -207,9 +207,9 @@ module branch_unit_rs
         end
     end
 
-    //-------------------------------------------\\
-    //----- RESERVATION STATION FIFO UPDATE -----\\
-    //-------------------------------------------\\
+    // -------------------------------
+    // RESERVATION STATION FIFO UPDATE
+    // -------------------------------
     always_ff @(posedge clk_i or negedge rst_n_i) begin: rs_fifo_update
         if (!rst_n_i) begin // Asynchronous reset
             foreach (rs_data[i]) begin
@@ -227,9 +227,9 @@ module branch_unit_rs
 			//;
         end else begin // Normal update
 
-            //-------------------------------\\
-            //----- PARALLEL OPERATIONS -----\\
-            //-------------------------------\\
+            // -------------------
+            // PARALLEL OPERATIONS
+            // -------------------
             // Retrieve operands from CDB (PARALLEL WRITE PORT 1)
             foreach (rs_data[i]) begin
                 if (rs_data[i].valid && !ex_ready_a[i]) begin // Following logic is masked if the entry is not valid
@@ -248,9 +248,9 @@ module branch_unit_rs
                 end
             end
 
-            //---------------------------------\\
-            //----- CONTROLLED OPERATIONS -----\\
-            //---------------------------------\\
+            // ---------------------
+            // CONTROLLED OPERATIONS
+            // ---------------------
             
             // Push a new instruction into the reservation station
             if (rs_push) begin
@@ -291,9 +291,9 @@ module branch_unit_rs
         end 
     end
 
-    //--------------------------------------\\
-    //----- HEAD, EX AND TAIL POINTERS -----\\
-    //--------------------------------------\\
+    // --------------------------
+    // HEAD, EX AND TAIL POINTERS
+    // --------------------------
     modn_counter #(.N(RS_DEPTH)) head_counter
     (
         .clk_i      (clk_i),
@@ -334,9 +334,9 @@ module branch_unit_rs
         .tc_o       ()              // Not needed
     );
 
-    //-----------------------------\\
-    //----- OUTPUT GENERATION -----\\
-    //-----------------------------\\
+    // -----------------
+    // OUTPUT GENERATION
+    // -----------------
     
     // To the branch unit
     assign bu_rs1_o                 = rs_data[ex_idx].rs1_value;
@@ -353,9 +353,9 @@ module branch_unit_rs
     assign cdb_data_o.except_raised = 1'b0; // no exception can be raised  (Wrong, First check the Missp if ok then cheeck address misaglined)
     assign cdb_data_o.except_code   = 0;// Fix it
 
-    //----------------------\\
-    //----- ASSERTIONS -----\\
-    //----------------------\\
+    // ----------
+    // ASSERTIONS
+    // ----------
     `ifndef SYNTHESIS
     always @(negedge clk_i) begin
         // Notice when the reservation station is full

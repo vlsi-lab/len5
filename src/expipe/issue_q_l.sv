@@ -148,9 +148,9 @@ logic               except_raised_o;
 except_code_t       except_code_o; 
 
 
- //---------------\\
-//----- DUT -----\\
-//---------------\\
+ // ---
+// DUT
+// ---
 issue_queue u_issue_queue
 (
     .clk_i (clk_i),

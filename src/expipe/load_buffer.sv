@@ -159,9 +159,9 @@ module load_buffer
     // Complete physical address
     logic [XLEN-1:0]                paddr_a [0:LDBUFF_DEPTH-1];
 
-    //--------------------------\\
-    //----- STATUS SIGNALS -----\\
-    //--------------------------\\
+    // --------------
+    // STATUS SIGNALS
+    // --------------
     // These are required because name selection after indexing is not supported
     always_comb begin: status_signals_gen
         for (int i = 0; i < LDBUFF_DEPTH; i++) begin
@@ -181,18 +181,18 @@ module load_buffer
         end
     end
 
-    //-------------------------------------\\
-    //----- COMPLETE PHYSICAL ADDRESS -----\\
-    //-------------------------------------\\
+    // -------------------------
+    // COMPLETE PHYSICAL ADDRESS
+    // -------------------------
     always_comb begin: paddr_gen
         for (int i = 0; i < LDBUFF_DEPTH; i++) begin
             paddr_a[i] = { {(XLEN-PADDR_LEN){1'b0}}, lb_data[i].ppn, lb_data[i].vaddr[PAGE_OFFSET_LEN-1:0] };
         end
     end
 
-    //-------------------------------------\\
-    //----- LOAD BUFFER CONTROL LOGIC -----\\
-    //-------------------------------------\\
+    // -------------------------
+    // LOAD BUFFER CONTROL LOGIC
+    // -------------------------
     // Generates the control signals that trigger specific operations on the data structure based in input and status signals.
     always_comb begin: lb_control_logic
         // DEFAULT VALUES
@@ -275,9 +275,9 @@ module load_buffer
             pfwd_req        = 1'b1;
         end
 
-        //-------------------\\
-        //----- ANSWERS -----\\
-        //-------------------\\
+        // -------
+        // ANSWERS
+        // -------
 
         // VIRTUAL ADDRESS ADDER ANSWER
         if (vadder_valid_i) begin
@@ -303,9 +303,9 @@ module load_buffer
 
     end 
 
-    //-----------------------------------\\
-    //----- LOAD BUFFER DATA UPDATE -----\\
-    //-----------------------------------\\
+    // -----------------------
+    // LOAD BUFFER DATA UPDATE
+    // -----------------------
     always_ff @(posedge clk_i or negedge rst_n_i) begin: lb_data_update
         if (!rst_n_i) begin // Asynchronous reset
             foreach (lb_data[i]) begin
@@ -325,9 +325,9 @@ module load_buffer
             end
         end else begin 
 
-            //-------------------------------\\
-            //----- PARALLEL OPERATIONS -----\\
-            //-------------------------------\\
+            // -------------------
+            // PARALLEL OPERATIONS
+            // -------------------
 
             foreach (lb_data[i]) begin
         
@@ -386,9 +386,9 @@ module load_buffer
 
             end
             
-            //----------------------------\\
-            //----- WRITE OPERATIONS -----\\
-            //----------------------------\\
+            // ----------------
+            // WRITE OPERATIONS
+            // ----------------
             
             // INSERT NEW INSTRUCTION
             if (lb_insert) begin
@@ -448,9 +448,9 @@ module load_buffer
                 lb_data[pfwd_idx].pfwd_attempted <= 1'b1; 
             end
 
-            //----------------------------------------------\\
-            //----- PROCESS ANSWERS ON DIFFERENT PORTS -----\\
-            //----------------------------------------------\\
+            // ----------------------------------
+            // PROCESS ANSWERS ON DIFFERENT PORTS
+            // ----------------------------------
 
             // VIRTUAL ADDRESS ADDER ANSWER (WRITE PORT 1: entry.vaddr, entry.value)
 
@@ -558,9 +558,9 @@ module load_buffer
         end
     end
 
-    //------------------------------\\
-    //----- NEW ENTRY SELECTOR -----\\
-    //------------------------------\\
+    // ------------------
+    // NEW ENTRY SELECTOR
+    // ------------------
     // Selects the entry where the next issued instruction will be inserted. It is the first empty (i.e. not valid) entry in the queue, selected by a priority encoder.
     prio_enc #(.N(LDBUFF_DEPTH)) new_entry_selector
     (
@@ -569,9 +569,9 @@ module load_buffer
         .valid_o    (new_idx_valid)
     );
 
-    //------------------------------------------------\\
-    //----- VIRTUAL ADDRESS COMPUTATION SELECTOR -----\\
-    //------------------------------------------------\\
+    // ------------------------------------
+    // VIRTUAL ADDRESS COMPUTATION SELECTOR
+    // ------------------------------------
     `ifdef ENABLE_AGE_BASED_SELECTOR
     // The selector follows a "first come first served" scheduling policy. The oldest valid entry whose base address from rs1 is available and whose virtual address hasn't been computed yet (vaddr_ready = 0) is selected to be sent to the virtual address adder
     age_based_sel #(.N(LDBUFF_DEPTH), .AGE_LEN(ROB_IDX_LEN)) vaddr_req_selector
@@ -591,9 +591,9 @@ module load_buffer
     );
     `endif
 
-    //-------------------------------\\
-    //----- TLB ACCESS SELECTOR -----\\
-    //-------------------------------\\
+    // -------------------
+    // TLB ACCESS SELECTOR
+    // -------------------
     `ifdef ENABLE_AGE_BASED_SELECTOR
     // The selector follows a "first come first served" scheduling policy. The oldest valid entry whose virtual address has already be computed and that's not busy or completed (thanks to forwarding) is selected for the address translation
     age_based_sel #(.N(LDBUFF_DEPTH), .AGE_LEN(ROB_IDX_LEN)) dtlb_req_selector
@@ -613,9 +613,9 @@ module load_buffer
     );
     `endif
 
-    //------------------------------------------------\\
-    //----- PHYSICAL ADDRESS FORWARDING SELECTOR -----\\
-    //------------------------------------------------\\
+    // ------------------------------------
+    // PHYSICAL ADDRESS FORWARDING SELECTOR
+    // ------------------------------------
     `ifdef ENABLE_AGE_BASED_SELECTOR
     // The selector follows a "first come first served" scheduling policy. In order to be selcted, an instruction must be valid, not busy or completed, have its paddr ready, no exceptions registered and no physical forwarding attempted.
     age_based_sel #(.N(LDBUFF_DEPTH), .AGE_LEN(ROB_IDX_LEN)) pfwd_req_selector
@@ -635,9 +635,9 @@ module load_buffer
     );
     `endif
 
-    //--------------------------------------\\
-    //----- DATA CACHE ACCESS SELECTOR -----\\
-    //--------------------------------------\\
+    // --------------------------
+    // DATA CACHE ACCESS SELECTOR
+    // --------------------------
     `ifdef ENABLE_AGE_BASED_SELECTOR
     // The selector follows a "first come first served" scheduling policy. The oldest valid entry whose physical address has already be computed and that's not busy or completed (thanks to forwarding) is selected for the cache access
     age_based_sel #(.N(LDBUFF_DEPTH), .AGE_LEN(ROB_IDX_LEN)) dcache_req_selector
@@ -657,9 +657,9 @@ module load_buffer
     );
     `endif
 
-    //------------------------\\
-    //----- CDB SELECTOR -----\\
-    //------------------------\\
+    // ------------
+    // CDB SELECTOR
+    // ------------
     `ifdef ENABLE_AGE_BASED_SELECTOR
     // The selector follows a "first come first served" scheduling policy. The oldest valid entry that has already completed (by forwarding, cache access or exception raising) is selected to write its data on the CDB, as soon as it becomes available
     age_based_sel #(.N(LDBUFF_DEPTH), .AGE_LEN(ROB_IDX_LEN)) cdb_req_selector
@@ -679,18 +679,18 @@ module load_buffer
     );
     `endif
 
-    //-------------------------------------\\
-    //----- FORWARDING INDEX REGISTER -----\\
-    //-------------------------------------\\
+    // -------------------------
+    // FORWARDING INDEX REGISTER
+    // -------------------------
     // When the virtual address adder returns the computed virtual address or and the index of the corresponding entry of the load buffer, this index is saved in a register so it can be used in the next cycle to select the entry for virtual address forwarding
     always_ff @(posedge clk_i or negedge rst_n_i) begin
         if (!rst_n_i) vfwd_idx <= 0;
         else vfwd_idx <= (vfwd_idx_reg_en) ? vadder_idx_i : vfwd_idx;
     end
 
-    //--------------------------\\
-    //----- BYTE SELECTORS -----\\
-    //--------------------------\\
+    // --------------
+    // BYTE SELECTORS
+    // --------------
     // The virtual address adder raises an exception if the load instructions are not aligned. If no exception is detected, the correct set of bytes must be selected and sign extended from the incoming data (D$ or forwarding), according to the load type.
 
     // FROM THE D$
@@ -702,9 +702,9 @@ module load_buffer
         .line_o     (dcache_value)
     );
 
-    //-----------------------------\\
-    //----- OUTPUT EVALUATION -----\\
-    //-----------------------------\\
+    // -----------------
+    // OUTPUT EVALUATION
+    // -----------------
     
     // TO THE VIRTUAL ADDRESS ADDER (OPERANDS READ PORT 1)
     assign vadder_isstore_o     = 1'b0;                                 // the instruction is a load
@@ -737,9 +737,9 @@ module load_buffer
     assign cdb_except_raised_o  = lb_data[cdb_req_idx].except_raised;
     assign cdb_except_o         = { {(ROB_EXCEPT_LEN-EXCEPT_TYPE_LEN){1'b0} }, lb_data[cdb_req_idx].except_code };
 
-    //----------------------\\
-    //----- ASSERTIONS -----\\
-    //----------------------\\
+    // ----------
+    // ASSERTIONS
+    // ----------
     `ifndef SYNTHESIS
     always @(negedge clk_i) begin
         // Notice when the load buffer is full

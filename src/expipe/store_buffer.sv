@@ -174,9 +174,9 @@ module store_buffer
     `endif
     logic [XLEN-1:0]                paddr_a [0:STBUFF_DEPTH-1];
 
-    //-------------------------------------\\
-    //----- STATUS SIGNALS GENERATION -----\\
-    //-------------------------------------\\
+    // -------------------------
+    // STATUS SIGNALS GENERATION
+    // -------------------------
     // These are required because name selection after indexing is not supported
     always_comb begin: status_signals_gen
         for (int i = 0; i < STBUFF_DEPTH; i++) begin
@@ -194,18 +194,18 @@ module store_buffer
         end
     end
 
-    //-------------------------------------\\
-    //----- COMPLETE PHYSICAL ADDRESS -----\\
-    //-------------------------------------\\
+    // -------------------------
+    // COMPLETE PHYSICAL ADDRESS
+    // -------------------------
     always_comb begin: paddr_gen
         for (int i = 0; i < STBUFF_DEPTH; i++) begin
             paddr_a[i] = { {(XLEN-PADDR_LEN){1'b0}}, sb_data[i].ppn, sb_data[i].vaddr[PAGE_OFFSET_LEN-1:0] };
         end
     end
 
-    //--------------------------------------\\
-    //----- STORE BUFFER CONTROL LOGIC -----\\
-    //--------------------------------------\\
+    // --------------------------
+    // STORE BUFFER CONTROL LOGIC
+    // --------------------------
     // Generates the control signals that trigger specific operations on the data structure based in input and status signals.
     always_comb begin: sb_control_logic
         // DEFAULT VALUES
@@ -246,9 +246,9 @@ module store_buffer
         tail_cnt_en         = 1'b0;
         tail_cnt_clr        = flush_i;  // clear when flushing 
 
-        //--------------------\\
-        //----- REQUESTS -----\\
-        //--------------------\\
+        // --------
+        // REQUESTS
+        // --------
 
         // PUSH NEW INSTRUCTION
         // Push a new instruction in the queue if the selected entry is empty (i.e. not valid) and the decoder is sending a valid instruction to the load buffer
@@ -304,9 +304,9 @@ module store_buffer
             head_cnt_en = 1'b1;
         end
 
-        //-------------------\\
-        //----- ANSWERS -----\\
-        //-------------------\\
+        // -------
+        // ANSWERS
+        // -------
 
         // VIRTUAL ADDRESS ADDER ANSWER
         if (vadder_valid_i) begin
@@ -331,9 +331,9 @@ module store_buffer
     
     end
 
-    //------------------------------------\\
-    //----- STORE BUFFER DATA UPDATE -----\\
-    //------------------------------------\\
+    // ------------------------
+    // STORE BUFFER DATA UPDATE
+    // ------------------------
     always_ff @(posedge clk_i or negedge rst_n_i) begin: sb_data_update
         if (!rst_n_i) begin // Asynchronous reset
             foreach (sb_data[i]) begin
@@ -352,9 +352,9 @@ module store_buffer
             end
         end else begin 
 
-            //-------------------------------\\
-            //----- PARALLEL OPERATIONS -----\\
-            //-------------------------------\\
+            // -------------------
+            // PARALLEL OPERATIONS
+            // -------------------
 
             foreach (sb_data[i]) begin
                 
@@ -406,9 +406,9 @@ module store_buffer
                 end
             end
 
-            //----------------------------\\
-            //----- WRITE OPERATIONS -----\\
-            //----------------------------\\
+            // ----------------
+            // WRITE OPERATIONS
+            // ----------------
 
             // PUSH NEW INSTRUCTION
             if (sb_push) begin
@@ -459,9 +459,9 @@ module store_buffer
                 sb_data[sb_head_idx].valid      <= 1'b0; // Pop the committed instruction
             end
             
-            //--------------------------\\
-            //----- PROCESS ANWERS -----\\
-            //--------------------------\\
+            // --------------
+            // PROCESS ANWERS
+            // --------------
 
             // VIRTUAL ADDRESS ADDER ANSWER (WRITE PORT 1: entry.vaddr, entry.rs2_value)
             if (sb_vadder_ans) begin
@@ -554,9 +554,9 @@ module store_buffer
         end
     end
 
-    //----------------------------\\
-    //----- FORWARDING LOGIC -----\\
-    //----------------------------\\
+    // ----------------
+    // FORWARDING LOGIC
+    // ----------------
 
     // VIRTUAL ADDRESS FORWARDING (PARALLEL ACCES 1: very complex due to RAW hazard check)
     logic vfwd_allowed, vfwd_hit, vfwd_depfree;
@@ -741,16 +741,16 @@ module store_buffer
     end
 
 
-    //------------------------------------\\
-    //----- IN-FLIGHT STORES COUNTER -----\\
-    //------------------------------------\\
+    // ------------------------
+    // IN-FLIGHT STORES COUNTER
+    // ------------------------
     // It is the difference between the tail and head pointers. However, when the store buffer is full of uncommitted stores, this difference is 0, like when the buffer is empty. So, the MSB is set accordingly.
     assign inflight_count[STBUFF_IDX_LEN]       = &valid_a; // MSB is 1 if all are valid
     assign inflight_count[STBUFF_IDX_LEN-1:0]   = sb_tail_idx - sb_head_idx;
     
-    //----------------------------------\\
-    //----- HEAD AND TAIL COUNTERS -----\\
-    //----------------------------------\\
+    // ----------------------
+    // HEAD AND TAIL COUNTERS
+    // ----------------------
     modn_counter #(.N(STBUFF_DEPTH)) head_counter
     (
         .clk_i      (clk_i),
@@ -771,9 +771,9 @@ module store_buffer
         .tc_o       ()              // Not needed
     );
     
-    //------------------------------------------------\\
-    //----- VIRTUAL ADDRESS COMPUTATION SELECTOR -----\\
-    //------------------------------------------------\\
+    // ------------------------------------
+    // VIRTUAL ADDRESS COMPUTATION SELECTOR
+    // ------------------------------------
     `ifdef ENABLE_AGE_BASED_SELECTOR
     // The selector follows a "first come first served" scheduling policy. The oldest valid entry whose base address from rs1 is available and whose virtual address hasn't been computed yet (vaddr_ready = 0) is selected to be sent to the virtual address adder
     age_based_sel #(.N(STBUFF_DEPTH), .AGE_LEN(ROB_IDX_LEN)) vaddr_req_selector
@@ -793,9 +793,9 @@ module store_buffer
     );
     `endif
 
-    //--------------------------------\\
-    //----- DTLB ACCESS SELECTOR -----\\
-    //--------------------------------\\
+    // --------------------
+    // DTLB ACCESS SELECTOR
+    // --------------------
     `ifdef ENABLE_AGE_BASED_SELECTOR
     // The selector follows a "first come first served" scheduling policy. The oldest valid entry whose virtual address has already be computed and that's not busy or completed is selected for the address translation
     age_based_sel #(.N(STBUFF_DEPTH), .AGE_LEN(ROB_IDX_LEN)) dtlb_req_selector
@@ -815,9 +815,9 @@ module store_buffer
     );
     `endif
 
-    //------------------------\\
-    //----- CDB SELECTOR -----\\
-    //------------------------\\
+    // ------------
+    // CDB SELECTOR
+    // ------------
     `ifdef ENABLE_AGE_BASED_SELECTOR
     // Stores access the CDB only to signal occurred exceptions to the ROB. Exceptions can be raised during the address translation or during the TLB access. 
     age_based_sel #(.N(STBUFF_DEPTH), .AGE_LEN(ROB_IDX_LEN)) cdb_req_selector
@@ -837,9 +837,9 @@ module store_buffer
     );
     `endif
     
-    //-----------------------------\\
-    //----- OUTPUT EVALUATION -----\\
-    //-----------------------------\\
+    // -----------------
+    // OUTPUT EVALUATION
+    // -----------------
 
     // TO THE VIRTUAL ADDRESS ADDER (OPERANDS READ PORT 1)
     assign vadder_isstore_o = 1'b1;                                 // the instruction is a store
@@ -885,9 +885,9 @@ module store_buffer
     assign cdb_except_raised_o  = sb_data[cdb_req_idx].except_raised;
     assign cdb_except_o         = { {(ROB_EXCEPT_LEN-EXCEPT_TYPE_LEN){1'b0} }, sb_data[cdb_req_idx].except_code };
     
-    //----------------------\\
-    //----- ASSERTIONS -----\\
-    //----------------------\\
+    // ----------
+    // ASSERTIONS
+    // ----------
     `ifndef SYNTHESIS
     always @(negedge clk_i) begin
         // Notice when the load buffer is full

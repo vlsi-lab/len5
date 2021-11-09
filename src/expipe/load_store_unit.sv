@@ -81,9 +81,9 @@ module load_store_unit (
 
     // DEFINITIONS
 
-    //-----------------------------------------\\
-    //----- LOAD BUFFER <--> STORE BUFFER -----\\
-    //-----------------------------------------\\
+    // -----------------------------
+    // LOAD BUFFER <--> STORE BUFFER
+    // -----------------------------
 
     logic [XLEN-1:0]            vfwd_vaddr;
     logic [XLEN-1:0]            pfwd_paddr;
@@ -100,9 +100,9 @@ module load_store_unit (
     logic [XLEN-1:0]            vfwd_value;
     logic [XLEN-1:0]            pfwd_value;
 
-    //--------------------------------------------------------\\
-    //----- LOAD/STORE BUFFER <--> VIRTUAL ADDRESS ADDER -----\\
-    //--------------------------------------------------------\\
+    // --------------------------------------------
+    // LOAD/STORE BUFFER <--> VIRTUAL ADDRESS ADDER
+    // --------------------------------------------
     
     // (LOAD/STORE BUFFER --> VIRTUAL ADDRESS ADDER) HS ARBITER
     logic                       lb_vadderarb_valid;
@@ -150,9 +150,9 @@ module load_store_unit (
     logic [BUFF_IDX_LEN-1:0]    vadder_lsb_idx;
     vadder_except_t             vadder_lsb_except;
 
-    //---------------------------------------\\
-    //----- LOAD/STORE BUFFER <--> DTLB -----\\
-    //---------------------------------------\\
+    // ---------------------------
+    // LOAD/STORE BUFFER <--> DTLB
+    // ---------------------------
 
     // (LOAD/STORE BUFFER --> DTLB) HS ARBITER
     logic                       lb_dtlbarb_valid;
@@ -197,9 +197,9 @@ module load_store_unit (
     // DTLB MUX SEL
     logic                       dtlbmux_sel;
 
-    //---------------------------------------------\\
-    //----- LOAD/STORE BUFFER <--> DATA CACHE -----\\
-    //---------------------------------------------\\
+    // ---------------------------------
+    // LOAD/STORE BUFFER <--> DATA CACHE
+    // ---------------------------------
     // (LOAD/STORE BUFFER --> D$) HS ARBITER
     logic                       lb_dcachearb_valid;
     logic                       sb_dcachearb_valid;
@@ -250,9 +250,9 @@ module load_store_unit (
 
     // MODULES INSTANTIATION
 
-    //-----------------------\\
-    //----- LOAD BUFFER -----\\
-    //-----------------------\\
+    // -----------
+    // LOAD BUFFER
+    // -----------
     load_buffer u_load_buffer (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
@@ -351,9 +351,9 @@ module load_store_unit (
         .cdb_except_o           (lb_cdb_data_o.except_code)
     );
 
-    //------------------------\\
-    //----- STORE BUFFER -----\\
-    //------------------------\\
+    // ------------
+    // STORE BUFFER
+    // ------------
 
     store_buffer u_store_buffer (
         .clk_i                  (clk_i),
@@ -462,9 +462,9 @@ module load_store_unit (
     );
 
 
-    //---------------------------------\\
-    //----- VIRTUAL ADDRESS ADDER -----\\
-    //---------------------------------\\
+    // ---------------------
+    // VIRTUAL ADDRESS ADDER
+    // ---------------------
     vaddr_adder #( .IDX_LEN (BUFF_IDX_LEN) ) u_vaddr_adder
     (
         .clk_i          (clk_i),
@@ -492,9 +492,9 @@ module load_store_unit (
         .except_o       (vadder_lsb_except)
     );
 
-    //--------------------------------------------\\
-    //----- VIRTUAL ADDRESS ADDER HS ARBITER -----\\
-    //--------------------------------------------\\
+    // --------------------------------
+    // VIRTUAL ADDRESS ADDER HS ARBITER
+    // --------------------------------
     `ifdef ENABLE_STORE_PRIO_2WAY_ARBITER
     // The store buffer, connected to valid_i[0] is given higher priority than the load buffer. This should increase the hit ratio of the store to load forwarding. However, it increases the load execution latency. Depending on the scenario, performance may be better or worse than the fair arbiter
     prio_2way_arbiter vadder_arbiter (
@@ -516,9 +516,9 @@ module load_store_unit (
     );
     `endif
 
-    //-------------------------------------\\
-    //----- VIRTUAL ADDRESS ADDER MUX -----\\
-    //-------------------------------------\\
+    // -------------------------
+    // VIRTUAL ADDRESS ADDER MUX
+    // -------------------------
     always_comb begin: vadder_mux
         if (vaddermux_sel) begin
             vaddermux_vadder_is_store   = lb_vaddermux_isstore;
@@ -535,9 +535,9 @@ module load_store_unit (
         end
     end
 
-    //--------------------------------------------\\
-    //----- VIRTUAL ADDRESS ADDER HS DECODER -----\\
-    //--------------------------------------------\\
+    // --------------------------------
+    // VIRTUAL ADDRESS ADDER HS DECODER
+    // --------------------------------
     always_comb begin: vadder_hs_decoder
         if (vadder_vadderdec_is_store) begin
             vadderdec_lb_valid      = 1'b0;
@@ -550,9 +550,9 @@ module load_store_unit (
         end
     end
 
-    //--------------------------------\\
-    //----- DTLB TYPE CONVERSION -----\\
-    //--------------------------------\\
+    // --------------------
+    // DTLB TYPE CONVERSION
+    // --------------------
     // lsq_dtlb_req_t
     assign dtlb_req_o.vpn       = dtlbmux_dtlb_vaddr;
     assign dtlb_req_o.is_store  = dtlbmux_dtlb_isstore;
@@ -577,9 +577,9 @@ module load_store_unit (
         dtlb_dtlbdec_is_store   = dtlb_ans_i.was_store;
     end
 
-    //---------------------------\\
-    //----- DTLB HS ARBITER -----\\
-    //---------------------------\\
+    // ---------------
+    // DTLB HS ARBITER
+    // ---------------
 
     assign dtlb_dtlbarb_ready = dtlb_ready_i;
     
@@ -604,9 +604,9 @@ module load_store_unit (
     );
     `endif
 
-    //--------------------\\
-    //----- DTLB MUX -----\\
-    //--------------------\\
+    // --------
+    // DTLB MUX
+    // --------
     always_comb begin: dtlb_mux
         if (dtlbmux_sel) begin
             dtlbmux_dtlb_isstore    = lb_dtlbmux_isstore;
@@ -619,9 +619,9 @@ module load_store_unit (
         end
     end
 
-    //---------------------------\\
-    //----- DTLB HS DECODER -----\\
-    //---------------------------\\
+    // ---------------
+    // DTLB HS DECODER
+    // ---------------
     always_comb begin: dtlb_hs_decoder
         if (dtlb_dtlbdec_is_store) begin
             dtlbdec_lb_ans_valid    = 1'b0;  
@@ -636,9 +636,9 @@ module load_store_unit (
     end
 
 
-    //--------------------------------\\
-    //----- DCACHE TYPE CONVERSION -----\\
-    //--------------------------------\\
+    // --------------------
+    // DCACHE TYPE CONVERSION
+    // --------------------
     // lsq_l1dc_req_t
     assign dcache_req_o.paddr       = dcachemux_dcache_paddr;
     assign dcache_req_o.data        = dcachemux_dcache_value;
@@ -672,9 +672,9 @@ module load_store_unit (
         dcache_dcachedec_is_store       = dcache_ans_i.was_store;
     end
 
-    //-----------------------------\\
-    //----- DCACHE HS ARBITER -----\\
-    //-----------------------------\\
+    // -----------------
+    // DCACHE HS ARBITER
+    // -----------------
 
     assign dcache_dcachearb_ready = dcache_ready_i;
 
@@ -699,9 +699,9 @@ module load_store_unit (
     );
     `endif
 
-    //----------------------\\
-    //----- DCACHE MUX -----\\
-    //----------------------\\
+    // ----------
+    // DCACHE MUX
+    // ----------
     always_comb begin: dcache_mux
         if (dcachemux_sel) begin
             dcachemux_dcache_isstore    = lb_dcachemux_isstore;
@@ -718,9 +718,9 @@ module load_store_unit (
         end
     end
 
-    //---------------------------\\
-    //----- DCACHE HS DECODER -----\\
-    //---------------------------\\
+    // ---------------
+    // DCACHE HS DECODER
+    // ---------------
     always_comb begin: dcache_hs_decoder
         if (dcache_dcachedec_is_store) begin
             dcachedec_lb_ans_valid  = 1'b0;
