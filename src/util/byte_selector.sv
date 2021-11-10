@@ -23,11 +23,10 @@ import len5_pkg::XLEN;
     
 module byte_selector
 (
-    input ldst_type_t type_i, // load/store type (number of bytes to select)
-    //input logic [$clog2(XLEN/8)-1:0] byte_off, // the offset of the first byte to select
-input logic [3-1:0] byte_off, // the offset of the first byte to select
-    input logic [XLEN-1:0] line_i, // the input line
-    output logic [XLEN-1:0] line_o // the output line
+    input   ldst_type_t type_i, // load/store type (number of bytes to select)
+    input   logic [$clog2(XLEN/8)-1:0] byte_off, // the offset of the first byte to select
+    input   logic [XLEN-1:0] line_i, // the input line
+    output  logic [XLEN-1:0] line_o // the output line
 );
 
     // DEFINITIONS

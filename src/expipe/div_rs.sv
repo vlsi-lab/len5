@@ -19,7 +19,7 @@ import expipe_pkg::*;
 
 module div_rs 
 #(
-    RS_DEPTH = 16,
+    RS_DEPTH = 4, // must be a power of 2,
     
     // EU-specific parameters
     EU_CTL_LEN = 4,
@@ -67,16 +67,14 @@ module div_rs
     logic                   eu_ready_o;
 
     // Data from/to the execution unit
-    //input   logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i,
-    logic [3-1:0] eu_entry_idx_i;
+    logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i;
     logic [XLEN-1:0]        eu_result_i;
     logic                   eu_except_raised_i;
     logic [EXCEPT_LEN-1:0]  eu_except_code_i;
     logic [EU_CTL_LEN-1:0]  eu_ctl_o;
     logic [XLEN-1:0]        eu_rs1_o;
     logic [XLEN-1:0]        eu_rs2_o;
-    //output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o,   // to be produced at the end of execution together with the result
-    logic [3-1:0] eu_entry_idx_o;
+    logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o;
 
 generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_div_generic_rs
 (

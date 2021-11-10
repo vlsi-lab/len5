@@ -13,7 +13,6 @@
 // Date: 11/11/2019
 
 import expipe_pkg::*;
-import len5_pkg::EU_N;
 
 module cdb_arbiter 
 (

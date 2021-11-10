@@ -19,7 +19,7 @@ import expipe_pkg::*;
 
 module mult_rs 
 #(
-    RS_DEPTH = 16,
+    RS_DEPTH = 4, // must be a power of 2,
     
     // EU-specific parameters
     EU_CTL_LEN = 4,
@@ -61,22 +61,20 @@ module mult_rs
 );
 
     // Handshake from/to the execution unit
-    logic                   eu_ready_i;
-    logic                   eu_valid_i;
-    logic                   eu_valid_o;
-    logic                   eu_ready_o;
+    logic                   rs_mult_valid;
+    logic                   rs_mult_ready;
+    logic                   mult_rs_valid;
+    logic                   mult_rs_ready;
 
     // Data from/to the execution unit
-    //input   logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i,
-    logic [3-1:0] eu_entry_idx_i;
-    logic [XLEN-1:0]        eu_result_i;
-    logic                   eu_except_raised_i;
-    logic [EXCEPT_LEN-1:0]  eu_except_code_i;
-    logic [EU_CTL_LEN-1:0]  eu_ctl_o;
-    logic [XLEN-1:0]        eu_rs1_o;
-    logic [XLEN-1:0]        eu_rs2_o;
-    //output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o,   // to be produced at the end of execution together with the result
-    logic [3-1:0] eu_entry_idx_o;
+    logic [$clog2(RS_DEPTH)-1:0] rs_mult_entry_idx;
+    logic [EU_CTL_LEN-1:0]  rs_mult_ctl;
+    logic [XLEN-1:0]        rs_mult_rs1_value;
+    logic [XLEN-1:0]        rs_mult_rs2_value;
+    logic [$clog2(RS_DEPTH)-1:0] mult_rs_entry_idx;
+    logic [XLEN-1:0]        mult_rs_result;
+    logic                   mult_rs_except_raised;
+    logic [EXCEPT_LEN-1:0]  mult_rs_except_code;
 
 generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_mult_generic_rs
 (
@@ -94,18 +92,18 @@ generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_m
     .rs2_idx_i (rs2_idx_i),
     .rs2_value_i (rs2_value_i),
     .dest_idx_i (dest_idx_i),
-    .eu_ready_i (eu_ready_i),
-    .eu_valid_i (eu_valid_i),
-    .eu_valid_o (eu_valid_o),
-    .eu_ready_o (eu_ready_o),
-    .eu_entry_idx_i (eu_entry_idx_i),
-    .eu_result_i (eu_result_i),
-    .eu_except_raised_i (eu_except_raised_i),
-    .eu_except_code_i (eu_except_code_i),
-    .eu_ctl_o (eu_ctl_o),
-    .eu_rs1_o (eu_rs1_o),
-    .eu_rs2_o (eu_rs2_o),
-    .eu_entry_idx_o (eu_entry_idx_o), 
+    .eu_ready_i (mult_rs_ready),
+    .eu_valid_i (mult_rs_valid),
+    .eu_valid_o (rs_mult_valid),
+    .eu_ready_o (rs_mult_ready),
+    .eu_entry_idx_i (mult_rs_entry_idx),
+    .eu_result_i (mult_rs_result),
+    .eu_except_raised_i (mult_rs_except_raised),
+    .eu_except_code_i (mult_rs_except_code),
+    .eu_ctl_o (rs_mult_ctl),
+    .eu_rs1_o (rs_mult_rs1_value),
+    .eu_rs2_o (rs_mult_rs2_value),
+    .eu_entry_idx_o (rs_mult_entry_idx), 
     .cdb_ready_i (cdb_ready_i),
     .cdb_valid_i (cdb_valid_i),
     .cdb_valid_o (cdb_valid_o),
@@ -118,23 +116,23 @@ generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_m
     .cdb_except_o (cdb_except_o)
 );
 
-mult #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_mult
+mult #(.EU_CTL_LEN (EU_CTL_LEN), .PIPE_DEPTH(MULT_PIPE_DEPTH), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_mult
 (
-    .clk_i (clk_i),
-    .rst_n_i (rst_n_i),
-    .flush_i (flush_i),
-	.eu_ready_i (eu_ready_i),
-    .eu_valid_i (eu_valid_i),
-    .eu_valid_o (eu_valid_o),
-    .eu_ready_o (eu_ready_o),
-    .eu_entry_idx_i (eu_entry_idx_i),
-    .eu_result_i (eu_result_i),
-    .eu_except_raised_i (eu_except_raised_i),
-    .eu_except_code_i (eu_except_code_i),
-    .eu_ctl_o (eu_ctl_o),
-    .eu_rs1_o (eu_rs1_o),
-    .eu_rs2_o (eu_rs2_o),
-    .eu_entry_idx_o (eu_entry_idx_o)
+    .clk_i              (clk_i),
+    .rst_n_i            (rst_n_i),
+    .flush_i            (flush_i),
+	.valid_i            (rs_mult_valid),
+    .ready_i            (rs_mult_ready),
+    .valid_o            (mult_rs_valid),
+    .ready_o            (mult_rs_ready),
+    .ctl_i              (rs_mult_ctl),
+    .entry_idx_i        (rs_mult_entry_idx),
+    .rs1_value_i        (rs_mult_rs1_value),
+    .rs2_value_i        (rs_mult_rs2_value),
+    .entry_idx_o        (mult_rs_entry_idx),
+    .result_o           (mult_rs_result),
+    .except_raised_o    (mult_rs_except_raised),
+    .except_code_o      (mult_rs_except_code)
 );
 
 endmodule

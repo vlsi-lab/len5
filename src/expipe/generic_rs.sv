@@ -25,7 +25,7 @@ import expipe_pkg::*;
 
 module generic_rs 
 #(
-    RS_DEPTH = 16,
+    RS_DEPTH = 4, // must be a power of 2,
     
     // EU-specific parameters
     EU_CTL_LEN = 4,

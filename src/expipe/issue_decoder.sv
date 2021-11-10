@@ -36,7 +36,7 @@ module issue_decoder (
     output  logic                           issue_stall_possible_o, // the instruction issue can be stall to save power
 
     output  issue_eu_t                      issue_eu_o,             // assigned EU
-    output  logic [8-1:0]      				issue_eu_ctl_o,         // controls for the assigned EU
+    output  logic [MAX_EU_CTL_LEN-1:0]      issue_eu_ctl_o,         // controls for the assigned EU
     output  logic                           issue_fp_rs_o,          // source operands are from FP register file
     output  logic                           issue_rs1_req_o,        // rs1 fetch is required
     output  logic                           issue_rs1_is_pc_o,      // rs1 is the current PC (for AUIPC)
@@ -56,7 +56,7 @@ module issue_decoder (
     logic                           res_ready;
     logic                           stall_possible;
     issue_eu_t                      assigned_eu;
-    logic [8-1:0]                   eu_ctl;
+    logic [MAX_EU_CTL_LEN-1:0]      eu_ctl;
     logic                           rs_fp;
     logic                           rs1_req; 
     logic                           rs1_is_pc;      // for AUIPC
@@ -748,9 +748,68 @@ module issue_decoder (
             regstat_upd                 = 1'b1;
         end
 
+    `ifdef LEN5_M_EN
+
         // RV64M
         // -----
-        // NOTE: to be implemented
+        // NOTE: DIV and REM to be implemented
+
+        // MUL
+        else if ((issue_instruction_i.r.opcode == `OPCODE_MUL) &&
+                (issue_instruction_i.r.funct3 == `FUNCT3_MUL) &&
+                (issue_instruction_i.r.funct7 == `FUNCT7_MUL)) begin
+            assigned_eu                 = EU_INT_MULT;
+            eu_ctl[MULT_CTL_LEN-1:0]    = MULT_MUL;
+            rs1_req                     = 1'b1;
+            rs2_req                     = 1'b1;
+            regstat_upd                 = 1'b1;
+        end
+        
+        // MULW
+        else if ((issue_instruction_i.r.opcode == `OPCODE_MULW) &&
+                (issue_instruction_i.r.funct3 == `FUNCT3_MULW) &&
+                (issue_instruction_i.r.funct7 == `FUNCT7_MULW)) begin
+            assigned_eu                 = EU_INT_MULT;
+            eu_ctl[MULT_CTL_LEN-1:0]    = MULT_MULW;
+            rs1_req                     = 1'b1;
+            rs2_req                     = 1'b1;
+            regstat_upd                 = 1'b1;
+        end
+        
+        // MULH
+        else if ((issue_instruction_i.r.opcode == `OPCODE_MULH) &&
+                (issue_instruction_i.r.funct3 == `FUNCT3_MULH) &&
+                (issue_instruction_i.r.funct7 == `FUNCT7_MULH)) begin
+            assigned_eu                 = EU_INT_MULT;
+            eu_ctl[MULT_CTL_LEN-1:0]    = MULT_MULH;
+            rs1_req                     = 1'b1;
+            rs2_req                     = 1'b1;
+            regstat_upd                 = 1'b1;
+        end
+        
+        // MULHSU
+        else if ((issue_instruction_i.r.opcode == `OPCODE_MULHSU) &&
+                (issue_instruction_i.r.funct3 == `FUNCT3_MULHSU) &&
+                (issue_instruction_i.r.funct7 == `FUNCT7_MULHSU)) begin
+            assigned_eu                 = EU_INT_MULT;
+            eu_ctl[MULT_CTL_LEN-1:0]    = MULT_MULHSU;
+            rs1_req                     = 1'b1;
+            rs2_req                     = 1'b1;
+            regstat_upd                 = 1'b1;
+        end
+        
+        // MULHU
+        else if ((issue_instruction_i.r.opcode == `OPCODE_MULHU) &&
+                (issue_instruction_i.r.funct3 == `FUNCT3_MULHU) &&
+                (issue_instruction_i.r.funct7 == `FUNCT7_MULHU)) begin
+            assigned_eu                 = EU_INT_MULT;
+            eu_ctl[MULT_CTL_LEN-1:0]    = MULT_MULHU;
+            rs1_req                     = 1'b1;
+            rs2_req                     = 1'b1;
+            regstat_upd                 = 1'b1;
+        end
+
+    `endif /* LEN5_M_EN */
 
         // RV64A
         // -----

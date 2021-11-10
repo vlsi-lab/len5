@@ -17,7 +17,6 @@
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
-import len5_pkg::EU_N;
 import len5_pkg::I_IMM;
 import len5_pkg::S_IMM;
 import len5_pkg::B_IMM;
@@ -93,7 +92,7 @@ module issue_logic (
     output  logic [0:EU_N-1]            ex_valid_o,             // ready signal to each reservation station
 
     // Data to the execution pipeline reservation stations
-    output  logic [8-1:0]  ex_eu_ctl_o,            // controls for the associated EU
+    output  logic [MAX_EU_CTL_LEN-1:0]  ex_eu_ctl_o,            // controls for the associated EU
     output  logic                       ex_rs1_ready_o,         // first operand is ready at issue time (from the RF or the ROB)
     output  logic [ROB_IDX_LEN-1:0]     ex_rs1_idx_o,           // the index of the ROB where the first operand can be found (if not ready)
     output  logic [XLEN-1:0]            ex_rs1_value_o,         // the value of the first operand (if ready)
@@ -167,7 +166,7 @@ module issue_logic (
     logic                               id_stall_possible;
     
     issue_eu_t                          id_assigned_eu;
-    logic [8-1:0]                       id_eu_ctl;
+    logic [MAX_EU_CTL_LEN-1:0]          id_eu_ctl;
 `ifdef LEN5_FP_EN
     logic                               id_fp_rs;
 `endif /* LEN5_FP_EN */
@@ -256,6 +255,8 @@ module issue_logic (
                         ex_valid_o [EU_INT_ALU]  = 1'b1;
                     end
                 end
+
+            `ifdef LEN5_M_EN
                 EU_INT_MULT: begin   // 4
                     if (ex_ready_i[EU_INT_MULT]) begin // if the load buffer can accept the instruction
                         rob_valid_o     = 1'b1;
@@ -270,6 +271,8 @@ module issue_logic (
                         ex_valid_o [EU_INT_DIV]  = 1'b1;
                     end
                 end
+            `endif /* LEN5_M_EN */
+
             `ifdef LEN5_FP_EN
                 EU_FPU: begin   // 6
                     if (ex_ready_i[EU_FPU]) begin // if the load buffer can accept the instruction

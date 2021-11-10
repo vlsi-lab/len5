@@ -18,8 +18,7 @@ module age_based_sel #(
 ) (
     input   logic [N-1:0]       lines_i,
     input   logic [AGE_LEN-1:0] ages_i [N-1:0],
-    //output logic [$clog2(N)-1:0] enc_o,
-    output  logic [3-1:0]       enc_o,
+    output  logic [$clog2(N)-1:0] enc_o,
     output  logic               valid_o
 );
     
@@ -33,8 +32,7 @@ module age_based_sel #(
         enc_o       = 0; // Default if none is selected
         for (int i = 0; i < N; i++) begin
             if (lines_i[i] && (ages_i[i] >= oldest_age[AGE_LEN-1:0])) begin // >= handles initial case where alla ages are 0
-                //enc_o   = i[$clog2(N)-1:0];
-		enc_o   = i[3-1:0];
+                enc_o   = i[$clog2(N)-1:0];
                 oldest_age[AGE_LEN-1:0] = ages_i[i];
             end 
         end

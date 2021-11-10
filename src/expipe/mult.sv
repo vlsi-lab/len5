@@ -1,4 +1,4 @@
-// Copyright 2019 Politecnico di Torino.
+// Copyright 2021 Politecnico di Torino.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 2.0 (the "License"); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -8,23 +8,22 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: generic_rs.sv
+// File: mult.sv
 // Author: Michele Caon
-// Date: 21/10/2019
+// Date: 10/11/2021
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
-//import len5_pkg::HLEN;
-
 import expipe_pkg::*;
 
 module mult 
 #(
-    RS_DEPTH = 16,
+    parameter RS_DEPTH      = 4,    // must be a power of 2,
+    parameter PIPE_DEPTH    = 4,    // number of pipeline levels (>0)
     
     // EU-specific parameters
-    EU_CTL_LEN = 4,
-    EXCEPT_LEN = 2
+    parameter EU_CTL_LEN    = 4,
+    parameter EXCEPT_LEN    = 2
 )
 (
     input   logic                   clk_i,
@@ -32,69 +31,162 @@ module mult
     input   logic                   flush_i,
 
     // Handshake from/to the reservation station unit
-    output   logic                   eu_ready_i,
-    output   logic                   eu_valid_i,
-    input  logic                   eu_valid_o,
-    input  logic                   eu_ready_o,
+    input   logic                   valid_i,
+    input   logic                   ready_i,
+    output  logic                   valid_o,
+    output  logic                   ready_o,
 
     // Data from/to the reservation station unit
-    //input   logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i,
-    output   logic [3-1:0] eu_entry_idx_i,
-    output   logic [XLEN-1:0]        eu_result_i,
-    output   logic                   eu_except_raised_i,
-    output   logic [EXCEPT_LEN-1:0]  eu_except_code_i,
-    input  logic [EU_CTL_LEN-1:0]  eu_ctl_o,
-    input  logic [XLEN-1:0]        eu_rs1_o,
-    input  logic [XLEN-1:0]        eu_rs2_o,
-    //output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o,   // to be produced at the end of execution together with the result
-    input  logic [3-1:0] eu_entry_idx_o
+    input   logic [EU_CTL_LEN-1:0]  ctl_i,
+    input   logic [$clog2(RS_DEPTH)-1:0] entry_idx_i,
+    input   logic [XLEN-1:0]        rs1_value_i,
+    input   logic [XLEN-1:0]        rs2_value_i,
+    output  logic [$clog2(RS_DEPTH)-1:0] entry_idx_o,
+    output  logic [XLEN-1:0]        result_o,
+    output  logic                   except_raised_o,
+    output  logic [EXCEPT_LEN-1:0]  except_code_o
 );
 
-//logic [3-1:0]       eu_entry_idx_temp;
-//logic [XLEN-1:0]     eu_result_temp;
-	// Main counting process. The counter clears when reaching the threshold
-always_ff @ (posedge clk_i or negedge rst_n_i) begin
-    if (!rst_n_i) begin
-        eu_ready_i <= 0; // Asynchronous reset
-		eu_valid_i <= 0;
-		eu_entry_idx_i = 'b000;
-		eu_result_i <= 'h0000000000000000;
-		eu_except_raised_i <= 0;
-		eu_except_code_i <= 'd0;
-    end
-    else if (flush_i) begin
-        eu_ready_i <= 0; // Synchronous clear when requested or when reaching the threshold
-		eu_valid_i <= 0;
-		eu_entry_idx_i = 'b000;
-		eu_result_i <= 'h0000000000000000;
-		eu_except_raised_i <= 0;
-		eu_except_code_i <= 'd0;
-    end
-   /* else if (eu_valid_o) begin
-		//case () begin
-        eu_result_temp <=  eu_rs1_o * eu_rs2_o;
-		eu_entry_idx_temp <= eu_entry_idx_o;
-		eu_ready_i = 1;
-    end*/
-	else if (eu_ready_o) begin
-		//case () begin
-		eu_entry_idx_i <= eu_entry_idx_o;
-		eu_ready_i = 1;
-        eu_result_i <= eu_rs1_o * eu_rs2_o;
+    // MULT output
+    logic [XLEN-1:0]        result;
+    logic [(XLEN<<1)-1:0]   result_full;
+    logic                   except_raised;
 
-		if (eu_valid_o) begin
-		eu_valid_i <= 1;
-		end
+    // Cached result and operands
+    logic                   cached_data_en;
+    logic [XLEN-1:0]        cached_result_low;
+    logic [XLEN-1:0]        cached_rs1_value;
+    logic [XLEN-1:0]        cached_rs2_value;
+
+    // Pipeline registers
+    logic [XLEN-1:0]        pipe_result_d [PIPE_DEPTH-1:0];
+    logic [$clog2(RS_DEPTH)-1:0] pipe_entry_idx_d [PIPE_DEPTH-1:0];
+    logic                   pipe_except_raised_d [PIPE_DEPTH-1:0];
+
+    // ---------------
+    // MULT OPERATIONS
+    // ---------------
+    // NOTE: when a MULH[S[U]] is detected, the multipliers performs computes
+    // the full product on 2*XLEN bits and cache the lower XLEN bits of the
+    // result and the value of the source operands. If the next instruction is
+    // a MUL on the same operand values, the lower part of the result is taken
+    // from the cached result.
+
+    always_comb begin : mult_ops
+        // Default values
+        result              = '0;
+        result_full         = '0;
+        except_raised       = 1'b0;
+
+        unique case (ctl_i)
+            MULT_MUL: begin
+                if (rs1_value_i == cached_rs1_value && rs2_value_i == cached_rs2_value) begin
+                    result          = cached_result_low;
+                end else begin
+                    result_full     = signed'(rs1_value_i) * signed'(rs2_value_i);
+                    result          = result_full[XLEN-1:0];
+                end
+            end
+            MULT_MULW: begin
+                result_full         = rs1_value_i[(XLEN>>1)-1:0] * rs2_value_i[(XLEN>>1)-1:0];
+                result              = signed'(result_full[(XLEN>>1)-1:0]);
+            end
+            MULT_MULH: begin
+                result_full         = signed'(rs1_value_i) * signed'(rs2_value_i);
+                result              = result_full[(XLEN<<1)-1:XLEN];
+                cached_data_en      = valid_i && ready_o && !flush_i;
+            end
+            MULT_MULHU: begin
+                result_full         = rs1_value_i * rs2_value_i;
+                result              = result_full[(XLEN<<1)-1:XLEN];
+                cached_data_en      = valid_i && ready_o && !flush_i;
+            end
+            MULT_MULHSU: begin
+                result_full         = signed'(rs1_value_i) * rs2_value_i;
+                result              = result_full[(XLEN<<1)-1:XLEN];
+                cached_data_en      = valid_i && ready_o && !flush_i;
+            end
+            default: except_raised  = 1'b1;
+        endcase
     end
-	else begin
-		eu_ready_i = 1;
-		eu_result_i <= 'h0000000000000000;
-		eu_entry_idx_i <= 'b000;
-		eu_valid_i <= 0;
-		eu_result_i <= 'h0000000000000000;
-		eu_except_raised_i <= 0;
-		eu_except_code_i <= 'd0;
-end
-end
+
+    // Cached rs1, rs2 and lower result register
+    always_ff @( posedge clk_i or negedge rst_n_i ) begin : cached_rs1_reg
+        if (!rst_n_i) begin
+            cached_rs1_value    <= '0;
+            cached_rs2_value    <= '0;
+            cached_result_low   <= '0;
+        end else if (cached_data_en) begin
+            cached_rs1_value    <= rs1_value_i;
+            cached_rs2_value    <= rs2_value_i;
+            cached_result_low   <= result_full[XLEN-1:0];
+        end
+    end
+
+    // ------------------
+    // PIPELINE REGISTERS
+    // ------------------
+
+    assign  pipe_result_d[0]        = result;
+    assign  pipe_entry_idx_d[0]     = entry_idx_i;
+    assign  pipe_except_raised_d[0] = except_raised;
+
+    // Generate PIPE_DEPTH-1 pipeline registers
+    generate
+        for (genvar i=1; i<PIPE_DEPTH; i=i+1) begin: pipe_reg
+            always_ff @( posedge clk_i or negedge rst_n_i ) begin
+                if (!rst_n_i) begin
+                    pipe_result_d[i]        <= '0;
+                    pipe_entry_idx_d[i]     <= '0;
+                    pipe_except_raised_d[i] <= 1'b0;
+                end else begin
+                    pipe_result_d[i]        <= pipe_result_d[i-1];
+                    pipe_entry_idx_d[i]     <= pipe_entry_idx_d[i-1];
+                    pipe_except_raised_d[i] <= pipe_except_raised_d[i-1];
+                end
+            end
+        end
+    endgenerate
+
+    // ---------------
+    // OUTPUT REGISTER
+    // ---------------
+    // NOTE: use a spill cell to break the handshaking path
+
+    // Interface data type
+    typedef struct packed {
+        logic [XLEN-1:0]        res;            // the ALU result
+        logic [$clog2(RS_DEPTH)-1:0] entry_idx; // instr. index in the RS
+        logic                   except_raised;  // exception flag
+    } out_reg_data_t;
+
+    out_reg_data_t  out_reg_data_in, out_reg_data_out;
+
+    // Input data
+    assign  out_reg_data_in.res             = pipe_result_d[PIPE_DEPTH-1];
+    assign  out_reg_data_in.entry_idx       = pipe_entry_idx_d[PIPE_DEPTH-1];
+    assign  out_reg_data_in.except_raised   = pipe_except_raised_d[PIPE_DEPTH-1];
+
+    // Output data
+    assign  result_o                        = out_reg_data_out.res;
+    assign  entry_idx_o                     = out_reg_data_out.entry_idx;
+    assign  except_raised_o                 = out_reg_data_out.except_raised;
+
+    // Output register
+    spill_cell #(.DATA_T(out_reg_data_t), .SKIP(1'b0)) u_out_reg (
+        .clk_i          (clk_i),
+        .rst_n_i        (rst_n_i),
+        .flush_i        (flush_i),
+        .valid_i        (valid_i),
+        .ready_i        (ready_i),
+        .valid_o        (valid_o),
+        .ready_o        (ready_o),
+        .data_i         (out_reg_data_in),
+        .data_o         (out_reg_data_out)
+    );
+
+    // Exception handling
+    // ------------------
+    assign  except_code_o       = E_ILLEGAL_INSTRUCTION;
 
 endmodule

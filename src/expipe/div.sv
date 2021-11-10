@@ -18,7 +18,7 @@ import expipe_pkg::*;
 
 module div 
 #(
-    RS_DEPTH = 16,
+    RS_DEPTH = 4, // must be a power of 2,
     
     // EU-specific parameters
     EU_CTL_LEN = 4,
@@ -30,68 +30,58 @@ module div
     input   logic                   flush_i,
 
     // Handshake from/to the reservation station unit
-    output   logic                   eu_ready_i,
-    output   logic                   eu_valid_i,
-    input  logic                   eu_valid_o,
-    input  logic                   eu_ready_o,
+    input   logic                   valid_i,
+    input   logic                   ready_i,
+    output  logic                   ready_o,
+    output  logic                   valid_o,
 
     // Data from/to the reservation station unit
-    //input   logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i,
-    output   logic [3-1:0] eu_entry_idx_i,
-    output   logic [XLEN-1:0]        eu_result_i,
-    output   logic                   eu_except_raised_i,
-    output   logic [EXCEPT_LEN-1:0]  eu_except_code_i,
-    input  logic [EU_CTL_LEN-1:0]  eu_ctl_o,
-    input  logic [XLEN-1:0]        eu_rs1_o,
-    input  logic [XLEN-1:0]        eu_rs2_o,
-    //output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o,   // to be produced at the end of execution together with the result
-    input  logic [3-1:0] eu_entry_idx_o
+    input   logic [EU_CTL_LEN-1:0]  ctl_i,
+    input   logic [$clog2(RS_DEPTH)-1:0] entry_idx_i,
+    input   logic [XLEN-1:0]        rs1_value_i,
+    input   logic [XLEN-1:0]        rs2_value_i,
+    output  logic [$clog2(RS_DEPTH)-1:0] entry_idx_o,
+    output  logic [XLEN-1:0]        result_o,
+    output  logic                   except_raised_o,
+    output  logic [EXCEPT_LEN-1:0]  except_code_o
 );
 
-//logic [3-1:0]       eu_entry_idx_temp;
-//logic [XLEN-1:0]     eu_result_temp;
 	// Main counting process. The counter clears when reaching the threshold
 always_ff @ (posedge clk_i or negedge rst_n_i) begin
     if (!rst_n_i) begin
-        eu_ready_i <= 0; // Asynchronous reset
-		eu_valid_i <= 0;
-		eu_entry_idx_i = 'b000;
-		eu_result_i <= 'h0000000000000000;
-		eu_except_raised_i <= 0;
-		eu_except_code_i <= 'd0;
+        ready_o <= 0; // Asynchronous reset
+		valid_o <= 0;
+		entry_idx_o <= 'b000;
+		result_o <= 'h0000000000000000;
+		except_raised_o <= 0;
+		except_code_o <= 'd0;
     end
     else if (flush_i) begin
-        eu_ready_i <= 0; // Synchronous clear when requested or when reaching the threshold
-		eu_valid_i <= 0;
-		eu_entry_idx_i = 'b000;
-		eu_result_i <= 'h0000000000000000;
-		eu_except_raised_i <= 0;
-		eu_except_code_i <= 'd0;
+        ready_o <= 0; // Synchronous clear when requested or when reaching the threshold
+		valid_o <= 0;
+		entry_idx_o <= 'b000;
+		result_o <= 'h0000000000000000;
+		except_raised_o <= 0;
+		except_code_o <= 'd0;
     end
-      /* else if (eu_valid_o) begin
+	else if (ready_i) begin
 		//case () begin
-        eu_result_temp <=  eu_rs1_o * eu_rs2_o;
-		eu_entry_idx_temp <= eu_entry_idx_o;
-		eu_ready_i = 1;
-    end*/
-	else if (eu_ready_o) begin
-		//case () begin
-		eu_entry_idx_i <= eu_entry_idx_o;
-		eu_ready_i = 1;
-        eu_result_i <= (eu_rs2_o != 'd0)? eu_rs1_o / eu_rs2_o : 'd0;
+		entry_idx_o <= entry_idx_i;
+		ready_o <= 1;
+        result_o <= (rs2_value_i != 'd0)? rs1_value_i / rs2_value_i : 'd0;
 
-		if (eu_valid_o) begin
-		eu_valid_i <= 1;
+		if (valid_i) begin
+		valid_o <= 1;
 		end
     end
 	else begin
-		eu_ready_i = 1;
-		eu_result_i <= 'h0000000000000000;
-		eu_entry_idx_i <= 'b000;
-		eu_valid_i <= 0;
-		eu_result_i <= 'h0000000000000000;
-		eu_except_raised_i <= 0;
-		eu_except_code_i <= 'd0;
+		ready_o = 1;
+		result_o <= 'h0000000000000000;
+		entry_idx_o <= 'b000;
+		valid_o <= 0;
+		result_o <= 'h0000000000000000;
+		except_raised_o <= 0;
+		except_code_o <= 'd0;
 end
 end
 

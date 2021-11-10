@@ -1,4 +1,4 @@
-// Copyright 2019 Politecnico di Torino.
+// Copyright 2021 Politecnico di Torino.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 2.0 (the "License"); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -8,9 +8,9 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: generic_rs.sv
+// File: alu.sv
 // Author: Michele Caon
-// Date: 21/10/2019
+// Date: 10/11/2021
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
@@ -18,11 +18,11 @@ import expipe_pkg::*;
 
 module alu 
 #(
-    RS_DEPTH = 16,
+    parameter RS_DEPTH      = 4, // it must be a power of 2
     
     // EU-specific parameters
-    EU_CTL_LEN = 4,
-    EXCEPT_LEN = 2
+    parameter EU_CTL_LEN    = 4,
+    parameter EXCEPT_LEN    = 2
 )
 (
     input   logic                   clk_i,
@@ -30,140 +30,97 @@ module alu
     input   logic                   flush_i,
 
     // Handshake from/to the reservation station unit
-    output   logic                   eu_ready_i,
-    output   logic                   eu_valid_i,
-    input  logic                   eu_valid_o,
-    input  logic                   eu_ready_o,
+    input   logic                   valid_i,
+    input   logic                   ready_i,
+    output  logic                   valid_o,
+    output  logic                   ready_o,
 
     // Data from/to the reservation station unit
-    //input   logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i,
-    output   logic [3-1:0] eu_entry_idx_i,
-    output   logic [XLEN-1:0]        eu_result_i,
-    output   logic                   eu_except_raised_i,
-    output   logic [EXCEPT_LEN-1:0]  eu_except_code_i,
-    input  logic [EU_CTL_LEN-1:0]  eu_ctl_o,
-    input  logic [XLEN-1:0]        eu_rs1_o,
-    input  logic [XLEN-1:0]        eu_rs2_o,
-    //output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o,   // to be produced at the end of execution together with the result
-    input  logic [3-1:0] eu_entry_idx_o
+    input   logic [EU_CTL_LEN-1:0]  ctl_i,
+    input   logic [$clog2(RS_DEPTH)-1:0] entry_idx_i,
+    input   logic [XLEN-1:0]        rs1_i,
+    input   logic [XLEN-1:0]        rs2_i,
+    output  logic [$clog2(RS_DEPTH)-1:0] entry_idx_o,
+    output  logic [XLEN-1:0]        result_o,
+    output  logic                   except_raised_o,
+    output  logic [EXCEPT_LEN-1:0]  except_code_o
 );
 
-//logic [3-1:0]       eu_entry_idx_temp;
-//logic [XLEN-1:0]     eu_result_temp;
-	// Main counting process. The counter clears when reaching the threshold
-always_ff @ (posedge clk_i or negedge rst_n_i) begin
-    if (!rst_n_i) begin
-        eu_ready_i <= 0; // Asynchronous reset
-		eu_valid_i <= 0;
-		eu_entry_idx_i = 'b000;
-		eu_result_i <= 'h0000000000000000;
-		eu_except_raised_i <= 0;
-		eu_except_code_i <= 'd0;
-    end
-    else if (flush_i) begin
-        eu_ready_i <= 0; // Synchronous clear when requested or when reaching the threshold
-		eu_valid_i <= 0;
-		eu_entry_idx_i = 'b000;
-		eu_result_i <= 'h0000000000000000;
-		eu_except_raised_i <= 0;
-		eu_except_code_i <= 'd0;
-    end
-    else if (eu_ready_o) begin
-		//case () begin
-        //eu_result_temp <= (eu_ctl_o)? eu_rs1_o - eu_rs2_o : eu_rs1_o + eu_rs2_o;
-		eu_entry_idx_i <= eu_entry_idx_o;
-		eu_ready_i = 1;
-		// R-FORMAT INSTRUCTIONS
-        
-        // ADD
-        if (eu_ctl_o == ALU_ADD) begin
-            eu_result_i <= eu_rs1_o + eu_rs2_o;
-        end
-        // ADDW
-        else if (eu_ctl_o == ALU_ADDW) begin
-            eu_result_i <= eu_rs1_o + eu_rs2_o;
-        end
-        // AND
-        else if (eu_ctl_o == ALU_AND) begin
-            eu_result_i <= eu_rs1_o + eu_rs2_o;
-        end
-        // OR
-        else if (eu_ctl_o == ALU_OR) begin
-            eu_result_i <= eu_rs1_o || eu_rs2_o;
-        end
-        
-        // SLL
-        else if (eu_ctl_o == ALU_SLL) begin
-            eu_result_i <= eu_rs1_o << eu_rs2_o;
-        end
-        // SLLW
-        else if (eu_ctl_o == ALU_SLLW) begin
-            eu_result_i <= eu_rs1_o << eu_rs2_o;
-        end
-        // SLT
-        else if (eu_ctl_o == ALU_SLT) begin
-            eu_result_i <= (eu_rs1_o < eu_rs2_o)? 'd1 : 'd0;
-        end
-        // SLTU
-        else if (eu_ctl_o == ALU_SLTU) begin
-            eu_result_i <= (eu_rs1_o < eu_rs2_o)? 'd1 : 'd0;
-        end
-        // SRA
-        else if (eu_ctl_o == ALU_SRA) begin
-            eu_result_i <= eu_rs1_o >>> eu_rs2_o;
-        end
-        // SRAW
-        else if (eu_ctl_o == ALU_SRAW) begin
-            eu_result_i <= eu_rs1_o >>> eu_rs2_o;
-        end
-        // SRL
-        else if (eu_ctl_o == ALU_SRL) begin
-            eu_result_i <= eu_rs1_o >> eu_rs2_o;
-        end
-        // SRLW
-        else if (eu_ctl_o == ALU_SRLW) begin
-            eu_result_i <= eu_rs1_o >> eu_rs2_o;
-        end
-        // SUB
-        else if (eu_ctl_o == ALU_SUB) begin
-            eu_result_i <= eu_rs1_o - eu_rs2_o;
-        end
-        // SUBW
-        else if (eu_ctl_o == ALU_SUBW) begin
-            eu_result_i <= eu_rs1_o - eu_rs2_o;
-        end
-        // XOR
-        else if (eu_ctl_o == ALU_XOR) begin
-            eu_result_i <= (eu_rs1_o && !eu_rs2_o) || (!eu_rs1_o && eu_rs2_o);
-        end
-        else begin
-            eu_result_i <= 'd0;
-        end
-		eu_valid_i <= (eu_valid_o)?1:0;
-		//eu_valid_i <= 0;
-		//if (eu_valid_o) begin
-		//eu_result_i <= eu_result_temp;
-		//eu_entry_idx_i <= eu_entry_idx_temp;
-		//eu_valid_i <= 1;
-		//end
-            
-    end
-	/*else if (eu_valid_o) begin// Swap with above I did
-		//case () begin
-        eu_result_i <= eu_result_temp;
-		eu_entry_idx_i <= eu_entry_idx_temp;
-		eu_valid_i <= 1;
-    end*/
-	else begin
-		eu_ready_i = 1;
-		eu_result_i <= 'h0000000000000000;
-		eu_entry_idx_i <= 'b000;
-		eu_valid_i <= 0;
-		eu_result_i <= 'h0000000000000000;
-		eu_except_raised_i <= 0;
-		eu_except_code_i <= 'd0;
-end
-end
+    // ALU output
+    logic [XLEN-1:0]        result;
+    logic                   except_raised;
 
+    // --------------
+    // ALU OPERATIONS
+    // --------------
+
+    always_comb begin : alu_ops
+        // Default values
+        result          = '0;
+        except_raised   = 1'b0;
+
+        unique case (ctl_i)
+            ALU_ADD:    result  = rs1_i + rs2_i;
+            ALU_ADDW:   result  = signed'(rs1_i[(XLEN>>1):0] + rs2_i[(XLEN>>1):0]);
+            ALU_SUB:    result  = rs1_i - rs2_i;
+            ALU_SUBW:   result  = signed'(rs1_i[(XLEN>>1):0] - rs2_i[(XLEN>>1):0]);
+            ALU_AND:    result  = rs1_i & rs2_i;
+            ALU_OR:     result  = rs1_i | rs2_i;
+            ALU_XOR:    result  = rs1_i ^ rs2_i;
+            ALU_SLL:    result  = rs1_i << rs2_i[5:0];
+            ALU_SLLW:   result  = signed'(rs1_i[(XLEN>>1):0] << rs2_i[4:0]);
+            ALU_SRL:    result  = rs1_i >> rs2_i[5:0];
+            ALU_SRLW:   result  = { '0, rs1_i[(XLEN>>1):0] >> rs2_i[4:0] };
+            ALU_SRA:    result  = rs1_i >>> rs2_i[5:0];
+            ALU_SRAW:   result  = rs1_i[(XLEN>>1):0] >>> rs2_i[4:0];
+            ALU_SLT:    result  = signed'(rs1_i) < signed'(rs2_i);
+            ALU_SLTU:   result  = rs1_i < rs2_i;
+            default:    except_raised   = 1'b1;
+        endcase
+    end
+
+    // Exception handling
+    assign  except_code     = E_ILLEGAL_INSTRUCTION; // invalid ALU opcode
+
+    // ---------------
+    // OUTPUT REGISTER
+    // ---------------
+    // NOTE: use a spill cell to break the handshaking path
+
+    // Interface data type
+    typedef struct packed {
+        logic [XLEN-1:0]        res;            // the ALU result
+        logic [$clog2(RS_DEPTH)-1:0] entry_idx; // instr. index in the RS
+        logic                   except_raised;  // exception flag
+    } out_reg_data_t;
+
+    out_reg_data_t  out_reg_data_in, out_reg_data_out;
+
+    // Input data
+    assign  out_reg_data_in.res             = result;
+    assign  out_reg_data_in.entry_idx       = entry_idx_i;
+    assign  out_reg_data_in.except_raised   = except_raised;
+
+    // Output data
+    assign  result_o                        = out_reg_data_out.res;
+    assign  entry_idx_o                     = out_reg_data_out.entry_idx;
+    assign  except_raised_o                 = out_reg_data_out.except_raised;
+
+    // Output register
+    spill_cell #(.DATA_T(out_reg_data_t), .SKIP(1'b0)) u_out_reg (
+        .clk_i          (clk_i),
+        .rst_n_i        (rst_n_i),
+        .flush_i        (flush_i),
+        .valid_i        (valid_i),
+        .ready_i        (ready_i),
+        .valid_o        (valid_o),
+        .ready_o        (ready_o),
+        .data_i         (out_reg_data_in),
+        .data_o         (out_reg_data_out)
+    );
+
+    // Exception handling
+    // ------------------
+    assign  except_code_o       = E_ILLEGAL_INSTRUCTION;
 
 endmodule

@@ -121,9 +121,31 @@ package expipe_pkg;
         IMM_TYPE_RS1
     } imm_format_t;
 
+    // -------------------------
+    // NUMBER OF EXECUTION UNITS
+    // -------------------------
+
+    localparam BASE_EU_N    = 5;   // load buffer, store buffer, branch unit, ALU, operands only
+
+`ifdef LEN5_M_EN
+    localparam MULT_EU_N    = 2;   // MULT, DIV
+`else
+    localparam MULT_EU_N    = 0;   // MULT, DIV
+`endif /* LEN5_M_EN */
+
+`ifdef LEN5_FP_EN
+    localparam FP_EU_N      = 1;     // FPU
+`else
+    localparam FP_EU_N      = 0;     // FPU
+`endif /* LEN5_FP_EN */
+
+    // Total number of execution units
+    localparam EU_N = BASE_EU_N + MULT_EU_N + FP_EU_N;
+
     // --------------------
     // RESERVATION STATIONS
     // --------------------
+
     // WIDTH OF THE CONTROL FIELDS IN THE DIFFERENT EUs
     // LOAD BUFFER
     localparam  LB_CTL_LEN      = 3;            // load type, see load buffer section below
@@ -136,7 +158,8 @@ package expipe_pkg;
 
     // ALU
     localparam  ALU_EXCEPT_LEN  = 2;
-    localparam  ALU_CTL_LEN     = 5;            // ALU operation control
+    localparam  ALU_CTL_LEN     = 4;            // ALU operation control
+
     // ALU opcodes
     typedef enum logic [ALU_CTL_LEN-1:0] {
         ALU_ADD,
@@ -152,18 +175,23 @@ package expipe_pkg;
         ALU_SRLW,
         ALU_SRA,    // shift right w/ sign extension
         ALU_SRAW,
-        ALU_SEQ,    // set if equal
-        ALU_SNE,    // set if not equal 
         ALU_SLT,    // set if less than
-        ALU_SGE,    // set if greater or equal
-        ALU_SLTU,   // set if less than (unsigned)
-        ALU_SGEU,   // set if greater or equal (unsigned)      
-        ALU_LUI     // LUI = imm << 12
+        ALU_SLTU    // set if less than (unsigned)
     } alu_ctl_t;
 
     // MULT
     localparam  MULT_EXCEPT_LEN = 2;
-    localparam  MULT_CTL_LEN    = 2;            // integer multiplier operation control
+    localparam  MULT_CTL_LEN    = 3;            // integer multiplier operation control
+    localparam  MULT_PIPE_DEPTH = 5;
+
+    // Mult opcodes
+    typedef enum logic [MULT_CTL_LEN-1:0] {
+        MULT_MUL,
+        MULT_MULW,
+        MULT_MULH,
+        MULT_MULHU,
+        MULT_MULHSU
+    } mult_ctl_t;
 
     // DIV
     localparam  DIV_EXCEPT_LEN  = 2;
@@ -182,11 +210,13 @@ package expipe_pkg;
         EU_STORE_BUFFER,
         EU_BRANCH_UNIT,
         EU_INT_ALU,
+    `ifdef LEN5_M_EN
         EU_INT_MULT,
         EU_INT_DIV,
-        `ifdef LEN5_FP_EN
+    `endif /* LEN5_M_EN */
+    `ifdef LEN5_FP_EN
         EU_FPU,
-        `endif /* LEN5_FP_EN */
+    `endif /* LEN5_FP_EN */
         EU_OPERANDS_ONLY,
         EU_NONE             //the instruction is directly sent to the ROB (csr, special instructions, etc.)
     } issue_eu_t;

@@ -88,7 +88,7 @@ module issue_q_l
     output  logic [0:EU_N-1]            ex_valid_o,             // ready signal to each reservation station
 
     // Data to the execution pipeline reservation stations
-    output  logic [8-1:0]  ex_eu_ctl_o,            // controls for the associated EU
+    output  logic [MAX_EU_CTL_LEN-1:0]  ex_eu_ctl_o,            // controls for the associated EU
     output  logic                       ex_rs1_ready_o,         // first operand is ready at issue time (from the RF or the ROB)
     output  logic [ROB_IDX_LEN-1:0]     ex_rs1_idx_o,    // the index of the ROB where the first operand can be found (if not ready
     output  logic [XLEN-1:0]            ex_rs1_value_o,         // the value of the first operand (if ready)

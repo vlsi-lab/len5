@@ -17,7 +17,7 @@ import expipe_pkg::*;
 
 module branch_rs 
 #(
-    RS_DEPTH = 16
+    RS_DEPTH = 4  // must be a power of 2
 )
 (
     input   logic                   clk_i,

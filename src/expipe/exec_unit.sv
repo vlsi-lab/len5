@@ -32,7 +32,7 @@ module exec_unit (
     output  logic [0:EU_N-1]    ex_valid_o,             // ready signal to each reservation station
 
     // Data oto the Back end
-    input   logic [8-1:0]               ex_eu_ctl_i,    // controls for the associated EU
+    input   logic [MAX_EU_CTL_LEN-1:0]  ex_eu_ctl_i,    // controls for the associated EU
     input   logic                       ex_rs1_ready_i, // first operand is ready at issue time (from the RF or the ROB)
     input   logic [ROB_IDX_LEN-1:0]     ex_rs1_idx_i,   // the index of the ROB where the first operand can be found (if not ready
     input   logic [XLEN-1:0]            ex_rs1_value_i, // the value of the first operand (if ready)
@@ -119,7 +119,7 @@ alu_rs #(.EU_CTL_LEN (ALU_CTL_LEN), .RS_DEPTH (ALU_RS_DEPTH), .EXCEPT_LEN(ALU_EX
 	//.stall(stall),
     .arbiter_valid_i (ex_ready_i[EU_INT_ALU]),
     .arbiter_ready_o (ex_valid_o[EU_INT_ALU]),
-	.eu_ctl_i (ex_eu_ctl_i),
+	.eu_ctl_i (ex_eu_ctl_i[ALU_CTL_LEN-1:0]),
     .rs1_ready_i (ex_rs1_ready_i),
     .rs1_idx_i (ex_rs1_idx_i),
     .rs1_value_i (ex_rs1_value_i),
@@ -139,6 +139,7 @@ alu_rs #(.EU_CTL_LEN (ALU_CTL_LEN), .RS_DEPTH (ALU_RS_DEPTH), .EXCEPT_LEN(ALU_EX
     .cdb_except_o (cdb_data_o[EU_INT_ALU].except_code)//(cdb_except_o)
 );
 
+`ifdef LEN5_M_EN
 mult_rs #(.EU_CTL_LEN (MULT_CTL_LEN), .RS_DEPTH (MULT_RS_DEPTH), .EXCEPT_LEN(MULT_EXCEPT_LEN)) u_mult_rs
 (
     .clk_i (clk_i),
@@ -147,7 +148,7 @@ mult_rs #(.EU_CTL_LEN (MULT_CTL_LEN), .RS_DEPTH (MULT_RS_DEPTH), .EXCEPT_LEN(MUL
 	//.stall(stall),
     .arbiter_valid_i (ex_ready_i[EU_INT_MULT]),
     .arbiter_ready_o (ex_valid_o[EU_INT_MULT]),
-	.eu_ctl_i (ex_eu_ctl_i),
+	.eu_ctl_i (ex_eu_ctl_i[MULT_CTL_LEN-1:0]),
     .rs1_ready_i (ex_rs1_ready_i),
     .rs1_idx_i (ex_rs1_idx_i),
     .rs1_value_i (ex_rs1_value_i),
@@ -175,7 +176,7 @@ div_rs #(.EU_CTL_LEN (DIV_CTL_LEN), .RS_DEPTH (DIV_RS_DEPTH), .EXCEPT_LEN(DIV_EX
 	//.stall(stall),
     .arbiter_valid_i (ex_ready_i[EU_INT_DIV]),
     .arbiter_ready_o (ex_valid_o[EU_INT_DIV]),
-	.eu_ctl_i (ex_eu_ctl_i),
+	.eu_ctl_i (ex_eu_ctl_i[DIV_CTL_LEN-1:0]),
     .rs1_ready_i (ex_rs1_ready_i),
     .rs1_idx_i (ex_rs1_idx_i),
     .rs1_value_i (ex_rs1_value_i),
@@ -194,6 +195,7 @@ div_rs #(.EU_CTL_LEN (DIV_CTL_LEN), .RS_DEPTH (DIV_RS_DEPTH), .EXCEPT_LEN(DIV_EX
     .cdb_except_raised_o (cdb_data_o[EU_INT_DIV].except_raised),//(cdb_except_raised_o),
     .cdb_except_o (cdb_data_o[EU_INT_DIV].except_code)//(cdb_except_o)
 );
+`endif /* LEN5_M_EN */
 
 `ifdef LEN5_FP_EN
 fpu_rs #(.EU_CTL_LEN (FPU_CTL_LEN), .RS_DEPTH (FPU_RS_DEPTH), .EXCEPT_LEN(FPU_EXCEPT_LEN)) u_fpu_rs
@@ -204,7 +206,7 @@ fpu_rs #(.EU_CTL_LEN (FPU_CTL_LEN), .RS_DEPTH (FPU_RS_DEPTH), .EXCEPT_LEN(FPU_EX
 	//.stall(stall),
     .arbiter_valid_i (ex_ready_i[EU_FPU]),
     .arbiter_ready_o (ex_valid_o[EU_FPU]),
-	.eu_ctl_i (ex_eu_ctl_i),
+	.eu_ctl_i (ex_eu_ctl_i[FPU_CTL_LEN-1:0]),
     .rs1_ready_i (ex_rs1_ready_i),
     .rs1_idx_i (ex_rs1_idx_i),
     .rs1_value_i (ex_rs1_value_i),

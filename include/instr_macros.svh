@@ -90,6 +90,21 @@ import len5_pkg::XLEN;
 `define OPCODE_XOR          7'b0110011
 `define OPCODE_XORI         7'b0010011
 
+// RV64M
+`define OPCODE_MUL          7'b0110011
+`define OPCODE_MULW         7'b0111011
+`define OPCODE_MULH         7'b0110011
+`define OPCODE_MULHSU       7'b0110011
+`define OPCODE_MULHU        7'b0110011
+`define OPCODE_DIV          7'b0110011
+`define OPCODE_DIVW         7'b0111011
+`define OPCODE_DIVU         7'b0110011
+`define OPCODE_DIVUW        7'b0111011
+`define OPCODE_REM          7'b0110011
+`define OPCODE_REMW         7'b0111011
+`define OPCODE_REMU         7'b0110011
+`define OPCODE_REMUW        7'b0111011
+
 // FUNCT3: only R, I, S, SB type instructions
 // RV64I
 `define FUNCT3_ADD          3'b000
@@ -156,6 +171,21 @@ import len5_pkg::XLEN;
 `define FUNCT3_XOR          3'b100
 `define FUNCT3_XORI         3'b100
 
+// RV64M
+`define FUNCT3_MUL          3'b000
+`define FUNCT3_MULW         3'b000
+`define FUNCT3_MULH         3'b001
+`define FUNCT3_MULHSU       3'b010
+`define FUNCT3_MULHU        3'b011
+`define FUNCT3_DIV          3'b100
+`define FUNCT3_DIVW         3'b100
+`define FUNCT3_DIVU         3'b101
+`define FUNCT3_DIVUW        3'b101
+`define FUNCT3_REM          3'b110
+`define FUNCT3_REMW         3'b110
+`define FUNCT3_REMU         3'b111
+`define FUNCT3_REMUW        3'b111
+
 // FUNCT7: only for R-type instructions
 // RV64I
 `define FUNCT7_ADD          7'b0000000
@@ -180,6 +210,21 @@ import len5_pkg::XLEN;
 `define FUNCT7_URET         7'b0011000
 `define FUNCT7_WFI          7'b0001000
 `define FUNCT7_XOR          7'b0000000
+
+// RV64M
+`define FUNCT7_MUL          7'b0000001
+`define FUNCT7_MULW         7'b0000001
+`define FUNCT7_MULH         7'b0000001
+`define FUNCT7_MULHSU       7'b0000001
+`define FUNCT7_MULHU        7'b0000001
+`define FUNCT7_DIV          7'b0000001
+`define FUNCT7_DIVW         7'b0000001
+`define FUNCT7_DIVU         7'b0000001
+`define FUNCT7_DIVUW        7'b0000001
+`define FUNCT7_REM          7'b0000001
+`define FUNCT7_REMW         7'b0000001
+`define FUNCT7_REMU         7'b0000001
+`define FUNCT7_REMUW        7'b0000001
 
 //-------------------
 // SPECIAL CODES

@@ -24,6 +24,10 @@
 // COMPILATION SWITCHES
 // --------------------
 
+// Enable M extension support
+// --------------------------
+//`define LEN5_M_EN
+
 // Enable floating-point support
 // -----------------------------
 //`define LEN5_FP_EN

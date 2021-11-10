@@ -228,7 +228,7 @@ module cache_L2_system_emulator #(
           l2c_l2arb_ans_o.wbb_tag   <= req_vec[ans_valid_idx].wbb_tag;
           l2c_l2arb_ans_o.ans_type  <= (missed_vec[ans_valid_idx]) ? l2arb_s0_DWbbWakeUp : l2arb_s0_DLineWritten;
           l2c_l2arb_ans_o.valid     <= 1'b1;
-          // TODO i_memory.WriteLine(memory_line_addr, line)
+          void'(i_memory.WriteLine(memory_line_addr, l2arb_l2c_req_i.line));
         end
         PTWLoad: begin
           void'(i_memory.ReadDW(memory_dw_addr));

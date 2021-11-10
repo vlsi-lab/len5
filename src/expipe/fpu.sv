@@ -18,7 +18,7 @@ import expipe_pkg::*;
 
 module fpu 
 #(
-    RS_DEPTH = 16,
+    RS_DEPTH = 4, // must be a power of 2,
     
     // EU-specific parameters
     EU_CTL_LEN = 4,
@@ -36,20 +36,15 @@ module fpu
     input  logic                   eu_ready_o,
 
     // Data from/to the reservation station unit
-    //input   logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i,
-    output   logic [3-1:0] eu_entry_idx_i,
+    output   logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i,
     output   logic [XLEN-1:0]        eu_result_i,
     output   logic                   eu_except_raised_i,
     output   logic [EXCEPT_LEN-1:0]  eu_except_code_i,
     input  logic [EU_CTL_LEN-1:0]  eu_ctl_o,
     input  logic [XLEN-1:0]        eu_rs1_o,
     input  logic [XLEN-1:0]        eu_rs2_o,
-    //output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o,   // to be produced at the end of execution together with the result
-    input  logic [3-1:0] eu_entry_idx_o
+    output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o   // to be produced at the end of execution together with the result
 );
-
-//logic [3-1:0]       eu_entry_idx_temp;
-//logic [XLEN-1:0]     eu_result_temp;
 	// Main counting process. The counter clears when reaching the threshold
 always_ff @ (posedge clk_i or negedge rst_n_i) begin
     if (!rst_n_i) begin
