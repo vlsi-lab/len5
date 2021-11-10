@@ -153,8 +153,8 @@ module spill_cell_cu (
             AB_FULL_SEL_B: begin
                 ready_o     = 1'b0;                 // do not accept new data
                 valid_o     = 1'b1;                 // valid data in B
-                a_en_o      = valid_i & !ready_i;   // no data to store
-                b_en_o      = valid_i & ready_i;    // no data to store
+                a_en_o      = 1'b0;                 // no data to store
+                b_en_o      = 1'b0;                 // no data to store
                 b_sel_o     = 1'b1;                 // select data in B
             end
             default:; // use default values

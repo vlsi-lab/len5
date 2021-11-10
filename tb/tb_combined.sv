@@ -62,13 +62,9 @@ initial begin
 
     //$monitor("Time = %0t -- instruction = 0x%8x, fetch ready = %0b", $time, instruction_i, fetch_ready_o);
     clk_i = 1;
-    rst_n_i = 1;
-	//l2c_l2arb_req_rdy_i =0;
-  	//l2c_l2arb_ans_t       
-	//l2c_l2arb_ans_i='d0;
+    rst_n_i = 0;
 
-        // reset
-    #2 rst_n_i = 0;
+	// reset
     #10 rst_n_i = 1;
 
     // #600 $finish;
