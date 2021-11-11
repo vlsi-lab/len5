@@ -12,7 +12,8 @@
 // Author: WALID WALID
 // Date: 17/10/2020
 
-//`include "issue_queue_fifo.sv"
+// Include LEN5 configuration
+`include "len5_config.svh"
 
 import len5_pkg::*;
 import expipe_pkg::*;

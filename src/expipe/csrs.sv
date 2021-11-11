@@ -12,6 +12,9 @@
 // Author: Michele Caon
 // Date: 03/11/2021
 
+// Include LEN5 configuration
+`include "len5_config.svh"
+
 // Opcode and CSR address definition
 `include "instr_macros.svh"
 `include "csr_macros.svh"

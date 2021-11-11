@@ -19,7 +19,7 @@ module cdb_arbiter
     input   logic                       clk_i,
     input   logic                       rst_n_i,
     input   logic                       flush_i,
-	//input logic stall,
+	
 
     // Handshake from/to the maximum priority unit
     input   logic                       max_prio_valid_i,

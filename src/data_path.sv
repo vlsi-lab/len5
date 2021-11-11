@@ -26,7 +26,7 @@ module data_path
   	input   logic             rst_n_i,
   	input   logic             flush_i,
 	output  logic [ILEN-1:0]  ins_in,
-	//input logic stall,
+	
 
 	// For back end :CU
   	input   satp_mode_t       vm_mode_i,
@@ -54,7 +54,7 @@ module data_path
   	//input   logic             except_raised_i,
   	//input   except_code_t     except_code_i,
 
-	input var icache_frontend_ans_t icache_frontend_ans_i,
+	input icache_frontend_ans_t icache_frontend_ans_i,
 	output logic                       except_raised_o,
     //output logic [ROB_EXCEPT_LEN-1:0]  except_code_o,
 	output except_code_t  except_code_o,

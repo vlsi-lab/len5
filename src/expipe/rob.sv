@@ -10,7 +10,10 @@
 //
 // File: rob.sv
 // Author: Michele Caon
-// Date: 03/11/2019ù
+// Date: 03/11/2019
+
+// Include LEN5 configuration
+`include "len5_config.svh"
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
@@ -24,7 +27,6 @@ module rob
     input   logic                       clk_i,
     input   logic                       rst_n_i,
     input   logic                       flush_i,
-	//input logic stall,
 
     // Handhsake from/to the issue stage
     input   logic                       issue_valid_i,
@@ -54,7 +56,7 @@ module rob
     output  logic                       cdb_ready_o,
 
     // Data from the CDB
-    input   var cdb_data_t                  cdb_data_i,
+    input   var cdb_data_t              cdb_data_i,
 
     // Handshake from/to the committing logic
     input   logic                       comm_ready_i,
@@ -65,8 +67,10 @@ module rob
     output  logic [XLEN-1:0]            comm_pc_o,
     output  logic [REG_IDX_LEN-1:0]     comm_rd_idx_o,          // the destination register (rd)
     output  logic [XLEN-1:0]            comm_value_o,           // the result of the instruction
+`ifdef LEN5_FP_EN
 	output  logic [REG_IDX_LEN-1:0]     fp_comm_rd_idx_o,          // the destination register (rd)
     output  logic [XLEN-1:0]            fp_comm_value_o,           // the result of the instruction
+`endif /* LEN5_FP_EN */
     output  logic                       comm_except_raised_o,
     //output  logic [ROB_EXCEPT_LEN-1:0]  comm_except_code_o,
 	output  except_code_t  comm_except_code_o,
@@ -90,7 +94,7 @@ module rob
 
     // Status signals
     logic [0:ROB_DEPTH-1]               valid_a, res_ready_a;
-    logic [ROB_EXCEPT_LEN-1:0]  comm_except_code_test;
+    logic [ROB_EXCEPT_LEN-1:0]          comm_except_code_test;
 
     // --------------
     // STATUS SIGNALS
@@ -251,10 +255,11 @@ module rob
     assign comm_pc_o            = rob_data[rob_head_idx].instr_pc;
     assign comm_rd_idx_o        = rob_data[rob_head_idx].rd_idx;
     assign comm_value_o         = rob_data[rob_head_idx].res_value;
-	assign fp_comm_rd_idx_o        = rob_data[rob_head_idx].rd_idx;//Fix it
-    assign fp_comm_value_o         = rob_data[rob_head_idx].res_value;//Fix it
+`ifdef LEN5_FP_EN
+	assign fp_comm_rd_idx_o     = rob_data[rob_head_idx].rd_idx;
+    assign fp_comm_value_o      = rob_data[rob_head_idx].res_value;
+`endif /* LEN5_FP_EN */
     assign comm_except_raised_o = rob_data[rob_head_idx].except_raised;
-    assign comm_except_code_test   = rob_data[rob_head_idx].except_code;
     assign comm_head_idx_o      = rob_head_idx;
 
 	// Exception assignment

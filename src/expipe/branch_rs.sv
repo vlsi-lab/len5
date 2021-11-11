@@ -60,7 +60,6 @@ module branch_rs
 );
 
     // Data from/to the execution unit
-    logic [XLEN-1:0]                mispredict_i; // mispredcition result
     logic [XLEN-1:0]                bu_rs1_o;
     logic [XLEN-1:0]                bu_rs2_o;
     logic [B_IMM-1:0]               bu_imm_o;
@@ -68,14 +67,13 @@ module branch_rs
     logic [XLEN-1:0]                bu_pred_target_o;
     logic                           bu_pred_taken_o;
     logic [BU_CTL_LEN-1:0]          bu_branch_type_o;
+    logic                           bu_res_mispredict;
 
     // Handshake from/to the execution unit
     logic                           bu_ready_i;
     logic                           bu_valid_i;
     logic                           bu_valid_o;
     logic                           bu_ready_o;
-
-	assign res_target_o = mispredict_i;
 
 branch_unit_rs  #(.RS_DEPTH (RS_DEPTH)) u_branch_generic_rs
 (
@@ -104,7 +102,7 @@ branch_unit_rs  #(.RS_DEPTH (RS_DEPTH)) u_branch_generic_rs
     .bu_valid_o (bu_valid_o),
     .bu_ready_o (bu_ready_o),
 
-    .mispredict_i(mispredict_i), 
+    .mispredict_i(bu_res_mispredict), 
     .bu_rs1_o(bu_rs1_o),
     .bu_rs2_o(bu_rs2_o),
     .bu_imm_o(bu_imm_o),
@@ -139,10 +137,13 @@ branch_unit u_branch
   	.ops_ready_o(bu_ready_i),
   	.res_valid_o(bu_valid_i),
   	.res_pc_o(res_pc_o),
-  	.res_target_o(mispredict_i/*res_target_o*/),
+  	.res_target_o(res_target_o),
   	.res_taken_o(res_taken_o),
-  	.res_mispredict_o(res_mispredict_o)
+  	.res_mispredict_o(bu_res_mispredict)
 
 );
+
+// Output evaluation
+assign  res_mispredict_o = bu_res_mispredict;
 
 endmodule

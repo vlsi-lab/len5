@@ -23,7 +23,7 @@ module d1_comp_block
   // From d0 output registers
   input  dcache_tag_t            tag_i,       // input tag for comparison
   // From the cache memory
-  input var dcache_tag_t [N_WAY-1:0] tag_vec_i,   // tag vector
+  input dcache_tag_t [N_WAY-1:0] tag_vec_i,   // tag vector
   input valid_vec_t              valid_vec_i, // valid vector
   input dirty_vec_t              dirty_vec_i, // dirty vector
   // From the replace block

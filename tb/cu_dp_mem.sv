@@ -34,7 +34,7 @@ module cu_dp_mem
 );
 
 	logic             flush_it;
-	//input logic stall,
+	
 	satp_mode_t       vm_mode_i;
 
 	// To the main control :CU 
@@ -108,7 +108,7 @@ data_path_memory #(.BOOT_PC(BOOT_PC)) U_Data_path_memory
     .rst_n_i  (rst_n_i),
     .flush_i  (flush_it),
 	.ins_in(ins_in),
-	//input logic stall,
+	
 
 	// For back end :CU
   	.vm_mode_i(vm_mode_i),

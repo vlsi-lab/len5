@@ -46,7 +46,7 @@ module front_end
   input   var resolution_t      res_i,
 
   // From Icache
-  input var icache_frontend_ans_t icache_frontend_ans_i,
+  input icache_frontend_ans_t icache_frontend_ans_i,
 
   // To backend
   output logic except_o,

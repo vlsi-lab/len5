@@ -33,7 +33,7 @@ module ifu
   output  logic             read_req_o,
 
   // From Icache
-  input var icache_frontend_ans_t icache_frontend_ans_i,
+  input icache_frontend_ans_t icache_frontend_ans_i,
 
   // To backend
   output logic except_o,

@@ -26,7 +26,7 @@ module data_path_memory
   	input   logic             rst_n_i,
   	input   logic             flush_i,
 	output  logic [ILEN-1:0]  ins_in,
-	//input logic stall,
+	
 
 	// For back end :CU
   	input   satp_mode_t       vm_mode_i,

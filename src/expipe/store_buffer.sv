@@ -46,7 +46,7 @@ module store_buffer
     input   logic                       clk_i,
     input   logic                       rst_n_i,
     input   logic                       flush_i,
-	//input logic stall,
+	
 
     input   satp_mode_t                 vm_mode_i,          // virtual memory MODE (from the 'satp' CSR)
 

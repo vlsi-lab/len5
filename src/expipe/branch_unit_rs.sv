@@ -37,7 +37,7 @@ module branch_unit_rs
     input   logic                           clk_i,
     input   logic                           rst_n_i,
     input   logic                           flush_i,
-	//input logic stall,
+	
 
     // Handshake from/to issue arbiter
     input   logic                           arbiter_valid_i,

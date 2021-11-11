@@ -48,7 +48,7 @@ module branch_unit
       BGE:      taken = ($signed(rs1_i) >= $signed(rs2_i));
       BLTU:     taken = (rs1_i < rs2_i);
       BGEU:     taken = (rs1_i >= rs2_i);
-      default:  taken = 0;    
+      default:  taken = 0;
     endcase
   end
 
