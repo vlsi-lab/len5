@@ -24,7 +24,7 @@ module mux
 )
 (
   input  logic [SEL_LEN-1:0]     sel,
-  input  var logic [PARALLELISM-1:0] input_i [N_INPUT],
+  input logic [PARALLELISM-1:0] input_i [N_INPUT],
   output logic [PARALLELISM-1:0] output_o
 );
 

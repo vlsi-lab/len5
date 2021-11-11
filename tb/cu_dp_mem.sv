@@ -29,7 +29,7 @@ module cu_dp_mem
   	// L2 Cache Arbiter <-> L2 Cache Emulator
 	output l2arb_l2c_req_t       l2arb_l2c_req_o,
   	input  logic                 l2c_l2arb_req_rdy_i,
-  	input  var l2c_l2arb_ans_t       l2c_l2arb_ans_i,
+  	input l2c_l2arb_ans_t       l2c_l2arb_ans_i,
   	output logic                 l2arb_l2c_ans_rdy_o 
 );
 

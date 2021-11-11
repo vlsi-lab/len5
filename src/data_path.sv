@@ -42,7 +42,7 @@ module data_path
   	output  logic [XLEN-1:0]  addr_o,
   	output  logic             addr_valid_o,
  	input   logic             addr_ready_i,
-  	input   var icache_out_t      data_i,
+  	input icache_out_t      data_i,
   	input   logic             data_valid_i,
  	output  logic             data_ready_o,
   	
@@ -62,14 +62,14 @@ module data_path
 	output logic [ROB_IDX_LEN-1:0] rob_head_idx_o,
 
 	// Handshake and data from/to the TLB :DTLB
-    input   var dtlb_lsq_ans_t          dtlb_ans_i,
-    input   var dtlb_lsq_wup_t          dtlb_wup_i,
+    input dtlb_lsq_ans_t          dtlb_ans_i,
+    input dtlb_lsq_wup_t          dtlb_wup_i,
 	input   logic                       dtlb_ready_i,
     output  lsq_dtlb_req_t          dtlb_req_o,
 
     // Handshake and data from/to the D$ :D$
-    input   var l1dc_lsq_ans_t          dcache_ans_i,
-    input   var l1dc_lsq_wup_t          dcache_wup_i,
+    input l1dc_lsq_ans_t          dcache_ans_i,
+    input l1dc_lsq_wup_t          dcache_wup_i,
 	input   logic                       dcache_ready_i,
     output  lsq_l1dc_req_t          dcache_req_o  
 );

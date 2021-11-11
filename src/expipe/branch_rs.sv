@@ -55,7 +55,7 @@ module branch_rs
     output  logic                           cdb_valid_o,
 
     // Data from/to the CDB
-    input   var cdb_data_t                      cdb_data_i,
+    input cdb_data_t                      cdb_data_i,
     output  cdb_data_t                      cdb_data_o
 );
 

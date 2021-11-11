@@ -24,22 +24,22 @@ module icache_L1 (
   input logic                   flush_i,     // flush the whole cache
   input logic                   abort_i,     // abort current operation
   // front-end
-  input  var frontend_icache_req_t  ireq_i,      // incoming front-end instruction request channel
+  input frontend_icache_req_t  ireq_i,      // incoming front-end instruction request channel
   output logic                  ready_o,     // ready for a front-end request
   output icache_frontend_ans_t  iresp_o,     // i-cache instruction response channel
   // TLB
   output icache_tlb_req_t       tlb_areq_o,  // address translation request to i-TLB
   input  logic                  tlb_ready_i, // TLB is ready for a request
-  input  var tlb_icache_ans_t       tlb_aresp_i, // i-TLB response channel
+  input tlb_icache_ans_t       tlb_aresp_i, // i-TLB response channel
   // L2-arbiter
   output icache_l2_req_t        l2_req_o,    // request channel to L2-arbiter
   input  logic                  l2_ready,    // l2 level can accept requests
-  input  var l2_icache_ans_t        l2_resp_i,   // response channel from L2-arbiter
+  input l2_icache_ans_t        l2_resp_i,   // response channel from L2-arbiter
   // Memory Interface
   output icache_mem_ctrl_t                              mem_ctrl_o,
   output icache_idx_addr_t                              cache_addr_o,
   output icache_L1_vtag_t [ICACHE_L1_ASSOCIATIVITY-1:0] vtag_vec_in_o,
-  input  var icache_mem_out_t                               mem_out_i
+  input icache_mem_out_t                               mem_out_i
 );
 
   // vaddr registers The address is "virtual" only if the virtual memory is on

@@ -27,7 +27,7 @@ module cdb
     output  logic               max_prio_ready_o,
 
     // Data from the maximum priority EU
-    input   var cdb_data_t          max_prio_data_i,
+    input cdb_data_t          max_prio_data_i,
 	output  cdb_data_t          max_prio_data_o,
 
     // Handshake from/to the reservation stations
@@ -35,7 +35,7 @@ module cdb
     output  logic [0:EU_N-2]    rs_ready_o,
 
     // Data from the reservation stations or issue queue.
-    input   var cdb_data_t          rs_data_i[0:EU_N-2],
+    input cdb_data_t          rs_data_i[0:EU_N-2],
 	output  cdb_data_t          rs_data_o[0:EU_N-2],
 
 	//new added

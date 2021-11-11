@@ -64,7 +64,7 @@ module branch_unit_rs
     output  logic                           bu_ready_o,
 
     // Data from/to the execution unit
-    input   logic [XLEN-1:0]                mispredict_i, // mispredcition result
+    input   logic                           mispredict_i, // mispredcition result
     output  logic [XLEN-1:0]                bu_rs1_o,
     output  logic [XLEN-1:0]                bu_rs2_o,
     output  logic [B_IMM-1:0]               bu_imm_o,
@@ -79,7 +79,7 @@ module branch_unit_rs
     output  logic                           cdb_valid_o,
 
     // Data from/to the CDB
-    input   var cdb_data_t                      cdb_data_i,
+    input cdb_data_t                      cdb_data_i,
     output  cdb_data_t                      cdb_data_o
 );
 
@@ -278,7 +278,7 @@ module branch_unit_rs
 
             // Save the result from the branch unit
             if (rs_wr_res) begin
-                rs_data[wr_res_idx]            <= 1'b0; // clear the busy bit
+                rs_data[wr_res_idx]                 <= 1'b0; // clear the busy bit
                 rs_data[wr_res_idx].res_ready       <= 1'b1; // mark the entry as completed
                 rs_data[wr_res_idx].mispredicted    <= mispredict_i; // misprediction info from the branch unit
             end

@@ -26,7 +26,7 @@ module dcache_mshr
   input  logic                         put_wait_read_line_i, // set the wait bit for the read line
   input  logic                         clr_hit_line_i,       // clear the line which hit
   // Input line address from d1
-  input  var line_addr_t                   line_addr_i,          // d1 input line address compared
+  input line_addr_t                   line_addr_i,          // d1 input line address compared
   // Output line address for L2C req
   output line_addr_t                   mshr_l2c_line_addr_o, // next ready line
   // Output state

@@ -34,7 +34,7 @@ module L2_tlb_t1
   input  asid_t            base_asid_i,    // Actual ASID from "satp" register
   // Flush control
   input  asid_t            flush_asid_i,
-  input  var vpn_t             flush_page_i,
+  input vpn_t             flush_page_i,
   // (t1 -> MSHR) data
   output vpn_t             t1_mshr_vpn_o,
   output tlb_arb_tag_e     mshr_destination_o,
@@ -43,9 +43,9 @@ module L2_tlb_t1
   // (L2 TLB -> L1 TLB Arbiter) answer channel
   output l2tlb_l1tlb_ans_t l2tlb_l1tlb_ans_o,
   // t0 -> registers
-  input  var t0_t1_req_t       t0_t1_req_q_i,
+  input t0_t1_req_t       t0_t1_req_q_i,
   // Memory -> t1 data
-  input  var l2tlb_entry_t     tlb_output_entry_vec_i [N_WAY],
+  input l2tlb_entry_t     tlb_output_entry_vec_i [N_WAY],
   // (t1 -> t0) request channel
   output t1_t0_req_t       t1_t0_req_o,
   // (t1 -> Replacement block)

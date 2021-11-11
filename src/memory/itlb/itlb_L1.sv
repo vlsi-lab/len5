@@ -29,17 +29,17 @@ module itlb_L1 (
   // ctrl
   input  tlb_flush_e       flush_type_i,    // flush the tlb
   input  asid_t            flush_asid_i,    // asid for selective flush (fence.vma)
-  input  var vpn_t             flush_page_i,    // page address for selective flush (fence.vma)
+  input vpn_t             flush_page_i,    // page address for selective flush (fence.vma)
   input  logic             vmem_on_i,       // is virtual memory active?
   input  logic             abort_i,         // abort current operation
   // i-cache
-  input  var icache_tlb_req_t  ic_areq_i,       // address translation request from i-cache
+  input icache_tlb_req_t  ic_areq_i,       // address translation request from i-cache
   output logic             ic_areq_ready_o, // i-TLB is ready for a request
   output tlb_icache_ans_t  ic_aresp_o,      // response channel to i-cache
   // L2-arbiter
   output itlb_l2tlb_req_t  l2_req_o,        // request channel to L2-arbiter
   input  logic             l2_req_ready_i,  // l2 level can accept requests
-  input  var l2tlb_itlb_ans_t  l2_resp_i,       // response channel from L2-arbiter
+  input l2tlb_itlb_ans_t  l2_resp_i,       // response channel from L2-arbiter
   output logic             l2_resp_ready_o  // response channel from L2-arbiter
 );
 

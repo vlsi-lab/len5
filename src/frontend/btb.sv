@@ -26,7 +26,7 @@ module btb
   input   logic [XLEN-1:0]        pc_i,
   input   logic                   valid_i,
   input   logic                   del_entry_i,
-  input   var resolution_t            res_i,
+  input resolution_t            res_i,
 
   output  logic                   hit_o,
   output  logic [XLEN-OFFSET-1:0] target_o

@@ -40,7 +40,6 @@ module commit_logic (
     input   logic [XLEN-1:0]            fp_rob_value_i,
 `endif /* LEN5_FP_EN */
     input   logic                       rob_except_raised_i,
-    //input   logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_i,
 	input   except_code_t  rob_except_code_i,
     input   logic [ROB_IDX_LEN-1:0]     rob_head_idx_i,
 
@@ -88,10 +87,12 @@ module commit_logic (
     // Data to instruction decoder
 	logic [OPCODE_LEN -1:0]     instr_opcode;
 	logic                       sb_store_committing_t;
+    logic                       mispredict;
 
 	assign instr_opcode         = rob_instr_i.r.opcode;
 	assign except_new_pc_o		= (rob_valid_i & rob_except_raised_i) ? 'd1 : 'd0 ;
 	assign except_new_o			= (rob_valid_i) ? rob_except_raised_i : 'b0;
+    assign mispredict           = rob_value_i[0];
 
     // ------------
     // COMMIT LOGIC
@@ -117,7 +118,7 @@ module commit_logic (
     .fp_rs_ready_i				(fp_rs_ready_i),
     .fp_rf_ready_i				(fp_rf_ready_i),
 `endif /* LEN5_FP_EN */
-    .mispredict_i				(mispredict_i),
+    .mispredict_i				(mispredict),
     .comm_possible_o            (cd_comm_possible)    
     );
 

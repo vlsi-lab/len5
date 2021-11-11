@@ -33,10 +33,12 @@ module commit_decoder
 	input   logic                   rob_valid_i,
 	input   logic                   no_exception_i,
 	input   logic                   int_rs_ready_i,
-	input   logic                   fp_rs_ready_i,
 	input   logic                   int_rf_ready_i,
+`ifdef LEN5_FP_EN
+	input   logic                   fp_rs_ready_i,
 	input   logic                   fp_rf_ready_i,
-	input   logic                   mispredict_i,
+`endif /* LEN5_FP_EN */
+    input   logic                   mispredict_i,
 
     // Control to the commit logic
     output  logic                   comm_possible_o    
@@ -70,9 +72,11 @@ module commit_decoder
                 comm_possible_o = (rob_valid_i && no_exception_i && int_rf_ready_i && int_rs_ready_i) ? 1'b1 : 1'b0;
             end
 			// Do here for floating point loads
+            `ifdef LEN5_FP_EN
 			`OPCODE_LD: begin // complete it later , `OPCODE_FTYPE, `OPCODE_DTYPE, `OPCODE_QTYPR
                 comm_possible_o = (rob_valid_i && no_exception_i && fp_rf_ready_i && fp_rs_ready_i) ? 1'b1 : 1'b0;
             end
+            `endif /* LEN5_FP_EN */
 
             default: comm_possible_o = 1'b0; // normally commit without further checks
         endcase

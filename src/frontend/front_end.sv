@@ -32,7 +32,7 @@ module front_end
   output  logic [XLEN-1:0]  addr_o,
   output  logic             addr_valid_o,
   input   logic             addr_ready_i,
-  input   var icache_out_t      data_i,
+  input icache_out_t      data_i,
   input   logic             data_valid_i,
   output  logic             data_ready_o,
 
@@ -43,7 +43,7 @@ module front_end
   output  prediction_t      pred_o,
 
   // From branch unit (ex stage)
-  input   var resolution_t      res_i,
+  input resolution_t      res_i,
 
   // From Icache
   input icache_frontend_ans_t icache_frontend_ans_i,

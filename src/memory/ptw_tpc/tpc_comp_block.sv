@@ -21,8 +21,8 @@ module tpc_comp_block
   HALF_TAG_LEN = VPN_PART_LEN  // 9 bit
 )
 (
-  input  var logic [1:0][HALF_TAG_LEN-1:0]                  tag_i,         // 9 bits VPN + 9 bits VPN = 18 bits
-  input  var logic [REG_ENTRIES-1:0][1:0][HALF_TAG_LEN-1:0] tag_vec_i,     // all the tags
+  input logic [1:0][HALF_TAG_LEN-1:0]                  tag_i,         // 9 bits VPN + 9 bits VPN = 18 bits
+  input logic [REG_ENTRIES-1:0][1:0][HALF_TAG_LEN-1:0] tag_vec_i,     // all the tags
   input  logic [REG_ENTRIES-1:0]                        partial_vec_i, // all the partial bits
   input  logic [REG_ENTRIES-1:0]                        valid_vec_i,   // all the valid bits
   output logic                                          full_hit_o,    // full or partial hit of the VPN trace

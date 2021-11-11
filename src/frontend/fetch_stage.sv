@@ -34,7 +34,7 @@ module fetch_stage
   output  logic [XLEN-1:0]  addr_o,
   output  logic             addr_valid_o,
   input   logic             addr_ready_i,
-  input   var icache_out_t      data_i,
+  input icache_out_t      data_i,
   input   logic             data_valid_i,
   output  logic             data_ready_o,
 
@@ -45,7 +45,7 @@ module fetch_stage
   output  prediction_t      pred_o,
 
   // From Icache
-  input   var icache_frontend_ans_t icache_frontend_ans_i,
+  input icache_frontend_ans_t icache_frontend_ans_i,
 
   // To backend
   output logic except_o,
@@ -53,7 +53,7 @@ module fetch_stage
   output except_code_t except_code_o,
 
   // From branch unit (ex stage)
-  input   var resolution_t      res_i  
+  input resolution_t      res_i  
 );
 
   // Signal declarations

@@ -36,15 +36,15 @@ module l2_tlb
   // Flush control
   input  tlb_flush_e       flush_type_i,   // External flush request to the L2 TLB flush unit
   input  asid_t            flush_asid_i,
-  input  var vpn_t             flush_page_i,
+  input vpn_t             flush_page_i,
   // (L1 TLB Arbiter -> L2 TLB) request channel
-  input  var l1tlb_l2tlb_req_t l1tlb_l2tlb_req_i,
+  input l1tlb_l2tlb_req_t l1tlb_l2tlb_req_i,
   output logic             l2tlb_l1tlb_req_rdy_o,
   // (L2 TLB -> PTW) request channel
   output l2tlb_ptw_req_t   l2tlb_ptw_req_o,
   input  logic             ptw_l2tlb_req_rdy_i,
   // (PTW -> L2 TLB) answer channel
-  input  var ptw_l2tlb_ans_t   ptw_l2tlb_ans_i,
+  input ptw_l2tlb_ans_t   ptw_l2tlb_ans_i,
   output logic             l2tlb_ptw_ans_rdy_o,
   // (L2 TLB -> L1 TLB Arbiter) answer channel
   output l2tlb_l1tlb_ans_t l2tlb_l1tlb_ans_o,
@@ -54,8 +54,8 @@ module l2_tlb
   output l2tlb_dmem_ctrl_t          data_mem_ctrl_o [L2_TLB_ASSOCIATIVITY],
   output l2tlb_t_entry_t            tlb_input_entry_tag_o,
   output logic [PPN_LEN-1:0]        tlb_input_entry_data_o,
-  input  var l2tlb_t_entry_t            tlb_output_entry_vec_tag_i  [L2_TLB_ASSOCIATIVITY],
-  input  var logic [PPN_LEN-1:0]        tlb_output_entry_vec_data_i [L2_TLB_ASSOCIATIVITY]
+  input l2tlb_t_entry_t            tlb_output_entry_vec_tag_i  [L2_TLB_ASSOCIATIVITY],
+  input logic [PPN_LEN-1:0]        tlb_output_entry_vec_data_i [L2_TLB_ASSOCIATIVITY]
 );
 
   localparam N_SETS_TLB  = L2_TLB_ENTRIES / L2_TLB_ASSOCIATIVITY;

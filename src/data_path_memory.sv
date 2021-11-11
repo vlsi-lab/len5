@@ -75,7 +75,7 @@ module data_path_memory
   	input  tlb_flush_e           L1TLB_flush_type_i,
   	input  tlb_flush_e           L2TLB_flush_type_i,
   	input  asid_t                flush_asid_i,
- 	input  var vpn_t                 flush_page_i,
+ 	input vpn_t                 flush_page_i,
 	
 	// LSQ <-> d-TLB
   	output logic                 dtlb_lsq_req_rdy_o,
@@ -86,7 +86,7 @@ module data_path_memory
   	// L2 Cache Arbiter <-> L2 Cache Emulator
 	output l2arb_l2c_req_t       l2arb_l2c_req_o,
   	input  logic                 l2c_l2arb_req_rdy_i,
-  	input  var l2c_l2arb_ans_t       l2c_l2arb_ans_i,
+  	input l2c_l2arb_ans_t       l2c_l2arb_ans_i,
   	output logic                 l2arb_l2c_ans_rdy_o 
 );
 

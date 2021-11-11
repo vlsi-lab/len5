@@ -34,15 +34,15 @@ module l2_tlb_with_ssram
   // Flush control
   input  tlb_flush_e       flush_type_i,   // External flush request to the L2 TLB flush unit
   input  asid_t            flush_asid_i,
-  input  var vpn_t             flush_page_i,
+  input vpn_t             flush_page_i,
   // (L1 TLB Arbiter -> L2 TLB) request channel
-  input  var l1tlb_l2tlb_req_t l1tlb_l2tlb_req_i,
+  input l1tlb_l2tlb_req_t l1tlb_l2tlb_req_i,
   output logic             l2tlb_l1tlb_req_rdy_o,
   // (L2 TLB -> PTW) request channel
   output l2tlb_ptw_req_t   l2tlb_ptw_req_o,
   input  logic             ptw_l2tlb_req_rdy_i,
   // (PTW -> L2 TLB) answer channel
-  input  var ptw_l2tlb_ans_t   ptw_l2tlb_ans_i,
+  input ptw_l2tlb_ans_t   ptw_l2tlb_ans_i,
   output logic             l2tlb_ptw_ans_rdy_o,
   // (L2 TLB -> L1 TLB Arbiter) answer channel
   output l2tlb_l1tlb_ans_t l2tlb_l1tlb_ans_o

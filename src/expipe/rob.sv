@@ -56,7 +56,7 @@ module rob
     output  logic                       cdb_ready_o,
 
     // Data from the CDB
-    input   var cdb_data_t              cdb_data_i,
+    input cdb_data_t              cdb_data_i,
 
     // Handshake from/to the committing logic
     input   logic                       comm_ready_i,

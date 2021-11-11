@@ -18,8 +18,8 @@ import memory_pkg::*;
 module pte_checker
 (
   input  pte_level_e pte_level_i,  // page table level at which the checked PTE exists. "ROOT" means that this is not a PTE, but the root address of the page table
-  input  var ppn_t       ppn_i,        // the ppn. If it is not a leaf page, it should be alignet to its natural boundary
-  input  var pte_ctrl_t  pte_ctrl_i,   // control bits to detect exception_os and understand the meaning of the PPN of the PTE
+  input ppn_t       ppn_i,        // the ppn. If it is not a leaf page, it should be alignet to its natural boundary
+  input pte_ctrl_t  pte_ctrl_i,   // control bits to detect exception_os and understand the meaning of the PPN of the PTE
   input  logic       chk_en_i,     // there is something to check
   output exception_e exception_o,  // the actual exception_o. A value of 0 means "no exception_os".
   output logic       done_o        // asserted if the PTW should be stopped, either for an exception_o or for the correct PPN

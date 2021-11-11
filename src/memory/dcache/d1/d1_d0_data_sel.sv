@@ -26,13 +26,13 @@ module d1_d0_data_sel
   input  logic            d1_d0_req_valid_i,        // valid for the d1 -> d0 request type
   input  logic            replaying_i,              // is d1 performing an instruction replay now?
   // Data from d0 output registers
-  input  var dcache_L1_addr_t d0_reg_out_paddr_i,       // the physical cache address
+  input dcache_L1_addr_t d0_reg_out_paddr_i,       // the physical cache address
   input  logic [XLEN-1:0] d0_reg_out_data_i,        // data to be stored
   input  dcache_line_t    d0_reg_out_line_i,        // forwarded line
   input  logic [BUFF_IDX_LEN-1:0] d0_reg_out_lsq_addr_i,    // to address the answer to LSQ
   input  store_width_e    d0_reg_out_store_width_i, // DW, W, HW, B
   // Dirty data from the memory (useful during an L2 Updating)
-  input  var line_addr_t      dirty_line_addr_i,        // paddr for d0 line cleaning during an L2 updating
+  input line_addr_t      dirty_line_addr_i,        // paddr for d0 line cleaning during an L2 updating
   // Data from the comparison block
   input  hit_vec_t        hit_vec_i,                // hit lines from the comparison block in d1
   input  dirty_vec_t      dirty_vec_i,              // one hotted dirty vector from d1
@@ -42,7 +42,7 @@ module d1_d0_data_sel
   input  dcache_line_t    wbb_d1_line_i,            // line from the WBB
   // Data from the replay registers
   input  d1_d0_req_type_e replay_reg_type_i,        // d1 -> d0 request type
-  input  var dcache_L1_addr_t replay_reg_paddr_i,       // the physical cache address
+  input dcache_L1_addr_t replay_reg_paddr_i,       // the physical cache address
   input  logic [XLEN-1:0] replay_reg_doubleword_i,  // data to be stored
   input  logic [BUFF_IDX_LEN-1:0] replay_reg_lsq_addr_i,    // to address the answer to LSQ
   input  store_width_e    replay_reg_store_width_i, // DW, W, HW, B

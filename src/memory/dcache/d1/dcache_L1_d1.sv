@@ -23,7 +23,7 @@ module dcache_L1_d1
   // Control
   input  logic          clr_i,              // Clear MSHR and other regs
   // d0 -> d1
-  input  var d0_d1_req_t    d0_d1_req_i,        // Request related information from d0 output register
+  input d0_d1_req_t    d0_d1_req_i,        // Request related information from d0 output register
   output logic          d1_d0_req_rdy_o,    // d1 stage ready?
   output logic          d1_d0_stalled_o,    // d1 is stalled (let pass L2 answers only)
   // d1 -> d0

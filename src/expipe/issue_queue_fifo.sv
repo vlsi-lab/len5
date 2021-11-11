@@ -34,7 +34,7 @@ module issue_queue_fifo (
     output  logic                   issue_valid_o,
 
     // New entry data (from fetch unit)
-    input   var iq_entry_t              new_entry,
+    input iq_entry_t              new_entry,
 
     // Issued entry
     output  iq_entry_t              issued_instr,

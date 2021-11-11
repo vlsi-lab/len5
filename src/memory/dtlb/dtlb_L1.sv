@@ -31,9 +31,9 @@ module dtlb_L1
   // Flush control
   input  tlb_flush_e      flush_type_i,         // Flush selectively the TLB and the MSHR
   input  asid_t           flush_asid_i,         // ASID for selective flush (fence.vma)
-  input  var vpn_t            flush_page_i,         // Page address for selective flush (fence.vma)
+  input vpn_t            flush_page_i,         // Page address for selective flush (fence.vma)
   // LSQ -> D-TLB translation request
-  input  var lsq_dtlb_req_t   lsq_dtlb_req_i,
+  input lsq_dtlb_req_t   lsq_dtlb_req_i,
   output logic            dtlb_lsq_req_rdy_o,
   // D-TLB -> LSQ answer and wake-up
   output dtlb_lsq_ans_t   dtlb_lsq_ans_o,
@@ -42,7 +42,7 @@ module dtlb_L1
   output dtlb_l2tlb_req_t dtlb_l2tlb_req_o,     // MSHR to L2-TLB request
   input  logic            l2tlb_dtlb_req_rdy_i, // L2-TLB ready for MSHR req?
   // L2-TLB -> D-TLB answer
-  input  var l2tlb_dtlb_ans_t l2tlb_dtlb_ans_i      // Always ready for the L2-TLB, because it has the highest req priority
+  input l2tlb_dtlb_ans_t l2tlb_dtlb_ans_i      // Always ready for the L2-TLB, because it has the highest req priority
 );
 
   localparam N      = D_TLB_ENTRIES;

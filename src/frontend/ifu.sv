@@ -28,7 +28,7 @@ module ifu
   output  logic             fetch_ready_o,
 
   // From/to i-cache interface
-  input   var icache_out_t      cache_out_i,
+  input icache_out_t      cache_out_i,
   input   logic             read_done_i,
   output  logic             read_req_o,
 
