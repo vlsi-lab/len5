@@ -28,10 +28,6 @@ module Back_end_tb; // comment
 	logic            except_raised_i;
 	except_code_t    except_code_i;
 
-    // Data for execution unit
-	branch_type_t               branch_type_i;
-	ldst_type_t             	ldst_type_i;
-
 	// Data to the FE 
 	logic [XLEN-1:0]  res_pc_o;
   	logic [XLEN-1:0]  res_target_o;
@@ -60,8 +56,6 @@ initial begin
     fetch_valid_i = 0;
 
 	vm_mode_i=SV39;
-	branch_type_i=BEQ;
-	ldst_type_i=LS_WORD;
 
 	dtlb_ans_i.ppn='h0;
 	dtlb_ans_i.exception=NoException;
@@ -129,10 +123,6 @@ back_end Back_end_IQL
     .pred_taken_i (pred_taken_i),
     .except_raised_i (except_raised_i),
     .except_code_i (except_code_i),
-
-    // Data for execution unit
-	.branch_type_i(branch_type_i),
-	.ldst_type_i(ldst_type_i),
 
 	// Data to the FE 
 	.res_pc_o(res_pc_o),

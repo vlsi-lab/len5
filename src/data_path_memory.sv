@@ -34,10 +34,6 @@ module data_path_memory
 	// To the main control :CU 
   	output  logic             main_cu_stall_o,
 
-	// Data for execution unit :CU
-    input   branch_type_t     branch_type_i,
-  	input   ldst_type_t       ldst_type_i,
-
   	// From/to i-cache  :I$
  	output  logic             data_ready_o,
   	
@@ -113,8 +109,6 @@ data_path #(.BOOT_PC(BOOT_PC)) u_Data_path
 	//.stall(stall),
     .vm_mode_i(vm_mode_i),
 	.main_cu_stall_o(main_cu_stall_o),
-	.branch_type_i(branch_type_i),
-	.ldst_type_i(ldst_type_i),
   	.addr_o(frontend_icache_req_i.vaddr),
   	.addr_valid_o(frontend_icache_req_i.valid),
  	.addr_ready_i(icache_frontend_rdy_o),

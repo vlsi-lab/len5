@@ -45,7 +45,7 @@ module vaddr_adder #(IDX_LEN = 8)
     input   logic [XLEN-1:0]            rs1_value_i,
     input   logic [I_IMM-1:0]           imm_value_i,
     input   logic [IDX_LEN-1:0]         lsb_idx_i,
-    input   ldst_type_t                 ldst_type_i,
+    input   logic [LDST_TYPE_LEN-1:0]   ldst_type_i,
     output  logic                       is_store_o,
     output  logic [XLEN-1:0]            vaddr_o,
     output  logic [IDX_LEN-1:0]         lsb_idx_o,
@@ -53,11 +53,11 @@ module vaddr_adder #(IDX_LEN = 8)
 );
 
     // DEFINITIONS
-    logic [XLEN-1:0]    rs1_value, sext_imm_value;
-    logic [I_IMM-1:0]   imm_value;
-    ldst_type_t         ldst_type;
-    satp_mode_t         vm_mode;
-    logic               align_except, pfault_except;
+    logic [XLEN-1:0]            rs1_value, sext_imm_value;
+    logic [I_IMM-1:0]           imm_value;
+    logic [LDST_TYPE_LEN-1:0]   ldst_type;
+    satp_mode_t                 vm_mode;
+    logic                       align_except, pfault_except;
 
     // ---------------
     // INPUT REGISTERS
@@ -140,9 +140,9 @@ module vaddr_adder #(IDX_LEN = 8)
         endcase
         // Warn when virtual address is misaligned
         case(ldst_type)
-            LS_HALFWORD, LS_HALFWORD_U: assert (!vaddr_o[0]) else `uvm_error("ALIGNMENT", $sformatf("Instruction of type %s has misaligned address \'%h\'", ldst_type.name(), vaddr_o))
-            LS_WORD, LS_WORD_U: assert (vaddr_o[1:0] == 2'b00) else `uvm_error("ALIGNMENT", $sformatf("Instruction of type %s has misaligned address \'%h\'", ldst_type.name(), vaddr_o))
-            LS_DOUBLEWORD: assert (vaddr_o[2:0] == 3'b000) else `uvm_error("ALIGNMENT", $sformatf("Instruction of type %s has misaligned address \'%h\'", ldst_type.name(), vaddr_o))
+            LS_HALFWORD, LS_HALFWORD_U: assert (!vaddr_o[0]) else `uvm_error("ALIGNMENT", $sformatf("Instruction of type HALFWORD has misaligned address \'%h\'", vaddr_o))
+            LS_WORD, LS_WORD_U: assert (vaddr_o[1:0] == 2'b00) else `uvm_error("ALIGNMENT", $sformatf("Instruction of type WORD has misaligned address \'%h\'", vaddr_o))
+            LS_DOUBLEWORD: assert (vaddr_o[2:0] == 3'b000) else `uvm_error("ALIGNMENT", $sformatf("Instruction of type DOUBLEWORD has misaligned address \'%h\'", vaddr_o))
             default:;
         endcase
     end

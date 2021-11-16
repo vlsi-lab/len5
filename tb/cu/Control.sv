@@ -33,10 +33,6 @@ module Control
 	input   logic [ILEN-1:0] 	ins_in,
 	output  logic 				stall,
 
-	// Data for execution unit :CU
-    output  branch_type_t     	branch_type_i,
-  	output  ldst_type_t       	ldst_type_i,
-
   	// From/to i-cache  :I$
  	input  	logic             	data_ready_o,
   	
@@ -196,72 +192,7 @@ module Control
  			flush_page_i  			= 	'd0;
     end
 	end
-
-	// Branch Control
-	always_comb begin: instr_branch_logic
-
-	if 		((instr_opcode == `OPCODE_BEQ) && (instr_funct3 == `FUNCT3_BEQ)) begin
-            branch_type_i			=	beq;
-    end
-	else if ((instr_opcode == `OPCODE_BNE) && (instr_funct3 == `FUNCT3_BNE) ) begin
-            branch_type_i			=	bne;
-    end
-	else if ((instr_opcode == `OPCODE_BLT) && (instr_funct3 == `FUNCT3_BLT) ) begin
-            branch_type_i			=	blt;
-    end
-	else if ((instr_opcode == `OPCODE_BLTU) && (instr_funct3 == `FUNCT3_BLTU) ) begin
-            branch_type_i			=	bltu;
-    end
-	else if ((instr_opcode == `OPCODE_BGE) && (instr_funct3 == `FUNCT3_BGE) ) begin
-            branch_type_i			=	bge;
-    end
-	else if ((instr_opcode == `OPCODE_BGEU) && (instr_funct3 == `FUNCT3_BGEU) ) begin
-            branch_type_i			=	bgeu;
-    end
-	else  begin
-            branch_type_i			=	beq;
-    end
-    end
-
-	//LOAD-STORE Control
-	always_comb begin: instr_LOAD_logic
-	//ldst_type_i				=	LS_WORD;
-
-	if 		((instr_opcode == `OPCODE_LB) && (instr_funct3 == `FUNCT3_LB)) begin
-            ldst_type_i				=	LS_BYTE;
-    end
-	else if ((instr_opcode == `OPCODE_LB) && (instr_funct3 == `FUNCT3_LBU) ) begin
-            ldst_type_i				=	LS_BYTE_U;
-    end
-	else if ((instr_opcode == `OPCODE_LB) && (instr_funct3 == `FUNCT3_LH) ) begin
-            ldst_type_i				=	LS_HALFWORD;
-    end
-	else if ((instr_opcode == `OPCODE_LB) && (instr_funct3 == `FUNCT3_LHU) ) begin
-            ldst_type_i				=	LS_HALFWORD_U;
-    end
-	else if ((instr_opcode == `OPCODE_LB) && (instr_funct3 == `FUNCT3_LD) ) begin
-            ldst_type_i				=	LS_DOUBLEWORD;
-    end
-	else if ((instr_opcode == `OPCODE_LB) && (instr_funct3 == `FUNCT3_LWU) ) begin
-            ldst_type_i				=	LS_WORD_U;
-    end
-	else if	((instr_opcode == `OPCODE_SB) && (instr_funct3 == `FUNCT3_SB)) begin
-            ldst_type_i				=	LS_BYTE;
-    end
-	else if ((instr_opcode == `OPCODE_SB) && (instr_funct3 == `FUNCT3_SH) ) begin
-            ldst_type_i				=	LS_HALFWORD;
-    end
-	else if ((instr_opcode == `OPCODE_SB) && (instr_funct3 == `FUNCT3_SD) ) begin
-            ldst_type_i				=	LS_DOUBLEWORD;
-    end
-	else if ((instr_opcode == `OPCODE_SB) && (instr_funct3 == `FUNCT3_SW) ) begin
-            ldst_type_i				=	LS_WORD;
-    end
-	else  begin
-            ldst_type_i				=	LS_WORD;
-    end
-    end
-
+	
 //-----
 
 endmodule

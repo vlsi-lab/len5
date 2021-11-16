@@ -45,7 +45,7 @@ module load_buffer
     output  logic                       issue_logic_ready_o,
 
     // Data from the decode stage
-    input   ldst_type_t                 load_type_i,
+    input   logic [LDST_TYPE_LEN-1:0]   load_type_i,
     input   logic                       rs1_ready_i,    // first operand already fetched from RF/ROB
     input   logic [ROB_IDX_LEN-1:0]     rs1_idx_i,
     input   logic [XLEN-1:0]            rs1_value_i,
@@ -66,7 +66,7 @@ module load_buffer
     output  logic [XLEN-1:0]            rs1_value_o,
     output  logic [I_IMM-1:0]           imm_value_o,
     output  logic [LDBUFF_IDX_LEN-1:0]  vadder_idx_o,
-    output  ldst_type_t                 vadder_ldtype_o,
+    output  logic [LDST_TYPE_LEN-1:0]   vadder_ldtype_o,
 
     // Handshake from/to the TLB
     input   logic                       dtlb_wu_valid_i,
@@ -110,8 +110,8 @@ module load_buffer
     input   logic [XLEN-1:0]            pfwd_value_i,
     output  logic [XLEN-1:0]            vfwd_vaddr_o,
     output  logic [XLEN-1:0]            pfwd_paddr_o,
-    output  ldst_type_t                 vfwd_ldtype_o,
-    output  ldst_type_t                 pfwd_ldtype_o,
+    output  logic [LDST_TYPE_LEN-1:0]   vfwd_ldtype_o,
+    output  logic [LDST_TYPE_LEN-1:0]   pfwd_ldtype_o,
     output  logic [STBUFF_IDX_LEN:0]    vfwd_older_stores_o,
     output  logic [STBUFF_IDX_LEN:0]    pfwd_older_stores_o,
 
@@ -239,39 +239,39 @@ module load_buffer
 
         // REQUEST TO THE VIRTUAL ADDRESS ADDER
         // The selected entry must be valid (other checks are performed by the selector)
-        if (lb_data[vadder_req_idx].valid && vadder_idx_valid/*&&!(stall)*/) begin
+        if (lb_data[vadder_req_idx].valid && vadder_idx_valid) begin
             vadder_valid_o  = 1'b1;
             if (vadder_ready_i) lb_vadder_req = 1'b1; // The adder accepted the request, and the entry is marked as busy
         end
 
         // REQUEST TO THE TLB
         // The selected entry must be valid (other checks are performed by the selector)
-        if (lb_data[dtlb_req_idx].valid && dtlb_idx_valid/*&&!(stall)*/) begin
+        if (lb_data[dtlb_req_idx].valid && dtlb_idx_valid) begin
             dtlb_valid_o    = 1'b1;
             if (dtlb_ready_i) lb_dtlb_req = 1'b1; // The TLB accepted the request, so the entry can be marked as busy
         end
 
         // REQUEST TO THE D$
         // The selected entry must be valid (other checks are performed by the selector)
-        if (lb_data[dcache_req_idx].valid && dcache_idx_valid/*&&!(stall)*/) begin
+        if (lb_data[dcache_req_idx].valid && dcache_idx_valid) begin
             dcache_valid_o  = 1'b1;
             if (dcache_ready_i) lb_dcache_req = 1'b1; // the D$ can accept the request
         end
 
         // REQUEST TO THE CDB
         // The selected entry must be valid (other checks are performed by the selector)
-        if (lb_data[cdb_req_idx].valid && cdb_idx_valid/*&&!(stall)*/) begin
+        if (lb_data[cdb_req_idx].valid && cdb_idx_valid) begin
             cdb_valid_o     = 1'b1;
             if (cdb_ready_i) lb_pop = 1'b1;
         end
 
         // FORWARD ON VIRTUAL ADDRESS
-        if (lb_data[vfwd_idx].valid && lb_data[vfwd_idx].busy && !lb_data[vfwd_idx].completed && lb_data[vfwd_idx].vaddr_ready && !lb_data[vfwd_idx].except_raised && !lb_data[vfwd_idx].paddr_ready/*&&!(stall)*/) begin
+        if (lb_data[vfwd_idx].valid && lb_data[vfwd_idx].busy && !lb_data[vfwd_idx].completed && lb_data[vfwd_idx].vaddr_ready && !lb_data[vfwd_idx].except_raised && !lb_data[vfwd_idx].paddr_ready) begin
             vfwd_req        = 1'b1;
         end
 
         // FORWARD ON PHYSICAL ADDRESS
-        if (lb_data[pfwd_idx].valid && pfwd_idx_valid/*&&!(stall)*/) begin 
+        if (lb_data[pfwd_idx].valid && pfwd_idx_valid) begin 
             pfwd_req        = 1'b1;
         end
 

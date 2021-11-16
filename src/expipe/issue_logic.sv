@@ -157,7 +157,6 @@ module issue_logic (
     logic [ROB_IDX_LEN-1:0]             rob_rs1_idx, rob_rs2_idx;
     logic                               rs1_ready, rs2_ready;
     logic [XLEN-1:0]                    rs1_value, rs2_value;
-    // logic [XLEN-1:0]                    imm_value;
 
     // Instruction issue decoder
     logic                               id_except_raised;
@@ -489,26 +488,25 @@ module issue_logic (
     // -------------------------
     issue_decoder u_issue_decoder (
          // Instruction from the issue logic
-        .issue_instruction_i        (iq_instruction_i),     
-    
+        .instruction_i        (iq_instruction_i),     
         // Information to the issue logic
-        .issue_except_raised_o      (id_except_raised),     
-        .issue_except_code_o        (id_except_code),     
-        .issue_res_ready_o          (id_res_ready),     
-        .issue_stall_possible_o     (id_stall_possible),     
+        .except_raised_o      (id_except_raised),     
+        .except_code_o        (id_except_code),     
+        .res_ready_o          (id_res_ready),     
+        .stall_possible_o     (id_stall_possible),     
 
-        .issue_eu_o                 (id_assigned_eu),     
-        .issue_eu_ctl_o             (id_eu_ctl), 
-        .issue_fp_rs_o              (id_fp_rs),       
-        .issue_rs1_req_o            (id_rs1_req), 
-        .issue_rs1_is_pc_o          (id_rs1_is_pc),
-        .issue_rs2_req_o            (id_rs2_req),
-        .issue_rs2_is_imm_o         (id_rs2_is_imm),
+        .eu_o                 (id_assigned_eu),     
+        .eu_ctl_o             (id_eu_ctl), 
+        .fp_rs_o              (id_fp_rs),       
+        .rs1_req_o            (id_rs1_req), 
+        .rs1_is_pc_o          (id_rs1_is_pc),
+        .rs2_req_o            (id_rs2_req),
+        .rs2_is_imm_o         (id_rs2_is_imm),
     `ifdef LEN5_FP_EN
-        .issue_rs3_req_o            (id_rs3_req),  
+        .rs3_req_o            (id_rs3_req),  
     `endif /* LEN5_FP_EN */     
-        .issue_imm_format_o         (id_imm_format),  
-        .issue_regstat_upd_o        (id_regstat_upd)  
+        .imm_format_o         (id_imm_format),  
+        .regstat_upd_o        (id_regstat_upd)  
     );
 
     // ------------------------------------
@@ -522,10 +520,6 @@ module issue_logic (
     assign  ex_rs2_ready_o              = rs2_ready;
     assign  ex_rs1_idx_o                = rob_rs1_idx;
     assign  ex_rs2_idx_o                = rob_rs2_idx;
-    
-    /* See the effect of this change */
-    //assign  ex_rs1_idx_o                = //instr_rs1_idx;
-    //assign  ex_rs2_idx_o                = //instr_rs2_idx;
 
     assign  ex_rs1_value_o              = rs1_value;
     assign  ex_rs2_value_o              = rs2_value;

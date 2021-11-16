@@ -30,7 +30,7 @@ module branch_rs
     output  logic                   arbiter_ready_o,
 
     // Data from the decode stage
-    input   branch_type_t                   branch_type_i,
+    input   logic [BU_CTL_LEN-1:0]          branch_type_i,
     input   logic                           rs1_ready_i,
     input   logic [ROB_IDX_LEN-1:0]         rs1_idx_i,
     input   logic [XLEN-1:0]                rs1_value_i,

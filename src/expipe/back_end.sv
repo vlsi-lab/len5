@@ -42,10 +42,6 @@ module back_end
 
     // To the main control 
     output  logic                       main_cu_stall_o,
-	
-	// Data for Control unit
-	input   branch_type_t               branch_type_i,
-	input   ldst_type_t             	ldst_type_i,
 
 	// Data to the FE 
 	output  logic [XLEN-1:0]  res_pc_o,
@@ -515,8 +511,6 @@ exec_unit u_exec_unit(
     .ex_pred_pc_i(ex_pred_pc_o),   
     .ex_pred_target_i(ex_pred_target_o),
     .ex_pred_taken_i(ex_pred_taken_o),
-	.branch_type_i(branch_type_i),
-	.ldst_type_i(ldst_type_i),
 
 	// Data to the FE 
 	.res_pc_o(res_pc_o),

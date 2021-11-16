@@ -37,9 +37,6 @@ module cu1_fsm
 	output  logic 				stall,
 	//input 	logic 				commit_possible,
 	//output 	logic 				commit_ready,
-	// Data for execution unit :CU
-    output  branch_type_t     	branch_type_i,
-  	output  ldst_type_t       	ldst_type_i,
 
   	// From/to i-cache  :I$
  	input  	logic             	data_ready_o,
@@ -257,8 +254,6 @@ module cu1_fsm
 	// Output update
   	always_comb begin
     // Defaults
-    	branch_type_i			=	BEQ;
-		ldst_type_i				=	LS_WORD;
 		flush_i 				= 	0;
 		stall	 				= 	0;
 		abort_i  				= 	0;
@@ -309,8 +304,6 @@ module cu1_fsm
    					clr_l2tlb_mshr_i  		= 	0;
    					clear_dmshr_dregs_i 	= 	0; 
 					synch_l1dc_l2c_i  		= 	0;
-					//ldst_type_i			=	LS_WORD;
-					//branch_type_i			=	beq;
     		end
       	end
 

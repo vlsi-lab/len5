@@ -35,10 +35,6 @@ module control
 	input   logic [ILEN-1:0] 	pc_in,
 	output  logic 				stall,
 
-	// Data for execution unit :CU
-    output  branch_type_t     	branch_type_i,
-  	output  ldst_type_t       	ldst_type_i,
-
   	// From/to i-cache  :I$
  	input  	logic             	data_ready_o,
   	
@@ -94,8 +90,6 @@ module control
 	always_comb begin : ctl_logic
 		flush_i					= 	main_cu_stall_o;
 		vm_mode_i				=	SV39;	//Use assign
-		branch_type_i			=	BEQ;
-		ldst_type_i				=	LS_WORD;
 
 		vmem_on_i  				= 	0;
 		sum_bit_i  				= 	0;

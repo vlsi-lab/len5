@@ -34,10 +34,6 @@ module data_path
 	// To the main control :CU 
   	output  logic             main_cu_stall_o,
 
-	// Data for execution unit :CU
-    input   branch_type_t     branch_type_i,
-  	input   ldst_type_t       ldst_type_i,
-
   	// From/to i-cache  :I$
   	output  logic [XLEN-1:0]  addr_o,
   	output  logic             addr_valid_o,
@@ -145,10 +141,6 @@ back_end u_Back_end_IQL
     .pred_taken_i (pred_o.taken),
     .except_raised_i (except_tp),
     .except_code_i (except_code_tp),
-
-    // Data for execution unit
-	.branch_type_i(branch_type_i),
-	.ldst_type_i(ldst_type_i),
 
 	// Data to the FE 
 	.res_pc_o(res_i.pc),

@@ -154,7 +154,7 @@ package expipe_pkg;
     localparam  SB_CTL_LEN      = LB_CTL_LEN;   // same type as load
 
     // BRANCH UNIT
-    localparam  BU_CTL_LEN      = 6;            // size of 'branch_type_t' from len5_pkg
+    localparam  BU_CTL_LEN      = BRANCH_TYPE_LEN; // size of 'branch_type_t' from len5_pkg
 
     // ALU
     localparam  ALU_EXCEPT_LEN  = 2;
@@ -202,7 +202,7 @@ package expipe_pkg;
     localparam  FPU_CTL_LEN     = 4;            // floating point multiplier operation control
 
     // MAXIMUM DIMENSION OF EU_CONTROL FIELDS
-    localparam MAX_EU_CTL_LEN   = BU_CTL_LEN;   // this must be set to the maximum of the previous parameters
+    localparam MAX_EU_CTL_LEN   = ALU_CTL_LEN;  // this must be set to the maximum of the previous parameters
     
     // ASSIGNED EU
     typedef enum logic [$clog2(EU_N)-1:0] {
@@ -230,64 +230,65 @@ package expipe_pkg;
     localparam EXCEPT_TYPE_LEN = ROB_EXCEPT_LEN; // only the last four bits of the mcause/scause CSR
     localparam LDST_TYPE_LEN = LB_CTL_LEN; // 3 bits: 7 types of load (lb, lh, lw, ld, lbu, lhu, ldu), 4 types of store (sb, sh, sw and sd)
     typedef enum logic [LDST_TYPE_LEN-1:0] { 
-        LS_BYTE, 
-        LS_BYTE_U, 
-        LS_HALFWORD, 
-        LS_HALFWORD_U, 
-        LS_WORD, 
-        LS_WORD_U, 
-        LS_DOUBLEWORD 
+        LS_BYTE,
+        LS_BYTE_U,
+        LS_HALFWORD,
+        LS_HALFWORD_U,
+        LS_WORD,
+        LS_WORD_U,
+        LS_DOUBLEWORD
     } ldst_type_t;
     
     // LOAD BUFFER ENTRY TYPE
     typedef struct packed {
-        logic                    valid;             // the entry contains a valid instructions
-        logic                    busy;              // The entry is waiting for an operation to complete
-        logic                    store_dep;         // the entry must wait for alla previous store to commit before it can be executed
-        logic                    pfwd_attempted;    // the entry is ready for the cache access
+        logic                       valid;             // the entry contains a valid instructions
+        logic                       busy;              // The entry is waiting for an operation to complete
+        logic                       store_dep;         // the entry must wait for alla previous store to commit before it can be executed
+        logic                       pfwd_attempted;    // the entry is ready for the cache access
         `ifdef ENABLE_AGE_BASED_SELECTOR
-        logic [ROB_IDX_LEN-1:0]  entry_age;         // the age of the entry, used for scheduling
+        logic [ROB_IDX_LEN-1:0]     entry_age;         // the age of the entry, used for scheduling
         `endif
-        logic [STBUFF_IDX_LEN:0] older_stores;      // Number of older uncommitted stores (if 0, the entry is dependency-free)
-        ldst_type_t              load_type;         // LB, LBU, LH, LHU, LW, LWU, LD
-        logic                    rs1_ready;         // the value of rs1 contained in 'rs1_value' field is valid
-        logic [ROB_IDX_LEN-1:0]  rs1_idx;           // the index of the ROB that will contain the base address
-        logic [XLEN-1:0]         rs1_value;         // the value of the base address
-        logic [I_IMM-1:0]        imm_value;         // the value of the immediate field (offset)
-        logic                    vaddr_ready;       // the virtual address has already been computed
-        logic [XLEN-1:0]         vaddr;             // the virtual address
-        logic                    paddr_ready;       // the address translation (TLB access) has already completed
-        logic [PPN_LEN-1:0]      ppn;  // the physical page number
-        logic [ROB_IDX_LEN-1:0]  dest_idx;          // the entry of the ROB where the loaded value will be stored
-        logic                    except_raised;
-        except_code_t            except_code;       // exception code 
-        logic [XLEN-1:0]         ld_value;          // the value loaded from memory
-        logic                    completed;         // the value has been fetched from D$
+        logic [STBUFF_IDX_LEN:0]    older_stores;      // Number of older uncommitted stores (if 0, the entry is dependency-free)
+        logic [LDST_TYPE_LEN-1:0]   load_type;         // LB, LBU, LH, LHU, LW, LWU, LD
+        logic                       rs1_ready;         // the value of rs1 contained in 'rs1_value' field is valid
+        logic [ROB_IDX_LEN-1:0]     rs1_idx;           // the index of the ROB that will contain the base address
+        logic [XLEN-1:0]            rs1_value;         // the value of the base address
+        logic [I_IMM-1:0]           imm_value;         // the value of the immediate field (offset)
+        logic                       vaddr_ready;       // the virtual address has already been computed
+        logic [XLEN-1:0]            vaddr;             // the virtual address
+        logic                       paddr_ready;       // the address translation (TLB access) has already completed
+        logic [PPN_LEN-1:0]         ppn;  // the physical page number
+        logic [ROB_IDX_LEN-1:0]     dest_idx;          // the entry of the ROB where the loaded value will be stored
+        logic                       except_raised;
+        except_code_t               except_code;       // exception code 
+        logic [XLEN-1:0]            ld_value;          // the value loaded from memory
+        logic                       completed;         // the value has been fetched from D$
     } lb_entry_t;
 
     // STORE BUFFER ENTRY TYPE
     typedef struct packed {
-        logic                   valid;              // the entry contains a valid instructions
-        logic                   busy;               // The entry is waiting for an operation to complete
+        logic                       valid;              // the entry contains a valid instructions
+        logic                       busy;               // The entry is waiting for an operation to complete
         `ifdef ENABLE_AGE_BASED_SELECTOR
-        logic [ROB_IDX_LEN-1:0] entry_age;          // the age of the entry, used for scheduling
+        logic [ROB_IDX_LEN-1:0]     entry_age;          // the age of the entry, used for scheduling
         `endif
-        ldst_type_t             store_type;         // SB, SH, SW, SD
-        logic                   rs1_ready;          // the value of rs1 (BASE ADDRESS) contained in 'rs1_value' field is valid
-        logic [ROB_IDX_LEN-1:0] rs1_idx;            // the index of the ROB that will contain the base address
-        logic [XLEN-1:0]        rs1_value;          // the value of the BASE ADDRESS
-        logic                   rs2_ready;          // the value of rs2 (VALUE to be stored) contained in 'rs2_value' field is valid
-        logic [ROB_IDX_LEN-1:0] rs2_idx;            // the index of the ROB that will contain the base address
-        logic [XLEN-1:0]        rs2_value;          // the value to be stored in memory
-        logic [I_IMM-1:0]       imm_value;          // the value of the immediate field (offset)
-        logic                   vaddr_ready;        // the virtual address has already been computed
-        logic [XLEN-1:0]        vaddr;              // the virtual address
-        logic                   paddr_ready;        // the address translation (TLB access) has already completed
-        logic [PPN_LEN-1:0]     ppn;  // the physical address (last 12 MSBs are identical to virtual address
-        logic [ROB_IDX_LEN-1:0] dest_idx;           // the entry of the ROB where the loaded value will be stored
-        logic                   except_raised;
-        except_code_t           except_code;        // exception code 
-        logic                   completed;          // the value has been fetched from D$
+        logic [LDST_TYPE_LEN-1:0]   store_type;         // SB, SH, SW, SD
+        logic                       rs1_ready;          // the value of rs1 (BASE ADDRESS) contained in 'rs1_value' field is valid
+        logic [ROB_IDX_LEN-1:0]     rs1_idx;            // the index of the ROB that will contain the base address
+        logic [XLEN-1:0]            rs1_value;          // the value of the BASE ADDRESS
+        logic                       rs2_ready;          // the value of rs2 (VALUE to be stored) contained in 'rs2_value' field is valid
+        logic [ROB_IDX_LEN-1:0]     rs2_idx;            // the index of the ROB that will contain the base address
+        logic [XLEN-1:0]            rs2_value;          // the value to be stored in memory
+        logic [I_IMM-1:0]           imm_value;          // the value of the immediate field (offset)
+        logic                       vaddr_ready;        // the virtual address has already been computed
+        logic [XLEN-1:0]            vaddr;              // the virtual address
+        logic                       paddr_ready;        // the address translation (TLB access) has already completed
+        logic [PPN_LEN-1:0]         ppn;                // the physical address (last 12 MSBs are identical to virtual address
+        logic                       dc_completed;       // the D$ completed the write request
+        logic [ROB_IDX_LEN-1:0]     dest_idx;           // the entry of the ROB where the loaded value will be stored
+        logic                       except_raised;
+        except_code_t               except_code;        // exception code
+        logic                       completed;          // the value has been stored to the D$
     } sb_entry_t;
 
     // ------------

@@ -44,10 +44,6 @@ module cu_dp_mem
 	logic 				stall1;
 	logic 				stall2;
 
-	// Data for execution unit :CU
-    branch_type_t     branch_type_i;
-  	ldst_type_t       ldst_type_i;
-
   	// From/to i-cache  :I$
  	logic             data_ready_o;
   	
@@ -116,10 +112,6 @@ data_path_memory #(.BOOT_PC(BOOT_PC)) U_Data_path_memory
 	// To the main control :CU 
   	.main_cu_stall_o(main_cu_stall_o),
 
-	// Data for execution unit :CU
-    .branch_type_i(branch_type_i),
-	.ldst_type_i(ldst_type_i),
-
   	// From/to i-cache  :I$
  	.data_ready_o(data_ready_o),
   	
@@ -186,9 +178,6 @@ cu1_fsm U_CU1_FSM
 	.ins_in(ins_in),
 	.stall(stall1),
 
-	// Data for execution unit :CU
-    .branch_type_i(branch_type_i),
-	.ldst_type_i(ldst_type_i),
   	// From/to i-cache  :I$
  	.data_ready_o(data_ready_o),
   	

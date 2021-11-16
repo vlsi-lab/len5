@@ -61,12 +61,12 @@ function print_usage() {
     printf -- "OPTIONS:\n"
     printf -- "-h:      print this message and exit.\n"
     printf -- "-t:      also compile top-level testbench files in 'tb/'.\n"
-    printf -- "-r:      also run simulation (implies '-t')\n"
     printf -- "-p:      set remote port. Default: %d.\n" $REMOTE_PORT
     printf -- "-u:      set remote username.\n"
     printf -- "-c:      launch vsim in command-line mode (no GUI).\n"
+    printf -- "-r [N]:  also run simulation for N ns (implies '-t'; N=%dns if\n\t not provided).\n" $SIM_TIME
     printf -- "-s HOST: run simulation on HOST instead of '%s'.\n" "$HOST_NAME"
-    printf -- "-w FILE: add 'do FILE' to simulation script. Default:\n\t%s\n" "${WAVE_FILE}"
+    printf -- "-w FILE: add 'do FILE' to simulation script. Default:\n\t %s\n" "${WAVE_FILE}"
     printf -- "-m FILE: use FILE as memory file.\n"
 }
 
@@ -107,7 +107,7 @@ $@
 
 # Parse command line options
 # --------------------------
-while getopts ':htrpucs:w:m:' opt; do
+while getopts ':htr::pucs:w:m:' opt; do
     case $opt in
         h) # Print usage message
             print_usage
@@ -119,6 +119,7 @@ while getopts ':htrpucs:w:m:' opt; do
         r) # Also run simulation
             TB_SRC=1
             LAUNCH_SIM=1
+            [ ! "$OPTARG" = "" ] && SIM_TIME=$OPTARG
             ;;
         p) # Set the remote port
             REMOTE_PORT=$OPTARG

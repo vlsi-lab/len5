@@ -25,58 +25,58 @@ import csr_pkg::SV39;
 import csr_pkg::SV48;
 
 module load_store_unit (
-    input   logic                   clk_i,
-    input   logic                   rst_n_i,
-    input   logic                   flush_i,
+    input   logic                       clk_i,
+    input   logic                       rst_n_i,
+    input   logic                       flush_i,
 	//input   logic				stall,
 
-    input   satp_mode_t             vm_mode_i,
+    input   satp_mode_t                 vm_mode_i,
 
     // Handshake from/to issue arbiter
-    input   logic                   issue_lb_valid_i,
-    input   logic                   issue_sb_valid_i,
-    output  logic                   lb_issue_ready_o,
-    output  logic                   sb_issue_ready_o,
+    input   logic                       issue_lb_valid_i,
+    input   logic                       issue_sb_valid_i,
+    output  logic                       lb_issue_ready_o,
+    output  logic                       sb_issue_ready_o,
 
     // Data from the decode stage
-    input   ldst_type_t             ldst_type_i,
-    input   logic                   rs1_ready_i,    
-    input   logic [ROB_IDX_LEN-1:0] rs1_idx_i,
-    input   logic [XLEN-1:0]        rs1_value_i,
-    input   logic                   rs2_ready_i,    
-    input   logic [ROB_IDX_LEN-1:0] rs2_idx_i,
-    input   logic [XLEN-1:0]        rs2_value_i,
-    input   logic [I_IMM-1:0]       imm_value_i,    
-    input   logic [ROB_IDX_LEN-1:0] dest_idx_i,
+    input   logic [LDST_TYPE_LEN-1:0]   ldst_type_i,
+    input   logic                       rs1_ready_i,    
+    input   logic [ROB_IDX_LEN-1:0]     rs1_idx_i,
+    input   logic [XLEN-1:0]            rs1_value_i,
+    input   logic                       rs2_ready_i,    
+    input   logic [ROB_IDX_LEN-1:0]     rs2_idx_i,
+    input   logic [XLEN-1:0]            rs2_value_i,
+    input   logic [I_IMM-1:0]           imm_value_i,    
+    input   logic [ROB_IDX_LEN-1:0]     dest_idx_i,
 
     // Handshake and data from/to the TLB
-    input dtlb_lsq_ans_t          dtlb_ans_i,
-    input dtlb_lsq_wup_t          dtlb_wup_i,
+    input dtlb_lsq_ans_t                dtlb_ans_i,
+    input dtlb_lsq_wup_t                dtlb_wup_i,
     input   logic                       dtlb_ready_i,
     output  lsq_dtlb_req_t              dtlb_req_o,
 
     // Handshake and data from/to the D$
-    input l1dc_lsq_ans_t          dcache_ans_i,
-    input l1dc_lsq_wup_t          dcache_wup_i,
+    input l1dc_lsq_ans_t                dcache_ans_i,
+    input l1dc_lsq_wup_t                dcache_wup_i,
     input   logic                       dcache_ready_i,
     output  lsq_l1dc_req_t              dcache_req_o,
 
     // Control from/to the ROB
-    input   logic [ROB_IDX_LEN-1:0] rob_head_idx_i,
-    output  logic                   rob_store_committing_o,
+    input   logic [ROB_IDX_LEN-1:0]     rob_head_idx_i,
+    output  logic                       rob_store_committing_o,
 
     // Hanshake from/to the CDB 
-    input   logic                   cdb_lb_valid_i,
-    input   logic                   cdb_sb_valid_i,
-    input   logic                   cdb_lb_ready_i,
-    input   logic                   cdb_sb_ready_i,
-    output  logic                   lb_cdb_valid_o,
-    output  logic                   sb_cdb_valid_o,
+    input   logic                       cdb_lb_valid_i,
+    input   logic                       cdb_sb_valid_i,
+    input   logic                       cdb_lb_ready_i,
+    input   logic                       cdb_sb_ready_i,
+    output  logic                       lb_cdb_valid_o,
+    output  logic                       sb_cdb_valid_o,
 
     // Data from/to the CDB
-    input cdb_data_t              cdb_lsb_data_i,
-    output  cdb_data_t              lb_cdb_data_o,
-    output  cdb_data_t              sb_cdb_data_o
+    input cdb_data_t                    cdb_lsb_data_i,
+    output  cdb_data_t                  lb_cdb_data_o,
+    output  cdb_data_t                  sb_cdb_data_o
 );
 
     // DEFINITIONS
@@ -87,8 +87,8 @@ module load_store_unit (
 
     logic [XLEN-1:0]            vfwd_vaddr;
     logic [XLEN-1:0]            pfwd_paddr;
-    ldst_type_t                 vfwd_ldtype;
-    ldst_type_t                 pfwd_ldtype;    
+    logic [LDST_TYPE_LEN-1:0]   vfwd_ldtype;
+    logic [LDST_TYPE_LEN-1:0]   pfwd_ldtype;    
     logic [STBUFF_IDX_LEN:0]    vfwd_older_stores;
     logic [STBUFF_IDX_LEN:0]    pfwd_older_stores;
     logic [STBUFF_IDX_LEN:0]    inflight_store_cnt; 
@@ -118,19 +118,19 @@ module load_store_unit (
     logic [XLEN-1:0]            lb_vaddermux_rs1_value;
     logic [I_IMM-1:0]           lb_vaddermux_imm_value;
     logic [LDBUFF_IDX_LEN-1:0]  lb_vaddermux_idx;
-    ldst_type_t                 lb_vaddermux_ldtype;
+    logic [LDST_TYPE_LEN-1:0]   lb_vaddermux_ldtype;
     // Store buffer --> MUX
     logic                       sb_vaddermux_isstore;
     logic [XLEN-1:0]            sb_vaddermux_rs1_value;
     logic [I_IMM-1:0]           sb_vaddermux_imm_value;
     logic [STBUFF_IDX_LEN-1:0]  sb_vaddermux_idx;
-    ldst_type_t                 sb_vaddermux_sttype;
+    logic [LDST_TYPE_LEN-1:0]   sb_vaddermux_sttype;
     // MUX --> Virtual address adder
     logic                       vaddermux_vadder_is_store;
     logic [XLEN-1:0]            vaddermux_vadder_rs1_value;
     logic [I_IMM-1:0]           vaddermux_vadder_imm_value;
     logic [BUFF_IDX_LEN-1:0]    vaddermux_vadder_lsb_idx;
-    ldst_type_t                 vaddermux_vadder_ldst_type;
+    logic [LDST_TYPE_LEN-1:0]   vaddermux_vadder_ldst_type;
 
     // (VIRTUAL ADDRESS ADDER --> LOAD/STORE BUFFER) HS DECODER
     logic                       vadder_vadderdec_is_store;
@@ -218,13 +218,13 @@ module load_store_unit (
     logic [XLEN-1:0]            sb_dcachemux_paddr;
     logic [XLEN-1:0]            sb_dcachemux_value;
     logic [STBUFF_IDX_LEN-1:0]  sb_dcachemux_idx;
-    ldst_type_t                 sb_dcachemux_sttype;
+    logic [LDST_TYPE_LEN-1:0]   sb_dcachemux_sttype;
     // MUX --> D$
     logic                       dcachemux_dcache_isstore;
     logic [XLEN-1:0]            dcachemux_dcache_paddr;
     logic [XLEN-1:0]            dcachemux_dcache_value;
     logic [BUFF_IDX_LEN-1:0]    dcachemux_dcache_idx;
-    ldst_type_t                 dcachemux_dcache_sttype;
+    logic [LDST_TYPE_LEN-1:0]   dcachemux_dcache_sttype;
 
     // (D$ --> LOAD/STORE BUFFER) HS DECODER
     logic                       dcache_dcachedec_is_store;

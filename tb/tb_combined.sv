@@ -55,7 +55,7 @@ initial begin
 	// end
 
 	/* Print boot program counter */
-	`uvm_info("CONFIG", $sformatf("Boot program counter: %x", BOOT_PC), UVM_MEDIUM);
+	`uvm_info("CONFIG", $sformatf("Boot program counter: 0x%x", BOOT_PC), UVM_MEDIUM);
 
 	/* Print memory file being used */
 	`uvm_info("CONFIG", $sformatf("Memory file: %s", `MEMORY_FILE), UVM_MEDIUM);

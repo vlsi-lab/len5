@@ -22,10 +22,6 @@ module DP_M_tb;
 	// From/to i-cache  :I$
  	logic             data_ready_o;
 
-    // Data for execution unit
-	branch_type_t               branch_type_i;
-	ldst_type_t             	ldst_type_i;
-
 	// For pc_gen from or to back end// Input from intruction cache :I$
   	logic             except_i;
   	logic [XLEN-1:0]  except_pc_i;
@@ -75,8 +71,6 @@ initial begin
     flush_i = 0;
 
 	vm_mode_i=SV39;
-	branch_type_i=beq;
-	ldst_type_i=LS_WORD;
 
     except_raised_i = 'b0;
     except_code_i = E_I_ACCESS_FAULT;
@@ -127,8 +121,6 @@ Data_path_memory u_Data_path_memory
     .flush_i (flush_i),
 	.vm_mode_i(vm_mode_i),
 	.main_cu_stall_o(main_cu_stall_o),
-	.branch_type_i(branch_type_i),
-	.ldst_type_i(ldst_type_i),
 	.data_ready_o(data_ready_o),
   	.except_i(except_i),
   	.except_pc_i(except_pc_i),

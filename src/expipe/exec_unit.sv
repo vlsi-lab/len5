@@ -46,65 +46,35 @@ module exec_unit (
     input   logic [XLEN-1:0]            ex_pred_pc_i,   // the PC of the current issuing instr (branches only)
     input   logic [XLEN-1:0]            ex_pred_target_i,// the predicted target of the current issuing instr (branches only)
     input   logic                       ex_pred_taken_i,// the predicted taken bit of the current issuing instr (branches only)
-	input   branch_type_t               branch_type_i,
-	input   ldst_type_t             	ldst_type_i,
 
 	// Data to the FE 
-	output  logic [XLEN-1:0]  res_pc_o,
-  	output  logic [XLEN-1:0]  res_target_o,
-  	output  logic             res_taken_o,
-	output 	logic 			  res_mispredict_o,
+	output  logic [XLEN-1:0]            res_pc_o,
+  	output  logic [XLEN-1:0]            res_target_o,
+  	output  logic                       res_taken_o,
+	output 	logic 			            res_mispredict_o,
 
 	// Handshake and data from/to the TLB
-    input dtlb_lsq_ans_t          dtlb_ans_i,
-    input dtlb_lsq_wup_t          dtlb_wup_i,
+    input   dtlb_lsq_ans_t              dtlb_ans_i,
+    input   dtlb_lsq_wup_t              dtlb_wup_i,
     input   logic                       dtlb_ready_i,
-    output  lsq_dtlb_req_t          dtlb_req_o,
+    output  lsq_dtlb_req_t              dtlb_req_o,
 
     // Handshake and data from/to the D$
-    input l1dc_lsq_ans_t          dcache_ans_i,
-    input l1dc_lsq_wup_t          dcache_wup_i,
+    input   l1dc_lsq_ans_t              dcache_ans_i,
+    input   l1dc_lsq_wup_t              dcache_wup_i,
     input   logic                       dcache_ready_i,
-    output  lsq_l1dc_req_t          dcache_req_o,
+    output  lsq_l1dc_req_t              dcache_req_o,
 
     // Hanshake from/to the CDB 
-    input   logic  [0:EU_N-1]                 cdb_ready_i,
-    input   logic                   cdb_valid_i,        // to know if the CDB is carrying valid data
-    output  logic  [0:EU_N-1]                 cdb_valid_o,
-
-    // Data from/to the CDB
-  //typedef struct packed {
-    //    logic [ROB_IDX_LEN-1:0]     rob_idx;
-    //    logic [XLEN-1:0]            value;
-    //    logic                       except_raised;
-    //    logic [ROB_EXCEPT_LEN-1:0]  except_code;
-    //} cdb_data_t;
-    input 	var cdb_data_t   cdb_data_i [0:EU_N-1],
-	output 	cdb_data_t   cdb_data_o [0:EU_N-1],
-    //input   logic [ROB_IDX_LEN-1:0] cdb_idx_i,
-    //input   logic [XLEN-1:0]        cdb_data_i,
-    //input   logic                   cdb_except_raised_i,
-    //output  logic [ROB_IDX_LEN-1:0] cdb_idx_o,
-    //output  logic [XLEN-1:0]        cdb_data_o,
-    //output  logic                   cdb_except_raised_o,
-    //output  logic [ROB_EXCEPT_LEN-1:0] cdb_except_o,
+    input   logic  [0:EU_N-1]           cdb_ready_i,
+    input   logic                       cdb_valid_i,        // to know if the CDB is carrying valid data
+    output  logic  [0:EU_N-1]           cdb_valid_o,
+    input 	cdb_data_t                  cdb_data_i [0:EU_N-1],
+	output 	cdb_data_t                  cdb_data_o [0:EU_N-1],
 
 	// Control from/to the ROB
-    input   logic [ROB_IDX_LEN-1:0] rob_head_idx_i,
-    output  logic                   rob_store_committing_o
-
-    // Hanshake from/to the CDB 
-    //input   logic                   cdb_lb_valid_i,
-    //input   logic                   cdb_sb_valid_i,
-    //input   logic                   cdb_lb_ready_i,
-    //input   logic                   cdb_sb_ready_i,
-    //output  logic                   lb_cdb_valid_o,
-    //output  logic                   sb_cdb_valid_o,
-
-    // Data from/to the CDB
-    //input   cdb_data_t              cdb_lsb_data_i,
-    //output  cdb_data_t              lb_cdb_data_o,
-    //output  cdb_data_t              sb_cdb_data_o
+    input   logic [ROB_IDX_LEN-1:0]     rob_head_idx_i,
+    output  logic                       rob_store_committing_o
 );
 
 // ---
@@ -116,7 +86,6 @@ alu_rs #(.EU_CTL_LEN (ALU_CTL_LEN), .RS_DEPTH (ALU_RS_DEPTH), .EXCEPT_LEN(ALU_EX
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
     .flush_i (flush_i),
-	//.stall(stall),
     .arbiter_valid_i (ex_ready_i[EU_INT_ALU]),
     .arbiter_ready_o (ex_valid_o[EU_INT_ALU]),
 	.eu_ctl_i (ex_eu_ctl_i[ALU_CTL_LEN-1:0]),
@@ -235,8 +204,7 @@ branch_rs #(.RS_DEPTH (BU_RS_DEPTH)) u_branch_rs
 	//.stall(stall),
     .arbiter_valid_i (ex_ready_i[EU_BRANCH_UNIT]),
     .arbiter_ready_o (ex_valid_o[EU_BRANCH_UNIT]),
-	.branch_type_i(branch_type_i),
-	//.eu_ctl_i (ex_eu_ctl_i),
+	.branch_type_i(ex_eu_ctl_i[BU_CTL_LEN-1:0]),
     .rs1_ready_i (ex_rs1_ready_i),
     .rs1_idx_i (ex_rs1_idx_i),
     .rs1_value_i (ex_rs1_value_i),
@@ -264,14 +232,12 @@ load_store_unit u_load_store_unit
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
     .flush_i (flush_i),
-	//.stall(stall),
 	.vm_mode_i(vm_mode_i),
 	.issue_lb_valid_i(ex_ready_i[EU_LOAD_BUFFER]),
     .issue_sb_valid_i(ex_ready_i[EU_STORE_BUFFER]),
     .lb_issue_ready_o(ex_valid_o[EU_LOAD_BUFFER]),
     .sb_issue_ready_o(ex_valid_o[EU_STORE_BUFFER]),
-	.ldst_type_i(ldst_type_i),
-	//.eu_ctl_i (ex_eu_ctl_i),
+	.ldst_type_i(ex_eu_ctl_i[LDST_TYPE_LEN-1:0]),
     .rs1_ready_i (ex_rs1_ready_i),
     .rs1_idx_i (ex_rs1_idx_i),
     .rs1_value_i (ex_rs1_value_i),

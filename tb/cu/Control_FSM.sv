@@ -33,10 +33,6 @@ module Control
 	input   logic [ILEN-1:0] 	ins_in,
 	output  logic 				stall,
 
-	// Data for execution unit :CU
-    output  branch_type_t     	branch_type_i,
-  	output  ldst_type_t       	ldst_type_i,
-
   	// From/to i-cache  :I$
  	input  	logic             	data_ready_o,
   	
@@ -180,8 +176,6 @@ module Control
 	// Output update
   	always_comb begin
     // Defaults
-    	branch_type_i			=	beq;
-		ldst_type_i				=	LS_WORD;
 		flush_i 				= 	0;
 		stall	 				= 	0;
 		abort_i  				= 	0;
@@ -210,69 +204,7 @@ module Control
       	end
 
       	OP_STATE: begin  
-			if 		(instr_opcode == `OPCODE_BEQ) begin
-            	case (instr_funct3)
-					`FUNCT3_BEQ: begin 
-						branch_type_i			=	beq;
-					end
-					`FUNCT3_BNE: begin 
-						branch_type_i			=	bne;
-					end
-					`FUNCT3_BLT: begin 
-						branch_type_i			=	blt;
-					end
-					`FUNCT3_BLTU: begin 
-						branch_type_i			=	bltu;
-					end
-					`FUNCT3_BGE: begin 
-						branch_type_i			=	bge;
-					end
-					`FUNCT3_BGEU: begin 
-						branch_type_i			=	bgeu;
-					end
-					default: begin 
-						branch_type_i			=	beq;
-					end
-				endcase
-    		end
-			else if (instr_opcode == `OPCODE_LB) begin
-            	case (instr_funct3)
-					`FUNCT3_LB,`FUNCT3_SB: begin 
-						ldst_type_i			=	LS_BYTE;
-					end
-					`FUNCT3_LBU: begin 
-						ldst_type_i			=	LS_BYTE_U;
-					end
-					`FUNCT3_LH,`FUNCT3_SH: begin 
-						ldst_type_i			=	LS_HALFWORD;
-					end
-					`FUNCT3_LHU: begin 
-						ldst_type_i			=	LS_HALFWORD_U;
-					end
-					`FUNCT3_LD,`FUNCT3_SD: begin 
-						ldst_type_i			=	LS_DOUBLEWORD;
-					end
-					`FUNCT3_LWU: begin 
-						ldst_type_i			=	LS_WORD_U;
-					end
-					//`FUNCT3_SB: begin 
-						//ldst_type_i			=	LS_BYTE;
-					//end
-					//`FUNCT3_SH: begin 
-						//ldst_type_i			=	LS_HALFWORD;
-					//end
-					//`FUNCT3_SD: begin 
-						//ldst_type_i			=	LS_DOUBLEWORD;
-					//end
-					`FUNCT3_SW: begin 
-						ldst_type_i			=	LS_WORD;
-					end
-					default: begin 
-						ldst_type_i			=	LS_WORD;
-					end
-				endcase
-    		end
-			else if ((instr_opcode == `OPCODE_FENCE) && (instr_funct3 == `FUNCT3_FENCE_I)) begin
+			if ((instr_opcode == `OPCODE_FENCE) && (instr_funct3 == `FUNCT3_FENCE_I)) begin
             		clr_l1tlb_mshr_i  		= 	1;
 					clr_l2tlb_mshr_i  		= 	1;
     		end
@@ -288,8 +220,6 @@ module Control
    					clr_l2tlb_mshr_i  		= 	0;
    					clear_dmshr_dregs_i 	= 	0; 
 					synch_l1dc_l2c_i  		= 	0;
-					//ldst_type_i			=	LS_WORD;
-					//branch_type_i			=	beq;
     		end
       	end
 

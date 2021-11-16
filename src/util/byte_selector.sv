@@ -23,10 +23,10 @@ import len5_pkg::XLEN;
     
 module byte_selector
 (
-    input   ldst_type_t type_i, // load/store type (number of bytes to select)
-    input   logic [$clog2(XLEN/8)-1:0] byte_off, // the offset of the first byte to select
-    input   logic [XLEN-1:0] line_i, // the input line
-    output  logic [XLEN-1:0] line_o // the output line
+    input   logic [LDST_TYPE_LEN-1:0]   type_i, // load/store type (number of bytes to select)
+    input   logic [$clog2(XLEN/8)-1:0]  byte_off, // the offset of the first byte to select
+    input   logic [XLEN-1:0]            line_i, // the input line
+    output  logic [XLEN-1:0]            line_o // the output line
 );
 
     // DEFINITIONS
@@ -78,8 +78,8 @@ module byte_selector
     `ifndef SYNTHESIS
     always_comb begin
         case(type_i)
-            LS_HALFWORD, LS_HALFWORD_U: assert (!byte_off[0]) else `uvm_error("ALIGNMENT", $sformatf("%s instr. with misaligned byte offset '%b' proceeded to cache access/fwd stage. This must be avoided!", type_i.name(), byte_off))
-            LS_WORD, LS_WORD_U: assert (byte_off[1:0] == 2'b00) else `uvm_error("ALIGNMENT", $sformatf("%s instr. with misaligned byte offset '%b' proceeded to cache access/fwd stage. This must be avoided!", type_i.name(), byte_off))
+            LS_HALFWORD, LS_HALFWORD_U: assert (!byte_off[0]) else `uvm_error("ALIGNMENT", $sformatf("HALFOWORD instr. with misaligned byte offset '%b' proceeded to cache access/fwd stage. This must be avoided!", byte_off))
+            LS_WORD, LS_WORD_U: assert (byte_off[1:0] == 2'b00) else `uvm_error("ALIGNMENT", $sformatf("WORD instr. with misaligned byte offset '%b' proceeded to cache access/fwd stage. This must be avoided!", byte_off))
             default:;
         endcase
     end
