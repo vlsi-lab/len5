@@ -38,19 +38,15 @@ module commit_decoder
 	input   logic                   fp_rs_ready_i,
 	input   logic                   fp_rf_ready_i,
 `endif /* LEN5_FP_EN */
+    input   logic                   csr_ready_i,
     input   logic                   mispredict_i,
 
     // Control to the commit logic
-    output  logic                   comm_possible_o    
+    output  logic                   comm_possible_o
 );
 
     // DEFINITIONS
-    logic [OPCODE_LEN -1:0]       instr_opcode;
-    
-    // -------------------
-    // EXTRACT INSTR. INFO
-    // -------------------
-    assign instr_opcode             = instruction_i.r.opcode;
+    logic [OPCODE_LEN-1:0]          instr_opcode = instruction_i.r.opcode;
 
     // --------------------
     // COMMIT DOCODER LOGIC
@@ -77,6 +73,14 @@ module commit_decoder
                 comm_possible_o = (rob_valid_i && no_exception_i && fp_rf_ready_i && fp_rs_ready_i) ? 1'b1 : 1'b0;
             end
             `endif /* LEN5_FP_EN */
+
+            // CSR instructions:
+            `OPCODE_CSRRC,
+            `OPCODE_CSRRCI,
+            `OPCODE_CSRRS,
+            `OPCODE_CSRRSI,
+            `OPCODE_CSRRW,
+            `OPCODE_CSRRWI: comm_possible_o = (csr_ready_i) ? 1'b1 : 1'b0;
 
             default: comm_possible_o = 1'b0; // normally commit without further checks
         endcase

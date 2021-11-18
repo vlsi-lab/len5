@@ -35,15 +35,9 @@ module cu1_fsm
   	input  	logic             	main_cu_stall_o,
 	input   logic [ILEN-1:0] 	ins_in,
 	output  logic 				stall,
-	//input 	logic 				commit_possible,
-	//output 	logic 				commit_ready,
 
   	// From/to i-cache  :I$
  	input  	logic             	data_ready_o,
-  	
-	// For pc_gen from or to back end// Input from intruction cache :I$
-  	//input   logic             	except_i,
-  	//input   logic [XLEN-1:0]  	except_pc_i,
 
   	// Data from intruction fetch unit cache // Fix_it from backend i.e., input from data cahce :D$
   	input   logic             	except_raised_i,
@@ -330,7 +324,6 @@ module cu1_fsm
 				end	
         		E_ILLEGAL_INSTRUCTION: begin 
 					abort_i  				= 	1;
-					//stall	 				= 	1;
 				end
 				E_ENV_CALL_SMODE,E_ENV_CALL_MMODE: begin //Remove
 					if (!l2c_update_done_o) begin
@@ -338,11 +331,8 @@ module cu1_fsm
 					end else begin
 						synch_l1dc_l2c_i  		= 	0;
 					end
-					//stall	 				= 	1;
 				end
 				default: begin
-					//stall	 				= 	0;
-					//flush_i	 			= 	0; 
 					abort_i  				= 	0;
    					clr_l1tlb_mshr_i  		= 	0;
    					clr_l2tlb_mshr_i  		= 	0;

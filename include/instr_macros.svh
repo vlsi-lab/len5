@@ -105,6 +105,38 @@ import len5_pkg::XLEN;
 `define OPCODE_REMU         7'b0110011
 `define OPCODE_REMUW        7'b0111011
 
+// RV64F
+`define OPCODE_FLW          7'b0000111
+`define OPCODE_FSW          7'b0100111
+`define OPCODE_FMADD_S      7'b1000011
+`define OPCODE_FMSUB_S      7'b1000111
+`define OPCODE_FNMSUB_S     7'b1001011
+`define OPCODE_FNMADD_S     7'b1001111
+`define OPCODE_FADD_S       7'b1010011
+`define OPCODE_FSUB_S       7'b1010011
+`define OPCODE_FMUL_S       7'b1010011
+`define OPCODE_FDIV_S       7'b1010011
+`define OPCODE_FSQRT_S      7'b1010011
+`define OPCODE_FSGNJ_S      7'b1010011
+`define OPCODE_FSGNJN_S     7'b1010011
+`define OPCODE_FSGNJX_S     7'b1010011
+`define OPCODE_FMIN_S       7'b1010011
+`define OPCODE_FMAX_S       7'b1010011
+`define OPCODE_FCVT_W_S     7'b1010011
+`define OPCODE_FCVT_WU_S    7'b1010011
+`define OPCODE_FMV_X_W      7'b1010011
+`define OPCODE_FEQ_S        7'b1010011
+`define OPCODE_FLT_S        7'b1010011
+`define OPCODE_FLE_S        7'b1010011
+`define OPCODE_FCLASS_S     7'b1010011
+`define OPCODE_FCVT_S_W     7'b1010011
+`define OPCODE_FCVT_S_WU    7'b1010011
+`define OPCODE_FMV_W_X      7'b1010011
+`define OPCODE_FCVT_L_S     7'b1010011
+`define OPCODE_FCVT_LU_S    7'b1010011
+`define OPCODE_FCVT_S_L     7'b1010011
+`define OPCODE_FCVT_S_LU    7'b1010011
+
 // FUNCT3: only R, I, S, SB type instructions
 // RV64I
 `define FUNCT3_ADD          3'b000
@@ -186,6 +218,21 @@ import len5_pkg::XLEN;
 `define FUNCT3_REMU         3'b111
 `define FUNCT3_REMUW        3'b111
 
+// RV64F
+`define FUNCT3_FLW          3'b010
+`define FUNCT3_FSW          3'b010
+`define FUNCT3_FSGNJ_S      3'b000
+`define FUNCT3_FSGNJN_S     3'b001
+`define FUNCT3_FSGNJX_S     3'b010
+`define FUNCT3_FMIN_S       3'b000
+`define FUNCT3_FMAX_S       3'b001
+`define FUNCT3_FMV_X_W      3'b000
+`define FUNCT3_FEQ_S        3'b010
+`define FUNCT3_FLT_S        3'b001
+`define FUNCT3_FLE_S        3'b000
+`define FUNCT3_FCLASS_S     3'b001
+`define FUNCT3_FMV_W_X      3'b000
+
 // FUNCT7: only for R-type instructions
 // RV64I
 `define FUNCT7_ADD          7'b0000000
@@ -225,6 +272,38 @@ import len5_pkg::XLEN;
 `define FUNCT7_REMW         7'b0000001
 `define FUNCT7_REMU         7'b0000001
 `define FUNCT7_REMUW        7'b0000001
+
+// RV64F
+`define FUNCT7_FADD_S       7'b0000000
+`define FUNCT7_FSUB_S       7'b0000100
+`define FUNCT7_FMUL_S       7'b0001000
+`define FUNCT7_FDIV_S       7'b0001100
+`define FUNCT7_FSQRT_S      7'b0101100
+`define FUNCT7_FSGNJ_S      7'b0010000
+`define FUNCT7_FSGNJN_S     7'b0010000
+`define FUNCT7_FSGNJX_S     7'b0010000
+`define FUNCT7_FMIN_S       7'b0010100
+`define FUNCT7_FMAX_S       7'b0010100
+`define FUNCT7_FCVT_W_S     7'b1100000
+`define FUNCT7_FCVT_WU_S    7'b1100000
+`define FUNCT7_FMV_X_W      7'b1110000
+`define FUNCT7_FEQ_S        7'b1010000
+`define FUNCT7_FLT_S        7'b1010000
+`define FUNCT7_FLE_S        7'b1010000
+`define FUNCT7_FCLASS_S     7'b1110000
+`define FUNCT7_FCVT_S_W     7'b1101000
+`define FUNCT7_FCVT_S_WU    7'b1101000
+`define FUNCT7_FMV_W_X      7'b1111000
+`define FUNCT7_FCVT_L_S     7'b1100000
+`define FUNCT7_FCVT_LU_S    7'b1100000
+`define FUNCT7_FCVT_S_L     7'b1101000
+`define FUNCT7_FCVT_S_LU    7'b1101000
+
+// FUNCT2: only for R4-type insrtructions
+`define FUNCT2_FMADD_S      2'b00
+`define FUNCT2_FMSUB_S      2'b00
+`define FUNCT2_FNMSUB_S     2'b00
+`define FUNCT2_FNMADD_S     2'b00
 
 //-------------------
 // SPECIAL CODES
@@ -278,6 +357,19 @@ import len5_pkg::XLEN;
 `define ECALL_RS1           5'b00000
 `define ECALL_RD            5'b00000
 `define ECALL_IMM           12'b000000000000
+
+// RV64F
+`define FSQRT_S_RS2         5'b00000
+`define FCVT_W_S_RS2        5'b00000
+`define FCVT_WU_S_RS2       5'b00001
+`define FMV_X_W_RS2         5'b00000
+`define FCLASS_S_RS2        5'b00000
+`define FCVT_S_W_RS2        5'b00000
+`define FCVT_S_WU_RS2       5'b00001
+`define FCVT_L_S_RS2        5'b00010
+`define FCVT_LU_S_RS2       5'b00011
+`define FCVT_S_L_RS2        5'b00010
+`define FCVT_S_LU_RS2       5'b00011
 
 `endif /* INSTR_MACROS_ */
 

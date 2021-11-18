@@ -8,13 +8,13 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: branch_unit_cu.sv
+// File: branch_ctl_cu.sv
 // Author: Marco Andorno
 // Date: 09/10/2019
 
 import len5_pkg::*;
 
-module branch_unit_cu
+module branch_ctl_cu
 (
   input   logic clk_i,
   input   logic rst_n_i,

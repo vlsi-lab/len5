@@ -12,7 +12,7 @@
 // Author: Michele Caon
 // Date: 12/11/2019
 
-// Include LEN5 configuration
+// LEN5 compilation switches
 `include "len5_config.svh"
 
 import len5_pkg::XLEN;
@@ -57,6 +57,12 @@ module issue_logic (
     output  logic [REG_IDX_LEN-1:0]     int_regstat_rs1_idx_o,      // first source register index
     output  logic [REG_IDX_LEN-1:0]     int_regstat_rs2_idx_o,      // second source register index
 
+    // Data from/to the integer register file
+    input   logic [XLEN-1:0]            intrf_rs1_value_i,      // value of the first operand
+    input   logic [XLEN-1:0]            intrf_rs2_value_i,      // value of the second operand
+    output  logic [REG_IDX_LEN-1:0]     intrf_rs1_idx_o,        // RF address of the first operand 
+    output  logic [REG_IDX_LEN-1:0]     intrf_rs2_idx_o,        // RF address of the second operand
+
 `ifdef LEN5_FP_EN
     // Handshake from/to the floating point register status register
     input   logic                       fp_regstat_ready_i,
@@ -71,15 +77,7 @@ module issue_logic (
     output  logic [ROB_IDX_LEN-1:0]     fp_regstat_rob_idx_o,      // ROB index where the instruction is being allocated (tail pointer of the ROB)
     output  logic [REG_IDX_LEN-1:0]     fp_regstat_rs1_idx_o,      // first source register index
     output  logic [REG_IDX_LEN-1:0]     fp_regstat_rs2_idx_o,      // second source register index
-`endif /* LEN5_FP_EN */
 
-    // Data from/to the integer register file
-    input   logic [XLEN-1:0]            intrf_rs1_value_i,      // value of the first operand
-    input   logic [XLEN-1:0]            intrf_rs2_value_i,      // value of the second operand
-    output  logic [REG_IDX_LEN-1:0]     intrf_rs1_idx_o,        // RF address of the first operand 
-    output  logic [REG_IDX_LEN-1:0]     intrf_rs2_idx_o,        // RF address of the second operand
-
-`ifdef LEN5_FP_EN
     // Data from/to the floating point register file
     input   logic [XLEN-1:0]            fprf_rs1_value_i,       // value of the first operand
     input   logic [XLEN-1:0]            fprf_rs2_value_i,       // value of the second operand
@@ -88,8 +86,8 @@ module issue_logic (
 `endif /* LEN5_FP_EN */
 
     // Handshake from/to the execution pipeline
-    input   logic [0:EU_N-1]            ex_ready_i,             // valid signal from each reservation station
-    output  logic [0:EU_N-1]            ex_valid_o,             // ready signal to each reservation station
+    input   logic                       ex_ready_i [0:EU_N-1],             // valid signal from each reservation station
+    output  logic                       ex_valid_o [0:EU_N-1],             // ready signal to each reservation station
 
     // Data to the execution pipeline reservation stations
     output  logic [MAX_EU_CTL_LEN-1:0]  ex_eu_ctl_o,            // controls for the associated EU
@@ -99,7 +97,7 @@ module issue_logic (
     output  logic                       ex_rs2_ready_o,         // second operand is ready at issue time (from the RF or the ROB)
     output  logic [ROB_IDX_LEN-1:0]     ex_rs2_idx_o,           // the index of the ROB where the first operand can be found (if not ready)
     output  logic [XLEN-1:0]            ex_rs2_value_o,         // the value of the first operand (if ready)
-    output  logic [I_IMM-1:0]           ex_imm_value_o,         // the value of the immediate field
+    output  logic [XLEN-1:0]            ex_imm_value_o,         // the value of the immediate field
     output  logic [ROB_IDX_LEN-1:0]     ex_rob_idx_o,           // the location of the ROB assigned to the instruction
     output  logic [XLEN-1:0]            ex_pred_pc_o,              // the PC of the current issuing instr (branches only)
     output  logic [XLEN-1:0]            ex_pred_target_o,          // the predicted target of the current issuing instr (branches only)
@@ -108,7 +106,6 @@ module issue_logic (
 	// Handshake from/to the cdb
     /* We may not need the ready because we're never writing the CDB from the issue logic */
 	input   logic                       cdb_valid_i,
-	output  logic                       cdb_ready_o,
 
 	// Data from the cdb
 	input   logic                       cdb_except_raised_i,
@@ -129,6 +126,7 @@ module issue_logic (
     output  logic [ROB_IDX_LEN-1:0]     rob_rs1_idx_o,          // ROB entry containing rs1 value
     output  logic [ROB_IDX_LEN-1:0]     rob_rs2_idx_o,          // ROB entry containing rs2 value
     output  instr_t                     rob_instr_o,            // to identify the instruction
+    output  logic [XLEN-1:0]            rob_pc_o,               // the PC of the current instruction
     output  logic [REG_IDX_LEN-1:0]     rob_rd_idx_o,           // the destination register index (rd)
     output  logic                       rob_except_raised_o,    // an exception has been raised
     output  logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_o,      // the exception code
@@ -211,9 +209,6 @@ module issue_logic (
 `else
     assign regstat_ready    = int_regstat_ready_i;
 `endif /* LEN5_FP_EN */
-
-    /* remove? */
-	assign cdb_ready_o = 1'b1;
 
     always_comb begin: issue_control_logic
         // Default values 
@@ -463,7 +458,6 @@ module issue_logic (
     // EXCEPTION HANDLING
     // ------------------
     always_comb begin: exception_handling_logic
-		//eh_stall_possible           = 1'b0;
         // If an exception was raised during the fetch stage, keep it and discard exception raised during the issue phase (if any)
         if (iq_except_raised_i) begin
             eh_except_raised            = 1'b1;
@@ -567,6 +561,7 @@ module issue_logic (
     assign  rob_rs1_idx_o               = rob_rs1_idx;
     assign  rob_rs2_idx_o               = rob_rs2_idx;
     assign  rob_instr_o                 = iq_instruction_i;
+    assign  rob_pc_o                    = iq_curr_pc_i;
     assign  rob_rd_idx_o                = instr_rd_idx;
 
     assign  rob_except_raised_o         = eh_except_raised;

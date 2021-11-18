@@ -1,4 +1,4 @@
-[X] fix spellong: cdb_except_rasied_i
+[X] fix spelling: cdb_except_rasied_i
 
 [X] remove control_pkg::
 
@@ -6,9 +6,9 @@
 
 [X] fix handshake in issue logic: maybe keep valid  only and it to operand fetch logic (only fetch operands from the cdb if they are valid)
 
-[ ] handle id_imm_req separately in issue logic
+[X] handle id_imm_req separately in issue logic
 
-[ ] See the effect of rob_idx vs instr_idx change in issue logic
+[X] See the effect of rob_idx vs instr_idx change in issue logic
 
 [X] fix register status
 
@@ -16,13 +16,13 @@
 
 [X] Review the indexes to the CDB of the execution units in exec_unit.sv 
 
-[ ] Fix assertions in branch_unit_rs
+[X] Fix assertions in branch_unit_rs
 
 [ ] fix EU indexes (make them unpacked vectors)
 
 [ ] fix "served" indexes in CDB
 
-[ ] Add write memory function to memory class
+[X] Add write memory function to memory class
 
 [ ] Fix store instructions
 
@@ -30,7 +30,13 @@
 
 [X] Do not execute nop instructions
 
-[ ] Fix width of EU control signals
+[X] Fix width of EU control signals
+
+[X] Rewrite execution stage with proper CDB handling
+
+[X] Add the satp CSR and read the memory mode from it
+
+[ ] Replace commit decoder/logic with a Moore CU (+ spill register)
 
 -----------------
 ----- IDEAS -----

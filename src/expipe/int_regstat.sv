@@ -8,13 +8,13 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: reg_status.sv
+// File: int_regstat.sv
 // Author: Michele Caon
 // Date: 12/11/2019
 
 import expipe_pkg::*;
 
-module reg_status 
+module int_regstat 
 #( 
     REG_NUM = 32,                               // power of 2
     localparam  REG_IDX_LEN = $clog2(REG_NUM)   //5 // not exposed
@@ -23,11 +23,10 @@ module reg_status
     input   logic                   clk_i,
     input   logic                   rst_n_i,
     input   logic                   flush_i,
-	//input   logic					stall,
 
     // Handshake from/to the issue logic
-    input   logic                   issuel_valid_i,
-    output  logic                   issuel_ready_o,
+    input   logic                   issue_valid_i,
+    output  logic                   issue_ready_o,
 
     // Data from/to the issue logic
     input   logic [REG_IDX_LEN-1:0] issue_rd_idx_i,         // destination register of the issuing instruction
@@ -66,7 +65,7 @@ module reg_status
         regstat_comm_upd            = 1'b0;
 
         // ISSUING INSTRUCTION
-        if (issuel_valid_i) begin
+        if (issue_valid_i) begin
             regstat_issue_upd       =1'b1;
         end
 
@@ -100,7 +99,7 @@ module reg_status
 
             // WRITE DESTINATION ROB ENTRY FROM ISSUE STAGE (WRITE PORT 1)
             // The ROB entry assigned to the issuing instructioin (tail of the ROB) is recorded in the corresponding destination register entry
-            if (regstat_issue_upd/*&& !(stall)*/) begin
+            if (regstat_issue_upd) begin
                 regstat_data[issue_rd_idx_i].busy           += 1'b1;            // a new in-flight instruction is writing rd
                 
                 //regstat_data[issue_rd_idx_i].busy           <= 1'b1;            // a new in-flight instruction is writing rd
@@ -109,7 +108,7 @@ module reg_status
 
             // CLEAR REGISTER INFORMATION WHEN AN INSTRUCTION COMMITS (WRITE PORT 2)
             // When an instruction commits from the ROB, its result may be written back to the register file. In this case, the busy counter is decremented. If this counter is zero, an issuing instr. sourcing one of its operand from this register can find the operand in the register file
-            if (regstat_comm_upd/*&& !(stall)*/) begin
+            if (regstat_comm_upd) begin
                 regstat_data[comm_rd_idx_i].busy -= 1'b0;   // one less in-flight instruction will write rd
                 
                 //regstat_data[comm_rd_idx_i].busy <= 1'b0;
@@ -136,7 +135,7 @@ module reg_status
     // OUTPUT HANDSHAKE GENERATION
     // ---------------------------
     // The register status data structure is always ready to accept requests from both the issue stage and the commit stage
-    assign issuel_ready_o                = 1'b1;
+    assign issue_ready_o                = 1'b1;
     assign comm_ready_o                 = 1'b1;
     
 endmodule

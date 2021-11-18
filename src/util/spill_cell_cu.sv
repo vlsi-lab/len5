@@ -20,7 +20,7 @@
 // and lower the output ready for the upstream hardware in the next cycle.
 
 module spill_cell_cu (
-    // Clock, reset and flush
+    // Clock, reset, and flush
     input   logic       clk_i,
     input   logic       rst_n_i,
     input   logic       flush_i,

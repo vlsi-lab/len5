@@ -17,7 +17,7 @@
 `ifndef LEN5_PKG_
 `define LEN5_PKG_
 
-// Include LEN5 configuration
+// LEN5 compilation switches
 `include "len5_config.svh"
 
 package len5_pkg;
@@ -209,6 +209,7 @@ package len5_pkg;
     localparam DIV_RS_DEPTH     = 4;
     localparam FPU_RS_DEPTH     = 4;
     localparam BU_RS_DEPTH      = 4;
+    localparam OP_ONLY_RS_DEPTH = 2;
 
 endpackage
 

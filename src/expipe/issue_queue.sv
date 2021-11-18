@@ -11,7 +11,6 @@
 // File: issue_queue.sv
 // Author: Michele Caon
 // Date: 17/10/2019
-//`include "issue_queue_fifo.sv"
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
@@ -24,7 +23,6 @@ module issue_queue
     input   logic               clk_i,
     input   logic               rst_n_i,
     input   logic               flush_i,
-	//input   logic					stall,
 
     // Handshake from/to fetch unit
     input   logic               fetch_valid_i,
@@ -103,7 +101,6 @@ module issue_queue
         .clk_i          (clk_i),
         .rst_n_i        (rst_n_i),
         .flush_i        (flush_i),
-		//.stall			(stall),
 
         .fetch_valid_i  (fetch_valid_i),
         .fetch_ready_o  (fetch_ready_o),

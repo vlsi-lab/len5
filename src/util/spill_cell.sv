@@ -23,7 +23,7 @@ module spill_cell #(
     parameter type  DATA_T  = logic,
     parameter bit   SKIP    = 1'b0
 ) (
-    // Clock, reset and flush
+    // Clock, reset, and flush
     input   logic       clk_i,
     input   logic       rst_n_i,
     input   logic       flush_i,

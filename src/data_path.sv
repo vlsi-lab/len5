@@ -90,7 +90,6 @@ front_end #(.HLEN(4),.BTB_BITS(4), .BOOT_PC(BOOT_PC)) u_Front_end_F
   	.clk_i    (clk_i),
     .rst_n_i  (rst_n_i),
     .flush_i  (flush_i),
-	//.stall(stall),
 
   // From/to i-cache
   .addr_o			(addr_o),
@@ -127,7 +126,6 @@ back_end u_Back_end_IQL
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
     .flush_i (flush_i),
-	//.stall(stall),
 	.vm_mode_i(vm_mode_i),
 
     // Handshake from/to fetch unit

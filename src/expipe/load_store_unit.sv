@@ -12,7 +12,7 @@
 // Author: Michele Caon
 // Date: 27/10/2019
 
-// Include LEN5 configuration
+// LEN5 compilation switches
 `include "len5_config.svh"
 
 import expipe_pkg::*;
@@ -28,7 +28,6 @@ module load_store_unit (
     input   logic                       clk_i,
     input   logic                       rst_n_i,
     input   logic                       flush_i,
-	//input   logic				stall,
 
     input   satp_mode_t                 vm_mode_i,
 
@@ -50,14 +49,14 @@ module load_store_unit (
     input   logic [ROB_IDX_LEN-1:0]     dest_idx_i,
 
     // Handshake and data from/to the TLB
-    input dtlb_lsq_ans_t                dtlb_ans_i,
-    input dtlb_lsq_wup_t                dtlb_wup_i,
+    input   dtlb_lsq_ans_t              dtlb_ans_i,
+    input   dtlb_lsq_wup_t              dtlb_wup_i,
     input   logic                       dtlb_ready_i,
     output  lsq_dtlb_req_t              dtlb_req_o,
 
     // Handshake and data from/to the D$
-    input l1dc_lsq_ans_t                dcache_ans_i,
-    input l1dc_lsq_wup_t                dcache_wup_i,
+    input   l1dc_lsq_ans_t              dcache_ans_i,
+    input   l1dc_lsq_wup_t              dcache_wup_i,
     input   logic                       dcache_ready_i,
     output  lsq_l1dc_req_t              dcache_req_o,
 
@@ -74,7 +73,7 @@ module load_store_unit (
     output  logic                       sb_cdb_valid_o,
 
     // Data from/to the CDB
-    input cdb_data_t                    cdb_lsb_data_i,
+    input   cdb_data_t                  cdb_lsb_data_i,
     output  cdb_data_t                  lb_cdb_data_o,
     output  cdb_data_t                  sb_cdb_data_o
 );
@@ -257,7 +256,6 @@ module load_store_unit (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
         .flush_i                (flush_i),
-		//.stall(stall),
 
         .vm_mode_i              (vm_mode_i),
 
@@ -359,7 +357,6 @@ module load_store_unit (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
         .flush_i                (flush_i),
-		//.stall(stall),
 
         .vm_mode_i              (vm_mode_i),          
 

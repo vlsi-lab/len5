@@ -1,4 +1,4 @@
-// Copyright 2019 Politecnico di Torino.
+// Copyright 2021 Politecnico di Torino.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 2.0 (the "License"); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -8,31 +8,31 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: generic_rs.sv
-// Author: Michele Caon 
-// Date: 21/10/2019
+// File: alu_unit.sv
+// Author: Michele Caon
+// Date: 17/11/2021
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
 
 import expipe_pkg::*;
 
-module alu_rs 
+module alu_unit 
 #(
     RS_DEPTH = 4, // must be a power of 2,
     
     // EU-specific parameters
     EU_CTL_LEN = 4,
     EXCEPT_LEN = 2
-)
-(
+) (
+    // Clock, reset, and flush
     input   logic                   clk_i,
     input   logic                   rst_n_i,
     input   logic                   flush_i,
 
-    // Handshake from/to issue logic
-    input   logic                   arbiter_valid_i,
-    output  logic                   arbiter_ready_o,
+    // Issue stage handshaking
+    input   logic                   issue_valid_i,
+    output  logic                   issue_ready_o,
 
     // Data from the issue stage
     input   logic [EU_CTL_LEN-1:0]  eu_ctl_i,
@@ -41,7 +41,7 @@ module alu_rs
     input   logic [XLEN-1:0]        rs1_value_i,
     input   logic                   rs2_ready_i,
     input   logic [ROB_IDX_LEN-1:0] rs2_idx_i,          
-    input   logic [XLEN-1:0]        rs2_value_i,        // can contain immediate for I type instructions
+    input   logic [XLEN-1:0]        rs2_value_i,        // contains immediate for I type instructions
     input   logic [ROB_IDX_LEN-1:0] dest_idx_i,
 
     // Hanshake from/to the CDB 
@@ -77,41 +77,41 @@ module alu_rs
 
 generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_alu_generic_rs
 (
-    .clk_i (clk_i),
-    .rst_n_i (rst_n_i),
-    .flush_i (flush_i),
-    .arbiter_valid_i (arbiter_valid_i),
-    .arbiter_ready_o (arbiter_ready_o),
-    .eu_ctl_i (eu_ctl_i),
-    .rs1_ready_i (rs1_ready_i),
-    .rs1_idx_i (rs1_idx_i),
-    .rs1_value_i (rs1_value_i),
-    .rs2_ready_i (rs2_ready_i),
-    .rs2_idx_i (rs2_idx_i),
-    .rs2_value_i (rs2_value_i),
-    .dest_idx_i (dest_idx_i),
-    .eu_ready_i (alu_rs_ready),
-    .eu_valid_i (alu_rs_valid),
-    .eu_valid_o (rs_alu_valid),
-    .eu_ready_o (rs_alu_ready),
-    .eu_entry_idx_i (alu_rs_entry_idx),
-    .eu_result_i (alu_rs_result),
-    .eu_except_raised_i (alu_rs_except_raised),
-    .eu_except_code_i (alu_rs_except_code),
-    .eu_ctl_o (rs_alu_ctl),
-    .eu_rs1_o (rs_alu_rs1_value),
-    .eu_rs2_o (rs_alu_rs2_value),
-    .eu_entry_idx_o (rs_alu_entry_idx), 
-    .cdb_ready_i (cdb_ready_i),
-    .cdb_valid_i (cdb_valid_i),
-    .cdb_valid_o (cdb_valid_o),
-    .cdb_idx_i (cdb_idx_i),
-    .cdb_data_i (cdb_data_i),
-    .cdb_except_raised_i (cdb_except_raised_i),
-    .cdb_idx_o (cdb_idx_o),
-    .cdb_data_o (cdb_data_o),
-    .cdb_except_raised_o (cdb_except_raised_o),
-    .cdb_except_o (cdb_except_o)
+    .clk_i                  (clk_i),
+    .rst_n_i                (rst_n_i),
+    .flush_i                (flush_i),
+    .issue_valid_i          (issue_valid_i),
+    .issue_ready_o          (issue_ready_o),
+    .eu_ctl_i               (eu_ctl_i),
+    .rs1_ready_i            (rs1_ready_i),
+    .rs1_idx_i              (rs1_idx_i),
+    .rs1_value_i            (rs1_value_i),
+    .rs2_ready_i            (rs2_ready_i),
+    .rs2_idx_i              (rs2_idx_i),
+    .rs2_value_i            (rs2_value_i),
+    .dest_idx_i             (dest_idx_i),
+    .eu_ready_i             (alu_rs_ready),
+    .eu_valid_i             (alu_rs_valid),
+    .eu_valid_o             (rs_alu_valid),
+    .eu_ready_o             (rs_alu_ready),
+    .eu_entry_idx_i         (alu_rs_entry_idx),
+    .eu_result_i            (alu_rs_result),
+    .eu_except_raised_i     (alu_rs_except_raised),
+    .eu_except_code_i       (alu_rs_except_code),
+    .eu_ctl_o               (rs_alu_ctl),
+    .eu_rs1_o               (rs_alu_rs1_value),
+    .eu_rs2_o               (rs_alu_rs2_value),
+    .eu_entry_idx_o         (rs_alu_entry_idx), 
+    .cdb_ready_i            (cdb_ready_i),
+    .cdb_valid_i            (cdb_valid_i),
+    .cdb_valid_o            (cdb_valid_o),
+    .cdb_idx_i              (cdb_idx_i),
+    .cdb_data_i             (cdb_data_i),
+    .cdb_except_raised_i    (cdb_except_raised_i),
+    .cdb_idx_o              (cdb_idx_o),
+    .cdb_data_o             (cdb_data_o),
+    .cdb_except_raised_o    (cdb_except_raised_o),
+    .cdb_except_o           (cdb_except_o)
 );
 
 alu #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_alu

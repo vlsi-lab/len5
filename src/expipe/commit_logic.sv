@@ -14,7 +14,7 @@
 
 // THIS FILE IS ONYL A TEMPLATE, THE COMMIT LOGIC IS NOT IMPLEMENTED YET, SINCE IT REQUIRES ALL THE PROCESSOR PARTS TO BE FUNCTIONAL
 
-// Include LEN5 configuration
+// LEN5 compilation switches
 `include "len5_config.svh"
 
 `include "instr_macros.svh"
@@ -35,46 +35,37 @@ module commit_logic (
     input   logic [XLEN-1:0]            rob_pc_i,
     input   logic [REG_IDX_LEN-1:0]     rob_rd_idx_i,
     input   logic [XLEN-1:0]            rob_value_i,
-`ifdef LEN5_FP_EN
-    input   logic [REG_IDX_LEN-1:0]     fp_rob_rd_idx_i,
-    input   logic [XLEN-1:0]            fp_rob_value_i,
-`endif /* LEN5_FP_EN */
     input   logic                       rob_except_raised_i,
-	input   except_code_t  rob_except_code_i,
+	input   except_code_t               rob_except_code_i,
     input   logic [ROB_IDX_LEN-1:0]     rob_head_idx_i,
 
     // Conditions
     input   logic                       sb_store_committing_i, // a store is ready to commit from the store buffer
 
-    output   logic                      rob_except_raised_o,
-    //output   logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_o,
-	output   except_code_t              rob_except_code_o,
-    output   logic                      except_new_o,
-    output   logic [XLEN-1:0]           except_new_pc_o,
-
 	// HS from to the register status
     input   logic                       int_rs_ready_i,
     output  logic                       int_rs_valid_o,
-`ifdef LEN5_FP_EN
-    input   logic                       fp_rs_ready_i,
-    output  logic                       fp_rs_valid_o,
-`endif /* LEN5_FP_EN */
 
     // HS from to the register files
     input   logic                       int_rf_ready_i,
     output  logic                       int_rf_valid_o,
 `ifdef LEN5_FP_EN
+    input   logic                       fp_rs_ready_i,
+    output  logic                       fp_rs_valid_o,
     input   logic                       fp_rf_ready_i,
     output  logic                       fp_rf_valid_o,
 `endif /* LEN5_FP_EN */
 
+    // Data to the register status registers
+    output  logic [ROB_IDX_LEN-1:0]     rs_head_idx_o,
+
     // Data to the register files
-    output  logic [REG_IDX_LEN-1:0]     rf_rd_idx_o,        // the index of the destination register (rd)
-    output  logic [XLEN-1:0]            rf_value_o          // the value to be stored in rd
-`ifdef LEN5_FP_EN
-   ,output  logic [REG_IDX_LEN-1:0]     fp_rd_idx_o,        // the index of the destination register (rd)
-    output  logic [XLEN-1:0]            fp_value_o          // the value to be stored in rd
-`endif /* LEN5_FP_EN */
+    output  logic [REG_IDX_LEN-1:0]     rd_idx_o,           // the index of the destination register (rd)
+    output  logic [XLEN-1:0]            rd_value_o          // the value to be stored in rd
+
+    // CSRs handshaking
+    logic                               csr_valid_o,
+    logic                               csr_ready_i,
 );
 
     // DEFINITIONS
@@ -90,8 +81,6 @@ module commit_logic (
     logic                       mispredict;
 
 	assign instr_opcode         = rob_instr_i.r.opcode;
-	assign except_new_pc_o		= (rob_valid_i & rob_except_raised_i) ? 'd1 : 'd0 ;
-	assign except_new_o			= (rob_valid_i) ? rob_except_raised_i : 'b0;
     assign mispredict           = rob_value_i[0];
 
     // ------------
@@ -99,7 +88,7 @@ module commit_logic (
     // ------------
     always_comb begin: commit_control_logic
         // Pop the head instruction from the ROB if commit actions have been perf
-        rob_ready_o          = cd_comm_possible & eh_no_except /*& !stall*/; // I think it is wrong
+        rob_ready_o          = cd_comm_possible & eh_no_except; // I think it is wrong
     end
 
     // --------------
@@ -107,9 +96,7 @@ module commit_logic (
     // --------------
     commit_decoder u_comm_decoder (
 	.instruction_i              (rob_instr_i),
-    //.instruction_i              (rob_instr_t),
-    .sb_store_committing_i      (sb_store_committing_i),
-	//.sb_store_committing_i      (sb_store_committing_t),    
+    .sb_store_committing_i      (sb_store_committing_i), 
 	.rob_valid_i				(rob_valid_i),
     .no_exception_i				(eh_no_except),
 	.int_rs_ready_i				(int_rs_ready_i),
@@ -118,6 +105,7 @@ module commit_logic (
     .fp_rs_ready_i				(fp_rs_ready_i),
     .fp_rf_ready_i				(fp_rf_ready_i),
 `endif /* LEN5_FP_EN */
+    .csr_ready_i                (csr_ready_i),
     .mispredict_i				(mispredict),
     .comm_possible_o            (cd_comm_possible)    
     );
@@ -125,26 +113,28 @@ module commit_logic (
     // ------------------------
     // EXCEPTION HANDLING LOGIC
     // ------------------------
-    // The exception handling logic must be insserted here when available
-    // assign eh_no_except = (rob_except_raised_t && rob_valid_i)?'b0:'b1/*& !stall*/;
-    assign eh_no_except = (rob_except_raised_i && rob_valid_i)?'b0:'b1/*& !stall*/;
+    // The exception handling logic must be insserted here when available;
+    assign eh_no_except = (rob_except_raised_i && rob_valid_i)?'b0:'b1;
 
     // -----------------
     // OUTPUT EVALUATION
     // -----------------
 
     // Data to the register files
-    assign rf_rd_idx_o          = rob_rd_idx_i;
-    assign rf_value_o           = rob_value_i;
+    assign rd_idx_o          = rob_rd_idx_i;
+    assign rd_value_o           = rob_value_i;
 `ifdef LEN5_FP_EN
     assign fp_rd_idx_o          = fp_rob_rd_idx_i;
     assign fp_value_o           = fp_rob_value_i;
 `endif /* LEN5_FP_EN */
-	
-	assign rob_except_raised_o	= (rob_valid_i) ? rob_except_raised_i : 'b0;
-	assign rob_except_code_o	= (rob_valid_i) ? rob_except_code_i   : E_UNKNOWN;
 
 	always_comb begin: comm_decoder
+        // Default values
+        int_rf_valid_o  = 1'b0;
+        int_rs_valid_o  = 1'b0;
+        csr_valid_o     = 1'b0;
+
+        // Integer register instructions
         case(instr_opcode)
 	       	`OPCODE_ADD, 
             `OPCODE_ADDI, 
@@ -174,17 +164,64 @@ module commit_logic (
             `OPCODE_SUBW, 
             `OPCODE_XOR, 
             `OPCODE_XORI, 
-            `OPCODE_LD: 
-            begin 
+            `OPCODE_LD: begin 
                 int_rf_valid_o = (cd_comm_possible) ? 1'b1 : 1'b0;
 				int_rs_valid_o = (cd_comm_possible) ? 1'b1 : 1'b0;
             end
 
-            default: begin int_rf_valid_o = 1'b0; int_rs_valid_o = 1'b0; end // normally commit without further checks
+        // Floating-point instructions
+        `ifdef LEN5_FP_EN
+            `OPCODE_FLW,
+            `OPCODE_FMADD_S,
+            `OPCODE_FMSUB_S,
+            `OPCODE_FNMSUB_S,
+            `OPCODE_FNMADD_S,
+            `OPCODE_FADD_S,
+            `OPCODE_FSUB_S,
+            `OPCODE_FMUL_S,
+            `OPCODE_FDIV_S,
+            `OPCODE_FSQRT_S,
+            `OPCODE_FSGNJ_S,
+            `OPCODE_FSGNJN_S,
+            `OPCODE_FSGNJX_S,
+            `OPCODE_FMIN_S,
+            `OPCODE_FMAX_S,
+            `OPCODE_FCVT_W_S,
+            `OPCODE_FCVT_WU_S,
+            `OPCODE_FMV_X_W,
+            `OPCODE_FEQ_S,
+            `OPCODE_FLT_S,
+            `OPCODE_FLE_S,
+            `OPCODE_FCLASS_S,
+            `OPCODE_FCVT_S_W,
+            `OPCODE_FCVT_S_WU,
+            `OPCODE_FMV_W_X,
+            `OPCODE_FCVT_L_S,
+            `OPCODE_FCVT_LU_S,
+            `OPCODE_FCVT_S_L,
+            `OPCODE_FCVT_S_LU: begin
+                fp_rf_valid_o   = (cd_comm_possible) ? 1'b1 : 1'b0;
+                fp_rs_valid_o   = (cd_comm_possible) ? 1'b1 : 1'b0;
+            end
+        `endif /* LEN5_FP_EN */
+
+            // CSR instructions
+            `OPCODE_CSRRC,
+            `OPCODE_CSRRCI,
+            `OPCODE_CSRRS,
+            `OPCODE_CSRRSI,
+            `OPCODE_CSRRW,
+            `OPCODE_CSRRWI: begin
+                csr_valid_o     = (cd_comm_possible) ? 1'b1 : 1'b0;
+            end
+
+            default:; // commit without writing the register files
         endcase
     end
 
-	assign fp_rf_valid_o  = (cd_comm_possible) ? ((instr_opcode == `OPCODE_AUIPC) ? 'b1 : 'b0) : 'b0;// Fix for float
-	assign fp_rs_valid_o  = (cd_comm_possible) ? ((instr_opcode == `OPCODE_AUIPC) ? 'b1 : 'b0) : 'b0;// Fix for float
+    // -----------------
+    // OUTPUT EVALUATION
+    // -----------------
+    rs_head_idx_o   = rob_head_idx_i;
     
 endmodule

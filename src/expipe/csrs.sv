@@ -12,7 +12,7 @@
 // Author: Michele Caon
 // Date: 03/11/2021
 
-// Include LEN5 configuration
+// LEN5 compilation switches
 `include "len5_config.svh"
 
 // Opcode and CSR address definition
@@ -46,13 +46,15 @@ module csrs (
     input   logic [ROB_EXCEPT_LEN-1:0]  exc_data_i, // exception data (e.g., FPU exceptions)
     input   logic [REG_IDX_LEN-1:0]     rd_idx_i,   // destination register
     output  logic [XLEN-1:0]            data_o,
-    output  logic                       acc_exc_o   // ILLEGAL INSTRUCTION flag (invalid address or access permission)
+    output  logic                       acc_exc_o,  // ILLEGAL INSTRUCTION flag (invalid address or access permission)
 
     // Data to the FPU
     `ifdef LEN5_FP_EN
-    ,
-    output  logic [FCSR_FRM_LEN-1:0]    fpu_frm_o   // dynamic rounding mode
+    output  logic [FCSR_FRM_LEN-1:0]    fpu_frm_o,  // dynamic rounding mode
     `endif /* LEN5_FP_EN */
+
+    // Data to the load/store unit
+    output  satp_mode_t                 vm_mode_o
 );
 
 // CSR read value
@@ -65,6 +67,14 @@ logic   [XLEN-1:0]      uimm_zext   = { 59'b0, rs1_idx_i };
 logic                   inv_acc_exc;    // invalid CSR address or no write permission
 logic                   inv_op_exc;     // invalid operation (from funct3)
 
+// ------------------------
+// PROCESSOR EXECUTION MODE
+// ------------------------
+// NOTE: code should not be able to discover the mode it is running in, so the
+// following CSR is only visible by the core itself. At reset, the execution 
+// mode defaults to M-mode.
+csr_priv_t              priv_mode;      // current execution mode
+
 // ----
 // CSRs
 // ----
@@ -73,6 +83,9 @@ logic                   inv_op_exc;     // invalid operation (from funct3)
 `ifdef LEN5_FP_EN
 csr_fcsr_t      fcsr;
 `endif /* LEN5_FP_EN */
+
+// SATP
+csr_satp_t      satp;
 
 // --------
 // CSR READ
@@ -96,6 +109,12 @@ always_comb begin : csr_read
                 `CSR_ADDR_FCSR:     csr_rd_val = { '0, fcsr };
                 `CSR_ADDR_FRM:      csr_rd_val = { '0, fcsr.frm };
                 `CSR_ADDR_FFLAGS:   csr_rd_val = { '0, fcsr.fflags };
+
+                // satp
+                `CSR_ADDR_SATP: begin
+                    // only readable in S and M modes
+                    if (priv_mode >= CSR_PRIV_S)    csr_rd_val = satp;
+                end
             `endif /* LEN5_FP_EN */
 
                 // Default
@@ -110,12 +129,23 @@ always_comb begin : csr_read
                      funct3_i == `FUNCT3_CSRRC ||
                      funct3_i == `FUNCT3_CSRRCI) begin
             case (addr_i)
+                // U-LEVEL CSRs
+                // -----------
             `ifdef LEN5_FP_EN
                 // fcsr
                 `CSR_ADDR_FCSR:     csr_rd_val = { '0, fcsr };
                 `CSR_ADDR_FRM:      csr_rd_val = { '0, fcsr.frm };
                 `CSR_ADDR_FFLAGS:   csr_rd_val = { '0, fcsr.fflags };
             `endif /* LEN5_FP_EN */
+                
+                // S-LEVEL CSRs
+                // ------------
+
+                // satp
+                `CSR_ADDR_SATP: begin
+                    // only readable in S and M modes
+                    if (priv_mode >= CSR_PRIV_S)    csr_rd_val = satp;
+                end
                 
                 // Default
                 default:;   // use default value (see Exception Handling)
@@ -131,7 +161,20 @@ end
 always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
     if (!rst_n_i) begin
     `ifdef LEN5_FP_EN
-        fcsr <= '0;
+        // priv mode
+        priv_mode   <= CSR_PRIV_M;
+
+        // fcsr
+        fcsr        <= '0;
+
+        // satp
+        // The following line resets sapt MODE, ASID, and PPN (physical page 
+        // number of the root page table) to BARE (no virtual memory), 0x00, 
+        // and 0x00 respectively. Subsequent instructions are required to
+        // enable VM and point to a proper page table. 
+        satp.mode   <= `BOOT_VM_MODE;
+        satp.asid   <= '0;
+        satp.ppn    <= '0;
     `endif /* LEN5_FP_EN */
     end
     
@@ -175,6 +218,83 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
                 endcase
             end
         `endif /* LEN5_FP_EN */
+
+            // S-MODE CSRs
+            // -----------
+
+            // satp
+            `CSR_ADDR_SATP: begin
+                case (funct3_i)
+                    `FUNCT3_CSRRW:  begin
+                        if (priv_mode >= CSR_PRIV_S) begin
+                            if (rs1_data_i[63:60] == BARE ||
+                                rs1_data_i[63:60] == SV39 ||
+                                rs1_data_i[63:60] == SV48) begin
+                                satp.mode   <= rs1_data_i[63:60];
+                            end
+                            satp.asid   <= rs1_data_i[59:44];
+                            satp.ppn    <= rs1_data_i[43:0];
+                        end
+                    end
+                    `FUNCT3_CSRRS:  begin
+                        if (priv_mode >= CSR_PRIV_S) begin
+                            if (rs1_data_i[63:60] == BARE ||
+                                rs1_data_i[63:60] == SV39 ||
+                                rs1_data_i[63:60] == SV48) begin
+                                satp.mode   <= satp.mode | rs1_data_i[63:60];
+                            end
+                            satp.asid   <= satp.asid | rs1_data_i[59:44];
+                            satp.ppn    <= satp.ppn | rs1_data_i[43:0];
+                        end
+                    end
+                    `FUNCT3_CSRRC:  begin
+                        if (priv_mode >= CSR_PRIV_S) begin
+                            if (rs1_data_i[63:60] == BARE ||
+                                rs1_data_i[63:60] == SV39 ||
+                                rs1_data_i[63:60] == SV48) begin
+                                satp.mode   <= satp.mode & ~rs1_data_i[63:60];
+                            end
+                            satp.asid   <= satp.asid & ~rs1_data_i[59:44];
+                            satp.ppn    <= satp.ppn & ~rs1_data_i[43:0];
+                        end
+                    end
+                    `FUNCT3_CSRRWI: begin
+                        if (priv_mode >= CSR_PRIV_S) begin
+                            if (uimm_zext[63:60] == BARE ||
+                                uimm_zext[63:60] == SV39 ||
+                                uimm_zext[63:60] == SV48) begin
+                                satp.mode   <= uimm_zext[63:60];
+                            end
+                            satp.asid   <= uimm_zext[59:44];
+                            satp.ppn    <= uimm_zext[43:0];
+                        end
+                    end
+                    `FUNCT3_CSRRSI: begin
+                        if (priv_mode >= CSR_PRIV_S) begin
+                            if (uimm_zext[63:60] == BARE ||
+                                uimm_zext[63:60] == SV39 ||
+                                uimm_zext[63:60] == SV48) begin
+                                satp.mode   <= satp.mode | uimm_zext[63:60];
+                            end
+                            satp.asid   <= satp.asid | uimm_zext[59:44];
+                            satp.ppn    <= satp.ppn | uimm_zext[43:0];
+                        end
+                    end
+                    `FUNCT3_CSRRCI: begin
+                        if (priv_mode >= CSR_PRIV_S) begin
+                            if (uimm_zext[63:60] == BARE ||
+                                uimm_zext[63:60] == SV39 ||
+                                uimm_zext[63:60] == SV48) begin
+                                satp.mode   <= satp.mode & ~uimm_zext[63:60];
+                            end
+                            satp.asid   <= satp.asid & ~uimm_zext[59:44];
+                            satp.ppn    <= satp.ppn & ~uimm_zext[43:0];
+                        end
+                    end
+                    default:;   // do not modify the CSR value
+                endcase
+            end
+
             default:;   // do not modify the CSR values
         endcase
     
@@ -232,8 +352,8 @@ end
 // CSR data
 // --------
 always_ff @( negedge clk_i or negedge rst_n_i ) begin : csr_out_reg
-    if (!rst_n_i)   data_o <= '0;
-    else            data_o <= csr_rd_val;
+    if (!rst_n_i)       data_o <= '0;
+    else                data_o <= csr_rd_val;
 end
 
 // CSR access exception
@@ -247,9 +367,15 @@ end
 // OUTPUT DATA
 // -----------
 
+// Always ready to accept data
+assign  ready_o     = 1'b1;
+
 // Data to FPU
 `ifdef LEN5_FP_EN
-assign fpu_frm_o = fcsr.frm;
+assign  fpu_frm_o   = fcsr.frm;
 `endif /* LEN5_FP_EN */
+
+// Memory protection mode
+assign  vm_mode_o   = satp.mode;
 
 endmodule

@@ -12,7 +12,7 @@
 // Author: Michele Caon
 // Date: 03/11/2019
 
-// Include LEN5 configuration
+// LEN5 compilation switches
 `include "len5_config.svh"
 
 import len5_pkg::XLEN;
@@ -33,11 +33,11 @@ module rob
     output  logic                       issue_ready_o,
 
     // Data from/to the issue stage
-    input   logic [ROB_IDX_LEN-1:0]     issue_rs1_idx_i,        // ROB entry containing rs1 value 
-    input   logic [ROB_IDX_LEN-1:0]     issue_rs2_idx_i,        // ROB entry containing rs2 value
     output  logic                       issue_rs1_ready_o,      // the result is ready
+    input   logic [ROB_IDX_LEN-1:0]     issue_rs1_idx_i,        // ROB entry containing rs1 value 
     output  logic [XLEN-1:0]            issue_rs1_value_o,      // the value of the first operand
     output  logic                       issue_rs2_ready_o,      // the result is ready
+    input   logic [ROB_IDX_LEN-1:0]     issue_rs2_idx_i,        // ROB entry containing rs2 value
     output  logic [XLEN-1:0]            issue_rs2_value_o,      // the value of the second operand
 
     input   instr_t                     issue_instr_i,         // to identify the instruction
@@ -56,7 +56,7 @@ module rob
     output  logic                       cdb_ready_o,
 
     // Data from the CDB
-    input cdb_data_t              cdb_data_i,
+    input cdb_data_t                    cdb_data_i,
 
     // Handshake from/to the committing logic
     input   logic                       comm_ready_i,
@@ -67,13 +67,8 @@ module rob
     output  logic [XLEN-1:0]            comm_pc_o,
     output  logic [REG_IDX_LEN-1:0]     comm_rd_idx_o,          // the destination register (rd)
     output  logic [XLEN-1:0]            comm_value_o,           // the result of the instruction
-`ifdef LEN5_FP_EN
-	output  logic [REG_IDX_LEN-1:0]     fp_comm_rd_idx_o,          // the destination register (rd)
-    output  logic [XLEN-1:0]            fp_comm_value_o,           // the result of the instruction
-`endif /* LEN5_FP_EN */
     output  logic                       comm_except_raised_o,
-    //output  logic [ROB_EXCEPT_LEN-1:0]  comm_except_code_o,
-	output  except_code_t  comm_except_code_o,
+	output  except_code_t               comm_except_code_o,
     output  logic [ROB_IDX_LEN-1:0]     comm_head_idx_o,        // ROB head idx to update register status
 
     // Data from/to the store buffer
@@ -133,7 +128,7 @@ module rob
         // --------------
         
         // PUSH A NEW INSTRUCTION IN THE QUEUE
-        if (!rob_data[rob_tail_idx].valid/*&& !stall*/) begin
+        if (!rob_data[rob_tail_idx].valid) begin
             issue_ready_o               = 1'b1; // tell the issue logic that an entry is valid
             if (issue_valid_i) begin
                 rob_push                = 1'b1; // push the new instruction in
@@ -143,12 +138,12 @@ module rob
         end
 
         // WRITE THE DATA FROM THE CDB  
-        if (cdb_valid_i/*&& !stall*/) begin
+        if (cdb_valid_i) begin
             rob_wr_res                  = 1'b1; 
         end
 
         // POP THE HEAD ENTRY WHEN IT'S READY TO COMMIT
-        if (rob_data[rob_head_idx].valid && rob_data[rob_head_idx].res_ready/*&& !stall*/) begin
+        if (rob_data[rob_head_idx].valid && rob_data[rob_head_idx].res_ready) begin
             comm_valid_o                = 1'b1; // tell the commit logic that an instruction is ready to commit
             if (comm_ready_i) begin
                rob_pop                  = 1'b1; // if the commit logic can accept the instruction, pop it
@@ -255,10 +250,6 @@ module rob
     assign comm_pc_o            = rob_data[rob_head_idx].instr_pc;
     assign comm_rd_idx_o        = rob_data[rob_head_idx].rd_idx;
     assign comm_value_o         = rob_data[rob_head_idx].res_value;
-`ifdef LEN5_FP_EN
-	assign fp_comm_rd_idx_o     = rob_data[rob_head_idx].rd_idx;
-    assign fp_comm_value_o      = rob_data[rob_head_idx].res_value;
-`endif /* LEN5_FP_EN */
     assign comm_except_raised_o = rob_data[rob_head_idx].except_raised;
     assign comm_head_idx_o      = rob_head_idx;
 

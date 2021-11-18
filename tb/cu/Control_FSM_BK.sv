@@ -244,19 +244,14 @@ module Control
 				end	
         		E_ILLEGAL_INSTRUCTION: begin 
 					abort_i  				= 	1;
-					//stall	 				= 	1;
-				end
 				E_ENV_CALL_SMODE,E_ENV_CALL_MMODE: begin 
 					if (!l2c_update_done_o) begin
 						synch_l1dc_l2c_i  		= 	1;
 					end else begin
 						synch_l1dc_l2c_i  		= 	0;
 					end
-					//stall	 				= 	1;
 				end
 				default: begin
-					//stall	 				= 	0;
-					//flush_i	 			= 	0; 
 					abort_i  				= 	0;
    					clr_l1tlb_mshr_i  		= 	0;
    					clr_l2tlb_mshr_i  		= 	0;
@@ -283,11 +278,9 @@ module Control
     end
 	else if (except_rasied_i /* && (commit_head_cnt)*/) begin
 			flush_i 			= 	1;
-			//stall	 			= 	1;
     end
 	else  begin
             flush_i 			= 	0;
-			stall	 			= 	0;
     end
 	end
 

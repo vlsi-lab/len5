@@ -12,7 +12,7 @@
 // Author: Michele Caon
 // Date: 27/10/2019
 
-// Include LEN5 configuration
+// LEN5 compilation switches
 `include "len5_config.svh"
 
 // Import UVM report macros

@@ -12,6 +12,10 @@
 // Author: Michele Caon
 // Date: 12/11/2019
 
+/*
+ * NOTE: ADD RS3!
+ */
+
 import len5_pkg::XLEN;
 import len5_pkg::FREG_NUM;
 import len5_pkg::FREG_IDX_LEN;

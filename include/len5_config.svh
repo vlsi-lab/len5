@@ -18,7 +18,12 @@
 // --------------------
 // GLOBAL CONFIGURATION
 // --------------------
+
+// Boot program counter
 `define BOOT_PC 'h0
+
+// Boot memory translation mode
+`define BOOT_VM_MODE 'h0 // 0x0: BARE, 0x8: SV39, 0x9: SV48
 
 // --------------------
 // COMPILATION SWITCHES

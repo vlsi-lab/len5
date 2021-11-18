@@ -23,7 +23,7 @@ module issue_queue_fifo (
     input   logic                   clk_i,
     input   logic                   rst_n_i,
     input   logic                   flush_i,
-	//input   logic					stall,
+	
 
     // Handshake from/to fetch unit
     input   logic                   fetch_valid_i,
@@ -118,8 +118,7 @@ module issue_queue_fifo (
             foreach (iq_fifo[i]) begin
                 iq_fifo[i].valid    <= 'b0; // clearing the valid field is necessary and sufficient
             end
-		//end else if (stall) begin
-			//;
+		
         end else begin // Normal update (pop and/or push an instruction)
             if (fifo_pop) iq_fifo[head_idx].valid   <= 'b0; // Pop the fetched entry
             if (fifo_push) iq_fifo[tail_idx]        <= new_entry; // Push new instruction WRITE PORT 1

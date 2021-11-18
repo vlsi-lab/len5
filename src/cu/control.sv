@@ -81,11 +81,6 @@ module control
   	input   l2c_l2arb_ans_t     l2c_l2arb_ans_i,
   	output 	logic               l2arb_l2c_ans_rdy_o 
 );
-//Perform a similar solution to this
-	// flush_i 				= 	0;
-	// if (main_cu_stall_o) begin	// Put it inside an always block
-	// 	flush_i 			= 	1;
-	// end
 
 	always_comb begin : ctl_logic
 		flush_i					= 	main_cu_stall_o;

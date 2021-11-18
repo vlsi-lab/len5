@@ -110,7 +110,6 @@ module Control
     end
 	else if (except_rasied_i /* && (commit_head_cnt)*/) begin
 			flush_i 			= 	1;
-			//stall	 			= 	1;
     end
 	else  begin
             flush_i 			= 	0;
@@ -118,9 +117,6 @@ module Control
     end
 	end
 
-       // E_BREAKPOINT          = 4'h3,	// Not used, find there use
-       // E_ENV_CALL_UMODE      = 4'h8,
-       // E_UNKNOWN             = 4'ha    // reserved code 10, used for debugging
 	// Abort and Clear logic
 	always_ff @(posedge clk_i or negedge rst_n_i) begin: Abort_update
 

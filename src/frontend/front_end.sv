@@ -26,7 +26,6 @@ module front_end
   input   logic             clk_i,
   input   logic             rst_n_i,
   input   logic             flush_i,
-  // input logic stall,
 
   // From/to i-cache
   output  logic [XLEN-1:0]  addr_o,

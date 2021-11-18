@@ -12,7 +12,7 @@
 // Author: Michele Caon
 // Date: 21/10/2019
 
-// Include LEN5 configuration
+// LEN5 compilation switches
 `include "len5_config.svh"
 
 // Import UVM report macros
@@ -35,11 +35,11 @@ module generic_rs
     input   logic                   clk_i,
     input   logic                   rst_n_i,
     input   logic                   flush_i,
-	//input   logic				stall,
+	
 
     // Handshake from/to issue logic
-    input   logic                   arbiter_valid_i,
-    output  logic                   arbiter_ready_o,
+    input   logic                   issue_valid_i,
+    output  logic                   issue_ready_o,
 
     // Data from the issue stage
     input   logic [EU_CTL_LEN-1:0]  eu_ctl_i,
@@ -97,7 +97,7 @@ module generic_rs
         logic                   rs1_ready;  // The first operand value is available in 'rs1_value'
         logic [ROB_IDX_LEN-1:0] rs1_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
         logic [XLEN-1:0]        rs1_value;  // The value of the first operand
-        logic rs2_ready; // The second operand value is available in 'rs2_value'
+        logic                   rs2_ready;  // The second operand value is available in 'rs2_value'
         logic [ROB_IDX_LEN-1:0] rs2_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
         logic [XLEN-1:0]        rs2_value;  // The value of the second operand
         logic                   res_ready;  // The value of the result is available in 'res_value'"
@@ -157,7 +157,7 @@ module generic_rs
         rs_pop          = 'b0;
         rs_wr_res       = 'b0;
         eu_valid_o      = 'b0;
-        arbiter_ready_o = 'b0;
+        issue_ready_o   = 'b0;
         cdb_valid_o     = 'b0;
         eu_ready_o      = 'b1;  // Always true since the entry has already been allocated during issue 
 
@@ -169,8 +169,8 @@ module generic_rs
 
         // Insert new instruction
         if (!rs_data[new_idx].valid && new_idx_valid) begin
-            arbiter_ready_o = 'b1; // the RS can accept a new instruction being issued if the entry pointed by the new entry selector is free (i.e. valid = 0).
-            if (arbiter_valid_i) rs_insert = 'b1;
+            issue_ready_o = 'b1; // the RS can accept a new instruction being issued if the entry pointed by the new entry selector is free (i.e. valid = 0).
+            if (issue_valid_i) rs_insert = 'b1;
         end
 
         // Send selected instruction to CDB
@@ -205,8 +205,6 @@ module generic_rs
                 rs_data[i].res_ready        <= 1'b0;
                 rs_data[i].except_raised    <= 1'b0;
             end
-		//end else if (stall) begin
-			//	;
         end else begin // Normal update
             
             // Send entry selected for execution to EU
@@ -214,7 +212,7 @@ module generic_rs
             
             // Insert new instruction 
             if (rs_insert) begin // WRITE PORT 1
-                rs_data[new_idx].valid      <= arbiter_valid_i;
+                rs_data[new_idx].valid      <= issue_valid_i;
                 rs_data[new_idx].busy       <= 'b0;
                 `ifdef ENABLE_AGE_BASED_SELECTOR
                 rs_data[new_idx].entry_age  <= 0;

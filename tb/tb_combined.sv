@@ -3,7 +3,7 @@
 //`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/CU_DP_MEM.sv"
 //import mmm_pkg::*;
 
-// Include LEN5 configuration
+// LEN5 compilation switches
 `include "len5_config.svh"
 
 /* Import UVM macros and package */
@@ -32,9 +32,6 @@ localparam [XLEN-1:0] BOOT_PC = `BOOT_PC;
 /******************/
 /* ---- BODY ---- */
 /******************/
-
-// To the main control 
-    //logic    main_cu_stall_o;
 
     logic clk_i;
 	logic rst_n_i;

@@ -135,13 +135,13 @@ package csr_pkg;
   typedef struct packed {
     logic                     sd; // fs or xs dirty?
     logic [XLEN-2:36] not_used_4; // WPRI
-    logic [    35:34]        sxl;
-    logic [    33:31]        uxl;
+    logic [    35:34]        sxl; // hardwired to 0 if S-mode is not supported
+    logic [    33:31]        uxl; // hardwired to 0 if U-mode is not supported
     logic [    31:23] not_used_3; // WPRI
     logic                    tsr; // trap sret
     logic                     tw; // timeout wait
     logic                    tvm; // trap virtual memory
-    logic                    mxr; // make executable readable
+    logic                    mxr; // make executable pages also readable
     logic                    sum;
     logic                   mprv; // modify privilege (if 1, translation and protection as in MPP)
     logic [    16:15]         xs; // other extensions state
@@ -210,7 +210,7 @@ package csr_pkg;
   // --------------
   
   typedef enum logic [3:0] {
-    BARE = 4'b0000, 
+    BARE = 4'b0000, // no translation or protection
     SV39 = 4'b1000,
     SV48 = 4'b1001
   } satp_mode_t;

@@ -110,8 +110,6 @@ module cdb_arbiter
             rem_valid_a         <= 0;
         end else if (flush_i) begin
             rem_valid_a         <= 0;
-		//end else if (stall)begin
-			//;
         end else begin
             rem_valid_a         <= msk_valid_a;
         end

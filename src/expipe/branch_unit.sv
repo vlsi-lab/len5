@@ -1,4 +1,4 @@
-// Copyright 2019 Politecnico di Torino.
+// Copyright 2021 Politecnico di Torino.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 2.0 (the "License"); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -9,80 +9,140 @@
 // specific language governing permissions and limitations under the License.
 //
 // File: branch_unit.sv
-// Author: Marco Andorno
-// Date: 05/10/2019
+// Author: Michele Caon
+// Date: 17/11/2021
 
 import len5_pkg::*;
-import expipe_pkg::BU_CTL_LEN;
+import expipe_pkg::*;
 
-module branch_unit
+module branch_unit 
+#(
+    RS_DEPTH = 4  // must be a power of 2
+)
 (
-    input   logic                   clk_i,
-    input   logic                   rst_n_i,
-    input   logic [XLEN-1:0]        rs1_i,
-    input   logic [XLEN-1:0]        rs2_i,
-    input   logic [B_IMM-1:0]       imm_i,
-    input   logic                   ops_valid_i,
-    input   logic [XLEN-1:0]        pred_pc_i,
-    input   logic [XLEN-1:0]        pred_target_i,
-    input   logic                   pred_taken_i,
-    input   logic [BU_CTL_LEN-1:0]  type_i,
+    input   logic                           clk_i,
+    input   logic                           rst_n_i,
+    input   logic                           flush_i,
 
-    output  logic                   ops_ready_o,
-    output  logic                   res_valid_o,
-    output  logic [XLEN-1:0]        res_pc_o,
-    output  logic [XLEN-1:0]        res_target_o,
-    output  logic                   res_taken_o,
-    output  logic                   res_mispredict_o
+    // Handshake from/to issue logic
+    input   logic                           issue_valid_i,
+    output  logic                           issue_ready_o,
+
+    // Data from the decode stage
+    input   logic [BU_CTL_LEN-1:0]          branch_type_i,
+    input   logic                           rs1_ready_i,
+    input   logic [ROB_IDX_LEN-1:0]         rs1_idx_i,
+    input   logic [XLEN-1:0]                rs1_value_i,
+    input   logic                           rs2_ready_i,
+    input   logic [ROB_IDX_LEN-1:0]         rs2_idx_i,
+    input   logic [XLEN-1:0]                rs2_value_i,
+    input   logic [B_IMM-1:0]               imm_value_i,
+    input   logic [ROB_IDX_LEN-1:0]         dest_idx_i,
+    input   logic [XLEN-1:0]                pred_pc_i,
+    input   logic [XLEN-1:0]                pred_target_i,
+    input   logic                           pred_taken_i,
+
+	// Data to the FE 
+	output  logic [XLEN-1:0]                res_pc_o,
+  	output  logic [XLEN-1:0]                res_target_o,
+  	output  logic                           res_taken_o,
+	output  logic                           res_mispredict_o,
+
+    // Hanshake from/to the CDB 
+    input   logic                           cdb_ready_i,
+    input   logic                           cdb_valid_i,        // to know if the CDB is carrying valid data
+    output  logic                           cdb_valid_o,
+
+    // Data from/to the CDB
+    input cdb_data_t                        cdb_data_i,
+    output  cdb_data_t                      cdb_data_o
 );
 
-    // Signal declarations
-    logic taken, wrong_taken, wrong_target;
-    logic [XLEN-1:0] target;
+    // Data from/to the execution unit
+    logic [XLEN-1:0]                bu_rs1_o;
+    logic [XLEN-1:0]                bu_rs2_o;
+    logic [B_IMM-1:0]               bu_imm_o;
+    logic [XLEN-1:0]                bu_pred_pc_o;
+    logic [XLEN-1:0]                bu_pred_target_o;
+    logic                           bu_pred_taken_o;
+    logic [BU_CTL_LEN-1:0]          bu_branch_type_o;
+    logic                           bu_res_mispredict;
 
-    // Logic unit
-    always_comb begin
-        case (type_i)
-        BEQ:      taken = (rs1_i == rs2_i);
-        BNE:      taken = (rs1_i != rs2_i);
-        BLT:      taken = ($signed(rs1_i) < $signed(rs2_i));
-        BGE:      taken = ($signed(rs1_i) >= $signed(rs2_i));
-        BLTU:     taken = (rs1_i < rs2_i);
-        BGEU:     taken = (rs1_i >= rs2_i);
-        default:  taken = 0;
-        endcase
-    end
+    // Handshake from/to the execution unit
+    logic                           bu_ready_i;
+    logic                           bu_valid_i;
+    logic                           bu_valid_o;
+    logic                           bu_ready_o;
 
-    // Control unit
-    branch_unit_cu u_branch_unit_cu
-    (
-        .clk_i            (clk_i),
-        .rst_n_i          (rst_n_i),
-        .ops_valid_i      (ops_valid_i),
-        .taken_i          (taken),
-        .wrong_taken_i    (wrong_taken),
-        .wrong_target_i   (wrong_target),
+branch_unit_rs  #(.RS_DEPTH (RS_DEPTH)) u_branch_generic_rs
+(
+    .clk_i (clk_i),
+    .rst_n_i (rst_n_i),
+    .flush_i (flush_i),
+	
+    .issue_valid_i (issue_valid_i),
+    .issue_ready_o (issue_ready_o),
 
-        .ops_ready_o      (ops_ready_o),
-        .res_valid_o      (res_valid_o),
-        .res_taken_o      (res_taken_o),
-        .res_mispredict_o (res_mispredict_o)
-    );
+    .branch_type_i(branch_type_i),
+    .rs1_ready_i(rs1_ready_i),
+    .rs1_idx_i(rs1_idx_i),
+    .rs1_value_i(rs1_value_i),
+    .rs2_ready_i(rs2_ready_i),
+    .rs2_idx_i(rs2_idx_i),
+    .rs2_value_i(rs2_value_i),
+    .imm_value_i(imm_value_i),
+    .dest_idx_i(dest_idx_i),
+    .pred_pc_i(pred_pc_i),
+    .pred_target_i(pred_target_i),
+    .pred_taken_i(pred_taken_i),
 
-    // Assignments
-    assign wrong_taken = pred_taken_i != taken;
-    assign target = { {XLEN-B_IMM{1'b0}}, (imm_i << 1)} + pred_pc_i; // add JAL and JALR; add a mux with jump
-    assign wrong_target = pred_target_i != target;
-        // Add a check for missaligned address
-    // Output register
-    always_ff @ (posedge clk_i or negedge rst_n_i) begin: out_reg
-        if (!rst_n_i) begin
-        res_pc_o <= '0;
-        res_target_o <= '0;
-        end else if (ops_valid_i) begin
-        res_pc_o <= pred_pc_i;
-        res_target_o <= target;
-        end
-    end: out_reg
-  
+    .bu_ready_i (bu_ready_i),
+    .bu_valid_i (bu_valid_i),
+    .bu_valid_o (bu_valid_o),
+    .bu_ready_o (bu_ready_o),
+
+    .mispredict_i(bu_res_mispredict), 
+    .bu_rs1_o(bu_rs1_o),
+    .bu_rs2_o(bu_rs2_o),
+    .bu_imm_o(bu_imm_o),
+    .bu_pred_pc_o(bu_pred_pc_o),
+    .bu_pred_target_o(bu_pred_target_o),
+    .bu_pred_taken_o(bu_pred_taken_o),
+    .bu_branch_type_o(bu_branch_type_o),
+ 
+    .cdb_ready_i (cdb_ready_i),
+    .cdb_valid_i (cdb_valid_i),
+    .cdb_valid_o (cdb_valid_o),
+
+    .cdb_data_i(cdb_data_i),
+    .cdb_data_o(cdb_data_o)
+);
+
+branch_unit u_branch
+(
+    .clk_i (clk_i),
+    .rst_n_i (rst_n_i),
+	.rs1_i(bu_rs1_o),
+    .rs2_i(bu_rs2_o),
+  	.imm_i(bu_imm_o),
+
+  	.ops_valid_i(bu_valid_o),
+
+  	.pred_pc_i(bu_pred_pc_o),
+  	.pred_target_i(bu_pred_target_o),
+  	.pred_taken_i(bu_pred_taken_o),
+  	.type_i(branch_type_i),
+
+  	.ops_ready_o(bu_ready_i),
+  	.res_valid_o(bu_valid_i),
+  	.res_pc_o(res_pc_o),
+  	.res_target_o(res_target_o),
+  	.res_taken_o(res_taken_o),
+  	.res_mispredict_o(bu_res_mispredict)
+
+);
+
+// Output evaluation
+assign  res_mispredict_o = bu_res_mispredict;
+
 endmodule

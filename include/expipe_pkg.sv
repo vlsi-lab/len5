@@ -15,7 +15,7 @@
 `ifndef EXPIPE_PKG
 `define EXPIPE_PKG
 
-// Include LEN5 configuration
+// LEN5 compilation switches
 `include "len5_config.svh"
 
 package expipe_pkg;
@@ -130,13 +130,13 @@ package expipe_pkg;
 `ifdef LEN5_M_EN
     localparam MULT_EU_N    = 2;   // MULT, DIV
 `else
-    localparam MULT_EU_N    = 0;   // MULT, DIV
+    localparam MULT_EU_N    = 0;
 `endif /* LEN5_M_EN */
 
 `ifdef LEN5_FP_EN
     localparam FP_EU_N      = 1;     // FPU
 `else
-    localparam FP_EU_N      = 0;     // FPU
+    localparam FP_EU_N      = 0;
 `endif /* LEN5_FP_EN */
 
     // Total number of execution units
@@ -201,6 +201,9 @@ package expipe_pkg;
     localparam  FPU_EXCEPT_LEN  = 2;
     localparam  FPU_CTL_LEN     = 4;            // floating point multiplier operation control
 
+    // OPERANDS ONLY
+    localparam  OP_ONLY_CTL_LEN = 2;
+
     // MAXIMUM DIMENSION OF EU_CONTROL FIELDS
     localparam MAX_EU_CTL_LEN   = ALU_CTL_LEN;  // this must be set to the maximum of the previous parameters
     
@@ -217,7 +220,7 @@ package expipe_pkg;
     `ifdef LEN5_FP_EN
         EU_FPU,
     `endif /* LEN5_FP_EN */
-        EU_OPERANDS_ONLY,
+        EU_OPERANDS_ONLY,   // probably not necessary if pipeline is stalled
         EU_NONE             //the instruction is directly sent to the ROB (csr, special instructions, etc.)
     } issue_eu_t;
 

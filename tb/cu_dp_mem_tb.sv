@@ -7,9 +7,6 @@ import csr_pkg::*;
 
 module cu_dp_mem_tb;
 
-// To the main control 
-    //logic    main_cu_stall_o;
-
     logic clk_i;
 	logic rst_n_i;
 	logic             flush_i;

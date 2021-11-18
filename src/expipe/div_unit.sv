@@ -1,4 +1,4 @@
-// Copyright 2019 Politecnico di Torino.
+// Copyright 2021 Politecnico di Torino.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 2.0 (the "License"); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -8,16 +8,15 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: generic_rs.sv
+// File: div_unit.sv
 // Author: Michele Caon
-// Date: 21/10/2019
-
+// Date: 17/11/2021
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
 import expipe_pkg::*;
 
-module fpu_rs 
+module div_unit 
 #(
     RS_DEPTH = 4, // must be a power of 2,
     
@@ -29,11 +28,11 @@ module fpu_rs
     input   logic                   clk_i,
     input   logic                   rst_n_i,
     input   logic                   flush_i,
-	//input   logic				stall,
+	
 
     // Handshake from/to issue logic
-    input   logic                   arbiter_valid_i,
-    output  logic                   arbiter_ready_o,
+    input   logic                   issue_valid_i,
+    output  logic                   issue_ready_o,
 
     // Data from the issue stage
     input   logic [EU_CTL_LEN-1:0]  eu_ctl_i,
@@ -76,14 +75,14 @@ module fpu_rs
     logic [XLEN-1:0]        eu_rs2_o;
     logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o;
 
-generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_fpu_generic_rs
+generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_div_generic_rs
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
     .flush_i (flush_i),
-	//.stall (stall),
-    .arbiter_valid_i (arbiter_valid_i),
-    .arbiter_ready_o (arbiter_ready_o),
+	
+    .issue_valid_i (issue_valid_i),
+    .issue_ready_o (issue_ready_o),
     .eu_ctl_i (eu_ctl_i),
     .rs1_ready_i (rs1_ready_i),
     .rs1_idx_i (rs1_idx_i),
@@ -116,7 +115,7 @@ generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_f
     .cdb_except_o (cdb_except_o)
 );
 
-fpu #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_fpu
+div #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_div
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
