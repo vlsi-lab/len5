@@ -139,6 +139,13 @@ package len5_pkg;
     // --------------
     // Frontend
     // --------------
+
+    // g-share branch predictor history length
+    localparam  HLEN = 4;
+
+    // Branch target buffer bits 
+    localparam  BTB_BITS = 4;
+
     // instruction selector enums
     typedef enum logic [1:0] { current_pc = 'h0, prev_pc = 'h1, line_pc = 'h2 } pc_src_t;
     typedef enum logic [1:0] { cache_out = 'h0, line_reg = 'h1, line_bak = 'h2 } line_src_t;

@@ -34,7 +34,7 @@ module fetch_stage
   output  logic [XLEN-1:0]  addr_o,
   output  logic             addr_valid_o,
   input   logic             addr_ready_i,
-  input icache_out_t      data_i,
+  input   icache_out_t      data_i,
   input   logic             data_valid_i,
   output  logic             data_ready_o,
 
@@ -42,6 +42,7 @@ module fetch_stage
   input   logic             issue_ready_i,
   output  logic             issue_valid_o,
   output  logic [ILEN-1:0]  instruction_o,
+  output  logic [XLEN-1:0]  curr_pc_o,
   output  prediction_t      pred_o,
 
   // From Icache
@@ -102,15 +103,16 @@ module fetch_stage
     .read_done_i    (read_done),
     .read_req_o     (read_req),
 
-	.icache_frontend_ans_i(icache_frontend_ans_i),
+	  .icache_frontend_ans_i(icache_frontend_ans_i),
 
-  .except_o(except_o),
-  .except_code_o(except_code_o),
+    .except_o(except_o),
+    .except_code_o(except_code_o),
 
     // From/to instruction decode
     .issue_ready_i  (issue_ready_i),
     .issue_valid_o  (issue_valid_o),
-    .instruction_o  (instruction_o)
+    .instruction_o  (instruction_o),
+    .curr_pc_o      (curr_pc_o)
   );
 
   // ---------

@@ -8,7 +8,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: fetch_stage.sv
+// File: frontend.sv
 // Author: Marco Andorno
 // Date: 07/10/2019
 
@@ -16,7 +16,7 @@ import len5_pkg::*;
 import memory_pkg::*;
 import expipe_pkg::*;
 
-module front_end
+module frontend
 #(
   parameter HLEN = 4,
   parameter BTB_BITS = 4,
@@ -31,26 +31,24 @@ module front_end
   output  logic [XLEN-1:0]  addr_o,
   output  logic             addr_valid_o,
   input   logic             addr_ready_i,
-  input icache_out_t      data_i,
+  input   icache_out_t      data_i,
   input   logic             data_valid_i,
   output  logic             data_ready_o,
+  input   icache_frontend_ans_t icache_frontend_ans_i,
 
   // From/to instruction decode
   input   logic             issue_ready_i,
   output  logic             issue_valid_o,
   output  logic [ILEN-1:0]  instruction_o,
+  output  logic [XLEN-1:0]  curr_pc_o,
   output  prediction_t      pred_o,
 
   // From branch unit (ex stage)
-  input resolution_t      res_i,
-
-  // From Icache
-  input icache_frontend_ans_t icache_frontend_ans_i,
+  input   resolution_t      res_i,
 
   // To backend
-  output logic except_o,
-  //output logic [ROB_EXCEPT_LEN-1:0] except_code_o,
-  output except_code_t except_code_o,
+  output logic              except_o,
+  output except_code_t      except_code_o,
   
 
   // For pc_gen from or to back end
@@ -74,7 +72,7 @@ fetch_stage #(.HLEN(HLEN),.BTB_BITS(BTB_BITS)) fetch_stage_u
   .fetch_ready_o	(fetch_ready_o),
 
   // From/to i-cache
-  .addr_o			(addr_o),
+  .addr_o			    (addr_o),
   .addr_valid_o		(addr_valid_o),
   .addr_ready_i		(addr_ready_i),
   .data_i			(data_i),
@@ -85,7 +83,8 @@ fetch_stage #(.HLEN(HLEN),.BTB_BITS(BTB_BITS)) fetch_stage_u
   .issue_ready_i	(issue_ready_i),
   .issue_valid_o	(issue_valid_o),
   .instruction_o	(instruction_o),
-  .pred_o			(pred_i),
+  .curr_pc_o      (curr_pc_o),
+  .pred_o			    (pred_i),
 
   .icache_frontend_ans_i(icache_frontend_ans_i),
 

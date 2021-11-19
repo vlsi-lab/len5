@@ -8,7 +8,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: CU_FSM.sv
+// File: main_cu.sv
 // Author: WALID
 // Date: 07/10/2019
 
@@ -20,31 +20,34 @@ import expipe_pkg::*;
 import memory_pkg::*;
 import csr_pkg::*;
 
-module cu2_fsm
+module main_cu
 (
 	// From :TB
   	input   logic             	clk_i,
   	input   logic             	rst_n_i,
 
-	// To the main control :CU 
-  	input  	logic             	main_cu_stall_o,
-	input   logic [ILEN-1:0] 	ins_in,
-	output  logic 				stall,
-  	
-	// For pc_gen from or to back end// Input from intruction cache :I$
-  	//input   logic             	except_i,
-  	//input   logic [XLEN-1:0]  	except_pc_i,
+	// From fontend
+	input   logic [ILEN-1:0] 	fe_ins_i,
+  	input   logic             	fe_except_raised_i
 
-  	// Data from intruction fetch unit cache // Fix_it from backend i.e., input from data cahce :D$
-  	input   logic             	except_raised_i,
-  	input   except_code_t     	except_code_i
+	// From backend
+  	input  	logic             	be_stall_i,
+	input 	logic 				be_flush_i,
+
+	// To others
+	output  logic 				stall_o,
+	output 	logic 				flush_o,
+
+	// To memory
+	output 	logic				mem_flush_o,
+	output 	logic 				mem_abort_o
 );
 
 	logic [OPCODE_LEN -1:0]        instr_opcode;
     logic [FUNCT3_LEN -1:0]        instr_funct3;
 
-	assign instr_opcode     = 	ins_in[OPCODE_LEN-1 : 0];
-    assign instr_funct3     = 	ins_in[14 -: FUNCT3_LEN];
+	assign instr_opcode     = 	fe_ins_i[OPCODE_LEN-1 : 0];
+    assign instr_funct3     = 	fe_ins_i[14 -: FUNCT3_LEN];
 
 	typedef enum logic [2:0] { RESET, OP_STATE, EXCEPT_I_MEM_STAGE, EXCEPT_RAISE_STAGE, STALL_STAGE } state_t;
   	state_t present_state, next_state;
@@ -74,13 +77,13 @@ module cu2_fsm
       	end
 
       	OP_STATE: begin  // Fix these are just states move it to output
-			if 		((/*!except_i ||*/ !except_raised_i) && (instr_opcode == `OPCODE_BEQ || instr_opcode == `OPCODE_LB || instr_opcode == `OPCODE_FENCE || instr_opcode == `OPCODE_SFENCE_VMA)) begin
+			if 		((/*!except_i ||*/ !fe_except_raised_i) && (instr_opcode == `OPCODE_BEQ || instr_opcode == `OPCODE_LB || instr_opcode == `OPCODE_FENCE || instr_opcode == `OPCODE_SFENCE_VMA)) begin
             		next_state 	= 	OP_STATE;
     		end
 			//else if (except_i) begin
             	//	next_state 	= 	EXCEPT_I_MEM_STAGE;
     		//end
-			else if (except_raised_i) begin
+			else if (fe_except_raised_i) begin
             		next_state 	= 	EXCEPT_RAISE_STAGE;
     		end
 			else  begin
@@ -89,13 +92,13 @@ module cu2_fsm
       	end
 
       	EXCEPT_I_MEM_STAGE: begin
-        if 		((/*!except_i ||*/ !except_raised_i) && (instr_opcode == `OPCODE_BEQ || instr_opcode == `OPCODE_LB || instr_opcode == `OPCODE_FENCE || instr_opcode == `OPCODE_SFENCE_VMA)) begin
+        if 		((/*!except_i ||*/ !fe_except_raised_i) && (instr_opcode == `OPCODE_BEQ || instr_opcode == `OPCODE_LB || instr_opcode == `OPCODE_FENCE || instr_opcode == `OPCODE_SFENCE_VMA)) begin
             		next_state 	= 	OP_STATE;
     		end
 			/*else if (except_i) begin
             		next_state 	= 	EXCEPT_I_MEM_STAGE;
     		end*/
-			else if (except_raised_i) begin
+			else if (fe_except_raised_i) begin
             		next_state 	= 	EXCEPT_RAISE_STAGE;
     		end
 			else  begin
@@ -104,13 +107,13 @@ module cu2_fsm
       	end
 
       	EXCEPT_RAISE_STAGE: begin
-        	if 		((/*!except_i ||*/ !except_raised_i) && (instr_opcode == `OPCODE_BEQ || instr_opcode == `OPCODE_LB || instr_opcode == `OPCODE_FENCE || instr_opcode == `OPCODE_SFENCE_VMA)) begin
+        	if 		((/*!except_i ||*/ !fe_except_raised_i) && (instr_opcode == `OPCODE_BEQ || instr_opcode == `OPCODE_LB || instr_opcode == `OPCODE_FENCE || instr_opcode == `OPCODE_SFENCE_VMA)) begin
             		next_state 	= 	OP_STATE;
     		end
 			/*else if (except_i) begin
             		next_state 	= 	EXCEPT_I_MEM_STAGE;
     		end*/
-			else if (except_raised_i) begin
+			else if (fe_except_raised_i) begin
             		next_state 	= 	EXCEPT_RAISE_STAGE;
     		end
 			else  begin
@@ -121,12 +124,12 @@ module cu2_fsm
   	end
 	// Output update
   	always_comb begin
-		stall	 				= 	0;
+		stall_o	 				= 	0;
 
     case (present_state)
       	RESET: begin
         	//flush_i 				= 	1;
-			stall	 				= 	0;//should it be 1 ?
+			stall_o	 				= 	0;//should it be 1 ?
       	end
 
       	OP_STATE: begin  
@@ -142,7 +145,7 @@ module cu2_fsm
       	end
 
       	EXCEPT_I_MEM_STAGE: begin
-       	 			stall	 				= 	1;
+       	 			stall_o	 				= 	1;
       	end
 
       	EXCEPT_RAISE_STAGE: begin
@@ -153,6 +156,13 @@ module cu2_fsm
       	//end
     	endcase
   	end
+
+	// TODO: properly handle flush signals
+	assign 	flush_o		= be_flush_i;
+	assign 	mem_flush_o	= 1'b0;
+
+	// TODO: properly handle memory abort
+	assign 	mem_abort_o	= 1'b0;
 
 //-----
 

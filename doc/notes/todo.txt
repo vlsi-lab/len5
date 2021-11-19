@@ -38,6 +38,14 @@
 
 [ ] Replace commit decoder/logic with a Moore CU (+ spill register)
 
+[ ] Fix branch unit
+
+[ ] Add exception handling to commit logic (CU)
+
+[ ] Write a proper main CU
+
+[ ] Instantiate the memory system in datapath.sv
+
 -----------------
 ----- IDEAS -----
 -----------------

@@ -25,10 +25,17 @@ import len5_pkg::*;
 module commit_logic (
 	input   logic                       clk_i,
     input   logic                       rst_n_i,
+
+    // Control to the main control unit
+    output  logic                       main_cu_flush_o;
+
+    // Data to frontend
+    output  logic                       fe_except_raised_o;
+    output  logic [XLEN-1:0]            fe_except_pc_o;
+
     // Control to the ROB
     input   logic                       rob_valid_i,
     output  logic                       rob_ready_o, 
-	   
 
     // Data from the ROB
     input   instr_t                     rob_instr_i,
@@ -126,6 +133,10 @@ module commit_logic (
     // ------------------------
     // The exception handling logic must be insserted here when available;
     assign eh_no_except = (rob_except_raised_i && rob_valid_i)?'b0:'b1;
+
+    // TODO: properly handle exception feedback to frontend
+    assign  fe_except_raised_o        = !eh_no_except;
+    assign  fe_except_pc_o            = 'h0;
 
     // -----------------
     // OUTPUT EVALUATION
@@ -236,6 +247,10 @@ module commit_logic (
     // -----------------
     // OUTPUT EVALUATION
     // -----------------
+
+    // TODO: properly handle flush signal to main CU
+    assign  main_cu_flush_o     = 1'b0;
+
     assign  rs_head_idx_o       = rob_head_idx_i;
     assign  csr_funct3_o        = rob_instr_i.i.funct3;
     assign  csr_addr_o          = rob_instr_i.i.imm;

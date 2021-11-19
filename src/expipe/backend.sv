@@ -8,7 +8,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: back_end.sv
+// File: backend.sv
 // Author: Michele Caon
 // Date: 17/11/2021
 
@@ -19,14 +19,15 @@ import expipe_pkg::*;
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
 
-module back_end (
+module backend (
     // Clock, reset, and flush
     input   logic               clk_i,
     input   logic               rst_n_i,
     input   logic               flush_i,
 
-    // Issue control unit
+    // Main control unit
     output  logic               main_cu_stall_o,
+    output  logic               main_cu_flush_o,
 
     // Front-end handshaking
     input   logic               fetch_valid_i,
@@ -42,7 +43,10 @@ module back_end (
     output  logic [XLEN-1:0]    fetch_res_pc_o,
   	output  logic [XLEN-1:0]    fetch_res_target_o,
   	output  logic               fetch_res_taken_o,
-	output  logic 			    fetch_res_mispredict_o,
+    output  logic               fetch_res_valid_o,
+	output  logic               fetch_res_mispredict_o,
+    output  logic               fetch_except_raised_o;
+    output  logic [XLEN-1:0]    fetch_except_pc_o;
 
     // TLB
     input   dtlb_lsq_ans_t      dtlb_ans_i,
@@ -416,6 +420,7 @@ module back_end (
         .fetch_res_pc_o             (fetch_res_pc_o),
         .fetch_res_target_o         (fetch_res_target_o),
         .fetch_res_taken_o          (fetch_res_taken_o),
+        .fetch_res_valid_o          (fetch_res_valid_o),
         .fetch_res_mispredict_o     (fetch_res_mispredict_o),
 
         .issue_valid_i              (il_ex_valid),
@@ -523,6 +528,9 @@ module back_end (
     (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
+        .main_cu_flush_o        (main_cu_flush_o),
+        .fetch_except_raised_o     (fetch_except_raised_o)
+        .fetch_except_pc_o         (fetch_except_pc_o)
         .rob_valid_i            (rob_comm_valid),
         .rob_ready_o            (comm_rob_ready), 
         .rob_instr_i            (rob_comm_instr),

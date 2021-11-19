@@ -46,6 +46,7 @@ module branch_unit
 	output  logic [XLEN-1:0]                res_pc_o,
   	output  logic [XLEN-1:0]                res_target_o,
   	output  logic                           res_taken_o,
+    output  logic                           res_valid_o,
 	output  logic                           res_mispredict_o,
 
     // Hanshake from/to the CDB 
@@ -59,20 +60,20 @@ module branch_unit
 );
 
     // Data from/to the execution unit
-    logic [XLEN-1:0]                bu_rs1_o;
-    logic [XLEN-1:0]                bu_rs2_o;
-    logic [B_IMM-1:0]               bu_imm_o;
-    logic [XLEN-1:0]                bu_pred_pc_o;
-    logic [XLEN-1:0]                bu_pred_target_o;
-    logic                           bu_pred_taken_o;
-    logic [BU_CTL_LEN-1:0]          bu_branch_type_o;
-    logic                           bu_res_mispredict;
+    logic [XLEN-1:0]                rs_bu_rs1;
+    logic [XLEN-1:0]                rs_bu_rs2;
+    logic [B_IMM-1:0]               rs_bu_imm;
+    logic [XLEN-1:0]                rs_bu_pred_pc;
+    logic [XLEN-1:0]                rs_bu_pred_target;
+    logic                           rs_bu_pred_taken;
+    logic [BU_CTL_LEN-1:0]          rs_bu_branch_type;
+    logic                           bu_rs_res_mispredict;
 
     // Handshake from/to the execution unit
-    logic                           bu_ready_i;
-    logic                           bu_valid_i;
-    logic                           bu_valid_o;
-    logic                           bu_ready_o;
+    logic                           bu_rs_ready;
+    logic                           bu_rs_valid;
+    logic                           rs_bu_valid;
+    logic                           rs_bu_ready;
 
 branch_unit_rs  #(.RS_DEPTH (RS_DEPTH)) u_branch_generic_rs
 (
@@ -96,19 +97,19 @@ branch_unit_rs  #(.RS_DEPTH (RS_DEPTH)) u_branch_generic_rs
     .pred_target_i(pred_target_i),
     .pred_taken_i(pred_taken_i),
 
-    .bu_ready_i (bu_ready_i),
-    .bu_valid_i (bu_valid_i),
-    .bu_valid_o (bu_valid_o),
-    .bu_ready_o (bu_ready_o),
+    .bu_ready_i (bu_rs_ready),
+    .bu_valid_i (bu_rs_valid),
+    .bu_valid_o (rs_bu_valid),
+    .bu_ready_o (rs_bu_ready),
 
-    .mispredict_i(bu_res_mispredict), 
-    .bu_rs1_o(bu_rs1_o),
-    .bu_rs2_o(bu_rs2_o),
-    .bu_imm_o(bu_imm_o),
-    .bu_pred_pc_o(bu_pred_pc_o),
-    .bu_pred_target_o(bu_pred_target_o),
-    .bu_pred_taken_o(bu_pred_taken_o),
-    .bu_branch_type_o(bu_branch_type_o),
+    .mispredict_i(bu_rs_res_mispredict), 
+    .bu_rs1_o(rs_bu_rs1),
+    .bu_rs2_o(rs_bu_rs2),
+    .bu_imm_o(rs_bu_imm),
+    .bu_pred_pc_o(rs_bu_pred_pc),
+    .bu_pred_target_o(rs_bu_pred_target),
+    .bu_pred_taken_o(rs_bu_pred_taken),
+    .bu_branch_type_o(rs_bu_branch_type),
  
     .cdb_ready_i (cdb_ready_i),
     .cdb_valid_i (cdb_valid_i),
@@ -118,31 +119,32 @@ branch_unit_rs  #(.RS_DEPTH (RS_DEPTH)) u_branch_generic_rs
     .cdb_data_o(cdb_data_o)
 );
 
-branch_unit u_branch
+branch_ctl u_branch_ctl
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
-	.rs1_i(bu_rs1_o),
-    .rs2_i(bu_rs2_o),
-  	.imm_i(bu_imm_o),
+	.rs1_i(rs_bu_rs1),
+    .rs2_i(rs_bu_rs2),
+  	.imm_i(rs_bu_imm),
 
-  	.ops_valid_i(bu_valid_o),
+  	.ops_valid_i(rs_bu_valid),
 
-  	.pred_pc_i(bu_pred_pc_o),
-  	.pred_target_i(bu_pred_target_o),
-  	.pred_taken_i(bu_pred_taken_o),
-  	.type_i(branch_type_i),
+  	.pred_pc_i(rs_bu_pred_pc),
+  	.pred_target_i(rs_bu_pred_target),
+  	.pred_taken_i(rs_bu_pred_taken),
+  	.type_i(rs_bu_branch_type),
 
-  	.ops_ready_o(bu_ready_i),
-  	.res_valid_o(bu_valid_i),
+  	.ops_ready_o(bu_rs_ready),
+  	.res_valid_o(bu_rs_valid),
   	.res_pc_o(res_pc_o),
   	.res_target_o(res_target_o),
   	.res_taken_o(res_taken_o),
-  	.res_mispredict_o(bu_res_mispredict)
+  	.res_mispredict_o(bu_rs_res_mispredict)
 
 );
 
 // Output evaluation
-assign  res_mispredict_o = bu_res_mispredict;
+assign  res_mispredict_o    = bu_rs_res_mispredict;
+assign  res_valid_o         = bu_rs_valid;
 
 endmodule

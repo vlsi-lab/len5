@@ -30,6 +30,7 @@ module exec_stage
     output  logic [XLEN-1:0]            fetch_res_pc_o,
     output  logic [XLEN-1:0]            fetch_res_target_o,
     output  logic                       fetch_res_taken_o,
+    output  logic                       fetch_res_valid_o,
     output  logic                       fetch_res_mispredict_o,
 
     // ISSUE STAGE
@@ -165,6 +166,7 @@ module exec_stage
         .res_pc_o                   (fetch_res_pc_o),
         .res_target_o               (fetch_res_target_o),
         .res_taken_o                (fetch_res_taken_o),
+        .res_valid_o                (fetch_res_valid_o),
         .res_mispredict_o           (fetch_res_mispredict_o),
         .cdb_ready_i                (cdb_ready_i[EU_BRANCH_UNIT]),
         .cdb_valid_i                (cdb_valid_i),

@@ -44,6 +44,7 @@ module ifu
   input   logic             issue_ready_i,
   output  logic             issue_valid_o,
   output  logic [ILEN-1:0]  instruction_o
+  output  logic [XLEN-1:0]  curr_pc_o,
 );
 
   // Signal declarations
@@ -161,11 +162,12 @@ module ifu
     .pc_sel_i       (pc_sel),
     .line_sel_i     (line_sel),
 
-    .instruction_o  (instruction_o)
+    .instruction_o  (instruction_o),
+    .curr_pc_o      (curr_pc_o)
   );
 
   // In case of flush, be ready to fetch next PC
   // at the following cycle
-  assign fetch_ready_o = fetch_ready;// | flush_i;
+  assign fetch_ready_o = fetch_ready;
 
 endmodule
