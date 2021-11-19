@@ -64,8 +64,19 @@ module commit_logic (
     output  logic [XLEN-1:0]            rd_value_o          // the value to be stored in rd
 
     // CSRs handshaking
-    logic                               csr_valid_o,
-    logic                               csr_ready_i,
+    output  logic                       csr_valid_o,
+    input   logic                       csr_ready_i,
+    
+    // CSRs data
+    input   logic [XLEN-1:0]            csr_data_i,
+    input   logic                       csr_acc_exc_i,      // CSR illegal instruction or access permission denied
+    output  csr_instr_t                 csr_instr_type_o,
+    output  logic [FUNCT3_LEN-1:0]      csr_funct3_o,
+    output  logic [CSR_ADDR_LEN-1:0]    csr_addr_o,
+    output  logic [REG_IDX_LEN-1:0]     csr_rs1_idx_o,
+    output  logic [XLEN-1:0]            csr_rs1_value_o,
+    output  logic [ROB_EXCEPT_LEN-1:0]  csr_except_data_o,
+    output  logic [REG_IDX_LEN-1:0]     csr_rd_idx_o,
 );
 
     // DEFINITIONS
@@ -200,8 +211,10 @@ module commit_logic (
             `OPCODE_FCVT_LU_S,
             `OPCODE_FCVT_S_L,
             `OPCODE_FCVT_S_LU: begin
-                fp_rf_valid_o   = (cd_comm_possible) ? 1'b1 : 1'b0;
-                fp_rs_valid_o   = (cd_comm_possible) ? 1'b1 : 1'b0;
+                fp_rf_valid_o       = (cd_comm_possible) ? 1'b1 : 1'b0;
+                fp_rs_valid_o       = (cd_comm_possible) ? 1'b1 : 1'b0;
+                csr_instr_type_o    = FP_INSTR;
+                csr_valid_o         = (rob_except_raised_i) ? 1'b1 : 1'b0;
             end
         `endif /* LEN5_FP_EN */
 
@@ -212,7 +225,8 @@ module commit_logic (
             `OPCODE_CSRRSI,
             `OPCODE_CSRRW,
             `OPCODE_CSRRWI: begin
-                csr_valid_o     = (cd_comm_possible) ? 1'b1 : 1'b0;
+                csr_valid_o         = (cd_comm_possible) ? 1'b1 : 1'b0;
+                csr_instr_type_o    = CSR_INSTR;
             end
 
             default:; // commit without writing the register files
@@ -222,6 +236,11 @@ module commit_logic (
     // -----------------
     // OUTPUT EVALUATION
     // -----------------
-    rs_head_idx_o   = rob_head_idx_i;
+    assign  rs_head_idx_o       = rob_head_idx_i;
+    assign  csr_funct3_o        = rob_instr_i.i.funct3;
+    assign  csr_addr_o          = rob_instr_i.i.imm;
+    assign  csr_rs1_value_o     = rob_value_i;
+    assign  csr_except_data_o   = rob_except_code_i;
+    assign  csr_rd_idx_o        = rob_rd_idx_i;
     
 endmodule

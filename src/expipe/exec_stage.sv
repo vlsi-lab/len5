@@ -74,6 +74,9 @@ module exec_stage
 
     // CSRs data
     input   satp_mode_t                 vm_mode_i,      // virtual memory mode
+`ifdef LEN5_FP_EN
+    input   logic [FCSR_FRM_LEN-1:0]    csr_frm_i,      // global rounding mode for the FPU
+`endif /* LEN5_FP_EN */
 
     // MEMORY SYSTEM
     // -------------
@@ -292,7 +295,8 @@ module exec_stage
         .cdb_idx_o              (cdb_data_o[EU_FPU].rob_idx),
         .cdb_data_o             (cdb_data_o[EU_FPU].value),
         .cdb_except_raised_o    (cdb_data_o[EU_FPU].except_raised),
-        .cdb_except_o           (cdb_data_o[EU_FPU].except_code)
+        .cdb_except_o           (cdb_data_o[EU_FPU].except_code),
+        .csr_frm_i              (csr_frm_i)
     );
     `endif /* LEN5_FP_EN */
 

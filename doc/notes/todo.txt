@@ -2,7 +2,7 @@
 
 [X] remove control_pkg::
 
-[ ] add dcache and dtlb ready signals to store buffer
+[X] add dcache and dtlb ready signals to store buffer
 
 [X] fix handshake in issue logic: maybe keep valid  only and it to operand fetch logic (only fetch operands from the cdb if they are valid)
 

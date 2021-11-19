@@ -44,6 +44,9 @@ module fpu
     input  logic [XLEN-1:0]        eu_rs1_o,
     input  logic [XLEN-1:0]        eu_rs2_o,
     output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o   // to be produced at the end of execution together with the result
+
+    // fcsr data
+    input   logic [FCSR_FRM_LEN-1:0]    csr_frm_i   // global rounding mode from fcsr
 );
 	// Main counting process. The counter clears when reaching the threshold
 always_ff @ (posedge clk_i or negedge rst_n_i) begin

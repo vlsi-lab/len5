@@ -42,7 +42,7 @@ module csrs (
     // CSR address and data to/from commit logic
     input   logic [CSR_ADDR_LEN-1:0]    addr_i,
     input   logic [REG_IDX_LEN-1:0]     rs1_idx_i,  // source register or unsigned immediate
-    input   logic [XLEN-1:0]            rs1_data_i, // data to write to the CSR
+    input   logic [XLEN-1:0]            rs1_value_i, // data to write to the CSR
     input   logic [ROB_EXCEPT_LEN-1:0]  exc_data_i, // exception data (e.g., FPU exceptions)
     input   logic [REG_IDX_LEN-1:0]     rd_idx_i,   // destination register
     output  logic [XLEN-1:0]            data_o,
@@ -186,9 +186,9 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
         `ifdef LEN5_FP_EN
             `CSR_ADDR_FCSR: begin
                 case (funct3_i)
-                    `FUNCT3_CSRRW:  fcsr <= rs1_data_i[7:0];
-                    `FUNCT3_CSRRS:  if (rs1_idx_i != '0) fcsr <= fcsr | rs1_data_i[7:0];
-                    `FUNCT3_CSRRC:  if (rs1_idx_i != '0) fcsr <= fcsr & ~rs1_data_i[7:0]; 
+                    `FUNCT3_CSRRW:  fcsr <= rs1_value_i[7:0];
+                    `FUNCT3_CSRRS:  if (rs1_idx_i != '0) fcsr <= fcsr | rs1_value_i[7:0];
+                    `FUNCT3_CSRRC:  if (rs1_idx_i != '0) fcsr <= fcsr & ~rs1_value_i[7:0]; 
                     `FUNCT3_CSRRWI: fcsr <= uimm_zext[7:0];
                     `FUNCT3_CSRRSI: if (rs1_idx_i != '0) fcsr <= fcsr | uimm_zext[7:0];
                     `FUNCT3_CSRRCI: if (rs1_idx_i != '0) fcsr <= fcsr & ~uimm_zext[7:0];
@@ -197,9 +197,9 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
             end
             `CSR_ADDR_FRM: begin
                 case (funct3_i)
-                    `FUNCT3_CSRRW:  fcsr.frm <= rs1_data_i[2:0];
-                    `FUNCT3_CSRRS:  if (rs1_idx_i != '0) fcsr.frm <= fcsr.frm | rs1_data_i[2:0];
-                    `FUNCT3_CSRRC:  if (rs1_idx_i != '0) fcsr.frm <= fcsr.frm & ~rs1_data_i[2:0]; 
+                    `FUNCT3_CSRRW:  fcsr.frm <= rs1_value_i[2:0];
+                    `FUNCT3_CSRRS:  if (rs1_idx_i != '0) fcsr.frm <= fcsr.frm | rs1_value_i[2:0];
+                    `FUNCT3_CSRRC:  if (rs1_idx_i != '0) fcsr.frm <= fcsr.frm & ~rs1_value_i[2:0]; 
                     `FUNCT3_CSRRWI: fcsr.frm <= uimm_zext[2:0];
                     `FUNCT3_CSRRSI: if (rs1_idx_i != '0) fcsr.frm <= fcsr.frm | uimm_zext[2:0];
                     `FUNCT3_CSRRCI: if (rs1_idx_i != '0) fcsr.frm <= fcsr.frm & ~uimm_zext[2:0];
@@ -208,9 +208,9 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
             end
             `CSR_ADDR_FFLAGS: begin
                 case (funct3_i)
-                    `FUNCT3_CSRRW:  fcsr.fflags <= rs1_data_i[4:0];
-                    `FUNCT3_CSRRS:  if (rs1_idx_i != '0) fcsr.fflags <= fcsr.fflags | rs1_data_i[4:0];
-                    `FUNCT3_CSRRC:  if (rs1_idx_i != '0) fcsr.fflags <= fcsr.fflags & ~rs1_data_i[4:0]; 
+                    `FUNCT3_CSRRW:  fcsr.fflags <= rs1_value_i[4:0];
+                    `FUNCT3_CSRRS:  if (rs1_idx_i != '0) fcsr.fflags <= fcsr.fflags | rs1_value_i[4:0];
+                    `FUNCT3_CSRRC:  if (rs1_idx_i != '0) fcsr.fflags <= fcsr.fflags & ~rs1_value_i[4:0]; 
                     `FUNCT3_CSRRWI: fcsr.fflags <= uimm_zext[4:0];
                     `FUNCT3_CSRRSI: if (rs1_idx_i != '0) fcsr.fflags <= fcsr.fflags | uimm_zext[4:0];
                     `FUNCT3_CSRRCI: if (rs1_idx_i != '0) fcsr.fflags <= fcsr.fflags & ~uimm_zext[4:0];
@@ -227,35 +227,35 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
                 case (funct3_i)
                     `FUNCT3_CSRRW:  begin
                         if (priv_mode >= CSR_PRIV_S) begin
-                            if (rs1_data_i[63:60] == BARE ||
-                                rs1_data_i[63:60] == SV39 ||
-                                rs1_data_i[63:60] == SV48) begin
-                                satp.mode   <= rs1_data_i[63:60];
+                            if (rs1_value_i[63:60] == BARE ||
+                                rs1_value_i[63:60] == SV39 ||
+                                rs1_value_i[63:60] == SV48) begin
+                                satp.mode   <= rs1_value_i[63:60];
                             end
-                            satp.asid   <= rs1_data_i[59:44];
-                            satp.ppn    <= rs1_data_i[43:0];
+                            satp.asid   <= rs1_value_i[59:44];
+                            satp.ppn    <= rs1_value_i[43:0];
                         end
                     end
                     `FUNCT3_CSRRS:  begin
                         if (priv_mode >= CSR_PRIV_S) begin
-                            if (rs1_data_i[63:60] == BARE ||
-                                rs1_data_i[63:60] == SV39 ||
-                                rs1_data_i[63:60] == SV48) begin
-                                satp.mode   <= satp.mode | rs1_data_i[63:60];
+                            if (rs1_value_i[63:60] == BARE ||
+                                rs1_value_i[63:60] == SV39 ||
+                                rs1_value_i[63:60] == SV48) begin
+                                satp.mode   <= satp.mode | rs1_value_i[63:60];
                             end
-                            satp.asid   <= satp.asid | rs1_data_i[59:44];
-                            satp.ppn    <= satp.ppn | rs1_data_i[43:0];
+                            satp.asid   <= satp.asid | rs1_value_i[59:44];
+                            satp.ppn    <= satp.ppn | rs1_value_i[43:0];
                         end
                     end
                     `FUNCT3_CSRRC:  begin
                         if (priv_mode >= CSR_PRIV_S) begin
-                            if (rs1_data_i[63:60] == BARE ||
-                                rs1_data_i[63:60] == SV39 ||
-                                rs1_data_i[63:60] == SV48) begin
-                                satp.mode   <= satp.mode & ~rs1_data_i[63:60];
+                            if (rs1_value_i[63:60] == BARE ||
+                                rs1_value_i[63:60] == SV39 ||
+                                rs1_value_i[63:60] == SV48) begin
+                                satp.mode   <= satp.mode & ~rs1_value_i[63:60];
                             end
-                            satp.asid   <= satp.asid & ~rs1_data_i[59:44];
-                            satp.ppn    <= satp.ppn & ~rs1_data_i[43:0];
+                            satp.asid   <= satp.asid & ~rs1_value_i[59:44];
+                            satp.ppn    <= satp.ppn & ~rs1_value_i[43:0];
                         end
                     end
                     `FUNCT3_CSRRWI: begin

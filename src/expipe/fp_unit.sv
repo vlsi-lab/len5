@@ -56,7 +56,10 @@ module fp_unit
     output  logic [ROB_IDX_LEN-1:0] cdb_idx_o,
     output  logic [XLEN-1:0]        cdb_data_o,
     output  logic                   cdb_except_raised_o,
-    output  logic [ROB_EXCEPT_LEN-1:0] cdb_except_o
+    output  logic [ROB_EXCEPT_LEN-1:0] cdb_except_o,
+
+    // CSR data
+    input   logic [FCSR_FRM_LEN-1:0] csr_frm_i
 );
 
     // Handshake from/to the execution unit
@@ -131,7 +134,8 @@ fpu #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_fpu
     .eu_ctl_o (eu_ctl_o),
     .eu_rs1_o (eu_rs1_o),
     .eu_rs2_o (eu_rs2_o),
-    .eu_entry_idx_o (eu_entry_idx_o)
+    .eu_entry_idx_o (eu_entry_idx_o),
+    .csr_frm_i(csr_frm_i)
 );
 
 endmodule

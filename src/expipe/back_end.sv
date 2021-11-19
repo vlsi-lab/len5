@@ -173,6 +173,7 @@ module back_end (
 
     // Execution stage <--> CSRs
     // -------------------------
+    logic [FCSR_FRM_LEN-1:0]    csr_ex_frm;
     satp_mode_t                 csr_ex_vm_mode;
 
     // CDB <--> ROB
@@ -204,6 +205,20 @@ module back_end (
     // --------------------------------------
     logic [REG_IDX_LEN-1:0]     comm_rf_rd_idx;
     logic [XLEN-1:0]            comm_rf_rd_value;
+
+    // Commit logic <--> CSRs
+    // ----------------------
+    logic                       comm_csr_valid;
+    logic                       csr_comm_ready;
+    logic [XLEN-1:0]            csr_comm_data;
+    logic                       csr_comm_acc_exc;
+    csr_instr_t                 comm_csr_instr_type;
+    logic [FUNCT3_LEN-1:0]      comm_csr_funct3;
+    logic [CSR_ADDR_LEN-1:0]    comm_csr_addr;
+    logic [REG_IDX_LEN]         comm_csr_rs1_idx;
+    logic [XLEN-1:0]            comm_csr_rs1_value;
+    logic [ROB_EXCEPT_LEN-1:0]  comm_csr_except_data;
+    logic [REG_IDX_LEN-1:0]     comm_csr_rd_idx;
 
     // -----------
     // ISSUE STAGE
@@ -428,6 +443,7 @@ module back_end (
         .rob_store_committing_o     (ex_rob_store_committing),
 
         .vm_mode_i                  (csr_ex_vm_mode),
+        .csr_frm_i                  (csr_ex_frm),
 
         .dtlb_ans_i                 (dtlb_ans_i),
         .dtlb_wup_i                 (dtlb_wup_i),
@@ -529,7 +545,18 @@ module back_end (
     `endif /* LEN5_FP_EN */
         .rs_head_idx_o          (comm_regstat_head_idx)
         .rd_idx_o               (comm_rf_rd_idx),
-        .rd_value_o             (comm_rf_rd_value)
+        .rd_value_o             (comm_rf_rd_value),
+        .csr_valid_o            (comm_csr_valid),
+        .csr_ready_i            (csr_comm_ready),
+        .csr_data_i             (csr_comm_data),
+        .csr_acc_exc_i          (csr_comm_acc_exc),
+        .csr_instr_type_o       (comm_csr_instr_type),
+        .csr_funct3_o           (comm_csr_funct3),
+        .csr_addr_o             (comm_csr_addr),
+        .csr_rs1_idx_o          (comm_csr_rs1_idx),
+        .csr_rs1_value_o        (comm_csr_rs1_value),
+        .csr_except_data_o      (comm_csr_except_data),
+        .csr_rd_idx_o           (comm_csr_rd_idx)
     );
 
     // ----
@@ -540,21 +567,21 @@ module back_end (
     (
         .clk_i              (clk_i),
         .rst_n_i            (rst_n_i),
-        .valid_i            (),
-        .ready_o            (),
-        .instr_type_i       (),
-        .funct3_i           (),
-        .addr_i             (),
-        .rs1_idx_i          (),
-        .rs1_data_i         (),
-        .exc_data_i         (),
-        .rd_idx_i           (),
-        .data_o             (),
-        .acc_exc_o          (),
+        .valid_i            (comm_csr_valid),
+        .ready_o            (csr_comm_ready),
+        .instr_type_i       (comm_csr_instr_type),
+        .funct3_i           (comm_csr_funct3),
+        .addr_i             (comm_csr_addr),
+        .rs1_idx_i          (comm_csr_rs1_idx),
+        .rs1_value_i        (comm_csr_rs1_value),
+        .exc_data_i         (comm_csr_except_data),
+        .rd_idx_i           (comm_csr_rd_idx),
+        .data_o             (csr_comm_data),
+        .acc_exc_o          (csr_comm_acc_exc),
         `ifdef LEN5_FP_EN
-        .fpu_frm_o          (),
+        .fpu_frm_o          (csr_ex_frm),
         `endif /* LEN5_FP_EN */
-        .vm_mode_o          ()
+        .vm_mode_o          (csr_ex_vm_mode)
     );
 
 endmodule
