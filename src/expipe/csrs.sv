@@ -54,7 +54,16 @@ module csrs (
     `endif /* LEN5_FP_EN */
 
     // Data to the load/store unit
-    output  satp_mode_t                 vm_mode_o
+    output  satp_mode_t                 vm_mode_o,
+
+    // CSRs <--> memory system
+    output  logic                       mem_vmem_on_o,
+    output  logic                       mem_sum_bit_o,
+    output  logic                       mem_mxr_bit_o,
+    output  priv_e                      mem_priv_mode_o,
+    output  priv_e                      mem_priv_mode_ls_o,
+    output  asid_t [PPN_LEN-1:0]        mem_base_asid_o,
+    output  logic                       mem_csr_root_ppn_o
 );
 
 // CSR read value
@@ -87,6 +96,37 @@ csr_fcsr_t      fcsr;
 // SATP
 csr_satp_t      satp;
 
+// MSTATUS
+csr_mstatus_t   mstatus;
+
+// mstatus values
+// --------------
+// TODO: add proper write handling with CSR instructions
+assign mstatu.sd            = 1'b0;
+assign mstatu.not_used_4    = 'h0;
+assign mstatu.sxl           = 'h0;
+assign mstatu.uxl           = 'h0;
+assign mstatu.not_used_3    = 'h0;
+assign mstatu.tsr           = 1'b0;
+assign mstatu.tw            = 1'b0;
+assign mstatu.tvm           = 1'b0;
+assign mstatu.mxr           = 1'b0;
+assign mstatu.sum           = 1'b0;
+assign mstatu.mprv          = 1'b0;
+assign mstatu.xs            = 'h0;
+assign mstatu.fs            = 'h0;
+assign mstatu.mpp           = PRIV_MODE_S;
+assign mstatu.not_used_2    = 'h0;
+assign mstatu.spp           = PRIV_MODE_U;
+assign mstatu.mpie          = 1'b0;
+assign mstatu.not_used_1    = 'h0;
+assign mstatu.spie          = 1'b0;
+assign mstatu.upie          = 1'b0;
+assign mstatu.mie           = 1'b0;
+assign mstatu.not_used_0    = 1'b0;
+assign mstatu.sie           = 1'b0;
+assign mstatu.uie           = 1'b0;
+
 // --------
 // CSR READ
 // --------
@@ -104,18 +144,33 @@ always_comb begin : csr_read
              funct3_i == `FUNCT3_CSRRWI) &&
              rd_idx_i != '0) begin
             case (addr_i)
+
+                // Floating-point status CSR
+                // -------------------------
             `ifdef LEN5_FP_EN
                 // fcsr
                 `CSR_ADDR_FCSR:     csr_rd_val = { '0, fcsr };
                 `CSR_ADDR_FRM:      csr_rd_val = { '0, fcsr.frm };
                 `CSR_ADDR_FFLAGS:   csr_rd_val = { '0, fcsr.fflags };
+            `endif /* LEN5_FP_EN */
+
+                // S-mode CSRs
+                // -----------
 
                 // satp
                 `CSR_ADDR_SATP: begin
                     // only readable in S and M modes
                     if (priv_mode >= CSR_PRIV_S)    csr_rd_val = satp;
                 end
-            `endif /* LEN5_FP_EN */
+
+                // M-mode CSRs
+                // -----------
+
+                // mstatus
+                `CSR_ADDR_MSTATUS: begin
+                    // Only readable in M mode
+                    if (priv_mode >= CSR_PRIV_M)    csr_rd_val = mstatus;
+                end
 
                 // Default
                 default:;   // use default value (see Exception Handling)
@@ -129,7 +184,7 @@ always_comb begin : csr_read
                      funct3_i == `FUNCT3_CSRRC ||
                      funct3_i == `FUNCT3_CSRRCI) begin
             case (addr_i)
-                // U-LEVEL CSRs
+                // U-mode CSRs
                 // -----------
             `ifdef LEN5_FP_EN
                 // fcsr
@@ -138,13 +193,20 @@ always_comb begin : csr_read
                 `CSR_ADDR_FFLAGS:   csr_rd_val = { '0, fcsr.fflags };
             `endif /* LEN5_FP_EN */
                 
-                // S-LEVEL CSRs
-                // ------------
+                // S-mode CSRs
+                // -----------
 
                 // satp
                 `CSR_ADDR_SATP: begin
                     // only readable in S and M modes
                     if (priv_mode >= CSR_PRIV_S)    csr_rd_val = satp;
+                end
+
+                // M-mode CSRs
+                // -----------
+
+                `CSR_ADDR_MSTATUS: begin
+                    if (priv_mode >= CSR_PRIV_M)    csr_rd_val = mstatus;
                 end
                 
                 // Default
@@ -160,12 +222,13 @@ end
 
 always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
     if (!rst_n_i) begin
-    `ifdef LEN5_FP_EN
         // priv mode
         priv_mode   <= CSR_PRIV_M;
 
+    `ifdef LEN5_FP_EN
         // fcsr
         fcsr        <= '0;
+    `endif /* LEN5_FP_EN */
 
         // satp
         // The following line resets sapt MODE, ASID, and PPN (physical page 
@@ -175,7 +238,6 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
         satp.mode   <= `BOOT_VM_MODE;
         satp.asid   <= '0;
         satp.ppn    <= '0;
-    `endif /* LEN5_FP_EN */
     end
     
     // Explicit CSR instructions
@@ -299,8 +361,10 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
         endcase
     
     // FPU exceptions update
+`ifdef LEN5_FP_EN
     end else if (valid_i && instr_type_i == FP_INSTR) begin
         fcsr.fflags <= exc_data_i[FCSR_FFLAGS_LEN-1:0];
+`endif /* LEN5_FP_EN */
     end
 end
 
@@ -377,5 +441,14 @@ assign  fpu_frm_o   = fcsr.frm;
 
 // Memory protection mode
 assign  vm_mode_o   = satp.mode;
+
+// Data to the memory system
+assign  mem_vmem_on_o       = (satp.mode != BARE) ? 1'b1 : 1'b0;
+assign  mem_sum_bit_o       = mstatus.sum;
+assign  mem_mxr_bit_o       = mstatus.mxr;
+assign  mem_priv_mode_o     = priv_mode;
+assign  mem_priv_mode_ls_o  = (mstatus.mprv) ? PRIV_MODE_M : priv_mode;
+assign  mem_base_asid_o     = satp.asid;
+assign  mem_csr_root_ppn_o  = satp.ppn;
 
 endmodule

@@ -39,8 +39,17 @@ module main_cu
 	output 	logic 				flush_o,
 
 	// To memory
+	input  	logic 				mem_l2c_update_done,
 	output 	logic				mem_flush_o,
-	output 	logic 				mem_abort_o
+	output 	logic 				mem_abort_o,
+	output 	logic 				mem_clr_l1tlb_mshr,
+	output 	logic 				mem_clr_l2tlb_mshr,
+	output 	logic 				mem_clear_dmshr_dregs,
+	output 	logic 				mem_synch_l1dc_l2c,
+	output 	tlb_flush_e 		mem_L1TLB_flush_type,
+	output 	tlb_flush_e 		mem_L2TLB_flush_type,
+	output 	asid_t 				mem_flush_asid,
+	output 	vpn_t 				mem_flush_page
 );
 
 	logic [OPCODE_LEN -1:0]        instr_opcode;
@@ -161,8 +170,18 @@ module main_cu
 	assign 	flush_o		= be_flush_i;
 	assign 	mem_flush_o	= 1'b0;
 
-	// TODO: properly handle memory abort
-	assign 	mem_abort_o	= 1'b0;
+	// TODO: properly handle memory control
+	assign 	mem_abort_o				= 1'b0;
+	assign 	mem_flush_o				= 1'b0;
+	assign 	mem_abort_o				= 1'b0;
+	assign 	mem_clr_l1tlb_mshr		= 1'b0;
+	assign 	mem_clr_l2tlb_mshr		= 1'b0;
+	assign 	mem_clear_dmshr_dregs	= 1'b0;
+	assign 	mem_synch_l1dc_l2c		= 1'b0;
+	assign 	mem_L1TLB_flush_type	= NoFlush,
+	assign 	mem_L2TLB_flush_type    = NoFlush,
+	assign 	mem_flush_asid          = 'h0;
+	assign 	mem_flush_page          = 'h0;
 
 //-----
 

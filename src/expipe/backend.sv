@@ -21,44 +21,53 @@ import len5_pkg::ILEN;
 
 module backend (
     // Clock, reset, and flush
-    input   logic               clk_i,
-    input   logic               rst_n_i,
-    input   logic               flush_i,
+    input   logic                   clk_i,
+    input   logic                   rst_n_i,
+    input   logic                   flush_i,
 
     // Main control unit
-    output  logic               main_cu_stall_o,
-    output  logic               main_cu_flush_o,
+    output  logic                   main_cu_stall_o,
+    output  logic                   main_cu_flush_o,
 
     // Front-end handshaking
-    input   logic               fetch_valid_i,
-    output  logic               fetch_ready_o,
+    input   logic                   fetch_valid_i,
+    output  logic                   fetch_ready_o,
 
     // Front-end data
-    input   logic [XLEN-1:0]    fetch_curr_pc_i,
-    input   logic [ILEN-1:0]    fetch_instr_i,
-    input   logic [XLEN-1:0]    fetch_pred_target_i,
-    input   logic               fetch_pred_taken_i,
-    input   logic               fetch_except_raised_i,
-    input   except_code_t       fetch_except_code_i,
-    output  logic [XLEN-1:0]    fetch_res_pc_o,
-  	output  logic [XLEN-1:0]    fetch_res_target_o,
-  	output  logic               fetch_res_taken_o,
-    output  logic               fetch_res_valid_o,
-	output  logic               fetch_res_mispredict_o,
-    output  logic               fetch_except_raised_o;
-    output  logic [XLEN-1:0]    fetch_except_pc_o;
+    input   logic [XLEN-1:0]        fetch_curr_pc_i,
+    input   logic [ILEN-1:0]        fetch_instr_i,
+    input   logic [XLEN-1:0]        fetch_pred_target_i,
+    input   logic                   fetch_pred_taken_i,
+    input   logic                   fetch_except_raised_i,
+    input   except_code_t           fetch_except_code_i,
+    output  logic [XLEN-1:0]        fetch_res_pc_o,
+  	output  logic [XLEN-1:0]        fetch_res_target_o,
+  	output  logic                   fetch_res_taken_o,
+    output  logic                   fetch_res_valid_o,
+	output  logic                   fetch_res_mispredict_o,
+    output  logic                   fetch_except_raised_o;
+    output  logic [XLEN-1:0]        fetch_except_pc_o;
 
     // TLB
-    input   dtlb_lsq_ans_t      dtlb_ans_i,
-    input   dtlb_lsq_wup_t      dtlb_wup_i,
-    input   logic               dtlb_ready_i,
-    output  lsq_dtlb_req_t      dtlb_req_o,
+    input   dtlb_lsq_ans_t          dtlb_ans_i,
+    input   dtlb_lsq_wup_t          dtlb_wup_i,
+    input   logic                   dtlb_ready_i,
+    output  lsq_dtlb_req_t          dtlb_req_o,
 
     // D$
-    input   l1dc_lsq_ans_t      dcache_ans_i,
-    input   l1dc_lsq_wup_t      dcache_wup_i,
-    input   logic               dcache_ready_i,
-    output  lsq_l1dc_req_t      dcache_req_o
+    input   l1dc_lsq_ans_t          dcache_ans_i,
+    input   l1dc_lsq_wup_t          dcache_wup_i,
+    input   logic                   dcache_ready_i,
+    output  lsq_l1dc_req_t          dcache_req_o,
+
+    // CSRs <--> memory system
+    output  logic                   mem_vmem_on_o,
+    output  logic                   mem_sum_bit_o,
+    output  logic                   mem_mxr_bit_o,
+    output  priv_e                  mem_priv_mode_o,
+    output  priv_e                  mem_priv_mode_ls_o,
+    output  asid_t [PPN_LEN-1:0]    mem_base_asid_o,
+    output  logic                   mem_csr_root_ppn_o
 );
 
     // ----------------
@@ -589,7 +598,14 @@ module backend (
         `ifdef LEN5_FP_EN
         .fpu_frm_o          (csr_ex_frm),
         `endif /* LEN5_FP_EN */
-        .vm_mode_o          (csr_ex_vm_mode)
+        .vm_mode_o          (csr_ex_vm_mode),
+        .mem_vmem_on_o      (mem_vmem_on_o),
+        .mem_sum_bit_o      (mem_sum_bit_o),
+        .mem_mxr_bit_o      (mem_mxr_bit_o),
+        .mem_priv_mode_o    (mem_priv_mode_o),
+        .mem_priv_mode_ls_o (mem_priv_mode_ls_o),
+        .mem_base_asid_o    (mem_base_asid_o),
+        .mem_csr_root_ppn_o (mem_csr_root_ppn_o)
     );
 
 endmodule

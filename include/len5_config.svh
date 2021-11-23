@@ -19,6 +19,11 @@
 // GLOBAL CONFIGURATION
 // --------------------
 
+// Set memory file path
+`ifndef MEMORY_FILE
+`define MEMORY_FILE "tb/memory/memory.txt"
+`endif /* MEMORY_FILE */
+
 // Boot program counter
 `define BOOT_PC 'h0
 
