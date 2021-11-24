@@ -256,7 +256,7 @@ package expipe_pkg;
         logic                       rs1_ready;         // the value of rs1 contained in 'rs1_value' field is valid
         logic [ROB_IDX_LEN-1:0]     rs1_idx;           // the index of the ROB that will contain the base address
         logic [XLEN-1:0]            rs1_value;         // the value of the base address
-        logic [I_IMM-1:0]           imm_value;         // the value of the immediate field (offset)
+        logic [XLEN-1:0]            imm_value;         // the value of the immediate field (offset)
         logic                       vaddr_ready;       // the virtual address has already been computed
         logic [XLEN-1:0]            vaddr;             // the virtual address
         logic                       paddr_ready;       // the address translation (TLB access) has already completed
@@ -282,7 +282,7 @@ package expipe_pkg;
         logic                       rs2_ready;          // the value of rs2 (VALUE to be stored) contained in 'rs2_value' field is valid
         logic [ROB_IDX_LEN-1:0]     rs2_idx;            // the index of the ROB that will contain the base address
         logic [XLEN-1:0]            rs2_value;          // the value to be stored in memory
-        logic [I_IMM-1:0]           imm_value;          // the value of the immediate field (offset)
+        logic [XLEN-1:0]            imm_value;          // the value of the immediate field (offset)
         logic                       vaddr_ready;        // the virtual address has already been computed
         logic [XLEN-1:0]            vaddr;              // the virtual address
         logic                       paddr_ready;        // the address translation (TLB access) has already completed

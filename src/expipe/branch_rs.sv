@@ -18,7 +18,6 @@ import uvm_pkg::*;
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
-import len5_pkg::B_IMM;
 import len5_pkg::branch_type_t;
 import len5_pkg::BEQ;
 import len5_pkg::BNE;
@@ -51,7 +50,7 @@ module branch_rs
     input   logic                           rs2_ready_i,
     input   logic [ROB_IDX_LEN-1:0]         rs2_idx_i,
     input   logic [XLEN-1:0]                rs2_value_i,
-    input   logic [B_IMM-1:0]               imm_value_i,
+    input   logic [XLEN-1:0]                imm_value_i,
     input   logic [ROB_IDX_LEN-1:0]         dest_idx_i,
     input   logic [XLEN-1:0]                pred_pc_i,
     input   logic [XLEN-1:0]                pred_target_i,
@@ -67,7 +66,7 @@ module branch_rs
     input   logic                           mispredict_i, // mispredcition result
     output  logic [XLEN-1:0]                bu_rs1_o,
     output  logic [XLEN-1:0]                bu_rs2_o,
-    output  logic [B_IMM-1:0]               bu_imm_o,
+    output  logic [XLEN-1:0]                bu_imm_o,
     output  logic [XLEN-1:0]                bu_pred_pc_o,
     output  logic [XLEN-1:0]                bu_pred_target_o,
     output  logic                           bu_pred_taken_o,
@@ -98,7 +97,7 @@ module branch_rs
         logic                   rs2_ready;  // The second operand value is available in 'rs2_value'
         logic [ROB_IDX_LEN-1:0] rs2_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
         logic [XLEN-1:0]        rs2_value;  // The value of the second operand
-        logic [B_IMM-1:0]       imm_value;  // Immediate value
+        logic [XLEN-1:0]        imm_value;  // Immediate value
         logic [XLEN-1:0]        pred_pc;    // Program counter of the current instruction (from the fetch stage)
         logic [XLEN-1:0]        pred_target;// Predicted target program counter (from the fetch stage)
         logic                   pred_taken; // Branch outcome prediction (from the fetch stage)

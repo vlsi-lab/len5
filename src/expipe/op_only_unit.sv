@@ -44,6 +44,7 @@ module op_only_unit
     input   logic                           rs1_ready_i,
     input   logic [ROB_IDX_LEN-1:0]         rs1_idx_i,
     input   logic [XLEN-1:0]                rs1_value_i,
+    input   logic [ROB_IDX_LEN-1:0]         dest_idx_i,
 
     // Hanshake from/to the CDB 
     input   logic                           cdb_ready_i,
@@ -67,6 +68,7 @@ module op_only_unit
         .rs1_ready_i        (rs1_ready_i),
         .rs1_idx_i          (rs1_idx_i),
         .rs1_value_i        (rs1_value_i),
+        .dest_idx_i         (dest_idx_i),
         .cdb_ready_i        (cdb_ready_i),
         .cdb_valid_i        (cdb_valid_i),
         .cdb_valid_o        (cdb_valid_o),

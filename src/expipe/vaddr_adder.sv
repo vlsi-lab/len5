@@ -17,10 +17,10 @@
 import uvm_pkg::*;
 
 import len5_pkg::XLEN;
-import len5_pkg::I_IMM;
 import expipe_pkg::*;
 
 import csr_pkg::satp_mode_t;
+import csr_pkg::SATP_MODE_LEN;
 import csr_pkg::BARE; 
 import csr_pkg::SV39;
 import csr_pkg::SV48;
@@ -32,7 +32,7 @@ module vaddr_adder #(IDX_LEN = 8)
     input   logic                       flush_i,
 
     // Virtual memory configuration
-    input   satp_mode_t                 vm_mode_i, // virtual memory MODE (from the 'satp' CSR)
+    input   logic [SATP_MODE_LEN-1:0]   vm_mode_i, // virtual memory MODE (from the 'satp' CSR)
 
     // Handshake from/to the load/store buffers
     input   logic                       lsb_valid_i,
@@ -43,7 +43,7 @@ module vaddr_adder #(IDX_LEN = 8)
     // Data from/to the load/store buffers
     input   logic                       is_store_i,
     input   logic [XLEN-1:0]            rs1_value_i,
-    input   logic [I_IMM-1:0]           imm_value_i,
+    input   logic [XLEN-1:0]            imm_value_i,
     input   logic [IDX_LEN-1:0]         lsb_idx_i,
     input   logic [LDST_TYPE_LEN-1:0]   ldst_type_i,
     output  logic                       is_store_o,
@@ -53,10 +53,10 @@ module vaddr_adder #(IDX_LEN = 8)
 );
 
     // DEFINITIONS
-    logic [XLEN-1:0]            rs1_value, sext_imm_value;
-    logic [I_IMM-1:0]           imm_value;
+    logic [XLEN-1:0]            rs1_value;
+    logic [XLEN-1:0]            imm_value;
     logic [LDST_TYPE_LEN-1:0]   ldst_type;
-    satp_mode_t                 vm_mode;
+    logic [SATP_MODE_LEN-1:0]   vm_mode;
     logic                       align_except, pfault_except;
 
     // ---------------
@@ -90,13 +90,10 @@ module vaddr_adder #(IDX_LEN = 8)
         end
     end
 
-    // Immediate field sign extension
-    assign sext_imm_value = { {(XLEN-I_IMM){imm_value[I_IMM-1]}}, imm_value };
-
     // ---------------------
     // VIRTUAL ADDRESS ADDER
     // ---------------------
-    assign vaddr_o = rs1_value + sext_imm_value;
+    assign vaddr_o = rs1_value + imm_value;
     
     // -------------------------------
     // VIRTUAL ADDRESS EXCEPTION CHECK
@@ -131,11 +128,13 @@ module vaddr_adder #(IDX_LEN = 8)
     // ASSERTIONS
     // ----------
     `ifndef SYNTHESIS
+    satp_mode_t vm_mode_e;
     always @(negedge clk_i) begin
+        $cast(vm_mode_e, vm_mode);
         // Warn when an address exception is raised
         case(vm_mode)
-            SV39: assert (vaddr_o[63:39] == { 25{vaddr_o[38]} }) else `uvm_error("EXCEPTION", $sformatf("MSBs [63:39] of virtual address are different from bit 38 while paging mode is %s", vm_mode.name()))
-            SV48: assert (vaddr_o[63:48] == { 16{vaddr_o[47]} }) else `uvm_error("EXCEPTION", $sformatf("MSBs [63:48] of virtual address are different from bit 47 while paging mode is %s", vm_mode.name()))
+            SV39: assert (vaddr_o[63:39] == { 25{vaddr_o[38]} }) else `uvm_error("EXCEPTION", $sformatf("MSBs [63:39] of virtual address are different from bit 38 while paging mode is %s", vm_mode_e.name()))
+            SV48: assert (vaddr_o[63:48] == { 16{vaddr_o[47]} }) else `uvm_error("EXCEPTION", $sformatf("MSBs [63:48] of virtual address are different from bit 47 while paging mode is %s", vm_mode_e.name()))
             default:;
         endcase
         // Warn when virtual address is misaligned

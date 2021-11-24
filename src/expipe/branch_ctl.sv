@@ -21,7 +21,7 @@ module branch_ctl
     input   logic                   rst_n_i,
     input   logic [XLEN-1:0]        rs1_i,
     input   logic [XLEN-1:0]        rs2_i,
-    input   logic [B_IMM-1:0]       imm_i,
+    input   logic [XLEN-1:0]        imm_i,
     input   logic                   ops_valid_i,
     input   logic [XLEN-1:0]        pred_pc_i,
     input   logic [XLEN-1:0]        pred_target_i,
@@ -54,7 +54,7 @@ module branch_ctl
     end
 
     // Control unit
-    branch_unit_cu u_branch_unit_cu
+    branch_ctl_cu u_branch_ctl_cu
     (
         .clk_i            (clk_i),
         .rst_n_i          (rst_n_i),
@@ -71,7 +71,7 @@ module branch_ctl
 
     // Assignments
     assign wrong_taken = pred_taken_i != taken;
-    assign target = { {XLEN-B_IMM{1'b0}}, (imm_i << 1)} + pred_pc_i; // add JAL and JALR; add a mux with jump
+    assign target = imm_i + pred_pc_i; // add JAL and JALR; add a mux with jump
     assign wrong_target = pred_target_i != target;
         // Add a check for missaligned address
     // Output register

@@ -17,30 +17,30 @@ import len5_pkg::XLEN;
 
 module cdb 
 (
-    input   logic               clk_i,
-    input   logic               rst_n_i,
-    input   logic               flush_i,
+    input   logic                   clk_i,
+    input   logic                   rst_n_i,
+    input   logic                   flush_i,
 
     // Handshake from/to the maximum priority EU
-    input   logic               max_prio_valid_i,
-    output  logic               max_prio_ready_o,
+    input   logic                   max_prio_valid_i,
+    output  logic                   max_prio_ready_o,
 
     // Data from the maximum priority EU
-    input   cdb_data_t          max_prio_data_i,
+    input   cdb_data_t              max_prio_data_i,
 
     // Handshake from/to the reservation stations
-    input   logic               rs_valid_i [0:EU_N-2], 
-    output  logic               rs_ready_o [0:EU_N-2],
+    input   logic [0:EU_N-2]        rs_valid_i, 
+    output  logic [0:EU_N-2]        rs_ready_o,
 
     // Data from the reservation stations or issue queue.
-    input   cdb_data_t          rs_data_i [0:EU_N-2],
+    input   cdb_data_t [0:EU_N-2]   rs_data_i,
 
     // Handshake from/to the ROB
-    input   logic               rob_ready_i,
+    input   logic                   rob_ready_i,
 
     // Output valid and data (to multiple units)
-    output  logic               valid_o,
-    output  cdb_data_t          data_o
+    output  logic                   valid_o,
+    output  cdb_data_t              data_o
 );
 
     // DEFINITIONS  
@@ -72,7 +72,7 @@ module cdb
 
         // Handshake from/to the ROB
         .rob_ready_i        (rob_ready_i),
-        .valid_o        (rob_valid_k),
+        .rob_valid_o        (rob_valid_k),
 
         // Served unit
         .served_max_prio_o  (served_max_prio),

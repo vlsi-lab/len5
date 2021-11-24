@@ -24,6 +24,7 @@ import memory_pkg::l1dc_lsq_ans_t;
 import memory_pkg::l1dc_lsq_wup_t;
 import memory_pkg::lsq_l1dc_req_t;
 import csr_pkg::satp_mode_t;
+import csr_pkg::SATP_MODE_LEN;
 
 module exec_stage
 (
@@ -55,7 +56,7 @@ module exec_stage
     input   logic                       issue_rs2_ready_i,  // second operand is ready at issue time (from the RF or the ROB)
     input   logic [ROB_IDX_LEN-1:0]     issue_rs2_idx_i,    // the index of the ROB where the first operand can be found (if not ready)
     input   logic [XLEN-1:0]            issue_rs2_value_i,  // the value of the first operand (if ready)
-    input   logic [I_IMM-1:0]           issue_imm_value_i,  // the value of the immediate field (for st and branches)                   
+    input   logic [XLEN-1:0]            issue_imm_value_i,  // the value of the immediate field (for st and branches)                   
     input   logic [ROB_IDX_LEN-1:0]     issue_rob_idx_i,    // the location of the ROB assigned to the instruction
     input   logic [XLEN-1:0]            issue_pred_pc_i,    // the PC of the current issuing instr (branches only)
     input   logic [XLEN-1:0]            issue_pred_target_i,// the predicted target of the current issuing instr (branches only)
@@ -65,13 +66,13 @@ module exec_stage
     // ---------------------
 
     // CDB handshaking
-    input   logic                       cdb_ready_i [0:EU_N-1], // from the CDB arbiter
+    input   logic [0:EU_N-1]            cdb_ready_i, // from the CDB arbiter
     input   logic                       cdb_valid_i,            // CDB data is valid
-    output  logic                       cdb_valid_o [0:EU_N-1], // to the CDB arbiter
+    output  logic [0:EU_N-1]            cdb_valid_o, // to the CDB arbiter
 
     // CDB data
-    input   cdb_data_t                  cdb_data_i [0:EU_N-1],
-    output  cdb_data_t                  cdb_data_o [0:EU_N-1],
+    input   cdb_data_t                  cdb_data_i,
+    output  cdb_data_t [0:EU_N-1]       cdb_data_o,
 
     // ROB AND CSRs
     // ------------
@@ -81,7 +82,7 @@ module exec_stage
     output  logic                       rob_store_committing_o,
 
     // CSRs data
-    input   satp_mode_t                 vm_mode_i,      // virtual memory mode
+    input   logic [SATP_MODE_LEN-1:0]   vm_mode_i,      // virtual memory mode
 `ifdef LEN5_FP_EN
     input   logic [FCSR_FRM_LEN-1:0]    csr_frm_i,      // global rounding mode for the FPU
 `endif /* LEN5_FP_EN */
@@ -142,7 +143,7 @@ module exec_stage
         .cdb_sb_ready_i             (cdb_ready_i[EU_STORE_BUFFER]),
         .lb_cdb_valid_o             (cdb_valid_o[EU_LOAD_BUFFER]),
         .sb_cdb_valid_o             (cdb_valid_o[EU_STORE_BUFFER]),
-        .cdb_lsb_data_i             (cdb_data_i[EU_LOAD_BUFFER]),
+        .cdb_lsb_data_i             (cdb_data_i),
         .lb_cdb_data_o              (cdb_data_o[EU_LOAD_BUFFER]),
         .sb_cdb_data_o              (cdb_data_o[EU_STORE_BUFFER])
     );
@@ -151,7 +152,7 @@ module exec_stage
     // BRANCH UNIT
     // -----------
 
-    branch_unit #(.RS_DEPTH (BU_RS_DEPTH)) u_branch_rs
+    branch_unit #(.RS_DEPTH (BU_RS_DEPTH)) u_branch_unit
     (
         .clk_i                      (clk_i),
         .rst_n_i                    (rst_n_i),
@@ -178,7 +179,7 @@ module exec_stage
         .cdb_ready_i                (cdb_ready_i[EU_BRANCH_UNIT]),
         .cdb_valid_i                (cdb_valid_i),
         .cdb_valid_o                (cdb_valid_o[EU_BRANCH_UNIT]),
-        .cdb_data_i                 (cdb_data_i[EU_BRANCH_UNIT]),
+        .cdb_data_i                 (cdb_data_i),
         .cdb_data_o                 (cdb_data_o[EU_BRANCH_UNIT])
     );
 
@@ -188,7 +189,7 @@ module exec_stage
 
     // Integer ALU
     // -----------
-    alu_unit #(.EU_CTL_LEN (ALU_CTL_LEN), .RS_DEPTH (ALU_RS_DEPTH), .EXCEPT_LEN(ALU_EXCEPT_LEN)) u_alu_rs
+    alu_unit #(.EU_CTL_LEN (ALU_CTL_LEN), .RS_DEPTH (ALU_RS_DEPTH), .EXCEPT_LEN(ALU_EXCEPT_LEN)) u_alu_unit
     (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
@@ -206,9 +207,9 @@ module exec_stage
         .cdb_ready_i            (cdb_ready_i[EU_INT_ALU]),
         .cdb_valid_i            (cdb_valid_i),
         .cdb_valid_o            (cdb_valid_o[EU_INT_ALU]),
-        .cdb_idx_i              (cdb_data_i[EU_INT_ALU].rob_idx),
-        .cdb_data_i             (cdb_data_i[EU_INT_ALU].value),
-        .cdb_except_raised_i    (cdb_data_i[EU_INT_ALU].except_raised),
+        .cdb_idx_i              (cdb_data_i.rob_idx),
+        .cdb_data_i             (cdb_data_i.value),
+        .cdb_except_raised_i    (cdb_data_i.except_raised),
         .cdb_idx_o              (cdb_data_o[EU_INT_ALU].rob_idx),
         .cdb_data_o             (cdb_data_o[EU_INT_ALU].value),
         .cdb_except_raised_o    (cdb_data_o[EU_INT_ALU].except_raised),
@@ -218,7 +219,7 @@ module exec_stage
     `ifdef LEN5_M_EN
     // Integer multiplier
     // ------------------
-    mult_unit #(.EU_CTL_LEN (MULT_CTL_LEN), .RS_DEPTH (MULT_RS_DEPTH), .EXCEPT_LEN(MULT_EXCEPT_LEN)) u_mult_rs
+    mult_unit #(.EU_CTL_LEN (MULT_CTL_LEN), .RS_DEPTH (MULT_RS_DEPTH), .EXCEPT_LEN(MULT_EXCEPT_LEN)) u_mult_unit
     (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
@@ -236,9 +237,9 @@ module exec_stage
         .cdb_ready_i            (cdb_ready_i[EU_INT_MULT]),
         .cdb_valid_i            (cdb_valid_i),
         .cdb_valid_o            (cdb_valid_o[EU_INT_MULT]),
-        .cdb_idx_i              (cdb_data_i[EU_INT_MULT].rob_idx),
-        .cdb_data_i             (cdb_data_i[EU_INT_MULT].value),
-        .cdb_except_raised_i    (cdb_data_i[EU_INT_MULT].except_raised),
+        .cdb_idx_i              (cdb_data_i.rob_idx),
+        .cdb_data_i             (cdb_data_i.value),
+        .cdb_except_raised_i    (cdb_data_i.except_raised),
         .cdb_idx_o              (cdb_data_o[EU_INT_MULT].rob_idx),,
         .cdb_data_o             (cdb_data_o[EU_INT_MULT].value),
         .cdb_except_raised_o    (cdb_data_o[EU_INT_MULT].except_raised),
@@ -247,7 +248,7 @@ module exec_stage
 
     // Integer divider
     // ---------------
-    div_unit #(.EU_CTL_LEN (DIV_CTL_LEN), .RS_DEPTH (DIV_RS_DEPTH), .EXCEPT_LEN(DIV_EXCEPT_LEN)) u_div_rs
+    div_unit #(.EU_CTL_LEN (DIV_CTL_LEN), .RS_DEPTH (DIV_RS_DEPTH), .EXCEPT_LEN(DIV_EXCEPT_LEN)) u_div_unit
     (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
@@ -265,9 +266,9 @@ module exec_stage
         .cdb_ready_i            (cdb_ready_i[EU_INT_DIV]),
         .cdb_valid_i            (cdb_valid_i),
         .cdb_valid_o            (cdb_valid_o[EU_INT_DIV]),
-        .cdb_idx_i              (cdb_data_i[EU_INT_DIV].rob_idx),
-        .cdb_data_i             (cdb_data_i[EU_INT_DIV].value),
-        .cdb_except_raised_i    (cdb_data_i[EU_INT_DIV].except_raised),
+        .cdb_idx_i              (cdb_data_i.rob_idx),
+        .cdb_data_i             (cdb_data_i.value),
+        .cdb_except_raised_i    (cdb_data_i.except_raised),
         .cdb_idx_o              (cdb_data_o[EU_INT_DIV].rob_idx),
         .cdb_data_o             (cdb_data_o[EU_INT_DIV].value),
         .cdb_except_raised_o    (cdb_data_o[EU_INT_DIV].except_raised),
@@ -280,7 +281,7 @@ module exec_stage
     // -------------------
 
     `ifdef LEN5_FP_EN
-    fp_unit #(.EU_CTL_LEN (FPU_CTL_LEN), .RS_DEPTH (FPU_RS_DEPTH), .EXCEPT_LEN(FPU_EXCEPT_LEN)) u_fpu_rs
+    fp_unit #(.EU_CTL_LEN (FPU_CTL_LEN), .RS_DEPTH (FPU_RS_DEPTH), .EXCEPT_LEN(FPU_EXCEPT_LEN)) u_fpu_unit
     (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
@@ -298,9 +299,9 @@ module exec_stage
         .cdb_ready_i            (cdb_ready_i[EU_FPU]),
         .cdb_valid_i            (cdb_valid_i),
         .cdb_valid_o            (cdb_valid_o[EU_FPU]),
-        .cdb_idx_i              (cdb_data_i[EU_FPU].rob_idx),
-        .cdb_data_i             (cdb_data_i[EU_FPU].value),
-        .cdb_except_raised_i    (cdb_data_i[EU_FPU].except_raised),
+        .cdb_idx_i              (cdb_data_i.rob_idx),
+        .cdb_data_i             (cdb_data_i.value),
+        .cdb_except_raised_i    (cdb_data_i.except_raised),
         .cdb_idx_o              (cdb_data_o[EU_FPU].rob_idx),
         .cdb_data_o             (cdb_data_o[EU_FPU].value),
         .cdb_except_raised_o    (cdb_data_o[EU_FPU].except_raised),
@@ -313,7 +314,7 @@ module exec_stage
     // OPERANDS ONLY UNIT
     // ------------------
 
-    op_only_unit #(.RS_DEPTH(OP_ONLY_RS_DEPTH), .EU_CTL_LEN(OP_ONLY_CTL_LEN))
+    op_only_unit #(.RS_DEPTH(OP_ONLY_RS_DEPTH), .EU_CTL_LEN(OP_ONLY_CTL_LEN)) u_op_only_unit
     (
         .clk_i              (clk_i),
         .rst_n_i            (rst_n_i),
@@ -327,7 +328,7 @@ module exec_stage
         .cdb_ready_i        (cdb_ready_i[EU_OPERANDS_ONLY]),
         .cdb_valid_i        (cdb_valid_i),
         .cdb_valid_o        (cdb_valid_o[EU_OPERANDS_ONLY]),
-        .cdb_data_i         (cdb_data_i[EU_OPERANDS_ONLY]),
+        .cdb_data_i         (cdb_data_i),
         .cdb_data_o         (cdb_data_o[EU_OPERANDS_ONLY])
     );
 

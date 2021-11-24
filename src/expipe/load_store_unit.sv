@@ -20,6 +20,7 @@ import expipe_pkg::*;
 import memory_pkg::*;
 import len5_pkg::*;
 import csr_pkg::satp_mode_t;
+import csr_pkg::SATP_MODE_LEN;
 import csr_pkg::BARE; 
 import csr_pkg::SV39;
 import csr_pkg::SV48;
@@ -29,7 +30,7 @@ module load_store_unit (
     input   logic                       rst_n_i,
     input   logic                       flush_i,
 
-    input   satp_mode_t                 vm_mode_i,
+    input   logic [SATP_MODE_LEN-1:0]   vm_mode_i,
 
     // Handshake from/to issue arbiter
     input   logic                       issue_lb_valid_i,
@@ -45,7 +46,7 @@ module load_store_unit (
     input   logic                       rs2_ready_i,    
     input   logic [ROB_IDX_LEN-1:0]     rs2_idx_i,
     input   logic [XLEN-1:0]            rs2_value_i,
-    input   logic [I_IMM-1:0]           imm_value_i,    
+    input   logic [XLEN-1:0]            imm_value_i,    
     input   logic [ROB_IDX_LEN-1:0]     dest_idx_i,
 
     // Handshake and data from/to the TLB
@@ -115,19 +116,19 @@ module load_store_unit (
     // Load buffer --> MUX
     logic                       lb_vaddermux_isstore;
     logic [XLEN-1:0]            lb_vaddermux_rs1_value;
-    logic [I_IMM-1:0]           lb_vaddermux_imm_value;
+    logic [XLEN-1:0]            lb_vaddermux_imm_value;
     logic [LDBUFF_IDX_LEN-1:0]  lb_vaddermux_idx;
     logic [LDST_TYPE_LEN-1:0]   lb_vaddermux_ldtype;
     // Store buffer --> MUX
     logic                       sb_vaddermux_isstore;
     logic [XLEN-1:0]            sb_vaddermux_rs1_value;
-    logic [I_IMM-1:0]           sb_vaddermux_imm_value;
+    logic [XLEN-1:0]            sb_vaddermux_imm_value;
     logic [STBUFF_IDX_LEN-1:0]  sb_vaddermux_idx;
     logic [LDST_TYPE_LEN-1:0]   sb_vaddermux_sttype;
     // MUX --> Virtual address adder
     logic                       vaddermux_vadder_is_store;
     logic [XLEN-1:0]            vaddermux_vadder_rs1_value;
-    logic [I_IMM-1:0]           vaddermux_vadder_imm_value;
+    logic [XLEN-1:0]            vaddermux_vadder_imm_value;
     logic [BUFF_IDX_LEN-1:0]    vaddermux_vadder_lsb_idx;
     logic [LDST_TYPE_LEN-1:0]   vaddermux_vadder_ldst_type;
 

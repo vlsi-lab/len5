@@ -15,6 +15,7 @@
 import len5_pkg::*;
 import memory_pkg::*;
 import csr_pkg::csr_priv_t;
+import expipe_pkg::except_code_t;
 
 module datapath #(
     parameter [XLEN-1:0]    BOOT_PC = 'h0
@@ -93,7 +94,7 @@ module datapath #(
     prediction_t                fe_be_pred;
     resolution_t                be_fe_res;
     logic                       fe_be_except;
-    logic                       fe_be_except_code;
+    except_code_t               fe_be_except_code;
     logic                       be_fe_except;
     logic [XLEN-1:0]            be_fe_except_pc;
 

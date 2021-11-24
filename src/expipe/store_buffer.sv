@@ -20,13 +20,13 @@
 import uvm_pkg::*;
 
 import len5_pkg::XLEN;
-import len5_pkg::S_IMM;
 import len5_pkg::STBUFF_DEPTH;
 
 import expipe_pkg::*;
 import memory_pkg::*;
 
 import csr_pkg::satp_mode_t;
+import csr_pkg::SATP_MODE_LEN;
 import csr_pkg::BARE; 
 import csr_pkg::SV39;
 import csr_pkg::SV48;
@@ -38,7 +38,7 @@ module store_buffer
     input   logic                       flush_i,
 	
 
-    input   satp_mode_t                 vm_mode_i,          // virtual memory MODE (from the 'satp' CSR)
+    input   logic [SATP_MODE_LEN-1:0]   vm_mode_i,          // virtual memory MODE (from the 'satp' CSR)
 
     // Handshake from/to issue arbiter
     input   logic                       issue_logic_valid_i,
@@ -52,7 +52,7 @@ module store_buffer
     input   logic                       rs2_ready_i,        // second operand already fetched from RF/ROB
     input   logic [ROB_IDX_LEN-1:0]     rs2_idx_i,
     input   logic [XLEN-1:0]            rs2_value_i,
-    input   logic [S_IMM-1:0]           imm_value_i,        // The immediate field of the load instruction
+    input   logic [XLEN-1:0]            imm_value_i,        // The immediate field of the load instruction
     input   logic [ROB_IDX_LEN-1:0]     dest_idx_i,
 
     // Handshake from/to the virtual address adder
@@ -67,7 +67,7 @@ module store_buffer
     input   vadder_except_t             vadder_except_i,    // LD_ADDR_MISALIGNED or LD_PAGE_FAULT exceptions
     output  logic                       vadder_isstore_o,
     output  logic [XLEN-1:0]            rs1_value_o,
-    output  logic [S_IMM-1:0]           imm_value_o,
+    output  logic [XLEN-1:0]            imm_value_o,
     output  logic [STBUFF_IDX_LEN-1:0]  vadder_idx_o,
     output  logic [LDST_TYPE_LEN-1:0]   vadder_sttype_o,
 

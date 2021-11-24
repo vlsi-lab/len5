@@ -19,6 +19,7 @@ import len5_pkg::*;
 import expipe_pkg::*;
 import csr_pkg::FCSR_FRM_LEN;
 import csr_pkg::CSR_ADDR_LEN;
+import csr_pkg::SATP_MODE_LEN;
 import csr_pkg::csr_priv_t;
 import csr_pkg::satp_mode_t;
 import csr_pkg::csr_instr_t;
@@ -71,8 +72,8 @@ module backend (
     output  logic                   mem_mxr_bit_o,
     output  csr_priv_t              mem_priv_mode_o,
     output  csr_priv_t              mem_priv_mode_ls_o,
-    output  asid_t [PPN_LEN-1:0]    mem_base_asid_o,
-    output  logic                   mem_csr_root_ppn_o
+    output  asid_t                  mem_base_asid_o,
+    output  logic [PPN_LEN-1:0]     mem_csr_root_ppn_o
 );
 
     // ----------------
@@ -165,7 +166,7 @@ module backend (
     logic                       rob_il_rs1_ready;
     logic [XLEN-1:0]            rob_il_rs1_value;
     logic                       rob_il_rs2_ready;
-    logic                       rob_il_rs2_value;
+    logic [XLEN-1:0]            rob_il_rs2_value;
     logic [ROB_IDX_LEN-1:0]     rob_il_tail_idx;
     logic [ROB_IDX_LEN-1:0]     il_rob_rs1_idx;
     logic [ROB_IDX_LEN-1:0]     il_rob_rs2_idx;
@@ -180,9 +181,9 @@ module backend (
 
     // Execution stage <--> CDB
     // ------------------------
-    logic                       cdb_ex_ready [0:EU_N-1];
-    logic                       ex_cdb_valid [0:EU_N-1];
-    cdb_data_t                  ex_cdb_data [0:EU_N-1];
+    logic [0:EU_N-1]            cdb_ex_ready;
+    logic [0:EU_N-1]            ex_cdb_valid;
+    cdb_data_t [0:EU_N-1]       ex_cdb_data;
 
     // Execution stage <--> ROB
     // ------------------------
@@ -192,7 +193,7 @@ module backend (
     // Execution stage <--> CSRs
     // -------------------------
     logic [FCSR_FRM_LEN-1:0]    csr_ex_frm;
-    satp_mode_t                 csr_ex_vm_mode;
+    logic [SATP_MODE_LEN-1:0]   csr_ex_vm_mode;
 
     // CDB <--> ROB
     // ------------
@@ -253,7 +254,7 @@ module backend (
 
         .fetch_valid_i                  (fetch_valid_i),
         .fetch_ready_o                  (fetch_ready_o),
-        .fetch_curr_pc                  (fetch_curr_pc_i),
+        .fetch_curr_pc_i                (fetch_curr_pc_i),
         .fetch_instr_i                  (fetch_instr_i),
         .fetch_pred_target_i            (fetch_pred_target_i),
         .fetch_pred_taken_i             (fetch_pred_taken_i),
@@ -462,7 +463,9 @@ module backend (
         .rob_store_committing_o     (ex_rob_store_committing),
 
         .vm_mode_i                  (csr_ex_vm_mode),
+    `ifdef LEN5_FP_EN
         .csr_frm_i                  (csr_ex_frm),
+    `endif /* LEN5_FP_EN */
 
         .dtlb_ans_i                 (dtlb_ans_i),
         .dtlb_wup_i                 (dtlb_wup_i),
@@ -543,8 +546,8 @@ module backend (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
         .main_cu_flush_o        (main_cu_flush_o),
-        .fetch_except_raised_o  (fetch_except_raised_o),
-        .fetch_except_pc_o      (fetch_except_pc_o),
+        .fe_except_raised_o     (fetch_except_raised_o),
+        .fe_except_pc_o         (fetch_except_pc_o),
         .rob_valid_i            (rob_comm_valid),
         .rob_ready_o            (comm_rob_ready), 
         .rob_instr_i            (rob_comm_instr),

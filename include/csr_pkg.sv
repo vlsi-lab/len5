@@ -209,7 +209,8 @@ package csr_pkg;
   // VIRTUAL MEMORY
   // --------------
   
-  typedef enum logic [3:0] {
+  localparam SATP_MODE_LEN = 4;
+  typedef enum logic [SATP_MODE_LEN-1:0] {
     BARE = 4'b0000, // no translation or protection
     SV39 = 4'b1000,
     SV48 = 4'b1001

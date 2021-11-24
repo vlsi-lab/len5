@@ -22,4 +22,5 @@ src/expipe/*.sv
 src/frontend/*.sv
 src/cu/*.sv
 src/*.sv
+tb/memory/*.sv
 tb/*.sv

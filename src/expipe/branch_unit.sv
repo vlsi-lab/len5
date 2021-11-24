@@ -36,7 +36,7 @@ module branch_unit
     input   logic                           rs2_ready_i,
     input   logic [ROB_IDX_LEN-1:0]         rs2_idx_i,
     input   logic [XLEN-1:0]                rs2_value_i,
-    input   logic [B_IMM-1:0]               imm_value_i,
+    input   logic [XLEN-1:0]                imm_value_i,
     input   logic [ROB_IDX_LEN-1:0]         dest_idx_i,
     input   logic [XLEN-1:0]                pred_pc_i,
     input   logic [XLEN-1:0]                pred_target_i,
@@ -62,7 +62,7 @@ module branch_unit
     // Data from/to the execution unit
     logic [XLEN-1:0]                rs_bu_rs1;
     logic [XLEN-1:0]                rs_bu_rs2;
-    logic [B_IMM-1:0]               rs_bu_imm;
+    logic [XLEN-1:0]                rs_bu_imm;
     logic [XLEN-1:0]                rs_bu_pred_pc;
     logic [XLEN-1:0]                rs_bu_pred_target;
     logic                           rs_bu_pred_taken;
@@ -75,7 +75,7 @@ module branch_unit
     logic                           rs_bu_valid;
     logic                           rs_bu_ready;
 
-branch_unit_rs  #(.RS_DEPTH (RS_DEPTH)) u_branch_generic_rs
+branch_rs  #(.RS_DEPTH (RS_DEPTH)) u_branch_rs
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),

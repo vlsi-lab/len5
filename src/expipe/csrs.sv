@@ -54,7 +54,7 @@ module csrs (
     `endif /* LEN5_FP_EN */
 
     // Data to the load/store unit
-    output  logic [3:0]                 vm_mode_o,
+    output  logic [SATP_MODE_LEN-1:0]   vm_mode_o,
 
     // CSRs <--> memory system
     output  logic                       mem_vmem_on_o,
@@ -62,8 +62,8 @@ module csrs (
     output  logic                       mem_mxr_bit_o,
     output  csr_priv_t                  mem_priv_mode_o,
     output  csr_priv_t                  mem_priv_mode_ls_o,
-    output  asid_t [PPN_LEN-1:0]        mem_base_asid_o,
-    output  logic                       mem_csr_root_ppn_o
+    output  asid_t                      mem_base_asid_o,
+    output  logic [PPN_LEN-1:0]         mem_csr_root_ppn_o
 );
 
 // CSR read value
@@ -102,30 +102,30 @@ csr_mstatus_t   mstatus;
 // mstatus values
 // --------------
 // TODO: add proper write handling with CSR instructions
-assign mstatu.sd            = 1'b0;
-assign mstatu.not_used_4    = 'h0;
-assign mstatu.sxl           = 'h0;
-assign mstatu.uxl           = 'h0;
-assign mstatu.not_used_3    = 'h0;
-assign mstatu.tsr           = 1'b0;
-assign mstatu.tw            = 1'b0;
-assign mstatu.tvm           = 1'b0;
-assign mstatu.mxr           = 1'b0;
-assign mstatu.sum           = 1'b0;
-assign mstatu.mprv          = 1'b0;
-assign mstatu.xs            = 'h0;
-assign mstatu.fs            = 'h0;
-assign mstatu.mpp           = PRIV_MODE_S;
-assign mstatu.not_used_2    = 'h0;
-assign mstatu.spp           = PRIV_MODE_U;
-assign mstatu.mpie          = 1'b0;
-assign mstatu.not_used_1    = 'h0;
-assign mstatu.spie          = 1'b0;
-assign mstatu.upie          = 1'b0;
-assign mstatu.mie           = 1'b0;
-assign mstatu.not_used_0    = 1'b0;
-assign mstatu.sie           = 1'b0;
-assign mstatu.uie           = 1'b0;
+assign mstatus.sd            = 1'b0;
+assign mstatus.not_used_4    = 'h0;
+assign mstatus.sxl           = 'h0;
+assign mstatus.uxl           = 'h0;
+assign mstatus.not_used_3    = 'h0;
+assign mstatus.tsr           = 1'b0;
+assign mstatus.tw            = 1'b0;
+assign mstatus.tvm           = 1'b0;
+assign mstatus.mxr           = 1'b0;
+assign mstatus.sum           = 1'b0;
+assign mstatus.mprv          = 1'b0;
+assign mstatus.xs            = 'h0;
+assign mstatus.fs            = 'h0;
+assign mstatus.mpp           = PRIV_MODE_S;
+assign mstatus.not_used_2    = 'h0;
+assign mstatus.spp           = PRIV_MODE_U;
+assign mstatus.mpie          = 1'b0;
+assign mstatus.not_used_1    = 'h0;
+assign mstatus.spie          = 1'b0;
+assign mstatus.upie          = 1'b0;
+assign mstatus.mie           = 1'b0;
+assign mstatus.not_used_0    = 1'b0;
+assign mstatus.sie           = 1'b0;
+assign mstatus.uie           = 1'b0;
 
 // --------
 // CSR READ

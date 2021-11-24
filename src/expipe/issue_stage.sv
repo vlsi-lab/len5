@@ -94,7 +94,7 @@ module issue_stage
     output  logic                       ex_rs2_ready_o,         // second operand is ready at issue time (from the RF or the ROB)
     output  logic [ROB_IDX_LEN-1:0]     ex_rs2_idx_o,    // the index of the ROB where the first operand can be found (if not ready)
     output  logic [XLEN-1:0]            ex_rs2_value_o,         // the value of the first operand (if ready)
-    output  logic [I_IMM-1:0]           ex_imm_value_o, // the value of the immediate field (for st and branches)                   
+    output  logic [XLEN-1:0]            ex_imm_value_o, // the value of the immediate field (for st and branches)                   
     output  logic [ROB_IDX_LEN-1:0]     ex_rob_idx_o,           // the location of the ROB assigned to the instruction
     output  logic [XLEN-1:0]            ex_pred_pc_o,              // the PC of the current issuing instr (branches only)
     output  logic [XLEN-1:0]            ex_pred_target_o,  // the predicted target of the current issuing instr (branches only)
@@ -102,7 +102,6 @@ module issue_stage
 
     // CDB handshaking
 	input   logic                       cdb_valid_i,
-	output  logic                       cdb_ready_o,
 
 	// CDB data
 	input   logic                       cdb_except_raised_i,
@@ -123,6 +122,7 @@ module issue_stage
     output  logic [ROB_IDX_LEN-1:0]     rob_rs1_idx_o,          // ROB entry containing rs1 value
     output  logic [ROB_IDX_LEN-1:0]     rob_rs2_idx_o,          // ROB entry containing rs2 value
     output  logic [ILEN-1:0]            rob_instr_o,            // to identify the instruction
+    output  logic [XLEN-1:0]            rob_pc_o,               // PC of the current instruction
     output  logic [REG_IDX_LEN-1:0]     rob_rd_idx_o,           // the destination register index (rd)
     output  logic                       rob_except_raised_o,    // an exception has been raised
     output  logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_o,      // the exception code
@@ -160,12 +160,12 @@ module issue_stage
         .fetch_ready_o          (fetch_ready_o),
 
         // Fetch unit handshaking
-        .fetch_curr_pc_i          (fetch_curr_pc_i),
-        .fetch_instr_i          (fetch_instr_i),
-        .fetch_pred_target_i    (fetch_pred_target_i),
-        .fetch_pred_taken_i     (fetch_pred_taken_i),
-        .fetch_except_raised_i  (fetch_except_raised_i),
-        .fetch_except_code_i    (fetch_except_code_i),
+        .curr_pc_i              (fetch_curr_pc_i),
+        .instruction_i          (fetch_instr_i),
+        .pred_target_i          (fetch_pred_target_i),
+        .pred_taken_i           (fetch_pred_taken_i),
+        .except_raised_i        (fetch_except_raised_i),
+        .except_code_i          (fetch_except_code_i),
 
         // Execution pipeline handshaking
         .issue_ready_i          (il_iq_ready),
@@ -266,7 +266,6 @@ module issue_stage
 
         // CDB handshaking
         .cdb_valid_i                    (cdb_valid_i),
-        .cdb_ready_o                    (cdb_ready_o),
 
         // CDB data
         .cdb_except_raised_i            (cdb_except_raised_i),
@@ -286,6 +285,7 @@ module issue_stage
         .rob_rs1_idx_o                  (rob_rs1_idx_o),
         .rob_rs2_idx_o                  (rob_rs2_idx_o),
         .rob_instr_o                    (rob_instr_o),
+        .rob_pc_o                       (rob_pc_o),
         .rob_rd_idx_o                   (rob_rd_idx_o),
         .rob_except_raised_o            (rob_except_raised_o),
         .rob_except_code_o              (rob_except_code_o),

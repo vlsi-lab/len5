@@ -64,10 +64,11 @@ function print_usage() {
     printf -- "-p:      set remote port. Default: %d.\n" $REMOTE_PORT
     printf -- "-u:      set remote username.\n"
     printf -- "-c:      launch vsim in command-line mode (no GUI).\n"
-    printf -- "-r [N]:  also run simulation for N ns (implies '-t'; N=%dns if\n\t not provided).\n" $SIM_TIME
+    printf -- "-r:      also run simulation (implies '-t')\n"
     printf -- "-s HOST: run simulation on HOST instead of '%s'.\n" "$HOST_NAME"
     printf -- "-w FILE: add 'do FILE' to simulation script. Default:\n\t %s\n" "${WAVE_FILE}"
     printf -- "-m FILE: use FILE as memory file.\n"
+    printf -- "-n NS  : if '-t' is also provided, run the simulation for\n\t NS nanoseconds (default: %dns).\n" "$SIM_TIME"
 }
 
 # Log message
@@ -107,7 +108,7 @@ $@
 
 # Parse command line options
 # --------------------------
-while getopts ':htr::pucs:w:m:' opt; do
+while getopts ':htrpucs:w:m:n:' opt; do
     case $opt in
         h) # Print usage message
             print_usage
@@ -119,7 +120,6 @@ while getopts ':htr::pucs:w:m:' opt; do
         r) # Also run simulation
             TB_SRC=1
             LAUNCH_SIM=1
-            [ ! "$OPTARG" = "" ] && SIM_TIME=$OPTARG
             ;;
         p) # Set the remote port
             REMOTE_PORT=$OPTARG
@@ -139,6 +139,9 @@ while getopts ':htr::pucs:w:m:' opt; do
         m) # Memory file to load
             MEMORY_FILE="${OPTARG}"
             COMPILER_OPTS="${COMPILER_OPTS} +define+MEMORY_FILE=\\\"${MEMORY_FILE}\\\""
+            ;;
+        n) # Simulation time in ns
+            SIM_TIME=$OPTARG
             ;;
         *) # Invalid option
             print_usage "invalid option"
@@ -221,7 +224,7 @@ if [ ${LAUNCH_SIM} -ne 0 ]; then
     log "Assembling simulation script '${SIM_SCRIPT##${LEN5_ROOT_DIR}/}'..."
 
     # Launch simulation
-    echo "vsim work.tb_combined ${SIM_OPTS}" > ${SIM_SCRIPT}
+    echo "vsim work.tb_with_l2cemu ${SIM_OPTS}" > ${SIM_SCRIPT}
 
     # Load waveforms
     echo "do ${REMOTE_WAVE_FILE}" >> ${SIM_SCRIPT}
