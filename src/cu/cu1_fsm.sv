@@ -60,8 +60,8 @@ module cu1_fsm
   	output  logic               vmem_on_i,
   	output  logic               sum_bit_i,
   	output  logic               mxr_bit_i,
- 	output  priv_e              priv_mode_i,
-  	output  priv_e              priv_mode_ls_i,
+ 	output  csr_priv_t          priv_mode_i,
+  	output  csr_priv_t          priv_mode_ls_i,
   	output  asid_t              base_asid_i,
   	output  logic [PPN_LEN-1:0] csr_root_ppn_i,
   	output  tlb_flush_e         L1TLB_flush_type_i,
@@ -92,8 +92,8 @@ module cu1_fsm
 	assign vmem_on_i  		=	0;		// Virtual memory is on
 	assign sum_bit_i  		= 	1;		// For user mode 
   	assign mxr_bit_i  		= 	0;		// Only readible
- 	assign priv_mode_i  	= 	U;		// User
-  	assign priv_mode_ls_i  	= 	U;		// User
+ 	assign priv_mode_i  	= 	PRIV_MODE_U;		// User
+  	assign priv_mode_ls_i  	= 	PRIV_MODE_U;		// User
 	assign base_asid_i  	= 	'd0;	// Root page address
   	assign csr_root_ppn_i  	= 	'd0;	// Root physical address
 

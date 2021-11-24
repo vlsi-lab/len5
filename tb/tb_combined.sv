@@ -1,7 +1,7 @@
 // TESTED AND WORKING
 //`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/Data_path_memory.sv"
 //`include "/home/phd-students/walid.walid/Desktop/RISC/len5_core_master/CU_DP_MEM.sv"
-//import mmm_pkg::*;
+
 
 // LEN5 compilation switches
 `include "len5_config.svh"

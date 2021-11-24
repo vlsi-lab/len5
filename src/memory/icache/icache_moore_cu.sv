@@ -13,7 +13,7 @@
 // Date: 29/10/2019
 // Description: Moore CU of the i-Cache which control the memory address source and the misses/requests policy
 
-//import mmm_pkg::*;
+
 import len5_pkg::*;
 import memory_pkg::*;
 

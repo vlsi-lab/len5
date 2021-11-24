@@ -98,7 +98,7 @@ module issue_stage
     output  logic [ROB_IDX_LEN-1:0]     ex_rob_idx_o,           // the location of the ROB assigned to the instruction
     output  logic [XLEN-1:0]            ex_pred_pc_o,              // the PC of the current issuing instr (branches only)
     output  logic [XLEN-1:0]            ex_pred_target_o,  // the predicted target of the current issuing instr (branches only)
-    output  logic                       ex_pred_taken_o   // the predicted taken bit of the current issuing instr (branches only)
+    output  logic                       ex_pred_taken_o,   // the predicted taken bit of the current issuing instr (branches only)
 
     // CDB handshaking
 	input   logic                       cdb_valid_i,

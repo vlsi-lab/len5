@@ -17,6 +17,13 @@
 
 import len5_pkg::*;
 import expipe_pkg::*;
+import memory_pkg::dtlb_lsq_ans_t;
+import memory_pkg::dtlb_lsq_wup_t;
+import memory_pkg::lsq_dtlb_req_t;
+import memory_pkg::l1dc_lsq_ans_t;
+import memory_pkg::l1dc_lsq_wup_t;
+import memory_pkg::lsq_l1dc_req_t;
+import csr_pkg::satp_mode_t;
 
 module exec_stage
 (
@@ -316,11 +323,12 @@ module exec_stage
         .rs1_ready_i        (issue_rs1_ready_i),
         .rs1_idx_i          (issue_rs1_idx_i),
         .rs1_value_i        (issue_rs1_value_i),
+        .dest_idx_i         (issue_rob_idx_i),
         .cdb_ready_i        (cdb_ready_i[EU_OPERANDS_ONLY]),
         .cdb_valid_i        (cdb_valid_i),
         .cdb_valid_o        (cdb_valid_o[EU_OPERANDS_ONLY]),
         .cdb_data_i         (cdb_data_i[EU_OPERANDS_ONLY]),
         .cdb_data_o         (cdb_data_o[EU_OPERANDS_ONLY])
-    )
+    );
 
 endmodule

@@ -14,7 +14,7 @@
 // Description: enable the memory control and the registers updating. It also controls the handshake
 //              combinatorial signals
 
-//import mmm_pkg::*;
+
 import len5_pkg::*;
 import memory_pkg::*;
 

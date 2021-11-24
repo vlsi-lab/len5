@@ -15,8 +15,7 @@
 
 import memory_pkg::*;
 import len5_pkg::*;
-//import mmm_pkg::*;
-
+import csr_pkg::csr_priv_t;
 
 module l2_tlb_with_ssram
 (
@@ -28,8 +27,8 @@ module l2_tlb_with_ssram
   // From CSR
   input  logic             sum_bit_i,      // For U bit access permissions check. Neglected for isntruction checks
   input  logic             mxr_bit_i,      // Executable pages can become Readable
-  input  priv_e            priv_mode_i,    // The actual privilege mode (NOT filtered by the MPRV BIT!!)
-  input  priv_e            priv_mode_ls_i, // The actual privilege mode (filtered by the MPRV BIT!!)
+  input  csr_priv_t        priv_mode_i,    // The actual privilege mode (NOT filtered by the MPRV BIT!!)
+  input  csr_priv_t        priv_mode_ls_i, // The actual privilege mode (filtered by the MPRV BIT!!)
   input  asid_t            base_asid_i,    // Actual ASID from "satp" register
   // Flush control
   input  tlb_flush_e       flush_type_i,   // External flush request to the L2 TLB flush unit

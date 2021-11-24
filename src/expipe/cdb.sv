@@ -90,7 +90,7 @@ module cdb
     
     // Low priority MUX
     assign low_prio_mux_data    = rs_data_i[served-1];
-	assign rs_data_o            = rs_data_i;
+	assign rs_data_o            = rs_data_i[served-1];
 	assign max_prio_data_o      = max_prio_data_i;
     
 endmodule

@@ -44,7 +44,9 @@
 
 [ ] Write a proper main CU
 
-[ ] Instantiate the memory system in datapath.sv
+[X] Instantiate the memory system in datapath.sv
+
+[ ] Connect datapath in TB
 
 -----------------
 ----- IDEAS -----

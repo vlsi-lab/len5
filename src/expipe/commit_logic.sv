@@ -21,17 +21,20 @@
 
 import expipe_pkg::*;
 import len5_pkg::*;
+import csr_pkg::csr_instr_t;
+import csr_pkg::CSR_ADDR_LEN;
+import csr_pkg::CSR_INSTR;
 
 module commit_logic (
 	input   logic                       clk_i,
     input   logic                       rst_n_i,
 
     // Control to the main control unit
-    output  logic                       main_cu_flush_o;
+    output  logic                       main_cu_flush_o,
 
     // Data to frontend
-    output  logic                       fe_except_raised_o;
-    output  logic [XLEN-1:0]            fe_except_pc_o;
+    output  logic                       fe_except_raised_o,
+    output  logic [XLEN-1:0]            fe_except_pc_o,
 
     // Control to the ROB
     input   logic                       rob_valid_i,
@@ -68,7 +71,7 @@ module commit_logic (
 
     // Data to the register files
     output  logic [REG_IDX_LEN-1:0]     rd_idx_o,           // the index of the destination register (rd)
-    output  logic [XLEN-1:0]            rd_value_o          // the value to be stored in rd
+    output  logic [XLEN-1:0]            rd_value_o,         // the value to be stored in rd
 
     // CSRs handshaking
     output  logic                       csr_valid_o,
@@ -83,7 +86,7 @@ module commit_logic (
     output  logic [REG_IDX_LEN-1:0]     csr_rs1_idx_o,
     output  logic [XLEN-1:0]            csr_rs1_value_o,
     output  logic [ROB_EXCEPT_LEN-1:0]  csr_except_data_o,
-    output  logic [REG_IDX_LEN-1:0]     csr_rd_idx_o,
+    output  logic [REG_IDX_LEN-1:0]     csr_rd_idx_o
 );
 
     // DEFINITIONS
@@ -253,7 +256,7 @@ module commit_logic (
 
     assign  rs_head_idx_o       = rob_head_idx_i;
     assign  csr_funct3_o        = rob_instr_i.i.funct3;
-    assign  csr_addr_o          = rob_instr_i.i.imm;
+    assign  csr_addr_o          = rob_instr_i.i.imm11;
     assign  csr_rs1_value_o     = rob_value_i;
     assign  csr_except_data_o   = rob_except_code_i;
     assign  csr_rd_idx_o        = rob_rd_idx_i;

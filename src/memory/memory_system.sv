@@ -14,9 +14,7 @@
 
 import len5_pkg::*;
 import memory_pkg::*;
-
-
-
+import csr_pkg::csr_priv_t;
 
 module memory_system
 (
@@ -36,8 +34,8 @@ module memory_system
   input  logic                 vmem_on_i,
   input  logic                 sum_bit_i,
   input  logic                 mxr_bit_i,
-  input  priv_e                priv_mode_i,
-  input  priv_e                priv_mode_ls_i,
+  input  csr_priv_t            priv_mode_i,
+  input  csr_priv_t            priv_mode_ls_i,
   input  asid_t                base_asid_i,
   input  logic [PPN_LEN-1:0]   csr_root_ppn_i,
   input  tlb_flush_e           L1TLB_flush_type_i,

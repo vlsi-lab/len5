@@ -12,7 +12,7 @@
 // Author: Matteo Perotti
 // Date: 30/11/2019
 
-//import mmm_pkg::*;
+
 import len5_pkg::*;
 import memory_pkg::*;
 

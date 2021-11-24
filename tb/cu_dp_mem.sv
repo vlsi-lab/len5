@@ -73,8 +73,8 @@ module cu_dp_mem
   	logic                 vmem_on_i;
   	logic                 sum_bit_i;
   	logic                 mxr_bit_i;
- 	priv_e                priv_mode_i;
-  	priv_e                priv_mode_ls_i;
+ 	csr_priv_t            priv_mode_i;
+  	csr_priv_t            priv_mode_ls_i;
   	asid_t                base_asid_i;
   	logic [PPN_LEN-1:0]   csr_root_ppn_i;
   	tlb_flush_e           L1TLB_flush_type_i;

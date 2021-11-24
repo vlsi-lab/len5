@@ -43,8 +43,8 @@ module ifu
   // From/to instruction decode
   input   logic             issue_ready_i,
   output  logic             issue_valid_o,
-  output  logic [ILEN-1:0]  instruction_o
-  output  logic [XLEN-1:0]  curr_pc_o,
+  output  logic [ILEN-1:0]  instruction_o,
+  output  logic [XLEN-1:0]  curr_pc_o
 );
 
   // Signal declarations

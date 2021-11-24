@@ -13,7 +13,7 @@
 // Date: 29/10/2019
 // Description: it set the physical commands of the memory
 
-//import mmm_pkg::*;
+
 import len5_pkg::*;
 import memory_pkg::*;
 

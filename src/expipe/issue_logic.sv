@@ -213,7 +213,7 @@ module issue_logic (
     always_comb begin: issue_control_logic
         // Default values 
         iq_ready_o      = 1'b0;
-        ex_valid_o      = '0;
+        foreach (ex_valid_o[i]) ex_valid_o[i] = 1'b0;
         rob_valid_o     = 1'b0;
 
         // The instruction can be issue (i.e. popped from the issue queue) if both the assigned reservation station and the ROB can accept it
@@ -289,7 +289,7 @@ module issue_logic (
                 end
                 default: begin
                     rob_valid_o         = 1'b0;
-                    ex_valid_o          = 0;
+                    foreach (ex_valid_o[i]) ex_valid_o[i] = 1'b0;
                     iq_ready_o          = 1'b0;
                 end
             endcase

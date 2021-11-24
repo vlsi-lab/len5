@@ -15,6 +15,7 @@
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
 import expipe_pkg::*;
+import csr_pkg::FCSR_FRM_LEN;
 
 module fpu 
 #(
@@ -43,7 +44,7 @@ module fpu
     input  logic [EU_CTL_LEN-1:0]  eu_ctl_o,
     input  logic [XLEN-1:0]        eu_rs1_o,
     input  logic [XLEN-1:0]        eu_rs2_o,
-    output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o   // to be produced at the end of execution together with the result
+    output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o,  // to be produced at the end of execution together with the result
 
     // fcsr data
     input   logic [FCSR_FRM_LEN-1:0]    csr_frm_i   // global rounding mode from fcsr

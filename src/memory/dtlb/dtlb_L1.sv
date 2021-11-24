@@ -16,7 +16,10 @@
 
 import memory_pkg::*;
 import len5_pkg::*;
-//import mmm_pkg::*;
+import csr_pkg::csr_priv_t;
+import csr_pkg::PRIV_MODE_U;
+import csr_pkg::PRIV_MODE_S;
+
 module dtlb_L1
 (
   // Main signals
@@ -26,7 +29,7 @@ module dtlb_L1
   // From CSRs
   input  logic            sum_bit_i,            // For U bit access permissions check
   input  logic            mxr_bit_i,            // Executable pages can become Readable
-  input  priv_e           priv_mode_i,          // The actual privilege mode (filtered by the MPRV BIT!!)
+  input  csr_priv_t       priv_mode_i,          // The actual privilege mode (filtered by the MPRV BIT!!)
   input  asid_t           base_asid_i,          // Actual ASID from SATP
   // Flush control
   input  tlb_flush_e      flush_type_i,         // Flush selectively the TLB and the MSHR
@@ -246,9 +249,9 @@ module dtlb_L1
                 // Store on a clean page
                 else if (lsq_dtlb_req_i.is_store && !dtlb_entry_q[k].dirty)      exception_dtlb = PageFault;
                 // User page. Supervisor access allowed only if SUM bit is asserted
-                else if (dtlb_entry_q[k].user && priv_mode_i == S && !sum_bit_i) exception_dtlb = PageFault;
+                else if (dtlb_entry_q[k].user && priv_mode_i == PRIV_MODE_S && !sum_bit_i) exception_dtlb = PageFault;
                 // Not a User page. U mode access forbidden
-                else if (!dtlb_entry_q[k].user && priv_mode_i == U)          exception_dtlb = PageFault;
+                else if (!dtlb_entry_q[k].user && priv_mode_i == PRIV_MODE_U)          exception_dtlb = PageFault;
                 hit_vec[k] = 1'b1;
                 hit_idx = k;
               end
@@ -262,9 +265,9 @@ module dtlb_L1
                 // Store on a clean page
                 else if (lsq_dtlb_req_i.is_store && !dtlb_entry_q[k].dirty)      exception_dtlb = PageFault;
                 // User page. Supervisor access allowed only if SUM bit is asserted
-                else if (dtlb_entry_q[k].user && priv_mode_i == S && !sum_bit_i) exception_dtlb = PageFault;
+                else if (dtlb_entry_q[k].user && priv_mode_i == PRIV_MODE_S && !sum_bit_i) exception_dtlb = PageFault;
                 // Not a User page. U mode access forbidden
-                else if (!dtlb_entry_q[k].user && priv_mode_i == U)          exception_dtlb = PageFault;
+                else if (!dtlb_entry_q[k].user && priv_mode_i == PRIV_MODE_U)          exception_dtlb = PageFault;
                 hit_vec[k] = 1'b1;
                 hit_idx = k;
               end
@@ -278,9 +281,9 @@ module dtlb_L1
                 // Store on a clean page
                 else if (lsq_dtlb_req_i.is_store && !dtlb_entry_q[k].dirty)      exception_dtlb = PageFault;
                 // User page. Supervisor access allowed only if SUM bit is asserted
-                else if (dtlb_entry_q[k].user && priv_mode_i == S && !sum_bit_i) exception_dtlb = PageFault;
+                else if (dtlb_entry_q[k].user && priv_mode_i == PRIV_MODE_S && !sum_bit_i) exception_dtlb = PageFault;
                 // Not a User page. U mode access forbidden
-                else if (!dtlb_entry_q[k].user && priv_mode_i == U)          exception_dtlb = PageFault;
+                else if (!dtlb_entry_q[k].user && priv_mode_i == PRIV_MODE_U)          exception_dtlb = PageFault;
                 hit_vec[k] = 1'b1;
                 hit_idx = k;
               end

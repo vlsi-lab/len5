@@ -216,7 +216,7 @@ package csr_pkg;
   } satp_mode_t;
 
   typedef struct packed {
-    satp_mode_t         mode;
+    logic       [63:60] mode;
     logic       [59:44] asid;
     logic       [43:0]  ppn;
   } csr_satp_t;
@@ -226,10 +226,10 @@ package csr_pkg;
   // ----------
 
   typedef enum logic[1:0] { 
-    CSR_PRIV_U = 2'b00, // user
-    CSR_PRIV_S = 2'b01, // supervisor
-    CSR_PRIV_R = 2'b10, // [reserved]
-    CSR_PRIV_M = 2'b11  // machine
+    PRIV_MODE_U = 2'b00, // user
+    PRIV_MODE_S = 2'b01, // supervisor
+    PRIV_MODE_R = 2'b10, // [reserved]
+    PRIV_MODE_M = 2'b11  // machine
   } csr_priv_t;
 
   typedef enum logic [XLEN-1:0] {

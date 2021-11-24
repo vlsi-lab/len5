@@ -15,7 +15,8 @@
 `include "util.svh"
 
 package memory_pkg;
-import len5_pkg::*;
+  import len5_pkg::*;
+  import csr_pkg::csr_priv_t;
 
   // TO BE DEFINED IN ANOTHER PLACE
   localparam ASID_LEN = 8;
@@ -914,8 +915,8 @@ import len5_pkg::*;
   } l2c_ptw_ans_t;
 
   typedef struct packed {
-    priv_e              priv;
-    priv_e              priv_ls; // privilege for load/store. It's priv filtered by MPRV bit
+    csr_priv_t          priv;
+    csr_priv_t          priv_ls; // privilege for load/store. It's priv filtered by MPRV bit
     logic               sum;
     logic               mxr;
   } csr_ptw_ctrl_t;

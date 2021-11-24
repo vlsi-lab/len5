@@ -14,17 +14,19 @@
 // Description: L1 i-TLB with zero latency for an hit. The access time should be masked by the cache access time (cache "virtually" indexed, physically tagged)
 // Details: if virtual memory is inactive, the i-TLB should remain inactive too. A valid request is shortened to the output, no exception can be raised and no valid request signal reach the control unit
 
-//import mmm_pkg::*;
+
 import len5_pkg::*;
 import memory_pkg::*;
-
+import csr_pkg::csr_priv_t;
+import csr_pkg::PRIV_MODE_U;
+import csr_pkg::PRIV_MODE_S;
 
 module itlb_L1 (
   // main
   input  logic             clk_i,           // main clock
   input  logic             rst_ni,          // main reset signal
   // from CSR
-  input  priv_e            priv_mode_i,     // The actual privilege mode (NOT filtered by the MPRV BIT!!)
+  input  csr_priv_t        priv_mode_i,     // The actual privilege mode (NOT filtered by the MPRV BIT!!)
   input  asid_t            base_asid_i,     // actual ASID from satp
   // ctrl
   input  tlb_flush_e       flush_type_i,    // flush the tlb
@@ -241,9 +243,9 @@ module itlb_L1 (
           if (entry_vec_q[k].gibi) begin
             if (effective_vaddr.vpn[2] == entry_vec_q[k].vpn[2]) begin
                 // User Page. S mode access forbidden (the SUM bit is ignored for the instructions!)
-                if          ( entry_vec_q[k].user && priv_mode_i == S) user_page_exception = PageFault;
+                if          ( entry_vec_q[k].user && priv_mode_i == PRIV_MODE_S) user_page_exception = PageFault;
                 // Not a User page. U mode access forbidden
-                else if (!entry_vec_q[k].user && priv_mode_i == U) user_page_exception = PageFault;
+                else if (!entry_vec_q[k].user && priv_mode_i == PRIV_MODE_U) user_page_exception = PageFault;
               hit_vec[k] = 1'b1;
               hit_idx    = k;
             end
@@ -252,9 +254,9 @@ module itlb_L1 (
             if (effective_vaddr.vpn[2] == entry_vec_q[k].vpn[2]) begin
               if (effective_vaddr.vpn[1] == entry_vec_q[k].vpn[1]) begin
                 // User Page. S mode access forbidden (the SUM bit is ignored for the instructions!)
-                if          ( entry_vec_q[k].user && priv_mode_i == S) user_page_exception = PageFault;
+                if          ( entry_vec_q[k].user && priv_mode_i == PRIV_MODE_S) user_page_exception = PageFault;
                 // Not a User page. U mode access forbidden
-                else if (!entry_vec_q[k].user && priv_mode_i == U) user_page_exception = PageFault;
+                else if (!entry_vec_q[k].user && priv_mode_i == PRIV_MODE_U) user_page_exception = PageFault;
                 hit_vec[k] = 1'b1;
                 hit_idx    = k;
               end
@@ -263,9 +265,9 @@ module itlb_L1 (
           end else begin
             if (effective_vaddr.vpn == entry_vec_q[k].vpn) begin
                 // User Page. S mode access forbidden (the SUM bit is ignored for the instructions!)
-                if          ( entry_vec_q[k].user && priv_mode_i == S) user_page_exception = PageFault;
+                if          ( entry_vec_q[k].user && priv_mode_i == PRIV_MODE_S) user_page_exception = PageFault;
                 // Not a User page. U mode access forbidden
-                else if (!entry_vec_q[k].user && priv_mode_i == U) user_page_exception = PageFault;
+                else if (!entry_vec_q[k].user && priv_mode_i == PRIV_MODE_U) user_page_exception = PageFault;
               hit_vec[k] = 1'b1;
               hit_idx    = k;
             end

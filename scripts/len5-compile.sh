@@ -34,7 +34,7 @@ RSYNC_OPT=""
 
 # Compiler options
 QUESTA_INIT_SCRIPT="/eda/scripts/init_questa"
-COMPILER_OPTS="-msglimit error -svinputport=compat +incdir+/eda/mentor/2020-21/RHELx86/QUESTA-CORE-PRIME_2020.4/questasim/verilog_src/uvm-1.1d/src/"
+COMPILER_OPTS="-msglimitcount 10 -msglimit error -svinputport=compat +incdir+/eda/mentor/2020-21/RHELx86/QUESTA-CORE-PRIME_2020.4/questasim/verilog_src/uvm-1.1d/src/"
 
 # Simulation options
 TB_SRC=0

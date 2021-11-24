@@ -14,7 +14,7 @@
 // Description: flush counter for i-Cache flushing
 
 import len5_pkg::*;
-//import mmm_pkg::*;
+
 import memory_pkg::*;
 
 module icache_flush_cnt

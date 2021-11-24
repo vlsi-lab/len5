@@ -13,6 +13,8 @@
 // Date: 19/11/2021
 
 import len5_pkg::*;
+import memory_pkg::*;
+import csr_pkg::csr_priv_t;
 
 module datapath #(
     parameter [XLEN-1:0]    BOOT_PC = 'h0
@@ -25,7 +27,8 @@ module datapath #(
     input   logic               l2c_l2arb_req_rdy_i,
     input   l2c_l2arb_ans_t     l2c_l2arb_ans_i,
     output  l2arb_l2c_req_t     l2arb_l2c_req_o,
-    output  logic               l2arb_l2c_ans_rdy_o
+    output  logic               l2arb_l2c_ans_rdy_o,
+    output  logic               l2c_flush_o
 );
 
     // ----------------
@@ -61,8 +64,8 @@ module datapath #(
     logic                       csr_mem_vmem_on;
     logic                       csr_mem_sum_bit;
     logic                       csr_mem_mxr_bit;
-    priv_e                      csr_mem_priv_mode;
-    priv_e                      csr_mem_priv_mode_ls;
+    csr_priv_t                  csr_mem_priv_mode;
+    csr_priv_t                  csr_mem_priv_mode_ls;
     asid_t                      csr_mem_base_asid;
     logic [PPN_LEN-1:0]         csr_mem_csr_root_ppn;
 
@@ -130,8 +133,6 @@ module datapath #(
         .mem_flush_o            (cu_mem_flush),
         .mem_abort_o            (cu_mem_abort),
         .mem_l2c_update_done    (mem_cu_l2c_update_done),
-        .mem_flush_o            (cu_mem_flush),
-        .mem_abort_o            (cu_mem_abort),
         .mem_clr_l1tlb_mshr     (cu_mem_clr_l1tlb_mshr),
         .mem_clr_l2tlb_mshr     (cu_mem_clr_l2tlb_mshr),
         .mem_clear_dmshr_dregs  (cu_mem_clear_dmshr_dregs),
@@ -265,5 +266,12 @@ module datapath #(
         .l2c_l2arb_ans_i            (l2c_l2arb_ans_i),
         .l2arb_l2c_ans_rdy_o        (l2arb_l2c_ans_rdy_o)
     );
+
+    // -----------------
+    // OUTPUT EVALUATION
+    // -----------------
+
+    // L2$ flush
+    assign  l2c_flush_o         = cu_mem_flush;
     
 endmodule

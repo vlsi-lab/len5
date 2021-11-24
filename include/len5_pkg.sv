@@ -179,16 +179,6 @@ package len5_pkg;
         BGEU  = 'h5
     } branch_type_t;
 
-    //-----\\
-    // CSR \\
-    //-----\\
-
-    typedef enum logic [1:0] {
-        M, // machine mode
-        S, // supervisor mode
-        U  // user mode
-    } priv_e;
-
     // ------------------
     // EXECUTION PIPELINE
     // ------------------

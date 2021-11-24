@@ -41,6 +41,7 @@ module op_only_rs
     input   logic                           rs1_ready_i,
     input   logic [ROB_IDX_LEN-1:0]         rs1_idx_i,
     input   logic [XLEN-1:0]                rs1_value_i,
+    input   logic [ROB_IDX_LEN-1:0]         dest_idx_i,
 
     // Hanshake from/to the CDB 
     input   logic                           cdb_ready_i,
@@ -62,6 +63,7 @@ module op_only_rs
         logic                   rs1_ready;  // The first operand value is available in 'rs1_value'
         logic [ROB_IDX_LEN-1:0] rs1_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
         logic [XLEN-1:0]        rs1_value;  // The value of the first operand
+        logic [ROB_IDX_LEN-1:0] dest_idx;   // The entry of the ROB assigned to the current instruction
     } rs_entry_t;
 
     // Reservation station pointers
@@ -175,6 +177,7 @@ module op_only_rs
                 rs_data[tail_idx].rs1_ready         <= rs1_ready_i;
                 rs_data[tail_idx].rs1_idx           <= rs1_idx_i;
                 rs_data[tail_idx].rs1_value         <= rs1_value_i;
+                rs_data[tail_idx].dest_idx          <= dest_idx_i;
             end
 
             // Send a result to the CDB
@@ -223,7 +226,7 @@ module op_only_rs
     // -----------------
 
     // To the CDB
-    assign cdb_data_o.rob_idx       = rs_data[head_idx].res_idx;
+    assign cdb_data_o.rob_idx       = rs_data[head_idx].dest_idx;
     assign cdb_data_o.value         = rs_data[head_idx].rs1_value; // for CSR instructions
     assign cdb_data_o.except_raised = 1'b0; // no exception can be raised  (Wrong, First check the Missp if ok then cheeck address misaglined)
     assign cdb_data_o.except_code   = 0;// Fix it

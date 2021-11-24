@@ -15,9 +15,14 @@
 // LEN5 compilation switches
 `include "len5_config.svh"
 
+import len5_pkg::*;
 import expipe_pkg::*;
-import len5_pkg::XLEN;
-import len5_pkg::ILEN;
+import csr_pkg::FCSR_FRM_LEN;
+import csr_pkg::CSR_ADDR_LEN;
+import csr_pkg::csr_priv_t;
+import csr_pkg::satp_mode_t;
+import csr_pkg::csr_instr_t;
+import memory_pkg::*;
 
 module backend (
     // Clock, reset, and flush
@@ -45,8 +50,8 @@ module backend (
   	output  logic                   fetch_res_taken_o,
     output  logic                   fetch_res_valid_o,
 	output  logic                   fetch_res_mispredict_o,
-    output  logic                   fetch_except_raised_o;
-    output  logic [XLEN-1:0]        fetch_except_pc_o;
+    output  logic                   fetch_except_raised_o,
+    output  logic [XLEN-1:0]        fetch_except_pc_o,
 
     // TLB
     input   dtlb_lsq_ans_t          dtlb_ans_i,
@@ -64,8 +69,8 @@ module backend (
     output  logic                   mem_vmem_on_o,
     output  logic                   mem_sum_bit_o,
     output  logic                   mem_mxr_bit_o,
-    output  priv_e                  mem_priv_mode_o,
-    output  priv_e                  mem_priv_mode_ls_o,
+    output  csr_priv_t              mem_priv_mode_o,
+    output  csr_priv_t              mem_priv_mode_ls_o,
     output  asid_t [PPN_LEN-1:0]    mem_base_asid_o,
     output  logic                   mem_csr_root_ppn_o
 );
@@ -538,8 +543,8 @@ module backend (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
         .main_cu_flush_o        (main_cu_flush_o),
-        .fetch_except_raised_o     (fetch_except_raised_o)
-        .fetch_except_pc_o         (fetch_except_pc_o)
+        .fetch_except_raised_o  (fetch_except_raised_o),
+        .fetch_except_pc_o      (fetch_except_pc_o),
         .rob_valid_i            (rob_comm_valid),
         .rob_ready_o            (comm_rob_ready), 
         .rob_instr_i            (rob_comm_instr),
@@ -560,7 +565,7 @@ module backend (
         .fp_rf_ready_i          (fprf_comm_ready),
         .fp_rf_valid_o          (comm_fprf_valid),
     `endif /* LEN5_FP_EN */
-        .rs_head_idx_o          (comm_regstat_head_idx)
+        .rs_head_idx_o          (comm_regstat_head_idx),
         .rd_idx_o               (comm_rf_rd_idx),
         .rd_value_o             (comm_rf_rd_value),
         .csr_valid_o            (comm_csr_valid),

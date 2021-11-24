@@ -15,6 +15,7 @@
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
 import expipe_pkg::*;
+import csr_pkg::FCSR_FRM_LEN;
 
 module fp_unit 
 #(

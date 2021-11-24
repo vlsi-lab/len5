@@ -20,6 +20,10 @@
 // LEN5 configuration
 `include "len5_config.svh"
 
+import len5_pkg::XLEN;
+import expipe_pkg::ROB_IDX_LEN;
+import expipe_pkg::cdb_data_t;
+
 module op_only_unit
 #(
     RS_DEPTH = 4,   // must be a power of 2
@@ -68,6 +72,6 @@ module op_only_unit
         .cdb_valid_o        (cdb_valid_o),
         .cdb_data_i         (cdb_data_i),
         .cdb_data_o         (cdb_data_o)
-    )
+    );
     
 endmodule

@@ -46,8 +46,8 @@ module dp_m_tb;
   	logic                 vmem_on_i;
   	logic                 sum_bit_i;
   	logic                 mxr_bit_i;
- 	priv_e                priv_mode_i;
-  	priv_e                priv_mode_ls_i;
+ 	csr_priv_t            priv_mode_i;
+  	csr_priv_t            priv_mode_ls_i;
   	asid_t                base_asid_i;
   	logic [PPN_LEN-1:0]   csr_root_ppn_i;
   	tlb_flush_e           L1TLB_flush_type_i;
@@ -87,8 +87,8 @@ initial begin
   	sum_bit_i  = 0;
   	mxr_bit_i  = 0;
 
- 	priv_mode_i  = U;
-  	priv_mode_ls_i  = U;
+ 	priv_mode_i  = PRIV_MODE_U;
+  	priv_mode_ls_i  = PRIV_MODE_U;
 
   	base_asid_i  = 'd0;
   	csr_root_ppn_i  = 'd0;

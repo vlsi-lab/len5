@@ -3,9 +3,9 @@
 include/util.svh
 include/len5_pkg.sv
 include/instr_macros.svh
+include/csr_pkg.sv
 include/memory_pkg.sv
 include/expipe_pkg.sv
-include/csr_pkg.sv
 src/util/*.sv
 src/memory/dcache/*.sv
 src/memory/dcache/d0/*.sv
@@ -14,7 +14,6 @@ src/memory/dtlb/*.sv
 src/memory/icache/*.sv
 src/memory/itlb/*.sv
 src/memory/l1_tlb_arbiter/*.sv
-src/memory/l2cache_emulator/*.sv
 src/memory/l2c_arbiter/*.sv
 src/memory/l2_tlb/*.sv
 src/memory/ptw_tpc/*.sv

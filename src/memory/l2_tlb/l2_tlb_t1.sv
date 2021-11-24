@@ -16,7 +16,9 @@
 
 import memory_pkg::*;
 import len5_pkg::*;
-//import mmm_pkg::*;
+import csr_pkg::csr_priv_t;
+import csr_pkg::PRIV_MODE_U;
+import csr_pkg::PRIV_MODE_S;
 
 module L2_tlb_t1
 #(
@@ -29,8 +31,8 @@ module L2_tlb_t1
   // From the CSRs
   input  logic             sum_bit_i,      // For U bit access permissions check. Neglected for isntruction ch
   input  logic             mxr_bit_i,      // Executable pages can become Readable
-  input  priv_e            priv_mode_i,    // The actual privilege mode (NOT filtered by the MPRV BIT!!)
-  input  priv_e            priv_mode_ls_i, // The actual privilege mode (filtered by the MPRV BIT!!)
+  input  csr_priv_t        priv_mode_i,    // The actual privilege mode (NOT filtered by the MPRV BIT!!)
+  input  csr_priv_t        priv_mode_ls_i, // The actual privilege mode (filtered by the MPRV BIT!!)
   input  asid_t            base_asid_i,    // Actual ASID from "satp" register
   // Flush control
   input  asid_t            flush_asid_i,
@@ -140,14 +142,14 @@ module L2_tlb_t1
         case (t0_t1_req_q_i.destination)
           ITLB: begin
             if      (!tlb_vec_q[hit_idx].execute)                                           l2tlb_exception = PageFault;
-            else if ( tlb_vec_q[hit_idx].user && priv_mode_i == S)                          l2tlb_exception = PageFault;
-            else if (!tlb_vec_q[hit_idx].user && priv_mode_i == U)                          l2tlb_exception = PageFault;
+            else if ( tlb_vec_q[hit_idx].user && priv_mode_i == PRIV_MODE_S)                          l2tlb_exception = PageFault;
+            else if (!tlb_vec_q[hit_idx].user && priv_mode_i == PRIV_MODE_U)                          l2tlb_exception = PageFault;
           end
           DTLB: begin
             // It can't exist here a (R == 0 && X == 0) page, so don't check it
             if      (!tlb_vec_q[hit_idx].read &&  tlb_vec_q[hit_idx].execute && !mxr_bit_i) l2tlb_exception = PageFault;
-            else if ( tlb_vec_q[hit_idx].user &&  priv_mode_ls_i == S        && !sum_bit_i) l2tlb_exception = PageFault;
-            else if (!tlb_vec_q[hit_idx].user &&  priv_mode_ls_i == U                     ) l2tlb_exception = PageFault;
+            else if ( tlb_vec_q[hit_idx].user &&  priv_mode_ls_i == PRIV_MODE_S        && !sum_bit_i) l2tlb_exception = PageFault;
+            else if (!tlb_vec_q[hit_idx].user &&  priv_mode_ls_i == PRIV_MODE_U                     ) l2tlb_exception = PageFault;
           end
         endcase
       end
@@ -156,13 +158,13 @@ module L2_tlb_t1
         case (t0_t1_req_q_i.destination)
           ITLB: begin
             if      (!tlb_vec_q[hit_idx].execute)                                           l2tlb_exception = PageFault;
-            else if ( tlb_vec_q[hit_idx].user && priv_mode_i == S)                          l2tlb_exception = PageFault;
-            else if (!tlb_vec_q[hit_idx].user && priv_mode_i == U)                          l2tlb_exception = PageFault;
+            else if ( tlb_vec_q[hit_idx].user && priv_mode_i == PRIV_MODE_S)                          l2tlb_exception = PageFault;
+            else if (!tlb_vec_q[hit_idx].user && priv_mode_i == PRIV_MODE_U)                          l2tlb_exception = PageFault;
           end
           DTLB: begin
             if      (!tlb_vec_q[hit_idx].read &&  tlb_vec_q[hit_idx].execute && !mxr_bit_i) l2tlb_exception = PageFault;
-            else if ( tlb_vec_q[hit_idx].user &&  priv_mode_ls_i == S        && !sum_bit_i) l2tlb_exception = PageFault;
-            else if (!tlb_vec_q[hit_idx].user &&  priv_mode_ls_i == U                     ) l2tlb_exception = PageFault;
+            else if ( tlb_vec_q[hit_idx].user &&  priv_mode_ls_i == PRIV_MODE_S        && !sum_bit_i) l2tlb_exception = PageFault;
+            else if (!tlb_vec_q[hit_idx].user &&  priv_mode_ls_i == PRIV_MODE_U                     ) l2tlb_exception = PageFault;
           end
         endcase
       end
@@ -171,13 +173,13 @@ module L2_tlb_t1
         case (t0_t1_req_q_i.destination)
         ITLB: begin
           if      (!tlb_vec_q[hit_idx].execute)                                           l2tlb_exception = PageFault;
-          else if ( tlb_vec_q[hit_idx].user && priv_mode_i == S)                          l2tlb_exception = PageFault;
-          else if (!tlb_vec_q[hit_idx].user && priv_mode_i == U)                          l2tlb_exception = PageFault;
+          else if ( tlb_vec_q[hit_idx].user && priv_mode_i == PRIV_MODE_S)                          l2tlb_exception = PageFault;
+          else if (!tlb_vec_q[hit_idx].user && priv_mode_i == PRIV_MODE_U)                          l2tlb_exception = PageFault;
         end
         DTLB: begin
           if      (!tlb_vec_q[hit_idx].read &&  tlb_vec_q[hit_idx].execute && !mxr_bit_i) l2tlb_exception = PageFault;
-          else if ( tlb_vec_q[hit_idx].user &&  priv_mode_ls_i == S        && !sum_bit_i) l2tlb_exception = PageFault;
-          else if (!tlb_vec_q[hit_idx].user &&  priv_mode_ls_i == U                     ) l2tlb_exception = PageFault;
+          else if ( tlb_vec_q[hit_idx].user &&  priv_mode_ls_i == PRIV_MODE_S        && !sum_bit_i) l2tlb_exception = PageFault;
+          else if (!tlb_vec_q[hit_idx].user &&  priv_mode_ls_i == PRIV_MODE_U                     ) l2tlb_exception = PageFault;
         end
         endcase
       end
@@ -185,12 +187,12 @@ module L2_tlb_t1
       t0_t1_PTWAns: begin
         if        (t0_t1_req_q_i.destination == ITLB) begin
           if      (!t0_t1_req_q_i.wrx_bits.x               )                             l2tlb_exception = PageFault;
-          else if ( t0_t1_req_q_i.u_bit && priv_mode_i == S)                             l2tlb_exception = PageFault;
-          else if (!t0_t1_req_q_i.u_bit && priv_mode_i == U)                             l2tlb_exception = PageFault;
+          else if ( t0_t1_req_q_i.u_bit && priv_mode_i == PRIV_MODE_S)                             l2tlb_exception = PageFault;
+          else if (!t0_t1_req_q_i.u_bit && priv_mode_i == PRIV_MODE_U)                             l2tlb_exception = PageFault;
         end else if (t0_t1_req_q_i.destination == DTLB) begin
           if      (!t0_t1_req_q_i.wrx_bits.r &&  t0_t1_req_q_i.wrx_bits.x && !mxr_bit_i) l2tlb_exception = PageFault;
-          else if ( t0_t1_req_q_i.u_bit      &&  priv_mode_ls_i == S      && !sum_bit_i) l2tlb_exception = PageFault;
-          else if (!t0_t1_req_q_i.u_bit      &&  priv_mode_ls_i == U                   ) l2tlb_exception = PageFault;
+          else if ( t0_t1_req_q_i.u_bit      &&  priv_mode_ls_i == PRIV_MODE_S      && !sum_bit_i) l2tlb_exception = PageFault;
+          else if (!t0_t1_req_q_i.u_bit      &&  priv_mode_ls_i == PRIV_MODE_U                   ) l2tlb_exception = PageFault;
         end
       end
     endcase

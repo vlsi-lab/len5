@@ -20,11 +20,11 @@
 `include "csr_macros.svh"
 
 // Data types and parameters
-import len5_pkg::XLEN;
-import len5_pkg::FUNCT3_LEN;
-import len5_pkg::REG_IDX_LEN;
+import len5_pkg::*;
 import csr_pkg::*;
 import expipe_pkg::ROB_EXCEPT_LEN;
+import memory_pkg::PPN_LEN;
+import memory_pkg::asid_t;
 
 module csrs (
     // Clock and reset 
@@ -54,14 +54,14 @@ module csrs (
     `endif /* LEN5_FP_EN */
 
     // Data to the load/store unit
-    output  satp_mode_t                 vm_mode_o,
+    output  logic [3:0]                 vm_mode_o,
 
     // CSRs <--> memory system
     output  logic                       mem_vmem_on_o,
     output  logic                       mem_sum_bit_o,
     output  logic                       mem_mxr_bit_o,
-    output  priv_e                      mem_priv_mode_o,
-    output  priv_e                      mem_priv_mode_ls_o,
+    output  csr_priv_t                  mem_priv_mode_o,
+    output  csr_priv_t                  mem_priv_mode_ls_o,
     output  asid_t [PPN_LEN-1:0]        mem_base_asid_o,
     output  logic                       mem_csr_root_ppn_o
 );
@@ -160,7 +160,7 @@ always_comb begin : csr_read
                 // satp
                 `CSR_ADDR_SATP: begin
                     // only readable in S and M modes
-                    if (priv_mode >= CSR_PRIV_S)    csr_rd_val = satp;
+                    if (priv_mode >= PRIV_MODE_S)    csr_rd_val = satp;
                 end
 
                 // M-mode CSRs
@@ -169,7 +169,7 @@ always_comb begin : csr_read
                 // mstatus
                 `CSR_ADDR_MSTATUS: begin
                     // Only readable in M mode
-                    if (priv_mode >= CSR_PRIV_M)    csr_rd_val = mstatus;
+                    if (priv_mode >= PRIV_MODE_M)    csr_rd_val = mstatus;
                 end
 
                 // Default
@@ -199,14 +199,14 @@ always_comb begin : csr_read
                 // satp
                 `CSR_ADDR_SATP: begin
                     // only readable in S and M modes
-                    if (priv_mode >= CSR_PRIV_S)    csr_rd_val = satp;
+                    if (priv_mode >= PRIV_MODE_S)    csr_rd_val = satp;
                 end
 
                 // M-mode CSRs
                 // -----------
 
                 `CSR_ADDR_MSTATUS: begin
-                    if (priv_mode >= CSR_PRIV_M)    csr_rd_val = mstatus;
+                    if (priv_mode >= PRIV_MODE_M)    csr_rd_val = mstatus;
                 end
                 
                 // Default
@@ -223,7 +223,7 @@ end
 always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
     if (!rst_n_i) begin
         // priv mode
-        priv_mode   <= CSR_PRIV_M;
+        priv_mode   <= PRIV_MODE_M;
 
     `ifdef LEN5_FP_EN
         // fcsr
@@ -288,7 +288,7 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
             `CSR_ADDR_SATP: begin
                 case (funct3_i)
                     `FUNCT3_CSRRW:  begin
-                        if (priv_mode >= CSR_PRIV_S) begin
+                        if (priv_mode >= PRIV_MODE_S) begin
                             if (rs1_value_i[63:60] == BARE ||
                                 rs1_value_i[63:60] == SV39 ||
                                 rs1_value_i[63:60] == SV48) begin
@@ -299,7 +299,7 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
                         end
                     end
                     `FUNCT3_CSRRS:  begin
-                        if (priv_mode >= CSR_PRIV_S) begin
+                        if (priv_mode >= PRIV_MODE_S) begin
                             if (rs1_value_i[63:60] == BARE ||
                                 rs1_value_i[63:60] == SV39 ||
                                 rs1_value_i[63:60] == SV48) begin
@@ -310,7 +310,7 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
                         end
                     end
                     `FUNCT3_CSRRC:  begin
-                        if (priv_mode >= CSR_PRIV_S) begin
+                        if (priv_mode >= PRIV_MODE_S) begin
                             if (rs1_value_i[63:60] == BARE ||
                                 rs1_value_i[63:60] == SV39 ||
                                 rs1_value_i[63:60] == SV48) begin
@@ -321,7 +321,7 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
                         end
                     end
                     `FUNCT3_CSRRWI: begin
-                        if (priv_mode >= CSR_PRIV_S) begin
+                        if (priv_mode >= PRIV_MODE_S) begin
                             if (uimm_zext[63:60] == BARE ||
                                 uimm_zext[63:60] == SV39 ||
                                 uimm_zext[63:60] == SV48) begin
@@ -332,7 +332,7 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
                         end
                     end
                     `FUNCT3_CSRRSI: begin
-                        if (priv_mode >= CSR_PRIV_S) begin
+                        if (priv_mode >= PRIV_MODE_S) begin
                             if (uimm_zext[63:60] == BARE ||
                                 uimm_zext[63:60] == SV39 ||
                                 uimm_zext[63:60] == SV48) begin
@@ -343,7 +343,7 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
                         end
                     end
                     `FUNCT3_CSRRCI: begin
-                        if (priv_mode >= CSR_PRIV_S) begin
+                        if (priv_mode >= PRIV_MODE_S) begin
                             if (uimm_zext[63:60] == BARE ||
                                 uimm_zext[63:60] == SV39 ||
                                 uimm_zext[63:60] == SV48) begin

@@ -28,8 +28,7 @@ module main_cu
 
 	// From fontend
 	input   logic [ILEN-1:0] 	fe_ins_i,
-  	input   logic             	fe_except_raised_i
-
+  	input   logic             	fe_except_raised_i,
 	// From backend
   	input  	logic             	be_stall_i,
 	input 	logic 				be_flush_i,
@@ -168,18 +167,16 @@ module main_cu
 
 	// TODO: properly handle flush signals
 	assign 	flush_o		= be_flush_i;
-	assign 	mem_flush_o	= 1'b0;
 
 	// TODO: properly handle memory control
-	assign 	mem_abort_o				= 1'b0;
 	assign 	mem_flush_o				= 1'b0;
 	assign 	mem_abort_o				= 1'b0;
 	assign 	mem_clr_l1tlb_mshr		= 1'b0;
 	assign 	mem_clr_l2tlb_mshr		= 1'b0;
 	assign 	mem_clear_dmshr_dregs	= 1'b0;
 	assign 	mem_synch_l1dc_l2c		= 1'b0;
-	assign 	mem_L1TLB_flush_type	= NoFlush,
-	assign 	mem_L2TLB_flush_type    = NoFlush,
+	assign 	mem_L1TLB_flush_type	= NoFlush;
+	assign 	mem_L2TLB_flush_type    = NoFlush;
 	assign 	mem_flush_asid          = 'h0;
 	assign 	mem_flush_page          = 'h0;
 

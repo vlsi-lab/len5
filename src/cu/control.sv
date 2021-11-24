@@ -60,8 +60,8 @@ module control
   	output  logic               vmem_on_i,
   	output  logic               sum_bit_i,
   	output  logic               mxr_bit_i,
- 	output  priv_e              priv_mode_i,
-  	output  priv_e              priv_mode_ls_i,
+ 	output  csr_priv_t          priv_mode_i,
+  	output  csr_priv_t          priv_mode_ls_i,
   	output  asid_t              base_asid_i,
   	output  logic [PPN_LEN-1:0] csr_root_ppn_i,
   	output  tlb_flush_e         L1TLB_flush_type_i,
@@ -89,8 +89,8 @@ module control
 		vmem_on_i  				= 	0;
 		sum_bit_i  				= 	0;
 		mxr_bit_i  				= 	0;
-		priv_mode_i  			= 	U;
-		priv_mode_ls_i  		= 	U;
+		priv_mode_i  			= 	PRIV_MODE_U;
+		priv_mode_ls_i  		= 	PRIV_MODE_U;
 		base_asid_i  			= 	'd0;
 		csr_root_ppn_i  		= 	'd0;
 		L1TLB_flush_type_i		= 	NoFlush;
