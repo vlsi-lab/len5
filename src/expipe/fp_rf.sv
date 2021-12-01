@@ -27,7 +27,7 @@ module fp_rf (
 
     // Handshake from the commit logic 
     input   logic                       comm_valid_i,
-    output  logic                       comm_ready_o,
+    // output  logic                       comm_ready_o,
 
     // Data from the commit logic (result write port)
     input   logic [FREG_IDX_LEN-1:0]    comm_rd_idx_i,
@@ -74,6 +74,6 @@ module fp_rf (
     // READY OUT
     // ---------
     // Always ready to accept data
-    assign comm_ready_o                     = 1'b1;
+    // assign comm_ready_o                     = 1'b1;
     
 endmodule

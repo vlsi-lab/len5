@@ -61,9 +61,10 @@ module load_store_unit (
     input   logic                       dcache_ready_i,
     output  lsq_l1dc_req_t              dcache_req_o,
 
-    // Control from/to the ROB
+    // LSU <--> commit logic
     input   logic [ROB_IDX_LEN-1:0]     rob_head_idx_i,
-    output  logic                       rob_store_committing_o,
+    output  logic                       cl_store_committing_o,
+    output  logic [ROB_IDX_LEN-1:0]     cl_sb_head_rob_idx_o,
 
     // Hanshake from/to the CDB 
     input   logic                       cdb_lb_valid_i,
@@ -440,9 +441,10 @@ module load_store_unit (
         .vfwd_value_o           (vfwd_value),
         .pfwd_value_o           (pfwd_value),
 
-        // Data from/to the ROB
+        // SB <--> commit logic
         .rob_head_idx_i         (rob_head_idx_i),
-        .rob_store_committing_o (rob_store_committing_o),
+        .cl_store_committing_o (cl_store_committing_o),
+        .cl_sb_head_rob_idx_o  (cl_sb_head_rob_idx_o),
 
         // Hanshake from/to the CDB 
         .cdb_ready_i            (cdb_sb_ready_i),

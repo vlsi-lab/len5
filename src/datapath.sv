@@ -80,8 +80,6 @@ module datapath #(
     // ----------------
     frontend_icache_req_t       fe_icache_req;
     logic                       icache_fe_addr_ready;
-    icache_out_t                icache_fe_data;
-    logic                       icache_fe_data_valid;
     logic                       fe_icache_data_ready;
     icache_frontend_ans_t       icache_fe_ans;
 
@@ -156,8 +154,6 @@ module datapath #(
         .addr_o                 (fe_icache_req.vaddr),
         .addr_valid_o           (fe_icache_req.valid),
         .addr_ready_i           (icache_fe_addr_ready),
-        .data_i                 (icache_fe_data),
-        .data_valid_i           (icache_fe_data_valid),
         .data_ready_o           (fe_icache_data_ready),
         .icache_frontend_ans_i  (icache_fe_ans),
         .issue_ready_i          (be_fe_ready),

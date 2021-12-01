@@ -34,8 +34,6 @@ add wave -noupdate -expand -group DATAPATH -group FRONTEND -group PORTS /tb_with
 add wave -noupdate -expand -group DATAPATH -group FRONTEND -group PORTS /tb_with_l2cemu/u_datapath/u_frontend/addr_o
 add wave -noupdate -expand -group DATAPATH -group FRONTEND -group PORTS /tb_with_l2cemu/u_datapath/u_frontend/addr_valid_o
 add wave -noupdate -expand -group DATAPATH -group FRONTEND -group PORTS /tb_with_l2cemu/u_datapath/u_frontend/addr_ready_i
-add wave -noupdate -expand -group DATAPATH -group FRONTEND -group PORTS /tb_with_l2cemu/u_datapath/u_frontend/data_i
-add wave -noupdate -expand -group DATAPATH -group FRONTEND -group PORTS /tb_with_l2cemu/u_datapath/u_frontend/data_valid_i
 add wave -noupdate -expand -group DATAPATH -group FRONTEND -group PORTS /tb_with_l2cemu/u_datapath/u_frontend/data_ready_o
 add wave -noupdate -expand -group DATAPATH -group FRONTEND -group PORTS /tb_with_l2cemu/u_datapath/u_frontend/icache_frontend_ans_i
 add wave -noupdate -expand -group DATAPATH -group FRONTEND -group PORTS /tb_with_l2cemu/u_datapath/u_frontend/issue_ready_i
@@ -378,7 +376,7 @@ add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_ST
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group PORTS /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/cdb_data_i
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group PORTS /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/cdb_data_o
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group PORTS /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/rob_head_idx_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group PORTS /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/rob_store_committing_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group PORTS /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/cl_store_committing_o
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group PORTS /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/vm_mode_i
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group PORTS /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/dtlb_ans_i
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group PORTS /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/dtlb_wup_i
@@ -414,7 +412,7 @@ add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_ST
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group LOAD_STORE_UNIT -group PORTS /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/u_load_store_unit/dcache_ready_i
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group LOAD_STORE_UNIT -group PORTS /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/u_load_store_unit/dcache_req_o
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group LOAD_STORE_UNIT -group PORTS /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/u_load_store_unit/rob_head_idx_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group LOAD_STORE_UNIT -group PORTS /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/u_load_store_unit/rob_store_committing_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group LOAD_STORE_UNIT -group PORTS /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/u_load_store_unit/cl_store_committing_o
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group LOAD_STORE_UNIT -group PORTS /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/u_load_store_unit/cdb_lb_valid_i
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group LOAD_STORE_UNIT -group PORTS /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/u_load_store_unit/cdb_sb_valid_i
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group LOAD_STORE_UNIT -group PORTS /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/u_load_store_unit/cdb_lb_ready_i
@@ -599,7 +597,7 @@ add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_ST
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group LOAD_STORE_UNIT -group STORE_BUFFER /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/u_load_store_unit/u_store_buffer/vfwd_value_o
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group LOAD_STORE_UNIT -group STORE_BUFFER /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/u_load_store_unit/u_store_buffer/pfwd_value_o
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group LOAD_STORE_UNIT -group STORE_BUFFER /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/u_load_store_unit/u_store_buffer/rob_head_idx_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group LOAD_STORE_UNIT -group STORE_BUFFER /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/u_load_store_unit/u_store_buffer/rob_store_committing_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group LOAD_STORE_UNIT -group STORE_BUFFER /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/u_load_store_unit/u_store_buffer/cl_store_committing_o
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group LOAD_STORE_UNIT -group STORE_BUFFER /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/u_load_store_unit/u_store_buffer/cdb_ready_i
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group LOAD_STORE_UNIT -group STORE_BUFFER /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/u_load_store_unit/u_store_buffer/cdb_valid_i
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group EXEC_STAGE -group LOAD_STORE_UNIT -group STORE_BUFFER /tb_with_l2cemu/u_datapath/u_backend/u_exec_stage/u_load_store_unit/u_store_buffer/cdb_valid_o
@@ -832,82 +830,82 @@ add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group ROB /tb
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group ROB /tb_with_l2cemu/u_datapath/u_backend/u_rob/res_ready_a
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group ROB /tb_with_l2cemu/u_datapath/u_backend/u_rob/comm_except_code_test
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group ROB /tb_with_l2cemu/u_datapath/u_backend/u_rob/rob_data
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/clk_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rst_n_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/main_cu_flush_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/fe_except_raised_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/fe_except_pc_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_valid_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_ready_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_instr_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_pc_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_rd_idx_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_value_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_except_raised_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_except_code_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_head_idx_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/sb_store_committing_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/int_rs_ready_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/int_rs_valid_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/int_rf_ready_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/int_rf_valid_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rs_head_idx_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rd_idx_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rd_value_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_valid_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_ready_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_data_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_acc_exc_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_instr_type_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_funct3_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_addr_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_rs1_idx_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_rs1_value_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_except_data_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_rd_idx_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/cd_comm_possible
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/eh_no_except
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/instr_opcode
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/sb_store_committing_t
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/mispredict
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/clk_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rst_n_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/main_cu_flush_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/fe_except_raised_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/fe_except_pc_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_valid_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_ready_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_instr_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_pc_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_rd_idx_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_value_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_except_raised_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_except_code_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rob_head_idx_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/sb_store_committing_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/int_rs_ready_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/int_rs_valid_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/int_rf_ready_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/int_rf_valid_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rs_head_idx_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rd_idx_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/rd_value_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_valid_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_ready_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_data_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_acc_exc_i
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_instr_type_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_funct3_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_addr_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_rs1_idx_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_rs1_value_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_except_data_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/csr_rd_idx_o
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/cd_comm_possible
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/eh_no_except
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/instr_opcode
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/sb_store_committing_t
-add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_logic/mispredict
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/clk_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rst_n_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/main_cu_flush_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/fe_except_raised_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/fe_except_pc_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_valid_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_ready_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_instr_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_pc_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_rd_idx_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_value_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_except_raised_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_except_code_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_head_idx_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/sb_store_committing_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/int_rs_ready_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/int_rs_valid_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/int_rf_ready_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/int_rf_valid_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rs_head_idx_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rd_idx_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rd_value_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_valid_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_ready_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_data_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_acc_exc_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_instr_type_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_funct3_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_addr_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_rs1_idx_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_rs1_value_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_except_data_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_rd_idx_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/cd_comm_possible
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/eh_no_except
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/instr_opcode
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/sb_store_committing_t
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/mispredict
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/clk_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rst_n_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/main_cu_flush_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/fe_except_raised_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/fe_except_pc_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_valid_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_ready_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_instr_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_pc_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_rd_idx_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_value_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_except_raised_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_except_code_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rob_head_idx_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/sb_store_committing_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/int_rs_ready_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/int_rs_valid_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/int_rf_ready_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/int_rf_valid_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rs_head_idx_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rd_idx_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/rd_value_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_valid_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_ready_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_data_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_acc_exc_i
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_instr_type_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_funct3_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_addr_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_rs1_idx_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_rs1_value_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_except_data_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/csr_rd_idx_o
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/cd_comm_possible
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/eh_no_except
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/instr_opcode
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/sb_store_committing_t
+add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group COMMIT_LOGIC -group COMMIT_CONTROL_LOGIC /tb_with_l2cemu/u_datapath/u_backend/u_commit_stage/mispredict
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group CSRS /tb_with_l2cemu/u_datapath/u_backend/u_csrs/clk_i
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group CSRS /tb_with_l2cemu/u_datapath/u_backend/u_csrs/rst_n_i
 add wave -noupdate -expand -group DATAPATH -expand -group BACKEND -group CSRS /tb_with_l2cemu/u_datapath/u_backend/u_csrs/valid_i

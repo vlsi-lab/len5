@@ -26,23 +26,10 @@ module commit_decoder
 (
     // Data from the commit logic
     input   instr_t                 instruction_i,
-
-    // Conditions
-    input   logic                   sb_store_committing_i,
-
-	input   logic                   rob_valid_i,
-	input   logic                   no_exception_i,
-	input   logic                   int_rs_ready_i,
-	input   logic                   int_rf_ready_i,
-`ifdef LEN5_FP_EN
-	input   logic                   fp_rs_ready_i,
-	input   logic                   fp_rf_ready_i,
-`endif /* LEN5_FP_EN */
-    input   logic                   csr_ready_i,
-    input   logic                   mispredict_i,
+	input   logic                   except_raised_i,
 
     // Control to the commit logic
-    output  logic                   comm_possible_o
+    output  comm_type_t             comm_type_o
 );
 
     // DEFINITIONS
@@ -52,38 +39,126 @@ module commit_decoder
     // COMMIT DOCODER LOGIC
     // --------------------
     always_comb begin: comm_decoder
-        case(instr_opcode)
-            // If the committing instruction is a store, check if it is also committing from the store buffer
-            `OPCODE_SB: begin
-                comm_possible_o = (sb_store_committing_i) ? 1'b1 : 1'b0;
-            end
-			`OPCODE_BEQ: begin
-                comm_possible_o = (rob_valid_i && no_exception_i && !mispredict_i) ? 1'b1 : 1'b0;
-            end
-			`OPCODE_FENCE: begin
-                comm_possible_o = (rob_valid_i && no_exception_i) ? 1'b1 : 1'b0;
-            end
-	       	//`OPCODE_MTYPE, See it. Only mult and div types
-       		`OPCODE_ADD, `OPCODE_ADDI, `OPCODE_ADDIW, `OPCODE_ADDW, `OPCODE_LUI, `OPCODE_JAL, `OPCODE_JALR: begin // complete it later also jump
-                comm_possible_o = (rob_valid_i && no_exception_i && int_rf_ready_i && int_rs_ready_i) ? 1'b1 : 1'b0;
-            end
-			// Do here for floating point loads
-            `ifdef LEN5_FP_EN
-			`OPCODE_LD: begin // complete it later , `OPCODE_FTYPE, `OPCODE_DTYPE, `OPCODE_QTYPR
-                comm_possible_o = (rob_valid_i && no_exception_i && fp_rf_ready_i && fp_rs_ready_i) ? 1'b1 : 1'b0;
-            end
-            `endif /* LEN5_FP_EN */
+        // Default
+        comm_type_o     = COMM_TYPE_NONE;
 
-            // CSR instructions:
-            `OPCODE_CSRRC,
-            `OPCODE_CSRRCI,
-            `OPCODE_CSRRS,
-            `OPCODE_CSRRSI,
-            `OPCODE_CSRRW,
-            `OPCODE_CSRRWI: comm_possible_o = (csr_ready_i) ? 1'b1 : 1'b0;
+        // Hanle exceptions
+        if (except_raised_i)    comm_type_o = COMM_TYPE_EXCEPT;
 
-            default: comm_possible_o = 1'b0; // normally commit without further checks
-        endcase
+        // No exceptions raised
+        else begin
+            case (instr_opcode)
+
+                // Intructions committing to the integer RF
+                // ----------------------------------------
+                `OPCODE_ADDI,
+                `OPCODE_LUI,
+                `OPCODE_AUIPC,
+                `OPCODE_LB,
+                `OPCODE_LH,
+                `OPCODE_LW,
+                `OPCODE_LD,
+                `OPCODE_LBU,
+                `OPCODE_LHU,
+                `OPCODE_LWU,
+                `OPCODE_ADDI,
+                `OPCODE_ADDIW,
+                `OPCODE_SLTI,
+                `OPCODE_SLTIU,
+                `OPCODE_XORI,
+                `OPCODE_ORI,
+                `OPCODE_ANDI,
+                `OPCODE_SLLIW,
+                `OPCODE_SLLI,
+                `OPCODE_SRLIW,
+                `OPCODE_SRLI,
+                `OPCODE_SRAIW,
+                `OPCODE_SRAI,
+                `OPCODE_ADDW,
+                `OPCODE_SUBW,
+                `OPCODE_ADD,
+                `OPCODE_SUB,
+                `OPCODE_SLLW,
+                `OPCODE_SLL,
+                `OPCODE_SLT,
+                `OPCODE_SLTU,
+                `OPCODE_XOR,
+                `OPCODE_SRLW,
+                `OPCODE_SRL,
+                `OPCODE_SRAW,
+                `OPCODE_SRA,
+                `OPCODE_OR,
+            `ifndef LEN5_M_EN:
+                `OPCODE_MUL,
+                `OPCODE_MULW,
+                `OPCODE_MULH,
+                `OPCODE_MULHSU,
+                `OPCODE_MULHU,
+            `endif /* LEN5_M_EN */
+                `OPCODE_AND:    comm_type_o      = COMM_TYPE_INT_RF;
+
+                // Store instructions
+                // ------------------
+                `OPCODE_SB,
+                `OPCODE_SH,
+                `OPCODE_SW,
+                `OPCODE_SD:     comm_type_o     = COMM_TYPE_STORE;
+
+                // Jump instructions
+                // ----------------- 
+                `OPCODE_JAL,
+                `OPCODE_JALR:   comm_type_o     = COMM_TYPE_JUMP;
+                
+                // Branch instructions
+                // -------------------
+                `OPCODE_BEQ,
+                `OPCODE_BNE,
+                `OPCODE_BLT,
+                `OPCODE_BGE,
+                `OPCODE_BLTU,
+                `OPCODE_BGEU:   comm_type_o     = COMM_TYPE_BRANCH;
+
+                // CSR instructions
+                // ----------------
+                `OPCODE_CSRRW,
+                `OPCODE_CSRRS,
+                `OPCODE_CSRRC,
+                `OPCODE_CSRRWI,
+                `OPCODE_CSRRSI,
+                `OPCODE_CSRRCI: comm_type_o     = COMM_TYPE_CSR;
+
+                // Fence instructions
+                // ------------------
+                `OPCODE_FENCE,
+            `ifdef LEN5_PRIVILEGED_EN
+                `OPCODE_SFENCE_VMA,
+                `OPCODE_HFENCE_BVMA,
+                `OPCODE_HFENCE_GVMA,
+            `endif /* LEN5_PRIVILEGED_EN */
+                `OPCODE_FENCE_I:    comm_type_o = COMM_TYPE_FENCE;
+
+                // ECALL instructions
+                // ------------------
+                `OPCODE_ECALL:  comm_type_o     = COMM_TYPE_ECALL;
+
+                // EBREAK instructions
+                // -------------------
+                `OPCALL_EBREAK: comm_type_o     = COMM_TYPE_EBREAK;
+                
+                // XRET instructions
+                // -----------------
+            `ifdef LEN5_PRIVILEGED_EN
+                `OPCODE_URET,
+                `OPCODE_SRET,
+                `OPCODE_MRET:   comm_type_o     = COMM_TYPE_XRET;
+
+                `OPCODE_WFI:    comm_type_o     = COMM_TYPE_WFI;
+            `endif /* LEN5_PRIVILEGED_EN */
+
+                // Ignore unsupported instructions (exception generated by issue)
+                default:        comm_type_o     = COMM_TYPE_NONE;
+            endcase
+        end
     end
     
 endmodule

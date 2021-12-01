@@ -33,7 +33,7 @@ module csrs (
 
     // Handshaking with commit logic
     input   logic                       valid_i,
-    output  logic                       ready_o,
+    // output  logic                       ready_o,
 
     // Control from commit logic
     input   csr_instr_t                 instr_type_i,
@@ -56,6 +56,11 @@ module csrs (
     // Data to the load/store unit
     output  logic [SATP_MODE_LEN-1:0]   vm_mode_o,
 
+`ifdef LEN5_PRIVILEGED_EN
+    // CSRs <--> issue logic
+    output  logic                       mstatus_tsr_o,  // TSR bit from the mstatus CSR
+`endif /* LEN5_PRIVILEGED_EN */
+
     // CSRs <--> memory system
     output  logic                       mem_vmem_on_o,
     output  logic                       mem_sum_bit_o,
@@ -63,7 +68,7 @@ module csrs (
     output  csr_priv_t                  mem_priv_mode_o,
     output  csr_priv_t                  mem_priv_mode_ls_o,
     output  asid_t                      mem_base_asid_o,
-    output  logic [PPN_LEN-1:0]         mem_csr_root_ppn_o
+    output  logic [PPN_LEN-1:0]         mem_csr_root_ppn_o,
 );
 
 // CSR read value
@@ -432,15 +437,20 @@ end
 // -----------
 
 // Always ready to accept data
-assign  ready_o     = 1'b1;
+assign  ready_o         = 1'b1;
 
 // Data to FPU
 `ifdef LEN5_FP_EN
-assign  fpu_frm_o   = fcsr.frm;
+assign  fpu_frm_o       = fcsr.frm;
 `endif /* LEN5_FP_EN */
 
+// Data to the issue logic
+`ifdef LEN5_PRIVILEGED_EN
+assign  mstatus_tsr_o   = mstatus.tsr;
+`endif /* LEN5_PRIVILEGED_EN */
+
 // Memory protection mode
-assign  vm_mode_o   = satp.mode;
+assign  vm_mode_o       = satp.mode;
 
 // Data to the memory system
 assign  mem_vmem_on_o       = (satp.mode != BARE) ? 1'b1 : 1'b0;

@@ -36,17 +36,17 @@
 
 [X] Add the satp CSR and read the memory mode from it
 
-[ ] Replace commit decoder/logic with a Moore CU (+ spill register)
+[ ] Replace commit decoder/logic with a Mealy CU
 
 [ ] Fix branch unit
 
-[ ] Add exception handling to commit logic (CU)
+[ ] Add fence/interrupt/exception handling to commit CU
 
 [ ] Write a proper main CU
 
 [X] Instantiate the memory system in datapath.sv
 
-[ ] Connect datapath in TB
+[X] Connect datapath in TB
 
 -----------------
 ----- IDEAS -----

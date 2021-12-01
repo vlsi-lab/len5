@@ -82,6 +82,11 @@ module issue_stage
     output  logic [REG_IDX_LEN-1:0]     fprf_rs2_idx_o,         // RF address of the second operand    
 `endif /* LEN5_FP_EN */
 
+`ifdef LEN5_PRIVILEGED_EN
+    // CSR data
+    input                                   mstatus_tsr_i,    // the TSR bit from the mstatus CSR
+`endif /* LEN5_PRIVILEGED_EN */
+
 	// Execution pipeline handhsaking
     input   logic                       ex_ready_i [0:EU_N-1],  // ready signal from each reservation station
     output  logic                       ex_valid_o [0:EU_N-1],  // valid signal to each reservation station
@@ -216,6 +221,12 @@ module issue_stage
         .int_regstat_rs1_idx_o          (int_regstat_rs1_idx_o),      
         .int_regstat_rs2_idx_o          (int_regstat_rs2_idx_o),     
 
+        // Interger register file handshaking
+        .intrf_rs1_value_i              (intrf_rs1_value_i),     
+        .intrf_rs2_value_i              (intrf_rs2_value_i),      
+        .intrf_rs1_idx_o                (intrf_rs1_idx_o), 
+        .intrf_rs2_idx_o                (intrf_rs2_idx_o),       
+
     `ifdef LEN5_FP_EN
         // Floating-point register status register handshaking
         .fp_regstat_ready_i             (fp_regstat_ready_i),
@@ -230,21 +241,17 @@ module issue_stage
         .fp_regstat_rob_idx_o           (fp_regstat_rob_idx_o),    
         .fp_regstat_rs1_idx_o           (fp_regstat_rs1_idx_o),    
         .fp_regstat_rs2_idx_o           (fp_regstat_rs2_idx_o),    
-    `endif /* LEN5_FP_EN */
 
-        // Interger register file handshaking
-        .intrf_rs1_value_i              (intrf_rs1_value_i),     
-        .intrf_rs2_value_i              (intrf_rs2_value_i),      
-        .intrf_rs1_idx_o                (intrf_rs1_idx_o), 
-        .intrf_rs2_idx_o                (intrf_rs2_idx_o),       
-
-    `ifdef LEN5_FP_EN
         // Floating-point register file handshaking
         .fprf_rs1_value_i               (fprf_rs1_value_i),       
         .fprf_rs2_value_i               (fprf_rs2_value_i),      
         .fprf_rs1_idx_o                 (fprf_rs1_idx_o),       
         .fprf_rs2_idx_o                 (fprf_rs2_idx_o),     
     `endif /* LEN5_FP_EN */
+
+    `ifdef LEN5_PRIVILEGED_EN
+        .mstatus_tsr_i        (mstatus_tsr_i),
+    `endif /* LEN5_PRIVILEGED_EN */
 
         // Execution pipeline handshaking
         .ex_ready_i                     (ex_ready_i),

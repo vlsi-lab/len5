@@ -23,7 +23,7 @@ module int_rf (
 
     // Handshake from the commit logic 
     input   logic                   comm_valid_i,
-    output  logic                   comm_ready_o,
+    // output  logic                   comm_ready_o,
 
     // Data from the commit logic (result write port)
     input   logic [REG_IDX_LEN-1:0] comm_rd_idx_i,
@@ -39,7 +39,7 @@ module int_rf (
     // DEFINITIONS
 
     // Register file data
-    logic [XLEN-1:0] rf_data [0:XREG_NUM-1];
+    logic [XLEN-1:0] rf_data [1:XREG_NUM-1];
 
     // ------------------------
     // REGISTER FILE WRITE PORT
@@ -47,12 +47,10 @@ module int_rf (
     // Synchronous write
     always_ff @(posedge clk_i or negedge rst_n_i) begin: res_write_port
         if (!rst_n_i) begin // Asynchronous reset
-            rf_data[0] <= 0; // hard-wired x0
             for (int i = 1; i < XREG_NUM; i++) begin
                 rf_data[i]                  <= 0;
             end
         end else begin
-            rf_data[0] <= 0; // hard-wired x0
             if (comm_valid_i && (comm_rd_idx_i != 0)) begin // if the data from the commit stage is valid, update the RF
                 rf_data[comm_rd_idx_i]      <= comm_rd_value_i;
             end
@@ -74,6 +72,6 @@ module int_rf (
     // READY OUT
     // ---------
     // Always ready to accept data
-    assign comm_ready_o                     = 1'b1;
+    // assign comm_ready_o                     = 1'b1;
     
 endmodule

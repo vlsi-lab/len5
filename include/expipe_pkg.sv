@@ -287,7 +287,7 @@ package expipe_pkg;
         logic [XLEN-1:0]            vaddr;              // the virtual address
         logic                       paddr_ready;        // the address translation (TLB access) has already completed
         logic [PPN_LEN-1:0]         ppn;                // the physical address (last 12 MSBs are identical to virtual address
-        logic                       dc_completed;       // the D$ completed the write request
+        // logic                       dc_completed;       // the D$ completed the write request
         logic [ROB_IDX_LEN-1:0]     dest_idx;           // the entry of the ROB where the loaded value will be stored
         logic                       except_raised;
         except_code_t               except_code;        // exception code
@@ -297,10 +297,26 @@ package expipe_pkg;
     // ------------
     // COMMIT LOGIC
     // ------------
-    localparam CL_CTL_SIZE = 4;
 
     // Virtual address adder exception codes
     typedef enum logic [1:0] { VADDER_ALIGN_EXCEPT, VADDER_PAGE_EXCEPT, VADDER_NO_EXCEPT } vadder_except_t;
+
+    // Commit destination data type
+    typedef enum logic [3:0] { 
+        COMM_TYPE_NONE,     // no data to commit (e.g., nops)
+        COMM_TYPE_INT_RF,   // commit to integer register file
+        COMM_TYPE_FP_RF,    // commit to floating-point register file
+        COMM_TYPE_STORE,    // commit store instructions
+        COMM_TYPE_BRANCH,   // commit branch instructions
+        COMM_TYPE_JUMP,     // commit jump-and-link instructions
+        COMM_TYPE_CSR,      // commit to CSRs
+        COMM_TYPE_FENCE,    // commit fence instructions
+        COMM_TYPE_ECALL,    // commit ECALL instructions
+        COMM_TYPE_EBREAK,   // commit EBREAK instructions
+        COMM_TYPE_XRET,     // commit URET, SRET, and MRET instructions
+        COMM_TYPE_WFI,      // commit wait for interrupt instructions
+        COMM_TYPE_EXCEPT    // handle exceptions
+    } comm_type_t;
 
 endpackage
 

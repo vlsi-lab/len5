@@ -26,7 +26,7 @@ module int_regstat
 
     // Handshake from/to the issue logic
     input   logic                   issue_valid_i,
-    output  logic                   issue_ready_o,
+    // output  logic                   issue_ready_o,
 
     // Data from/to the issue logic
     input   logic [REG_IDX_LEN-1:0] issue_rd_idx_i,         // destination register of the issuing instruction
@@ -41,7 +41,7 @@ module int_regstat
 
     // Handshake from/to the commit logic
     input   logic                   comm_valid_i,
-    output  logic                   comm_ready_o,
+    // output  logic                   comm_ready_o,
 
     // Data from the commit logic
     input   logic [REG_IDX_LEN-1:0] comm_rd_idx_i,          // destination register of the committing instr.
@@ -135,7 +135,7 @@ module int_regstat
     // OUTPUT HANDSHAKE GENERATION
     // ---------------------------
     // The register status data structure is always ready to accept requests from both the issue stage and the commit stage
-    assign issue_ready_o                = 1'b1;
-    assign comm_ready_o                 = 1'b1;
+    // assign issue_ready_o                = 1'b1;
+    // assign comm_ready_o                 = 1'b1;
     
 endmodule

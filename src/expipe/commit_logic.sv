@@ -8,7 +8,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: commit_logic.sv
+// File: commit_stage.sv
 // Author: Michele Caon 
 // Date: 20/11/2019
 
@@ -25,44 +25,51 @@ import csr_pkg::csr_instr_t;
 import csr_pkg::CSR_ADDR_LEN;
 import csr_pkg::CSR_INSTR;
 
-module commit_logic (
+module commit_stage (
 	input   logic                       clk_i,
     input   logic                       rst_n_i,
 
     // Control to the main control unit
     output  logic                       main_cu_flush_o,
+    output  logic                       main_cu_resume_o,
 
     // Data to frontend
     output  logic                       fe_except_raised_o,
     output  logic [XLEN-1:0]            fe_except_pc_o,
+
+    // Issue logic <--> commit logic
+    output  logic                       il_reg0_valid_o,
+    output  logic [XLEN-1:0]            il_reg0_value_o,
+    output  logic [ROB_IDX_LEN-1:0]     il_reg0_idx_o,
+    output  logic                       il_reg1_valid_o,
+    output  logic [XLEN-1:0]            il_reg1_value_o,
+    output  logic [ROB_IDX_LEN-1:0]     il_reg1_idx_o,
+    output  logic                       il_comm_reg_valid_o,
+    output  logic [XLEN-1:0]            il_comm_reg_value_o,
+    output  logic [ROB_IDX_LEN-1:0]     il_comm_reg_idx_o,
 
     // Control to the ROB
     input   logic                       rob_valid_i,
     output  logic                       rob_ready_o, 
 
     // Data from the ROB
-    input   instr_t                     rob_instr_i,
-    input   logic [XLEN-1:0]            rob_pc_i,
-    input   logic [REG_IDX_LEN-1:0]     rob_rd_idx_i,
-    input   logic [XLEN-1:0]            rob_value_i,
-    input   logic                       rob_except_raised_i,
-	input   except_code_t               rob_except_code_i,
+    input   rob_entry_t                 rob_head_entry_i,
     input   logic [ROB_IDX_LEN-1:0]     rob_head_idx_i,
 
-    // Conditions
-    input   logic                       sb_store_committing_i, // a store is ready to commit from the store buffer
+    // Commit logic <--> store buffer
+    input   logic                       cl_sb_head_completed_i,
+    input   logic [ROB_IDX_LEN-1:0]     cl_sb_head_rob_idx_i,
+    output  logic                       cl_pop_store_o,     // pop the head store iunstruction in the store buffer
 
-	// HS from to the register status
-    input   logic                       int_rs_ready_i,
+	// Commit logic <--> register files and status
+    // input   logic                       int_rs_ready_i,
     output  logic                       int_rs_valid_o,
-
-    // HS from to the register files
-    input   logic                       int_rf_ready_i,
+    // input   logic                       int_rf_ready_i,
     output  logic                       int_rf_valid_o,
 `ifdef LEN5_FP_EN
-    input   logic                       fp_rs_ready_i,
+    // input   logic                       fp_rs_ready_i,
     output  logic                       fp_rs_valid_o,
-    input   logic                       fp_rf_ready_i,
+    // input   logic                       fp_rf_ready_i,
     output  logic                       fp_rf_valid_o,
 `endif /* LEN5_FP_EN */
 
@@ -89,176 +96,139 @@ module commit_logic (
     output  logic [REG_IDX_LEN-1:0]     csr_rd_idx_o
 );
 
-    // DEFINITIONS
+    // INTERNAL SIGNALS
+    // ----------------
+
+    // Input register data
+    typedef struct packed {
+        rob_entry_t             data;
+        logic [ROB_IDX_LEN-1:0] rob_idx;
+    } inreg_data_t;
+
     // Commit decoder
-    logic                       cd_comm_possible;
+    comm_type_t                 cd_comm_type;
 
-    // Exception handling logic
-    logic                       eh_no_except;
-
-    // Data to instruction decoder
+    // ROB <--> input register
 	logic [OPCODE_LEN -1:0]     instr_opcode;
 	logic                       sb_store_committing_t;
     logic                       mispredict;
 
-	assign instr_opcode         = rob_instr_i.r.opcode;
-    assign mispredict           = rob_value_i[0];
+    // Input register <--> commit CU
+    logic                       cu_inreg_valid;
+    logic                       inreg_cu_valid;
 
-    // ------------
-    // COMMIT LOGIC
-    // ------------
-    always_comb begin: commit_control_logic
-        // Pop the head instruction from the ROB if commit actions have been perf
-        rob_ready_o          = cd_comm_possible & eh_no_except; // I think it is wrong
+    // Input registers <--> outputs
+    logic                       inreg_buff_full;
+    inreg_data_t                inreg_buff_data;
+
+    // Committing instruction register
+    logic                       comm_reg_en;
+    rob_entry_t                 comm_reg_data;
+
+    // commit CU --> others
+    logic                       cu_instr_valid;
+    logic                       cu_store_comm;
+    logic                       cu_csr_type;
+
+    // ------------------------
+    // INPUT ROB ENTRY REGISTER
+    // ------------------------
+    inreg_data_t    inreg_data_in, inreg_data_out;
+
+    assign  inreg_data_in.data      = rob_head_entry_i;
+    assign  inreg_data_in.rob_idx   = rob_head_idx_i;
+
+    // Input spill cell
+    spill_cell_ext #(.DATA_T(rob_entry_t)) u_input_reg (
+        .clk_i          (clk_i),
+        .rst_n_i        (rst_n_i),
+        .flush_i        (1'b0),
+        .valid_i        (rob_valid_i),
+        .ready_i        (cu_inreg_valid),
+        .valid_o        (inreg_cu_valid),
+        .ready_o        (rob_ready_o),
+        .data_i         (inreg_data_in),
+        .data_o         (inreg_data_out),
+        .buff_full_o    (inreg_buff_full),
+        .buff_data_o    (inreg_buff_data)
+    );
+
+    // -------------------------------
+    // COMMITTING INSTRUCTION REGISTER
+    // -------------------------------
+
+    always_ff @( posedge clk_i or negedge rst_n_i ) begin : comm_reg
+        if (!rst_n_i)           comm_reg_data   = 'h0;
+        else if (comm_reg_en)   comm_reg_data   = inreg_data_out.data;
     end
 
     // --------------
     // COMMIT DECODER
     // --------------
     commit_decoder u_comm_decoder (
-	.instruction_i              (rob_instr_i),
-    .sb_store_committing_i      (sb_store_committing_i), 
-	.rob_valid_i				(rob_valid_i),
-    .no_exception_i				(eh_no_except),
-	.int_rs_ready_i				(int_rs_ready_i),
-    .int_rf_ready_i				(int_rf_ready_i),
-`ifdef LEN5_FP_EN
-    .fp_rs_ready_i				(fp_rs_ready_i),
-    .fp_rf_ready_i				(fp_rf_ready_i),
-`endif /* LEN5_FP_EN */
-    .csr_ready_i                (csr_ready_i),
-    .mispredict_i				(mispredict),
-    .comm_possible_o            (cd_comm_possible)    
+        .instruction_i      (rob_instr_i),
+        .except_raised_i    (rob_except_raised_i),
+        .comm_type_o        (cd_comm_type)
     );
 
-    // ------------------------
-    // EXCEPTION HANDLING LOGIC
-    // ------------------------
-    // The exception handling logic must be insserted here when available;
-    assign eh_no_except = (rob_except_raised_i && rob_valid_i)?'b0:'b1;
+    // -------------------
+    // COMMIT CONTROL UNIT
+    // -------------------
+    assign instr_opcode         = inreg_data_out.data.instruction.r.opcode;
+    assign mispredict           = inreg_data_out.data.res_value[0];
+    assign cu_store_comm        = (cl_sb_head_rob_idx_i == inreg_data_out.rob_idx) && cl_sb_head_completed_i;
 
-    // TODO: properly handle exception feedback to frontend
-    assign  fe_except_raised_o        = !eh_no_except;
-    assign  fe_except_pc_o            = 'h0;
-
+    commit_cu u_commit_cu (
+        .clk_i              (clk_i),
+        .rst_n_i            (rst_n_i),
+        .comm_type_i        (cd_comm_type),
+        .store_comm_i       (cu_store_comm),
+        .mispredict_i       (mispredict),
+        .comm_reg_en_o      (comm_reg_en),
+        .valid_i            (inreg_data_out.data.valid),
+        .ready_o            (cu_inreg_valid),
+        .instr_i            (inreg_data_out.data.instruction),
+        .except_raised_i    (inreg_data_out.data.except_raised),
+        .except_code_i      (inreg_data_out.data.except_code),
+        .int_rs_valid_o     (int_rs_valid_o),
+        .int_rf_valid_o     (int_rf_valid_o),
+    `ifdef LEN5_FP_EN
+        .fp_rs_valid_o      (fp_rs_valid_o),
+        .fp_rf_valid_o      (fp_rf_valid_o),
+    `endif /* LEN5_FP_EN */
+        .sb_pop_store_o     (cl_pop_store_o),
+        .csr_valid_o        (csr_valid_o),
+        .csr_type_o         (csr_instr_type_o),
+        .flush_o            (main_cu_flush_o),
+        .resume_o           (main_cu_resume_o)
+    );
+    
     // -----------------
     // OUTPUT EVALUATION
     // -----------------
 
-    // Data to the register files
-    assign rd_idx_o          = rob_rd_idx_i;
-    assign rd_value_o           = rob_value_i;
-`ifdef LEN5_FP_EN
-    assign fp_rd_idx_o          = fp_rob_rd_idx_i;
-    assign fp_value_o           = fp_rob_value_i;
-`endif /* LEN5_FP_EN */
-
-	always_comb begin: comm_decoder
-        // Default values
-        int_rf_valid_o  = 1'b0;
-        int_rs_valid_o  = 1'b0;
-        csr_valid_o     = 1'b0;
-
-        // Integer register instructions
-        case(instr_opcode)
-	       	`OPCODE_ADD, 
-            `OPCODE_ADDI, 
-            `OPCODE_ADDIW, 
-            `OPCODE_ADDW, 
-            `OPCODE_AND, 
-            `OPCODE_AND, 
-            `OPCODE_OR, 
-            `OPCODE_ORI, 
-            `OPCODE_SLL, 
-            `OPCODE_SLLI, 
-            `OPCODE_SLLW, 
-            `OPCODE_SLLIW, 
-            `OPCODE_SLT, 
-            `OPCODE_SLTU, 
-            `OPCODE_SLTI, 
-            `OPCODE_SLTIU, 
-            `OPCODE_SRA, 
-            `OPCODE_SRAI, 
-            `OPCODE_SRAW, 
-            `OPCODE_SRAIW, 
-            `OPCODE_SRL, 
-            `OPCODE_SRLI, 
-            `OPCODE_SRLW, 
-            `OPCODE_SRLIW, 
-            `OPCODE_SUB, 
-            `OPCODE_SUBW, 
-            `OPCODE_XOR, 
-            `OPCODE_XORI, 
-            `OPCODE_LD: begin 
-                int_rf_valid_o = (cd_comm_possible) ? 1'b1 : 1'b0;
-				int_rs_valid_o = (cd_comm_possible) ? 1'b1 : 1'b0;
-            end
-
-        // Floating-point instructions
-        `ifdef LEN5_FP_EN
-            `OPCODE_FLW,
-            `OPCODE_FMADD_S,
-            `OPCODE_FMSUB_S,
-            `OPCODE_FNMSUB_S,
-            `OPCODE_FNMADD_S,
-            `OPCODE_FADD_S,
-            `OPCODE_FSUB_S,
-            `OPCODE_FMUL_S,
-            `OPCODE_FDIV_S,
-            `OPCODE_FSQRT_S,
-            `OPCODE_FSGNJ_S,
-            `OPCODE_FSGNJN_S,
-            `OPCODE_FSGNJX_S,
-            `OPCODE_FMIN_S,
-            `OPCODE_FMAX_S,
-            `OPCODE_FCVT_W_S,
-            `OPCODE_FCVT_WU_S,
-            `OPCODE_FMV_X_W,
-            `OPCODE_FEQ_S,
-            `OPCODE_FLT_S,
-            `OPCODE_FLE_S,
-            `OPCODE_FCLASS_S,
-            `OPCODE_FCVT_S_W,
-            `OPCODE_FCVT_S_WU,
-            `OPCODE_FMV_W_X,
-            `OPCODE_FCVT_L_S,
-            `OPCODE_FCVT_LU_S,
-            `OPCODE_FCVT_S_L,
-            `OPCODE_FCVT_S_LU: begin
-                fp_rf_valid_o       = (cd_comm_possible) ? 1'b1 : 1'b0;
-                fp_rs_valid_o       = (cd_comm_possible) ? 1'b1 : 1'b0;
-                csr_instr_type_o    = FP_INSTR;
-                csr_valid_o         = (rob_except_raised_i) ? 1'b1 : 1'b0;
-            end
-        `endif /* LEN5_FP_EN */
-
-            // CSR instructions
-            `OPCODE_CSRRC,
-            `OPCODE_CSRRCI,
-            `OPCODE_CSRRS,
-            `OPCODE_CSRRSI,
-            `OPCODE_CSRRW,
-            `OPCODE_CSRRWI: begin
-                csr_valid_o         = (cd_comm_possible) ? 1'b1 : 1'b0;
-                csr_instr_type_o    = CSR_INSTR;
-            end
-
-            default:; // commit without writing the register files
-        endcase
-    end
-
-    // -----------------
-    // OUTPUT EVALUATION
-    // -----------------
+    // Data to the issue logic
+    assign  il_reg0_valid_o         = inreg_buff_full;
+    assign  il_reg0_value_o         = inreg_buff_data.data.res_value;
+    assign  il_reg0_idx_o           = inreg_buff_data.rob_idx;
+    assign  il_reg1_valid_o         = inreg_cu_valid;
+    assign  il_reg1_value_o         = inreg_data_out.data.res_value;
+    assign  il_reg1_idx_o           = inreg_data_out.rob_idx;
+    assign  il_comm_reg_valid_o     = cu_inreg_valid;
+    assign  il_comm_reg_value_o     = comm_reg_data.res_value;
+    assign  il_comm_reg_idx_o       = comm_reg_data.rd_idx;
 
     // TODO: properly handle flush signal to main CU
-    assign  main_cu_flush_o     = 1'b0;
+    assign  main_cu_flush_o         = 1'b0;
 
-    assign  rs_head_idx_o       = rob_head_idx_i;
-    assign  csr_funct3_o        = rob_instr_i.i.funct3;
-    assign  csr_addr_o          = rob_instr_i.i.imm11;
-    assign  csr_rs1_value_o     = rob_value_i;
-    assign  csr_except_data_o   = rob_except_code_i;
-    assign  csr_rd_idx_o        = rob_rd_idx_i;
+    assign  rs_head_idx_o           = rob_head_idx_i;
+
+    // Data to CSRs
+    assign  csr_funct3_o            = comm_reg_data.instruction.i.funct3;
+    assign  csr_addr_o              = comm_reg_data.instruction.i.imm11;
+    assign  csr_rs1_idx_o           = comm_reg_data.instruction.r.rs1;
+    assign  csr_rs1_value_o         = comm_reg_data.res_value;
+    assign  csr_except_data_o       = comm_reg_data.except_code;
+    assign  csr_rd_idx_o            = comm_reg_data.rd_idx;
     
 endmodule

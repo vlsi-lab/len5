@@ -236,10 +236,8 @@ module op_only_rs
     // ----------
     `ifndef SYNTHESIS
     always @(negedge clk_i) begin
-        foreach (rs_data[i]) begin
-            // Check if the correct order of operations is respected
-            assert (!(rs1_ready_i)) else `uvm_error("HAZARD", $sformatf("Input instruction sent to operands only RS but operand is already available.", i))
-        end
+        // Check if the correct order of operations is respected
+        assert (issue_valid_i && !(rs1_ready_i)) else `uvm_error("HAZARD", $sformatf("Input instruction sent to operands only RS but operand is already available.", i))
     end
     `endif
 

@@ -31,8 +31,8 @@ module spill_cell #(
     // Handshaking signals
     input   logic       valid_i,    // from upstream hardware
     input   logic       ready_i,    // from downstream hardware
-    output  logic       valid_o,    // from downstream hardware
-    output  logic       ready_o,    // from upstream hardware
+    output  logic       valid_o,    // to downstream hardware
+    output  logic       ready_o,    // to upstream hardware
 
     // Input and output data
     input   DATA_T      data_i,

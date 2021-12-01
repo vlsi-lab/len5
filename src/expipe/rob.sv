@@ -89,7 +89,6 @@ module rob
 
     // Status signals
     logic [0:ROB_DEPTH-1]               valid_a, res_ready_a;
-    logic [ROB_EXCEPT_LEN-1:0]          comm_except_code_test;
 
     // --------------
     // STATUS SIGNALS
@@ -227,12 +226,11 @@ module rob
     // -------------------------------
     // ISSUE STAGE OPERANDS READ PORTS
     // -------------------------------
-    // During issue, if the register status register reports that the result 
     // rs1 port
-    assign issue_rs1_ready_o    = rob_data[issue_rs1_idx_i].res_ready;
+    assign issue_rs1_ready_o    = rob_data[issue_rs1_idx_i].valid && rob_data[issue_rs1_idx_i].res_ready;
     assign issue_rs1_value_o    = rob_data[issue_rs1_idx_i].res_value; // READ PORT 1 (res_value)
     // rs2 port
-    assign issue_rs2_ready_o    = rob_data[issue_rs2_idx_i].res_ready;
+    assign issue_rs2_ready_o    = rob_data[issue_rs2_idx_i].valid && rob_data[issue_rs2_idx_i].res_ready;
     assign issue_rs2_value_o    = rob_data[issue_rs2_idx_i].res_value; // READ PORT 2 (res_value)
 
     // -----------------
@@ -252,27 +250,5 @@ module rob
     assign comm_value_o         = rob_data[rob_head_idx].res_value;
     assign comm_except_raised_o = rob_data[rob_head_idx].except_raised;
     assign comm_head_idx_o      = rob_head_idx;
-
-	// Exception assignment
-  always_comb begin
-    case (comm_except_code_test)
-      4'h0: 		comm_except_code_o = E_I_ADDR_MISALIGNED;
-      4'h1:    		comm_except_code_o = E_I_ACCESS_FAULT;
-      4'h2:      	comm_except_code_o = E_ILLEGAL_INSTRUCTION;
-	  4'h3: 		comm_except_code_o = E_BREAKPOINT;
-      4'h4:    		comm_except_code_o = E_LD_ADDR_MISALIGNED;
-      4'h5:      	comm_except_code_o = E_LD_ACCESS_FAULT;
-	  4'h6: 		comm_except_code_o = E_ST_ADDR_MISALIGNED;
-      4'h7:    		comm_except_code_o = E_ST_ACCESS_FAULT;
-      4'h8:      	comm_except_code_o = E_ENV_CALL_UMODE;
-	  4'h9: 		comm_except_code_o = E_ENV_CALL_SMODE;
-	  4'ha:      	comm_except_code_o = E_UNKNOWN;
-      4'hb:    		comm_except_code_o = E_ENV_CALL_MMODE;
-      4'hc:      	comm_except_code_o = E_INSTR_PAGE_FAULT;
-	  4'hd: 		comm_except_code_o = E_LD_PAGE_FAULT;
-      4'hf:    		comm_except_code_o = E_ST_PAGE_FAULT;
-      default:    	comm_except_code_o = E_UNKNOWN;
-    endcase
-  end
-
+    assign comm_except_code_o   = rob_data[rob_head_idx].except_code;
 endmodule

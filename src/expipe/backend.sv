@@ -179,16 +179,21 @@ module backend (
     logic                       il_rob_res_ready;
     logic [XLEN-1:0]            il_rob_res_value;
 
+    // Issue stage <--> CSRs
+    // ---------------------
+    logic                       csr_il_mstatus_tsr;
+
     // Execution stage <--> CDB
     // ------------------------
     logic [0:EU_N-1]            cdb_ex_ready;
     logic [0:EU_N-1]            ex_cdb_valid;
     cdb_data_t [0:EU_N-1]       ex_cdb_data;
 
-    // Execution stage <--> ROB
-    // ------------------------
+    // Execution stage <--> commit logic
+    // ---------------------------------
     logic                       ex_rob_store_committing;
     logic [ROB_IDX_LEN-1:0]     rob_sb_head_idx;
+    logic [ROB_IDX_LEN-1:0]     ex_cl_sb_head_rob_idx;
 
     // Execution stage <--> CSRs
     // -------------------------
@@ -224,6 +229,18 @@ module backend (
     // --------------------------------------
     logic [REG_IDX_LEN-1:0]     comm_rf_rd_idx;
     logic [XLEN-1:0]            comm_rf_rd_value;
+
+    // Commit logic --> issue logic
+    // ----------------------------
+    logic                       cl_il_reg0_valid;
+    logic [XLEN-1:0]            cl_il_reg0_value;
+    logic [ROB_IDX_LEN-1:0]     cl_il_reg0_idx;
+    logic                       cl_il_reg1_valid;
+    logic [XLEN-1:0]            cl_il_reg1_value;
+    logic [ROB_IDX_LEN-1:0]     cl_il_reg1_idx;
+    logic                       cl_il_comm_reg_valid;
+    logic [XLEN-1:0]            cl_il_comm_reg_value;
+    logic [ROB_IDX_LEN-1:0]     cl_il_comm_reg_idx;
 
     // Commit logic <--> CSRs
     // ----------------------
@@ -295,6 +312,10 @@ module backend (
         .fprf_rs2_idx_o                 (il_fprf_rs2_idx),
     `endif /* LEN5_FP_EN */
 
+    `ifdef LEN5_PRIVILEGED_EN
+        .mstatus_tsr_i                  (csr_il_mstatus_tsr),
+    `endif /* LEN5_PRIVILEGED_EN */
+
         .ex_ready_i                     (ex_il_ready),
         .ex_valid_o                     (il_ex_valid),
         .ex_eu_ctl_o                    (il_ex_eu_ctl),
@@ -331,7 +352,16 @@ module backend (
         .rob_except_code_o              (il_rob_except_code),
         .rob_except_aux_o               (il_rob_except_aux),
         .rob_res_ready_o                (il_rob_res_ready),
-        .rob_res_value_o                (il_rob_res_value)
+        .rob_res_value_o                (il_rob_res_value),
+        .cl_reg0_valid_i                (cl_il_reg0_valid),
+        .cl_reg0_value_i                (cl_il_reg0_value),
+        .cl_reg0_idx_i                  (cl_il_reg0_idx),
+        .cl_reg1_valid_i                (cl_il_reg1_valid),
+        .cl_reg1_value_i                (cl_il_reg1_value),
+        .cl_reg1_idx_i                  (cl_il_reg1_idx),
+        .cl_comm_reg_valid_i            (cl_il_comm_reg_valid),
+        .cl_comm_reg_value_i            (cl_il_comm_reg_value),
+        .cl_comm_reg_idx_i              (cl_il_comm_reg_idx)
     );
 
     // --------------------------------------------
@@ -460,7 +490,8 @@ module backend (
         .cdb_data_o                 (ex_cdb_data),
 
         .rob_head_idx_i             (rob_sb_head_idx),
-        .rob_store_committing_o     (ex_rob_store_committing),
+        .cl_store_committing_o      (ex_rob_store_committing),
+        .cl_sb_head_rob_idx_o       (ex_cl_sb_head_rob_idx),
 
         .vm_mode_i                  (csr_ex_vm_mode),
     `ifdef LEN5_FP_EN
@@ -541,13 +572,22 @@ module backend (
 
     // Commit logic
     // ------------
-    commit_logic u_commit_logic
+    commit_stage u_commit_stage
     (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
         .main_cu_flush_o        (main_cu_flush_o),
         .fe_except_raised_o     (fetch_except_raised_o),
         .fe_except_pc_o         (fetch_except_pc_o),
+        .il_reg0_valid_o        (cl_il_reg0_valid),
+        .il_reg0_value_o        (cl_il_reg0_value),
+        .il_reg0_idx_o          (cl_il_reg0_idx),
+        .il_reg1_valid_o        (cl_il_reg1_valid),
+        .il_reg1_value_o        (cl_il_reg1_value),
+        .il_reg1_idx_o          (cl_il_reg1_idx),
+        .il_comm_reg_valid_o    (cl_il_comm_reg_valid),
+        .il_comm_reg_value_o    (cl_il_comm_reg_value),
+        .il_comm_reg_idx_o      (cl_il_comm_reg_idx),
         .rob_valid_i            (rob_comm_valid),
         .rob_ready_o            (comm_rob_ready), 
         .rob_instr_i            (rob_comm_instr),
@@ -558,6 +598,7 @@ module backend (
         .rob_except_code_i      (rob_comm_except_code),
         .rob_head_idx_i         (rob_comm_head_idx),
         .sb_store_committing_i  (ex_rob_store_committing),
+        .sb_head_idx_i          (ex_cl_sb_head_rob_idx),
         .int_rs_ready_i         (int_regstat_comm_ready),
         .int_rs_valid_o         (comm_int_regstat_valid),
         .int_rf_ready_i         (intrf_comm_ready),
@@ -603,10 +644,13 @@ module backend (
         .rd_idx_i           (comm_csr_rd_idx),
         .data_o             (csr_comm_data),
         .acc_exc_o          (csr_comm_acc_exc),
-        `ifdef LEN5_FP_EN
+    `ifdef LEN5_FP_EN
         .fpu_frm_o          (csr_ex_frm),
-        `endif /* LEN5_FP_EN */
+    `endif /* LEN5_FP_EN */
         .vm_mode_o          (csr_ex_vm_mode),
+    `ifdef LEN5_PRIVILEGED_EN
+        .mstatus_tsr_o      (csr_il_mstatus_tsr),
+    `endif /* LEN5_PRIVILEGED_EN */
         .mem_vmem_on_o      (mem_vmem_on_o),
         .mem_sum_bit_o      (mem_sum_bit_o),
         .mem_mxr_bit_o      (mem_mxr_bit_o),

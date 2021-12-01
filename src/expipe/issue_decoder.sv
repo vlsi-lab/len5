@@ -29,6 +29,11 @@ module issue_decoder (
     // Instruction from the issue logic
     input   instr_t                         instruction_i,    // the issuing instruction
     
+`ifdef LEN5_PRIVILEGED_EN
+    // CSR data
+    input                                   mstatus_tsr_i,    // the TSR bit from the mstatus CSR
+`endif /* LEN5_PRIVILEGED_EN */
+
     // Information to the issue logic
     output  logic                           except_raised_o,  // an exception occurred during decoding
     output  except_code_t                   except_code_o,    // exception code to send to the ROB
@@ -46,7 +51,7 @@ module issue_decoder (
     output  logic                           rs3_req_o,        // rs3 (S, D only) fetch is required
 `endif /* LEN5_FP_EN */
     output  imm_format_t                    imm_format_o,     // immediate format    
-    output  logic                           regstat_upd_o     // the register status must be updated              
+    output  logic                           regstat_upd_o     // the register status must be updated
 );
 
     // DEFINITIONS
@@ -853,9 +858,14 @@ module issue_decoder (
                 (instruction_i.r.rs2 == `SRET_RS2) && 
                 (instruction_i.r.rs1 == `SRET_RS1) && 
                 (instruction_i.r.rd == `SRET_RD)) begin
-            stall_possible              = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
+            if (mstatus_tsr_i) begin
+                except_raised           = 1'b1;
+                except_code_t           = E_ILLEGAL_INSTRUCTION;
+            end else begin
+                stall_possible          = 1'b1;
+                assigned_eu             = EU_NONE;
+                res_ready               = 1'b1;
+            end
         end
 
         // MRET

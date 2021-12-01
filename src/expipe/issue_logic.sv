@@ -44,7 +44,7 @@ module issue_logic (
     input   except_code_t               iq_except_code_i,
 
     // Handshake from/to the integer register status register
-    input   logic                       int_regstat_ready_i,        // should always be asserted
+    // input   logic                       int_regstat_ready_i,        // should always be asserted
     output  logic                       int_regstat_valid_o,
 
     // Data from/to the integer register status register
@@ -65,7 +65,7 @@ module issue_logic (
 
 `ifdef LEN5_FP_EN
     // Handshake from/to the floating point register status register
-    input   logic                       fp_regstat_ready_i,
+    // input   logic                       fp_regstat_ready_i,
     output  logic                       fp_regstat_valid_o,
 
     // Data from/to the floating point register status register
@@ -85,6 +85,11 @@ module issue_logic (
     output  logic [REG_IDX_LEN-1:0]     fprf_rs2_idx_o,         // RF address of the second operand
 `endif /* LEN5_FP_EN */
 
+`ifdef LEN5_PRIVILEGED_EN
+    // CSR data
+    input                                   mstatus_tsr_i,    // the TSR bit from the mstatus CSR
+`endif /* LEN5_PRIVILEGED_EN */
+
     // Handshake from/to the execution pipeline
     input   logic                       ex_ready_i [0:EU_N-1],             // valid signal from each reservation station
     output  logic                       ex_valid_o [0:EU_N-1],             // ready signal to each reservation station
@@ -102,16 +107,15 @@ module issue_logic (
     output  logic [XLEN-1:0]            ex_pred_pc_o,              // the PC of the current issuing instr (branches only)
     output  logic [XLEN-1:0]            ex_pred_target_o,          // the predicted target of the current issuing instr (branches only)
     output  logic                       ex_pred_taken_o,           // the predicted taken bit of the current issuing instr (branches only)
-//new added
+
 	// Handshake from/to the cdb
-    /* We may not need the ready because we're never writing the CDB from the issue logic */
 	input   logic                       cdb_valid_i,
 
 	// Data from the cdb
 	input   logic                       cdb_except_raised_i,
 	input   logic [XLEN-1:0]            cdb_value_i,
 	input   logic [ROB_IDX_LEN-1:0]		cdb_rob_idx_i,
-//To here
+
     // Handshake from/to the ROB
     input   logic                       rob_ready_i,            // the ROB has an empty entry available
     output  logic                       rob_valid_o,            // a new instruction can be issued
@@ -132,7 +136,18 @@ module issue_logic (
     output  logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_o,      // the exception code
     output  logic [XLEN-1:0]            rob_except_aux_o,       // exception auxilliary data (e.g. offending virtual address)
     output  logic                       rob_res_ready_o,        // force the ready-to-commit state in the ROB to handle special instr. 
-    output  logic [XLEN-1:0]            rob_res_value_o         // result to save in the rob (when available, e.g., immediate)
+    output  logic [XLEN-1:0]            rob_res_value_o,        // result to save in the rob (when available, e.g., immediate)
+
+    // Data from the commit logic (for operands fetch)
+    input   logic                       cl_reg0_valid_i,
+    input   logic [XLEN-1:0]            cl_reg0_value_i,
+    input   logic [ROB_IDX_LEN-1:0]     cl_reg0_idx_i,
+    input   logic                       cl_reg1_valid_i,
+    input   logic [XLEN-1:0]            cl_reg1_value_i,
+    input   logic [ROB_IDX_LEN-1:0]     cl_reg1_idx_i,
+    input   logic                       cl_comm_reg_valid_i,
+    input   logic [XLEN-1:0]            cl_comm_reg_value_i,
+    input   logic [ROB_IDX_LEN-1:0]     cl_comm_reg_idx_i
 );
 
     // DEFINITIONS
@@ -149,7 +164,7 @@ module issue_logic (
     logic [ROB_IDX_LEN-1:0]             rob_tail_idx;
 
     // Handshake control
-    logic                               regstat_ready;
+    // logic                               regstat_ready;
 
     // Operand fetch
     logic [ROB_IDX_LEN-1:0]             rob_rs1_idx, rob_rs2_idx;
@@ -204,11 +219,11 @@ module issue_logic (
     // -----------------
 
     // Select the corresponding register status register ready signal
-`ifdef LEN5_FP_EN
-    assign regstat_ready    = (id_fp_rs) ? fp_regstat_ready_i : int_regstat_ready_i;
-`else
-    assign regstat_ready    = int_regstat_ready_i;
-`endif /* LEN5_FP_EN */
+// `ifdef LEN5_FP_EN
+//     assign regstat_ready    = (id_fp_rs) ? fp_regstat_ready_i : int_regstat_ready_i;
+// `else
+//     assign regstat_ready    = int_regstat_ready_i;
+// `endif /* LEN5_FP_EN */
 
     always_comb begin: issue_control_logic
         // Default values 
@@ -218,7 +233,7 @@ module issue_logic (
 
         // The instruction can be issue (i.e. popped from the issue queue) if both the assigned reservation station and the ROB can accept it
         
-        if (iq_valid_i && rob_ready_i && regstat_ready) begin // an instr. can be issued
+        if (iq_valid_i && rob_ready_i) begin // an instr. can be issued
             case(id_assigned_eu)
                 // IMPORTANT: check the order of the valid/ready connections to each RS
                 EU_LOAD_BUFFER: begin   // 0
@@ -319,7 +334,14 @@ module issue_logic (
     // --------------
     // OPERANDS FETCH
     // --------------
-    // The issue logic accesses the register status to know if the source operands are available in the RF, the ROB (and from which entry of it), or the CDB. If the source operands are not ready yet, they will be fetched from the CDB by the reservation station as soon as they are produced by the associated EU. 
+    // NOTE: if an operand is required, look for it in the following order:
+    // 1) special cases (e.g., the first operand is the current PC)
+    // 2) CDB
+    // 3) ROB
+    // 4) Commit stage buffer 0
+    // 5) Commit stage buffer 1
+    // 6) Commit stage committing instruction buffer
+    // 7) Register files
 
     // Select the correct integer/floating point register status register
     `ifdef LEN5_FP_EN
@@ -352,11 +374,20 @@ module issue_logic (
                         rs1_ready   = 1'b1;
                         rs1_value   = rob_rs1_value_i;
                     end else if (cdb_valid_i && cdb_rob_idx_i == rob_rs1_idx && !cdb_except_raised_i) begin /* the operand is being broadcast on the CDB */
-                            rs1_ready   = 1'b1;
-                            rs1_value   = cdb_value_i;
+                        rs1_ready   = 1'b1;
+                        rs1_value   = cdb_value_i;
+                    end else if (cl_reg0_valid_i && cl_reg0_idx_i == rob_rs1_idx) begin
+                        rs1_ready   = 1'b1;
+                        rs1_value   = cl_reg0_value_i;
+                    end else if (cl_reg1_valid_i && cl_reg1_idx_i == rob_rs1_idx) begin
+                        rs1_ready   = 1'b1;
+                        rs1_value   = cl_reg1_value_i;
+                    end else if (cl_comm_reg_valid_i && cl_comm_reg_idx_i == rob_rs1_idx) begin
+                        rs1_ready   = 1'b1;
+                        rs1_value   = cl_comm_reg_value_i;
                     end else begin /* mark as not ready */
-                            rs1_ready   = 1'b0;
-                            rs1_value   = 0;
+                        rs1_ready   = 1'b0;
+                        rs1_value   = 0;
                     end
                 end else begin                  // the operand is available in the register file 
                     rs1_ready           = 1'b1;
@@ -373,12 +404,18 @@ module issue_logic (
                     if (rob_rs2_ready_i) begin /* the operand is already available in the ROB */
                         rs2_ready   = 1'b1;
                         rs2_value   = rob_rs2_value_i;
-                    
-                    //New added
-                    end else if (cdb_valid_i && cdb_rob_idx_i == rob_rs2_idx && !cdb_except_raised_i /*&& cdb_valid_i*/) begin /* TODO: we need the valid! */
+                    end else if (cdb_valid_i && cdb_rob_idx_i == rob_rs2_idx && !cdb_except_raised_i) begin
                             rs2_ready   = 1'b1;
                             rs2_value   = cdb_value_i;
-                    //Till here
+                    end else if (cl_reg0_valid_i && cl_reg0_idx_i == rob_rs2_idx) begin
+                        rs2_ready   = 1'b1;
+                        rs2_value   = cl_reg0_value_i;
+                    end else if (cl_reg1_valid_i && cl_reg1_idx_i == rob_rs2_idx) begin
+                        rs2_ready   = 1'b1;
+                        rs2_value   = cl_reg1_value_i;
+                    end else if (cl_comm_reg_valid_i && cl_comm_reg_idx_i == rob_rs2_idx) begin
+                        rs2_ready   = 1'b1;
+                        rs2_value   = cl_comm_reg_value_i;
 				    end else begin /* mark as not ready */
                         rs2_ready   = 1'b0;
                         rs2_value   = 0;
@@ -402,6 +439,15 @@ module issue_logic (
                     end else if (cdb_valid_i && cdb_rob_idx_i == rob_rs1_idx && !cdb_except_raised_i) begin /* the operand is being broadcast on the CDB */
                         rs1_ready   = 1'b1;
                         rs1_value   = cdb_value_i;
+                    end else if (cl_reg0_valid_i && cl_reg0_idx_i == rob_rs1_idx) begin
+                        rs1_ready   = 1'b1;
+                        rs1_value   = cl_reg0_value_i;
+                    end else if (cl_reg1_valid_i && cl_reg1_idx_i == rob_rs1_idx) begin
+                        rs1_ready   = 1'b1;
+                        rs1_value   = cl_reg1_value_i;
+                    end else if (cl_comm_reg_valid_i && cl_comm_reg_idx_i == rob_rs1_idx) begin
+                        rs1_ready   = 1'b1;
+                        rs1_value   = cl_comm_reg_value_i;
                     end else begin /* mark as not ready */
                         rs1_ready   = 1'b0;
                         rs1_value   = 0;
@@ -421,6 +467,15 @@ module issue_logic (
                     end else if (cdb_valid_i && cdb_rob_idx_i == rob_rs2_idx && !cdb_except_raised_i) begin /* the operand is being broadcast on the CDB */
                         rs2_ready   = 1'b1;
                         rs2_value   = cdb_value_i;
+                    end else if (cl_reg0_valid_i && cl_reg0_idx_i == rob_rs2_idx) begin
+                        rs2_ready   = 1'b1;
+                        rs2_value   = cl_reg0_value_i;
+                    end else if (cl_reg1_valid_i && cl_reg1_idx_i == rob_rs2_idx) begin
+                        rs2_ready   = 1'b1;
+                        rs2_value   = cl_reg1_value_i;
+                    end else if (cl_comm_reg_valid_i && cl_comm_reg_idx_i == rob_rs2_idx) begin
+                        rs2_ready   = 1'b1;
+                        rs2_value   = cl_comm_reg_value_i;
                     end else begin /* mark as not ready */
                         rs2_ready   = 1'b0;
                         rs2_value   = 0;
@@ -482,7 +537,12 @@ module issue_logic (
     // -------------------------
     issue_decoder u_issue_decoder (
          // Instruction from the issue logic
-        .instruction_i        (iq_instruction_i),     
+        .instruction_i        (iq_instruction_i), 
+
+    `ifdef LEN5_PRIVILEGED_EN
+        .mstatus_tsr_i        (mstatus_tsr_i),
+    `endif /* LEN5_PRIVILEGED_EN */
+
         // Information to the issue logic
         .except_raised_o      (id_except_raised),     
         .except_code_o        (id_except_code),     

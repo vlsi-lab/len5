@@ -119,9 +119,10 @@ module store_buffer
     output  logic [XLEN-1:0]            vfwd_value_o,
     output  logic [XLEN-1:0]            pfwd_value_o,
 
-    // Control from/to the ROB
-    input   logic [ROB_IDX_LEN-1:0]     rob_head_idx_i,
-    output  logic                       rob_store_committing_o,
+    // Commit logic <--> store buffer
+    input   logic                       cl_pop_store_i,     // pop the head store iunstruction in the store buffer
+    output  logic                       cl_sb_head_completed_o,
+    output  logic [ROB_IDX_LEN-1:0]     cl_sb_head_rob_idx_o,
 
     // Hanshake from/to the CDB 
     input   logic                       cdb_ready_i,
@@ -152,13 +153,13 @@ module store_buffer
     logic [STBUFF_IDX_LEN:0]        inflight_count; 
 
     // Operation control
-    logic                           sb_push, sb_pop, sb_vadder_req, sb_vadder_ans, sb_dtlb_req, sb_dtlb_wu, sb_dtlb_ans, sb_dcache_req, sb_dcache_wu, sb_dcache_ans, sb_cdb_req, sb_store_committing;
+    logic                           sb_push, sb_pop, sb_vadder_req, sb_vadder_ans, sb_dtlb_req, sb_dtlb_wu, sb_dtlb_ans, sb_dcache_req, sb_dcache_wu, sb_dcache_ans, sb_cdb_req;
 
     // Store buffer data structure
     sb_entry_t                      sb_data[0:STBUFF_DEPTH-1];
 
     // Status signals 
-    logic [STBUFF_DEPTH-1:0]        valid_a, busy_a, rs1_ready_a, vaddr_ready_a, paddr_ready_a, dc_completed_a, except_raised_a, completed_a;
+    logic [STBUFF_DEPTH-1:0]        valid_a, busy_a, rs1_ready_a, vaddr_ready_a, paddr_ready_a, except_raised_a, completed_a;
     `ifdef ENABLE_AGE_BASED_SELECTOR
     logic [ROB_IDX_LEN-1:0]         entry_age_a [0:STBUFF_DEPTH-1];
     `endif
@@ -173,10 +174,8 @@ module store_buffer
             valid_a[i]          = sb_data[i].valid;
             busy_a[i]           = sb_data[i].busy;
             rs1_ready_a[i]      = sb_data[i].rs1_ready;
-            //rs2_ready_a[i]      = sb_data[i].rs2_ready;   /* TODO: do we need this? */
             vaddr_ready_a[i]    = sb_data[i].vaddr_ready;
             paddr_ready_a[i]    = sb_data[i].paddr_ready;
-            dc_completed_a[i]   = sb_data[i].dc_completed;
             except_raised_a[i]  = sb_data[i].except_raised;
             completed_a[i]      = sb_data[i].completed;
             `ifdef ENABLE_AGE_BASED_SELECTOR
@@ -216,8 +215,6 @@ module store_buffer
         sb_dcache_ans       = 1'b0;
 
         sb_cdb_req          = 1'b0;
-
-        sb_store_committing = 1'b0;
 
         // Handshake control
         issue_logic_ready_o     = 1'b0;
@@ -269,17 +266,14 @@ module store_buffer
 
         // REQUEST TO THE D$
         // The cache request can be performed if the head instruction of the store buffer:
-        // - is also the head entry of the ROB (in-order execution of store instructions)
         // - is valid
         // - is not busy (it hasn't performed the request yet)
         // - has no recorded exceptions
         // - has its physical address ready
         // - is not completed
-        if (rob_head_idx_i == sb_data[sb_head_idx].dest_idx) begin
-            if (sb_data[sb_head_idx].valid && !sb_data[sb_head_idx].busy && !sb_data[sb_head_idx].except_raised && sb_data[sb_head_idx].paddr_ready && !sb_data[sb_head_idx].completed) begin
-                dcache_valid_o = 1'b1;
-                if (dcache_ready_i) sb_dcache_req = 1'b1; // the D$ can accept the request
-            end
+        if (sb_data[sb_head_idx].valid && !sb_data[sb_head_idx].busy && !sb_data[sb_head_idx].except_raised && sb_data[sb_head_idx].paddr_ready && !sb_data[sb_head_idx].completed) begin
+            dcache_valid_o = 1'b1;
+            if (dcache_ready_i) sb_dcache_req = 1'b1; // the D$ can accept the request
         end
 
         // REQUEST TO THE CDB
@@ -291,9 +285,8 @@ module store_buffer
 
         // POP INSTRUCTION
         // The head instruction can be popped if it's completed and its also at the head of the ROB. This corresponds to the instruction commit. 
-        if (sb_data[sb_head_idx].valid && sb_data[sb_head_idx].completed && (rob_head_idx_i == sb_data[sb_head_idx].dest_idx)) begin
+        if (cl_pop_store_i) begin
             sb_pop = 1'b1;
-            sb_store_committing = 1'b1; // Notify the ROB and the load buffer that a store is committing
             head_cnt_en = 1'b1;
         end
 
@@ -321,7 +314,6 @@ module store_buffer
         if (dcache_ans_valid_i) begin
             sb_dcache_ans = 1'b1;
         end
-    
     end
 
     // ------------------------
@@ -340,7 +332,6 @@ module store_buffer
                 sb_data[i].rs2_ready        <= 1'b0;
                 sb_data[i].vaddr_ready      <= 1'b0;
                 sb_data[i].paddr_ready      <= 1'b0;
-                sb_data[i].dc_completed     <= 1'b0;
                 sb_data[i].except_raised    <= 1'b0;
                 sb_data[i].completed        <= 1'b0;
             end
@@ -421,7 +412,6 @@ module store_buffer
                 sb_data[sb_tail_idx].imm_value      <= imm_value_i;
                 sb_data[sb_tail_idx].vaddr_ready    <= 1'b0;
                 sb_data[sb_tail_idx].paddr_ready    <= 1'b0;
-                sb_data[sb_tail_idx].dc_completed   <= 1'b0;
                 sb_data[sb_tail_idx].dest_idx       <= dest_idx_i;
                 sb_data[sb_tail_idx].except_raised  <= 1'b0;
                 sb_data[sb_tail_idx].completed      <= 1'b0;
@@ -532,7 +522,7 @@ module store_buffer
             // D$ ANSWER (WRITE PORT 3: entry.value)
             if (sb_dcache_ans) begin
                 sb_data[dcache_idx_i].busy          <= 1'b0; // clear the busy bit
-                sb_data[dcache_idx_i].dc_completed  <= 1'b1; // mark instruction as completed so it can commit
+                sb_data[dcache_idx_i].completed     <= 1'b1;
             end
 
             // D$ WAKE-UP: only the head entry can be waken up being the only one that performed the cache request
@@ -817,7 +807,7 @@ module store_buffer
     // Stores access the CDB only to signal occurred exceptions to the ROB. Exceptions can be raised during the address translation or during the TLB access. 
     age_based_sel #(.N(STBUFF_DEPTH), .AGE_LEN(ROB_IDX_LEN)) cdb_req_selector
     (
-        .lines_i    (valid_a & dc_completed_a),
+        .lines_i    (valid_a & completed_a),
         .ages_i     (entry_age_a),
         .enc_o      (cdb_req_idx),
         .valid_o    (cdb_idx_valid)
@@ -826,7 +816,7 @@ module store_buffer
     // Simple priority encoder
     prio_enc #(.N(STBUFF_DEPTH)) cdb_req_selector
     (
-        .lines_i    (valid_a & dc_completed_a),
+        .lines_i    (valid_a & completed_a),
         .enc_o      (cdb_req_idx),
         .valid_o    (cdb_idx_valid)
     );
@@ -857,7 +847,6 @@ module store_buffer
 
     // TO THE LOAD BUFFER
     assign inflight_store_cnt_o     = inflight_count;
-    assign lb_store_committing_o    = sb_store_committing;
 
     // VIRTUAL ADDRESS FORWARDING (PARALLEL PORT 1)
     // Virtual address forwarding is valid only if all previous stores have ready vaddr
@@ -871,8 +860,9 @@ module store_buffer
     assign pfwd_hit_o       = pfwd_allowed & pfwd_hit;
     assign pfwd_value_o     = sb_data[pfwd_idx].rs2_value;      // (RS2 READ PORT 3)
 
-    // TO THE ROB
-    assign rob_store_committing_o = sb_store_committing;
+    // TO THE COMMIT LOGIC
+    assign cl_sb_head_completed_o   = sb_data[sb_head_idx].valid && sb_data[sb_head_idx].completed && !sb_data[sb_head_idx].except_raised;
+    assign cl_sb_head_rob_idx_o     = sb_head_idx;
 
     // TO THE CDB
     assign cdb_idx_o            = sb_data[cdb_req_idx].dest_idx;

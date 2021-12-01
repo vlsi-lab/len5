@@ -31,8 +31,6 @@ module frontend
   output  logic [XLEN-1:0]  addr_o,
   output  logic             addr_valid_o,
   input   logic             addr_ready_i,
-  input   icache_out_t      data_i,
-  input   logic             data_valid_i,
   output  logic             data_ready_o,
   input   icache_frontend_ans_t icache_frontend_ans_i,
 
@@ -60,6 +58,10 @@ module frontend
   logic             fetch_ready_o;
   prediction_t      pred_i;
   logic [XLEN-1:0]  pc_o;
+  icache_out_t      icache_data;
+
+  assign  icache_data.pc    = icache_frontend_ans_i.vaddr;
+  assign  icache_data.line  = icache_frontend_ans_i.line;
 
 fetch_stage #(.HLEN(HLEN),.BTB_BITS(BTB_BITS)) fetch_stage_u
 (
@@ -75,8 +77,8 @@ fetch_stage #(.HLEN(HLEN),.BTB_BITS(BTB_BITS)) fetch_stage_u
   .addr_o			    (addr_o),
   .addr_valid_o		(addr_valid_o),
   .addr_ready_i		(addr_ready_i),
-  .data_i			(data_i),
-  .data_valid_i		(data_valid_i),
+  .data_i			    (icache_data),
+  .data_valid_i		(icache_frontend_ans_i.valid),
   .data_ready_o		(data_ready_o),
 
   // From/to instruction decode

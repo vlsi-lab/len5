@@ -411,7 +411,7 @@ add wave -noupdate -expand -group BE -group BE_TOP -radix hexadecimal /tb_combin
 add wave -noupdate -expand -group BE -group BE_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/cdb_ready_i
 add wave -noupdate -expand -group BE -group BE_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/cdb_valid_o
 add wave -noupdate -expand -group BE -group BE_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/rob_head_idx_i
-add wave -noupdate -expand -group BE -group BE_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/rob_store_committing_o
+add wave -noupdate -expand -group BE -group BE_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/cl_store_committing_o
 add wave -noupdate -expand -group BE -group BE_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/comm_valid_ROB_i
 add wave -noupdate -expand -group BE -group BE_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/comm_ready_ROB_o
 add wave -noupdate -expand -group BE -group BE_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/rob_instr_i
@@ -805,7 +805,7 @@ add wave -noupdate -expand -group BE -expand -group EXEC -group EX -radix hexade
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/cdb_valid_i
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/cdb_valid_o
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/rob_head_idx_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/rob_store_committing_o
+add wave -noupdate -expand -group BE -expand -group EXEC -group EX -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/cl_store_committing_o
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_ALU_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_alu_rs/clk_i
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_ALU_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_alu_rs/rst_n_i
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_ALU_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_alu_rs/flush_i
@@ -1408,7 +1408,7 @@ add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_TOP -radix
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/dcache_ready_i
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/dcache_req_o
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/rob_head_idx_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/rob_store_committing_o
+add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/cl_store_committing_o
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/cdb_lb_valid_i
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/cdb_sb_valid_i
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/cdb_lb_ready_i
@@ -1727,7 +1727,7 @@ add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_SB -radix 
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_SB -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/u_store_buffer/vfwd_value_o
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_SB -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/u_store_buffer/pfwd_value_o
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_SB -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/u_store_buffer/rob_head_idx_i
-add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_SB -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/u_store_buffer/rob_store_committing_o
+add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_SB -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/u_store_buffer/cl_store_committing_o
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_SB -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/u_store_buffer/cdb_ready_i
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_SB -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/u_store_buffer/cdb_valid_i
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_SB -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/u_store_buffer/cdb_valid_o
@@ -1847,52 +1847,52 @@ add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_DCARB -rad
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_DCARB -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/dcache_hs_arbiter/ready_o
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_DCARB -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/dcache_hs_arbiter/select_o
 add wave -noupdate -expand -group BE -expand -group EXEC -group EX_LS_DCARB -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_exec_unit/u_load_store_unit/dcache_hs_arbiter/last_served
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/clk_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/rst_n_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/rob_valid_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/rob_ready_o
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/rob_instr_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/rob_pc_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/rob_rd_idx_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/rob_value_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/fp_rob_rd_idx_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/fp_rob_value_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/rob_except_raised_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/rob_except_code_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/rob_head_idx_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/sb_store_committing_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/rob_except_raised_o
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/rob_except_code_o
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/except_new_o
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/except_new_pc_o
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/int_rs_ready_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/fp_rs_ready_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/int_rs_valid_o
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/fp_rs_valid_o
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/int_rf_ready_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/fp_rf_ready_i
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/int_rf_valid_o
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/fp_rf_valid_o
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/rf_rd_idx_o
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/rf_value_o
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/fp_rd_idx_o
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/fp_value_o
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/cd_comm_possible
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/eh_no_except
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/instr_opcode
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/sb_store_committing_t
-add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/mispredict_i
-add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/u_comm_decoder/instruction_i
-add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/u_comm_decoder/sb_store_committing_i
-add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/u_comm_decoder/rob_valid_i
-add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/u_comm_decoder/no_exception_i
-add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/u_comm_decoder/int_rs_ready_i
-add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/u_comm_decoder/fp_rs_ready_i
-add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/u_comm_decoder/int_rf_ready_i
-add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/u_comm_decoder/fp_rf_ready_i
-add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/u_comm_decoder/mispredict_i
-add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/u_comm_decoder/comm_possible_o
-add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_logic/u_comm_decoder/instr_opcode
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/clk_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/rst_n_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/rob_valid_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/rob_ready_o
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/rob_instr_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/rob_pc_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/rob_rd_idx_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/rob_value_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/fp_rob_rd_idx_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/fp_rob_value_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/rob_except_raised_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/rob_except_code_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/rob_head_idx_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/sb_store_committing_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/rob_except_raised_o
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/rob_except_code_o
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/except_new_o
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/except_new_pc_o
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/int_rs_ready_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/fp_rs_ready_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/int_rs_valid_o
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/fp_rs_valid_o
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/int_rf_ready_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/fp_rf_ready_i
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/int_rf_valid_o
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/fp_rf_valid_o
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/rf_rd_idx_o
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/rf_value_o
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/fp_rd_idx_o
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/fp_value_o
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/cd_comm_possible
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/eh_no_except
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/instr_opcode
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/sb_store_committing_t
+add wave -noupdate -expand -group BE -group CL_TOP -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/mispredict_i
+add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/u_comm_decoder/instruction_i
+add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/u_comm_decoder/sb_store_committing_i
+add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/u_comm_decoder/rob_valid_i
+add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/u_comm_decoder/no_exception_i
+add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/u_comm_decoder/int_rs_ready_i
+add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/u_comm_decoder/fp_rs_ready_i
+add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/u_comm_decoder/int_rf_ready_i
+add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/u_comm_decoder/fp_rf_ready_i
+add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/u_comm_decoder/mispredict_i
+add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/u_comm_decoder/comm_possible_o
+add wave -noupdate -expand -group BE -group CL_DEC -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_commit_stage/u_comm_decoder/instr_opcode
 add wave -noupdate -expand -group BE -group ROB -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_rob/clk_i
 add wave -noupdate -expand -group BE -group ROB -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_rob/rst_n_i
 add wave -noupdate -expand -group BE -group ROB -radix hexadecimal /tb_combined/u_CU_DP_MEM/U_Data_path_memory/u_Data_path/u_Back_end_IQL/u_rob/flush_i
