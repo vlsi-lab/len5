@@ -89,7 +89,7 @@ module spill_cell #(
         // Register B
         always_ff @( posedge clk_i or negedge rst_n_i ) begin : reg_b
             if (!rst_n_i)       b_data_q    <= '0;
-            else if (a_en)      b_data_q    <= data_i;
+            else if (b_en)      b_data_q    <= data_i;
         end
 
         // Output MUX
