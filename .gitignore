@@ -18,8 +18,8 @@
 private/
 
 # Test objects and test files
-test-files/obj
-test-files/txt
+test-files/*
+!test-files/src
 
 ## Visual Studio Code settings
 .vscode/

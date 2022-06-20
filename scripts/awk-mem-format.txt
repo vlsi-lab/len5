@@ -1,6 +1,5 @@
 { 
-    curr_line = sprintf("%s%s%s%s", $5, $4, $3, $2);
-    if((NR-1)%2 == 0) printf("%016x ", (NR-1)*4);
-    else printf("%s%s\n", curr_line, prev_line);
-    prev_line = curr_line;
+    gsub(/:/,"", $1);
+    len = 16-length($1);
+    printf("%0*d%s %8s\t# %-4s\t%-8s%s\n", len, 0, $1, $3, $2, $4, $5);
 }

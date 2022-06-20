@@ -173,7 +173,7 @@ module mult
     assign  except_raised_o                 = out_reg_data_out.except_raised;
 
     // Output register
-    spill_cell #(.DATA_T(out_reg_data_t), .SKIP(1'b0)) u_out_reg (
+    spill_cell_flush #(.DATA_T(out_reg_data_t), .SKIP(1'b0)) u_out_reg (
         .clk_i          (clk_i),
         .rst_n_i        (rst_n_i),
         .flush_i        (flush_i),

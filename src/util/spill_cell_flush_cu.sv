@@ -8,9 +8,9 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: spill_cell_ext_cu.sv
+// File: spill_cell_flush_cu.sv
 // Author: Michele Caon
-// Date: 26/11/2021
+// Date: 10/11/2021
 
 // -------------
 // SPILL CELL CU
@@ -19,7 +19,7 @@
 // downstream hardware is not ready, buffer input data on a spill register
 // and lower the output ready for the upstream hardware in the next cycle.
 
-module spill_cell_ext_cu (
+module spill_cell_flush_cu (
     // Clock, reset, and flush
     input   logic       clk_i,
     input   logic       rst_n_i,
@@ -34,8 +34,7 @@ module spill_cell_ext_cu (
     // Output control signals
     output  logic       a_en_o,     // enable for the first register
     output  logic       b_en_o,     // enable for the second (spill) register
-    output  logic       b_sel_o,    // for register MUX
-    output  logic       buff_full_o // also the second register is full
+    output  logic       b_sel_o     // for register MUX
 );
 
     // ----------------
@@ -120,7 +119,6 @@ module spill_cell_ext_cu (
         a_en_o      = 1'b0;
         b_en_o      = 1'b0;
         b_sel_o     = 1'b0;
-        buff_full_o = 1'b0;
         
         case (curr_state)
             RESET:; // use default values
@@ -151,7 +149,6 @@ module spill_cell_ext_cu (
                 a_en_o      = 1'b0;                 // no data to store
                 b_en_o      = 1'b0;                 // no data to store
                 b_sel_o     = 1'b0;                 // select data in A
-                buff_full_o = 1'b1;                 // both registers are full
             end
             AB_FULL_SEL_B: begin
                 ready_o     = 1'b0;                 // do not accept new data
@@ -159,7 +156,6 @@ module spill_cell_ext_cu (
                 a_en_o      = 1'b0;                 // no data to store
                 b_en_o      = 1'b0;                 // no data to store
                 b_sel_o     = 1'b1;                 // select data in B
-                buff_full_o = 1'b1;                 // both registers are full
             end
             default:; // use default values
         endcase
@@ -168,7 +164,7 @@ module spill_cell_ext_cu (
     // State update
     always_ff @(posedge clk_i or negedge rst_n_i) begin : cu_state_upd
         if (!rst_n_i)       curr_state  <= RESET;       // asynchronous reset
-        else if (flush_i)   curr_state  <= RESET;       // synchronous flush
+        else if (flush_i)   curr_state  <= NO_DATA;     // synchronous flush
         else                curr_state  <= next_state;  // normal behaviour
     end
 

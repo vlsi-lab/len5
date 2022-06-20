@@ -8,7 +8,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: spill_cell.sv
+// File: spill_cell_flush.sv
 // Author: Michele Caon
 // Date: 10/11/2021
 
@@ -19,13 +19,14 @@
 // downstream hardware is not ready, buffer input data on a spill register
 // and lower the output ready for the upstream hardware in the next cycle.
 
-module spill_cell #(
+module spill_cell_flush #(
     parameter type  DATA_T  = logic,
     parameter bit   SKIP    = 1'b0
 ) (
     // Clock, reset, and flush
     input   logic       clk_i,
     input   logic       rst_n_i,
+    input   logic       flush_i,
 
     // Handshaking signals
     input   logic       valid_i,    // from upstream hardware
@@ -63,9 +64,10 @@ module spill_cell #(
             // CONTROL UNIT
             // ------------
 
-            spill_cell_cu u_spill_cell_cu (
+            spill_cell_flush_cu u_spill_cell_cu (
                 .clk_i      (clk_i),
                 .rst_n_i    (rst_n_i),
+                .flush_i    (flush_i),
                 .valid_i    (valid_i),
                 .ready_i    (ready_i),
                 .valid_o    (valid_o),

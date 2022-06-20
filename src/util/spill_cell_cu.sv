@@ -23,7 +23,6 @@ module spill_cell_cu (
     // Clock, reset, and flush
     input   logic       clk_i,
     input   logic       rst_n_i,
-    input   logic       flush_i,
 
     // Handshaking signals
     input   logic       valid_i,    // from upstream hardware
@@ -118,26 +117,26 @@ module spill_cell_cu (
         valid_o     = 1'b0;
         a_en_o      = 1'b0;
         b_en_o      = 1'b0;
-        b_sel_o      = 1'b0;
+        b_sel_o     = 1'b0;
         
         case (curr_state)
             RESET:; // use default values
             NO_DATA: begin
-                ready_o     = !flush_i;             // new data can be accepted
+                ready_o     = 1'b1;             // new data can be accepted
                 valid_o     = 1'b0;                 // no valid data in A or B
                 a_en_o      = valid_i;              // save incoming data in A
                 b_en_o      = 1'b0;                 // use A instead
                 b_sel_o     = 1'b0;
             end
             A_FULL: begin
-                ready_o     = !flush_i;             // new data can be accepted
+                ready_o     = 1'b1;             // new data can be accepted
                 valid_o     = 1'b1;                 // valid data in A
                 a_en_o      = 1'b0;                 // keep old data in A
                 b_en_o      = valid_i;              // store new data in B
                 b_sel_o     = 1'b0;                 // select data in A
             end
             B_FULL: begin
-                ready_o     = !flush_i;             // new data can be accepted
+                ready_o     = 1'b1;             // new data can be accepted
                 valid_o     = 1'b1;                 // valid data in B
                 a_en_o      = valid_i;              // store new data in A
                 b_en_o      = 1'b0;                 // keep old data in B
@@ -163,9 +162,8 @@ module spill_cell_cu (
 
     // State update
     always_ff @(posedge clk_i or negedge rst_n_i) begin : cu_state_upd
-        if (!rst_n_i)       curr_state  = RESET;        // asynchronous reset
-        else if (flush_i)   curr_state  = RESET;        // synchronous flush
-        else                curr_state  = next_state;   // normal behaviour
+        if (!rst_n_i)       curr_state  <= RESET;       // asynchronous reset
+        else                curr_state  <= next_state;  // normal behaviour
     end
 
 endmodule

@@ -21,100 +21,157 @@
 import uvm_pkg::*;
 
 class memory_class;
-    /* Calss properties */
-    string          memory_file_path;
-    logic [31:0]    read_word;
-    logic [63:0]    read_doubleword;
-    logic [511:0]   read_line;
+    // PROPERTIES
+    // ----------
 
-    /* Constructor */
+    // File info
+    local   string          memory_file_path;
+    local   int             fd;
+    local   string          file_line;
+
+    // Data
+    local   logic [31:0]    word_buf;
+    local   logic [31:0]    read_word;
+    local   logic [63:0]    read_doubleword;
+    local   logic [511:0]   read_line;
+
+    // METHODS
+    // -------
+
+    // Constructor
     function new (string memory_file_path = "./memory.txt");
         this.memory_file_path = memory_file_path;
     endfunction
 
+    // Open the memory file
+    local function void OpenMemFile(string mode = "r");
+        this.fd = $fopen(this.memory_file_path, mode);
+        if (this.fd == 0) begin
+            `uvm_fatal("MEMFILE", $sformatf("Cannot open memory file '%s'", this.memory_file_path));
+        end
+    endfunction: OpenMemFile
+
+    // Close the memory file
+    local function void CloseMemFile();
+        $fclose(this.fd);
+    endfunction: CloseMemFile
+
     /* READ TASKS */
 
-    /* Read a doubleword (64 bits) from the memory */
-    function ReadDW (logic [63:0] addr);
-        /* Variables */
-        int             fd              = 0;    // file descriptor
-        int             ret_code        = 0;    // $fopen() return code
-        int             done            = 0;    // done flag
-        logic [63:0]    read_addr       = 0;    // memory address
-        logic [63:0]    read_doubleword = 0;    // memory data
+    // Find a word (32 bits) in memory file
+    local function bit FindW (logic [63:0] addr);
+        logic [31:0]    w;
+        logic [63:0]    read_addr;
+        int             ret_code    = 0;
 
-        /* Check address alignment */
-        if (addr[2:0] != 3'b000) begin
-            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 64 bits", addr))
-            return 1; // exit
-        end
-
-        /* Open the memory file */
-        fd = $fopen(this.memory_file_path, "r");
-        if (fd == 0) begin
-            `uvm_fatal("MEMFILE", $sformatf("Cannot open memory file '%s'", this.memory_file_path));
-            return 1; // exit
-        end
-
-        /* Read address and data from the file */
-        while (!done && !$feof(fd)) begin
-            ret_code = $fscanf(fd, "%h %b", read_addr, read_doubleword);
-            if (!$feof(fd) && ret_code != 2) begin    
-                `uvm_error("MEMFILE", "Unexpected memory file format");
-                return 1;
-            end
-            if (read_addr == addr) done = 1;
-        end
-
-        /* Close the file */
-        $fclose(fd);
-
-        /* Return an error if the line was not found */
-        if (!done) begin
-            `uvm_error("READMEM", $sformatf("Cannot find requested address 0x%h", addr))
-            return 1;
-        end
-
-        /* Return the accessed doubleword */
-        this.read_doubleword = read_doubleword;
-
-        /* Return with success */
-        return 0;
-    endfunction
-
-    
-    /* Read a word (32 bits) from the memory */
-    function ReadW (logic [63:0] addr);
         /* Check address aligment */
         if (addr[1:0] != 2'b00) begin
             `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 32 bits", addr))
             return 1;
         end
 
-        /* Read a doubleword */
-        if (ReadDW({addr[63:4], 3'b000}) != 0) return 1;
+        // Search the requested address
+        if ($rewind(this.fd)) `uvm_fatal("MEMFILE", "$rewind() failed");
+        while (!$feof(this.fd)) begin
+            if ($fgets(this.file_line, this.fd) < 0) begin
+                `uvm_error("MEMFILE", "Unexpected memory file format ($fgets)");
+                return 1;
+            end
+            ret_code = $sscanf(this.file_line, "%h %h", read_addr, w);
+            if (!$feof(this.fd) && ret_code != 2) begin    
+                `uvm_error("MEMFILE", "Unexpected memory file format ($fscanf)");
+                return 1;
+            end
+            if (read_addr == addr) begin 
+                this.word_buf = w;  // save the word content
+                return 0;
+            end
+        end
 
-        /* Extract the requested word */
-        if (addr[2] == 1'b0)    this.read_word = this.read_doubleword[31:0];
-        else                    this.read_word = this.read_doubleword[63:32];
+        // Return with error (word not found)
+        return 1;
+    endfunction
 
-        /* Return with success */
+    // Read a word (32 bits) from the memory
+    function bit ReadW(logic [63:0] addr);
+        // Check the address alignment
+        if (addr[1:0] != 2'b00) begin
+            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 32 bits", addr))
+            return 1;
+        end
+
+        OpenMemFile();
+
+        // Find the requested word in memory
+        if (FindW(addr)) begin
+            `uvm_error("MEMREAD", $sformatf("Cannot find word at address 0x%h", addr));
+            return 1;
+        end
+        
+        CloseMemFile();
+
+        // Save the read word
+        this.read_word = this.word_buf;
+
+        // Return success
+        return 0;
+    endfunction: ReadW
+
+    /* Read a doubleword (64 bits) from the memory */
+    function bit ReadDW (logic [63:0] addr);
+        logic [63:0]    dw = 0;    // memory data
+
+        // Check address alignment
+        if (addr[2:0] != 3'b000) begin
+            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 64 bits", addr))
+            return 1; // exit
+        end
+
+        OpenMemFile();
+
+        // Read lower word
+        if (FindW(addr)) begin
+            `uvm_error("MEMREAD", $sformatf("Cannot find word at address 0x%h", addr));
+            return 1;
+        end
+        dw[31:0]   = this.word_buf;
+        
+        // Read upper word
+        if (FindW(addr | 64'h04)) begin
+            `uvm_error("MEMREAD", $sformatf("Cannot find word at address 0x%h", addr | 64'h4));
+            return 1;
+        end
+        dw[63:32]  = this.word_buf;
+
+        CloseMemFile();
+
+        // Save accessed double word
+        this.read_doubleword    = dw;
+
+        // Return 
         return 0;
     endfunction
 
     /* Read a cache line (512 bits) from the memory */
-    function ReadLine (logic [63:0] addr);
+    function bit ReadLine (logic [63:0] addr);
         /* Check address aligment */
         if (addr[5:0] != 9'b000000) begin
             `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 32 bits", addr))
             return 1;
         end
 
-        /* Read eight doublewords from the memory */
-        for (int i = 0; i < 8; i++) begin
-            if (ReadDW(addr + (i << 3)) != 0) return 1;
-            this.read_line[64*i +: 64] = this.read_doubleword;
+        OpenMemFile();
+
+        /* Read sixteen words from the memory */
+        for (int i = 0; i < 16; i++) begin
+            if (FindW(addr + (i << 2))) begin
+                `uvm_error("MEMREAD", $sformatf("Cannot find word at address 0x%h", addr | 64'h4));
+                return 1;
+            end
+            this.read_line[32*i +: 32] = this.word_buf;
         end
+
+        CloseMemFile();
 
         /* Return with success */
         return 0;
@@ -123,77 +180,44 @@ class memory_class;
     /* WRITE TASKS */
 
     /* Write a word (32 bits) to the memory file */
-    function WriteW(logic [63:0] addr, logic [31:0] data);
+    function bit WriteW(logic [63:0] addr, logic [31:0] data);
         /* Variables */
-        int             fd              = 0;    // file descriptor
         int             ret_code        = 0;    // $fopen() return code
         int             done            = 0;    // done flag
         logic [63:0]    read_addr       = 0;    // memory address
-        logic [63:0]    read_doubleword = 0;    // memory data
+        logic [63:0]    dw = 0;    // memory data
         logic [63:0]    write_doubleword = 0;   // data to store
+        string          line_buf;
 
-        /* Check address alignment */
+        // Check address alignment
         if (addr[1:0] != 2'b00) begin
             `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 32 bits", addr))
             return 1; // exit
         end
 
-        /* Open the memory file */
-        fd = $fopen(this.memory_file_path, "r+");
-        if (fd == 0) begin
-            `uvm_fatal("MEMFILE", $sformatf("Cannot open memory file '%s'", this.memory_file_path));
-            return 1; // exit
-        end
+        // Update the line buffer
+        $sformat(line_buf, "%016h %08h", addr, data);
 
-        /* Read address and data from the file */
-        while (!done && !$feof(fd)) begin
-            ret_code = $fscanf(fd, "%h %b", read_addr, read_doubleword);
-            if (!$feof(fd) && ret_code != 2) begin    
-                `uvm_error("MEMFILE", "Unexpected memory file format");
-                return 1;
+        OpenMemFile("r+");
+
+        // Find the requested word in memory
+        if (!FindW(addr)) begin
+            // Go back one line
+            if ($fseek(this.fd, -this.file_line.len(), 1)) begin
+                `uvm_fatal("MEMFILE", "fseek() failed");
             end
-            if (read_addr == {addr[63:3], 3'b000}) done = 1;
-        end
+            // Update the line content
+            $fwrite(this.fd, line_buf);
+        end else $fdisplay(this.fd, line_buf);
 
-        /* If the requested line exists, replace it */
-        if (done) begin
-            /* Replace the selected word */
-            if (addr[2] == 1'b0)    write_doubleword = {read_doubleword[63:32], data};
-            else                    write_doubleword = {data, read_doubleword[31:0]};
-
-            /* Move back by 64 characters and write the new data */
-            ret_code = $fseek(fd, -64, 1);
-            if (ret_code != 0) begin
-                `uvm_error("MEMFILE", "Unable to move back file pointer")
-                return 1;
-            end
-            $fwrite(fd, $sformatf("%b\n", write_doubleword));
-        end else begin
-            /* Initialize the new doubleword */
-            if (addr[2] == 1'b0)    write_doubleword = {{32{1'b0}}, data};
-            else                    write_doubleword = {data, {32{1'b0}}};
-
-            /* Append the line to the file */
-            ret_code = $fseek(fd, 0, 2);
-            if (ret_code != 0) begin
-                `uvm_error("MEMFILE", "Unable to seek the end of file")
-                return 1;
-            end
-            $fwrite(fd, $sformatf("%h %b\n", addr, write_doubleword));
-        end
-
-        /* Close the file */
-        $fclose(fd);
-
-        /* Return the accessed doubleword */
-        this.read_doubleword = read_doubleword;
+        CloseMemFile();
 
         /* Return with success */
         return 0;
     endfunction;
 
     /* Write a doubleword (64 bits) to the memory file */
-    function WriteDW(logic [63:0] addr, logic [63:0] data);
+    function bit WriteDW(logic [63:0] addr, logic [63:0] data);
         /* Check address alignment */
         if (addr[2:0] != 3'b000) begin
             `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 64 bits", addr))
@@ -209,7 +233,7 @@ class memory_class;
     endfunction;
 
     /* Write a cache line (512 bits) to the memory file */
-    function WriteLine(logic [63:0] addr, logic [511:0] data);
+    function bit WriteLine(logic [63:0] addr, logic [511:0] data);
         /* Check address aligment */
         if (addr[5:0] != 9'b000000) begin
             `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 512 bits", addr))
@@ -224,4 +248,26 @@ class memory_class;
         /* Return with success */
         return 0;
     endfunction;
+
+    // Print functions
+    // ---------------
+
+    // Print the last w/dw/line fetched
+    function string PrintW();
+        string str;
+        $sformat(str, "%08x", this.read_word);
+        return str;
+    endfunction: PrintW
+    
+    function string PrintDW();
+        string str;
+        $sformat(str, "%016x", this.read_doubleword);
+        return str;
+    endfunction: PrintDW
+
+    function string PrintLine();
+        string str;
+        $sformat(str, "%0128x", this.read_line);
+        return str;
+    endfunction: PrintLine
 endclass
