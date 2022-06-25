@@ -36,8 +36,8 @@ package csr_pkg;
 
   // CSR instruction type
   typedef enum logic [1:0] {
-    CSR_INSTR,    // explicit CSR instruction
-    FP_INSTR      // floating-point instruction
+    CSR_INSTR   = 'b00,  // explicit CSR instruction
+    FP_INSTR    = 'b01   // floating-point instruction
   } csr_instr_t;
 
   // ---------------
@@ -48,10 +48,10 @@ package csr_pkg;
   // --------
 
   // Cycle counter
-  typedef logic [TIMER_CNT_LEN-1:0]   csr_cycle_t;
+  typedef logic [TIMER_CNT_LEN-1:0] csr_cycle_t;
 
   // Time counter
-  typedef logic [TIMER_CNT_LEN-1:0]    csr_time_t;
+  typedef logic [TIMER_CNT_LEN-1:0] csr_time_t;
 
   // Retired instruction counter
   typedef logic [TIMER_CNT_LEN-1:0] csr_instret_t;

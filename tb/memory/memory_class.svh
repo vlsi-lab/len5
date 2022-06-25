@@ -9,7 +9,7 @@
 // specific language governing permissions and limitations under the License.
 //
 // File: memory_class.svh
-// Author: Matteo Perotti
+// Author: Matteo Perotti, Michele Caon
 // Date: 10/11/2019
 // Description: memory emulator
 // Details: it accesses to a file with sparse addresses and data. This way, it 
@@ -20,20 +20,31 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-class memory_class;
+class memory_class #(
+    parameter WWIDTH = 32,
+    parameter AWIDTH = 64    
+);
     // PROPERTIES
     // ----------
 
-    // File info
-    local   string          memory_file_path;
-    local   int             fd;
-    local   string          file_line;
+    // Parameters
+    localparam  DWWIDTH = WWIDTH << 1;
+    localparam  LWIDTH  = WWIDTH << 4;
 
-    // Data
-    local   logic [31:0]    word_buf;
-    local   logic [31:0]    read_word;
-    local   logic [63:0]    read_doubleword;
-    local   logic [511:0]   read_line;
+    // File info
+    local string    memory_file_path;
+    local int       fd;
+    local string    file_line;
+
+    // File data
+    local logic [WWIDTH-1:0]    word_buf;
+    logic [WWIDTH-1:0]          read_word;
+    logic [DWWIDTH-1:0]         read_doubleword;
+    logic [LWIDTH-1:0]          read_line;
+
+    // Memory data
+    logic [WWIDTH-1:0]  mem [logic [AWIDTH-1:0]];
+    string              insn_str [logic [AWIDTH-1:0]];
 
     // METHODS
     // -------
@@ -44,8 +55,8 @@ class memory_class;
     endfunction
 
     // Open the memory file
-    local function void OpenMemFile(string mode = "r");
-        this.fd = $fopen(this.memory_file_path, mode);
+    local function void OpenMemFile(string mode = "r", string file = this.memory_file_path);
+        this.fd = $fopen(file, mode);
         if (this.fd == 0) begin
             `uvm_fatal("MEMFILE", $sformatf("Cannot open memory file '%s'", this.memory_file_path));
         end
@@ -56,13 +67,18 @@ class memory_class;
         $fclose(this.fd);
     endfunction: CloseMemFile
 
+    // Load the memory file
+    function int LoadMem(string file);
+        return 0;
+    endfunction: LoadMem
+
     /* READ TASKS */
 
     // Find a word (32 bits) in memory file
-    local function bit FindW (logic [63:0] addr);
-        logic [31:0]    w;
-        logic [63:0]    read_addr;
-        int             ret_code    = 0;
+    local function bit FindW (logic [AWIDTH-1:0] addr);
+        logic [WWIDTH-1:0]  w;
+        logic [AWIDTH-1:0]  read_addr;
+        int                 ret_code = 0;
 
         /* Check address aligment */
         if (addr[1:0] != 2'b00) begin
@@ -93,7 +109,7 @@ class memory_class;
     endfunction
 
     // Read a word (32 bits) from the memory
-    function bit ReadW(logic [63:0] addr);
+    function bit ReadW(logic [AWIDTH-1:0] addr);
         // Check the address alignment
         if (addr[1:0] != 2'b00) begin
             `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 32 bits", addr))
@@ -118,8 +134,8 @@ class memory_class;
     endfunction: ReadW
 
     /* Read a doubleword (64 bits) from the memory */
-    function bit ReadDW (logic [63:0] addr);
-        logic [63:0]    dw = 0;    // memory data
+    function bit ReadDW (logic [AWIDTH-1:0] addr);
+        logic [DWWIDTH-1:0] dw = 0;    // memory data
 
         // Check address alignment
         if (addr[2:0] != 3'b000) begin
@@ -134,14 +150,14 @@ class memory_class;
             `uvm_error("MEMREAD", $sformatf("Cannot find word at address 0x%h", addr));
             return 1;
         end
-        dw[31:0]   = this.word_buf;
+        dw[WWIDTH-1:0]  = this.word_buf;
         
         // Read upper word
         if (FindW(addr | 64'h04)) begin
             `uvm_error("MEMREAD", $sformatf("Cannot find word at address 0x%h", addr | 64'h4));
             return 1;
         end
-        dw[63:32]  = this.word_buf;
+        dw[DWWIDTH-1:WWIDTH]    = this.word_buf;
 
         CloseMemFile();
 
@@ -153,7 +169,7 @@ class memory_class;
     endfunction
 
     /* Read a cache line (512 bits) from the memory */
-    function bit ReadLine (logic [63:0] addr);
+    function bit ReadLine (logic [AWIDTH-1:0] addr);
         /* Check address aligment */
         if (addr[5:0] != 9'b000000) begin
             `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 32 bits", addr))
@@ -180,14 +196,14 @@ class memory_class;
     /* WRITE TASKS */
 
     /* Write a word (32 bits) to the memory file */
-    function bit WriteW(logic [63:0] addr, logic [31:0] data);
+    function bit WriteW(logic [AWIDTH-1:0] addr, logic [WWIDTH-1:0] data);
         /* Variables */
-        int             ret_code        = 0;    // $fopen() return code
-        int             done            = 0;    // done flag
-        logic [63:0]    read_addr       = 0;    // memory address
-        logic [63:0]    dw = 0;    // memory data
-        logic [63:0]    write_doubleword = 0;   // data to store
-        string          line_buf;
+        int                 ret_code        = 0;    // $fopen() return code
+        int                 done            = 0;    // done flag
+        logic [AWIDTH-1:0]  read_addr       = 0;    // memory address
+        logic [DWWIDTH-1:0] dw = 0;    // memory data
+        logic [DWWIDTH-1:0] write_doubleword = 0;   // data to store
+        string              line_buf;
 
         // Check address alignment
         if (addr[1:0] != 2'b00) begin
@@ -217,7 +233,7 @@ class memory_class;
     endfunction;
 
     /* Write a doubleword (64 bits) to the memory file */
-    function bit WriteDW(logic [63:0] addr, logic [63:0] data);
+    function bit WriteDW(logic [AWIDTH-1:0] addr, logic [DWWIDTH-1:0] data);
         /* Check address alignment */
         if (addr[2:0] != 3'b000) begin
             `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 64 bits", addr))
@@ -225,15 +241,15 @@ class memory_class;
         end
 
         /* Write the two words */
-        if (WriteW({addr[63:3], 3'b000}, data[31:0]) != 0) return 1;
-        if (WriteW({addr[63:3], 3'b100}, data[63:32]) != 0) return 1;
+        if (WriteW({addr[63:3], 3'b000}, data[WWIDTH-1:0]) != 0) return 1;
+        if (WriteW({addr[63:3], 3'b100}, data[DWWIDTH-1:WWIDTH]) != 0) return 1;
 
         /* Return with success */
         return 0;
     endfunction;
 
     /* Write a cache line (512 bits) to the memory file */
-    function bit WriteLine(logic [63:0] addr, logic [511:0] data);
+    function bit WriteLine(logic [AWIDTH-1:0] addr, logic [LWIDTH-1:0] data);
         /* Check address aligment */
         if (addr[5:0] != 9'b000000) begin
             `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 512 bits", addr))

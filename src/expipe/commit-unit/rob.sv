@@ -44,7 +44,7 @@ module rob
     input   logic [XLEN-1:0]            issue_pc_i,             // the PC of the instruction being issued, needed for exception handling
     input   logic [REG_IDX_LEN-1:0]     issue_rd_idx_i,         // the destination register index (rd)
     input   logic                       issue_except_raised_i,  // an exception has been raised
-    input   logic [ROB_EXCEPT_LEN-1:0]  issue_except_code_i,    // the exception code
+    input   except_code_t               issue_except_code_i,    // the exception code
     input   logic [XLEN-1:0]            issue_except_aux_i,     // exception auxilliary data (e.g. offending virtual address)
     input   logic                       issue_res_ready_i,      // to force result ready in special cases that are ready to commit from the issue phase
     input   logic [XLEN-1:0]            issue_res_value_i,

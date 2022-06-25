@@ -31,34 +31,79 @@ package expipe_pkg;
     import memory_pkg::PADDR_LEN;
     import memory_pkg::PAGE_OFFSET_LEN;
 
-    // ----
+    // ----------
+    // PARAMETERS
+    // ----------
+
     // ROB
-    // ----
-    
+    // ---
     localparam ROB_IDX_LEN = $clog2(ROB_DEPTH);//3 // ROB index width
     localparam ROB_EXCEPT_LEN = 5;  // to fit the last four bits of the mcause/scause CSR and the fflags of the fcsr CSR
 
-    typedef struct packed {
-        logic                       valid;          // the ROB entry contains a valid instruction
-        instr_t                     instruction;    // the instruction
-        logic [XLEN-1:0]            instr_pc;       // the program counter if the instruction
-        logic                       res_ready;      // the result of the instruction is ready
-        logic [XLEN-1:0]            res_value;      // the value of the result (from the EU)
-        logic [REG_IDX_LEN-1:0]     rd_idx;         // the destination register (rd)
-        logic                       except_raised;  // an exception has been raised
-        logic [ROB_EXCEPT_LEN-1:0]  except_code;    // the exception code
-    } rob_entry_t;
+    // ISSUE QUEUE
+    // -----------
+    localparam IQ_IDX_LEN = $clog2(IQ_DEPTH); // issue queue index width
 
-    // ----
-    // CDB
-    // ----
+    // EXECUTION UNITS
+    // ---------------
+    localparam BASE_EU_N    = 5;   // load buffer, store buffer, branch unit, ALU, operands only
+
+`ifdef LEN5_M_EN
+    localparam MULT_EU_N    = 2;   // MULT, DIV
+`else
+    localparam MULT_EU_N    = 0;
+`endif /* LEN5_M_EN */
+
+`ifdef LEN5_FP_EN
+    localparam FP_EU_N      = 1;     // FPU
+`else
+    localparam FP_EU_N      = 0;
+`endif /* LEN5_FP_EN */
+
+    // Total number of execution units
+    localparam EU_N = BASE_EU_N + MULT_EU_N + FP_EU_N;
+
+    // RESERVATION STATIONS
+    // --------------------
+
+    // WIDTH OF THE CONTROL FIELDS IN THE DIFFERENT EUs
+    // LOAD BUFFER
+    localparam  LB_CTL_LEN      = 3;            // load type, see load buffer section below
     
-    typedef struct packed {
-        logic [ROB_IDX_LEN-1:0]     rob_idx;
-        logic [XLEN-1:0]            value;
-        logic                       except_raised;
-        logic [ROB_EXCEPT_LEN-1:0]  except_code;
-    } cdb_data_t;
+    // STORE BUFFER
+    localparam  SB_CTL_LEN      = LB_CTL_LEN;   // same type as load
+
+    // BRANCH UNIT
+    localparam  BU_CTL_LEN      = BRANCH_TYPE_LEN; // size of 'branch_type_t' from len5_pkg
+
+    // ALU
+    localparam  ALU_EXCEPT_LEN  = 2;
+    localparam  ALU_CTL_LEN     = 4;            // ALU operation control
+
+    // MULT
+    localparam  MULT_EXCEPT_LEN = 2;
+    localparam  MULT_CTL_LEN    = 3;            // integer multiplier operation control
+    localparam  MULT_PIPE_DEPTH = 5;
+
+    // DIV
+    localparam  DIV_EXCEPT_LEN  = 2;
+    localparam  DIV_CTL_LEN     = 2;            // integer divider operation control
+
+    // FPU
+    localparam  FPU_EXCEPT_LEN  = 2;
+    localparam  FPU_CTL_LEN     = 4;            // floating point multiplier operation control
+
+    // OPERANDS ONLY
+    localparam  OP_ONLY_CTL_LEN = 2;
+
+    // MAXIMUM DIMENSION OF EU_CONTROL FIELDS
+    localparam MAX_EU_CTL_LEN   = ALU_CTL_LEN;  // this must be set to the maximum of the previous parameters
+
+    localparam LDBUFF_IDX_LEN = $clog2(LDBUFF_DEPTH); //3 // load buffer address width
+    localparam STBUFF_IDX_LEN = $clog2(STBUFF_DEPTH); //3 // store buffer address width
+    localparam BUFF_IDX_LEN = (LDBUFF_IDX_LEN > STBUFF_IDX_LEN) ? (LDBUFF_IDX_LEN) : (STBUFF_IDX_LEN); // the largest of the two. Useful when comparing indexes from both
+    localparam EXCEPT_TYPE_LEN = ROB_EXCEPT_LEN; // only the last four bits of the mcause/scause CSR
+    localparam LDST_TYPE_LEN = LB_CTL_LEN; // 3 bits: 7 types of load (lb, lh, lw, ld, lbu, lhu, ldu), 4 types of store (sb, sh, sw and sd)
 
     // ----------------
     // EXCEPTION CODES
@@ -80,13 +125,38 @@ package expipe_pkg;
         E_LD_PAGE_FAULT       = 'hd,
         E_ST_PAGE_FAULT       = 'hf,
         
-        E_UNKNOWN             = 'ha    // reserved code 10, used for debugging
+        E_UNKNOWN             = 'ha // reserved code 10, used for debugging
     } except_code_t;
+
+    // ----
+    // ROB
+    // ----
+
+    typedef struct packed {
+        logic                       valid;          // the ROB entry contains a valid instruction
+        instr_t                     instruction;    // the instruction
+        logic [XLEN-1:0]            instr_pc;       // the program counter if the instruction
+        logic                       res_ready;      // the result of the instruction is ready
+        logic [XLEN-1:0]            res_value;      // the value of the result (from the EU)
+        logic [REG_IDX_LEN-1:0]     rd_idx;         // the destination register (rd)
+        logic                       except_raised;  // an exception has been raised
+        except_code_t               except_code;    // the exception code
+    } rob_entry_t;
+
+    // ----
+    // CDB
+    // ----
+    
+    typedef struct packed {
+        logic [ROB_IDX_LEN-1:0]     rob_idx;
+        logic [XLEN-1:0]            value;
+        logic                       except_raised;
+        except_code_t               except_code;
+    } cdb_data_t;
 
     // -----------
     // ISSUE QUEUE
     // -----------
-    localparam IQ_IDX_LEN = $clog2(IQ_DEPTH); // issue queue index width
 
     typedef struct packed {
         logic               valid; // The entry contains a valid instruction
@@ -121,44 +191,9 @@ package expipe_pkg;
         IMM_TYPE_RS1
     } imm_format_t;
 
-    // -------------------------
-    // NUMBER OF EXECUTION UNITS
-    // -------------------------
-
-    localparam BASE_EU_N    = 5;   // load buffer, store buffer, branch unit, ALU, operands only
-
-`ifdef LEN5_M_EN
-    localparam MULT_EU_N    = 2;   // MULT, DIV
-`else
-    localparam MULT_EU_N    = 0;
-`endif /* LEN5_M_EN */
-
-`ifdef LEN5_FP_EN
-    localparam FP_EU_N      = 1;     // FPU
-`else
-    localparam FP_EU_N      = 0;
-`endif /* LEN5_FP_EN */
-
-    // Total number of execution units
-    localparam EU_N = BASE_EU_N + MULT_EU_N + FP_EU_N;
-
     // --------------------
     // RESERVATION STATIONS
     // --------------------
-
-    // WIDTH OF THE CONTROL FIELDS IN THE DIFFERENT EUs
-    // LOAD BUFFER
-    localparam  LB_CTL_LEN      = 3;            // load type, see load buffer section below
-    
-    // STORE BUFFER
-    localparam  SB_CTL_LEN      = LB_CTL_LEN;   // same type as load
-
-    // BRANCH UNIT
-    localparam  BU_CTL_LEN      = BRANCH_TYPE_LEN; // size of 'branch_type_t' from len5_pkg
-
-    // ALU
-    localparam  ALU_EXCEPT_LEN  = 2;
-    localparam  ALU_CTL_LEN     = 4;            // ALU operation control
 
     // ALU opcodes
     typedef enum logic [ALU_CTL_LEN-1:0] {
@@ -179,11 +214,6 @@ package expipe_pkg;
         ALU_SLTU    // set if less than (unsigned)
     } alu_ctl_t;
 
-    // MULT
-    localparam  MULT_EXCEPT_LEN = 2;
-    localparam  MULT_CTL_LEN    = 3;            // integer multiplier operation control
-    localparam  MULT_PIPE_DEPTH = 5;
-
     // Mult opcodes
     typedef enum logic [MULT_CTL_LEN-1:0] {
         MULT_MUL,
@@ -192,20 +222,6 @@ package expipe_pkg;
         MULT_MULHU,
         MULT_MULHSU
     } mult_ctl_t;
-
-    // DIV
-    localparam  DIV_EXCEPT_LEN  = 2;
-    localparam  DIV_CTL_LEN     = 2;            // integer divider operation control
-
-    // FPU
-    localparam  FPU_EXCEPT_LEN  = 2;
-    localparam  FPU_CTL_LEN     = 4;            // floating point multiplier operation control
-
-    // OPERANDS ONLY
-    localparam  OP_ONLY_CTL_LEN = 2;
-
-    // MAXIMUM DIMENSION OF EU_CONTROL FIELDS
-    localparam MAX_EU_CTL_LEN   = ALU_CTL_LEN;  // this must be set to the maximum of the previous parameters
     
     // ASSIGNED EU
     typedef enum logic [$clog2(EU_N)-1:0] {
@@ -227,11 +243,7 @@ package expipe_pkg;
     // ---------------
     // LOAD-STORE UNIT
     // ---------------
-    localparam LDBUFF_IDX_LEN = $clog2(LDBUFF_DEPTH); //3 // load buffer address width
-    localparam STBUFF_IDX_LEN = $clog2(STBUFF_DEPTH); //3 // store buffer address width
-    localparam BUFF_IDX_LEN = (LDBUFF_IDX_LEN > STBUFF_IDX_LEN) ? (LDBUFF_IDX_LEN) : (STBUFF_IDX_LEN); // the largest of the two. Useful when comparing indexes from both
-    localparam EXCEPT_TYPE_LEN = ROB_EXCEPT_LEN; // only the last four bits of the mcause/scause CSR
-    localparam LDST_TYPE_LEN = LB_CTL_LEN; // 3 bits: 7 types of load (lb, lh, lw, ld, lbu, lhu, ldu), 4 types of store (sb, sh, sw and sd)
+
     typedef enum logic [LDST_TYPE_LEN-1:0] { 
         LS_BYTE,
         LS_BYTE_U,

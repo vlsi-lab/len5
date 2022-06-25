@@ -68,7 +68,7 @@ module csrs (
     output  csr_priv_t                  mem_priv_mode_o,
     output  csr_priv_t                  mem_priv_mode_ls_o,
     output  asid_t                      mem_base_asid_o,
-    output  logic [PPN_LEN-1:0]         mem_csr_root_ppn_o,
+    output  logic [PPN_LEN-1:0]         mem_csr_root_ppn_o
 );
 
 // CSR read value

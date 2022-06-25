@@ -88,7 +88,7 @@ module commit_decoder
                 `OPCODE_SRAW,
                 `OPCODE_SRA,
                 `OPCODE_OR,
-            `ifndef LEN5_M_EN:
+            `ifndef LEN5_M_EN
                 `OPCODE_MUL,
                 `OPCODE_MULW,
                 `OPCODE_MULH,
@@ -143,7 +143,7 @@ module commit_decoder
 
                 // EBREAK instructions
                 // -------------------
-                `OPCALL_EBREAK: comm_type_o     = COMM_TYPE_EBREAK;
+                `OPCODE_EBREAK: comm_type_o     = COMM_TYPE_EBREAK;
                 
                 // XRET instructions
                 // -----------------

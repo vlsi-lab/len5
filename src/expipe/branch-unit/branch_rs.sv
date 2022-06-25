@@ -349,7 +349,7 @@ module branch_rs
     assign cdb_data_o.rob_idx       = rs_data[head_idx].res_idx;
     assign cdb_data_o.value         = { {(XLEN-1){1'b0}}, rs_data[head_idx].mispredicted }; // store the misprediction information in the value field of the CDB (result field of the ROB)
     assign cdb_data_o.except_raised = 1'b0; // no exception can be raised  (Wrong, First check the Missp if ok then cheeck address misaglined)
-    assign cdb_data_o.except_code   = 0;// Fix it
+    assign cdb_data_o.except_code   = E_UNKNOWN;
 
     // ----------
     // ASSERTIONS

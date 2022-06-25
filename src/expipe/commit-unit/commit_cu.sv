@@ -16,6 +16,9 @@
 `include "len5_config.svh"
 
 import len5_pkg::ILEN;
+import len5_pkg::instr_t;
+import expipe_pkg::*;
+import csr_pkg::*;
 
 module commit_cu (
     // Clock and reset
@@ -67,7 +70,7 @@ module commit_cu (
     // ----------------
 
     // CU state type
-    typedef enum logic [3:0] {
+    typedef enum logic [4:0] {
         RESET,
         IDLE,               // wait for a valid instruction from the ROB
         COMMIT_INT_RF,      // commit to the integer RF
@@ -344,8 +347,10 @@ module commit_cu (
         ready_o             = 1'b0;
         int_rs_valid_o      = 1'b0;
         int_rf_valid_o      = 1'b0;
+    `ifdef LEN5_FP_EN
         fp_rs_valid_o       = 1'b0;
         fp_rf_valid_o       = 1'b0;
+    `endif /* LEN5_FP_EN */
         sb_pop_store_o      = 1'b0;
         csr_valid_o         = 1'b0;
         csr_type_o          = CSR_INSTR;
@@ -365,11 +370,13 @@ module commit_cu (
                 int_rf_valid_o  = 1'b1;
             end
 
+        `ifdef LEN5_FP_EN
             COMMIT_FP_RF: begin
                 ready_o         = 1'b1;
                 fp_rs_valid_o   = 1'b1;
                 fp_rf_valid_o   = 1'b1;
             end
+        `endif /* LEN5_FP_EN */
 
             COMMIT_STORE: begin
                 ready_o         = 1'b1;
