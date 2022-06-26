@@ -57,9 +57,9 @@ module commit_stage (
     input   logic [ROB_IDX_LEN-1:0]     rob_head_idx_i,
 
     // Commit logic <--> store buffer
-    input   logic                       cl_sb_head_completed_i,
-    input   logic [ROB_IDX_LEN-1:0]     cl_sb_head_rob_idx_i,
-    output  logic                       cl_pop_store_o,     // pop the head store iunstruction in the store buffer
+    input   logic                       sb_head_completed_i,
+    input   logic [ROB_IDX_LEN-1:0]     sb_head_rob_idx_i,
+    output  logic                       sb_pop_store_o,     // pop the head store iunstruction in the store buffer
 
 	// Commit logic <--> register files and status
     // input   logic                       int_rs_ready_i,
@@ -176,7 +176,7 @@ module commit_stage (
     // -------------------
     assign instr_opcode         = inreg_data_out.data.instruction.r.opcode;
     assign mispredict           = inreg_data_out.data.res_value[0];
-    assign cu_store_comm        = (cl_sb_head_rob_idx_i == inreg_data_out.rob_idx) && cl_sb_head_completed_i;
+    assign cu_store_comm        = (sb_head_rob_idx_i == inreg_data_out.rob_idx) && sb_head_completed_i;
 
     commit_cu u_commit_cu (
         .clk_i              (clk_i),
@@ -196,7 +196,7 @@ module commit_stage (
         .fp_rs_valid_o      (fp_rs_valid_o),
         .fp_rf_valid_o      (fp_rf_valid_o),
     `endif /* LEN5_FP_EN */
-        .sb_pop_store_o     (cl_pop_store_o),
+        .sb_pop_store_o     (sb_pop_store_o),
         .csr_valid_o        (csr_valid_o),
         .csr_type_o         (csr_instr_type_o),
         .flush_o            (main_cu_flush_o),

@@ -23,14 +23,15 @@ TB_VLOG_OPT_FILE="$LEN5_ROOT_DIR/config/tb-list"
 PRINT_CMD_LINE=0
 CMD_LINE=$@
 
-# Compiler options
+# Compilation options
 COMPILE_ONLY=0
 COMPILE_OPT_FILE=$SIM_DIR/compile.f
 CUSTOM_SRC=0
 BUILD_TARGET=source-files
 VLIB_PATH=$SIM_DIR/work
 
-# Gui options
+# Simulation options
+TOP_MODULE_FILE=$LEN5_ROOT_DIR/tb/tb_with_l2cemu.sv
 SIM_MACRO="$SIM_DIR/sim.do"
 SIM_WAVE_ZOOM=1000 # ns
 SIM_OPT="-sv_seed random" # default simulator options
@@ -53,7 +54,7 @@ SSH_OPT=""
 # Print usage message
 print_usage() {
     [ ! "$1" = "" ] && { printf -- "\nERROR: %s\n\n" "$1" 1>&2; }
-    printf -- "USAGE: $0 [OPTIONS] SRC_DIR TOP_MODULE_FILE [SIM_ARGS]\n"
+    printf -- "USAGE: $0 [OPTIONS] [SRC_DIR] [TOP_MODULE_FILE] [SIM_ARGS]\n"
     printf -- "OPTIONS:\n"
     printf -- "\n"
     printf -- "General:\n"
@@ -66,14 +67,15 @@ print_usage() {
     printf -- "Compilation:\n"
     printf -- "-c:      don't start simulation (compile only).\n"
     printf -- "-b TGT:  build target TGT. Default: '%s'.\n" $BUILD_TARGET
-    printf -- "-t:      shortcut for '-b tb' (also compile testbench files).\n"
-    printf -- "-d:      clean build directory (shortcut for '-b clean').\n"
+    printf -- "-t:      shortcut for '-b \"tb test-files\"' (also compile testbench files).\n"
+    printf -- "-d:      clean build directory (shortcut for '-cb clean').\n"
     printf -- "-n:      compile dry run (pass '-n' to make).\n"
     printf -- "-f OPTS: add OPTS to 'vlog' command-line arguments.\n"
     printf -- "-w LIB:  use custom library path LIB.\n"
     printf -- "-i:      toggle infer HDL hierarchy feature (default: %0d).\n" $INFER_HIERARCHY
     printf -- "\n"
     printf -- "Simulation (ignored with '-c'):\n"
+    printf -- "-m FILE: append '+MEM_FILE=FILE' to vsim command line.\n"
     printf -- "-x:      launch simulation with GUI (ignores '-o').\n"
     printf -- "-o:      remove '-voptargs=+acc' from simulation options.\n"
     printf -- "-p FILE: pass '-do FILE' to the simulator AFTER the 'run' command.\n"
@@ -147,7 +149,7 @@ function clean_up() {
 
 # Parse command line options
 # --------------------------
-while getopts ':hls:g:R:cb:tdnf:w:ixop:' opt; do
+while getopts ':hls:g:R:cb:tdnf:w:im:xop:' opt; do
     case $opt in
         h) # Print usage message
             print_usage
@@ -174,10 +176,11 @@ while getopts ':hls:g:R:cb:tdnf:w:ixop:' opt; do
             BUILD_TARGET=$OPTARG
             ;;
         t) # shortcut for '-b tb' (also compile testbench files)
-            BUILD_TARGET=tb
+            BUILD_TARGET="tb test-files"
             ;;
         d) # Clean build directory
             BUILD_TARGET=clean
+            COMPILE_ONLY=1
             ;;
         n) # compile dry run (pass '-n' to make)
             MAKE_OPT="$MAKE_OPT -n"
@@ -190,6 +193,9 @@ while getopts ':hls:g:R:cb:tdnf:w:ixop:' opt; do
             ;;
         i) # toggle infer HDL hierarchy feature
             INFER_HIERARCHY=$(($INFER_HIERARCHY ^ 1))
+            ;;
+        m) # append '+MEM_FILE=FILE' to vsim command line
+            SIM_OPT="$SIM_OPT +MEM_FILE=$OPTARG"
             ;;
         x) # Launch simulation with GUI
             VSIM_GUI=1
@@ -260,9 +266,6 @@ if [ $# -gt 0 ]; then
         shift
     fi
     shift
-else 
-    log "WARNING: no top-level module. Forcing compilation-only."
-    COMPILE_ONLY=1
 fi
 SIM_ARGS="$@"
 

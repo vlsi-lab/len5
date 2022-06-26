@@ -33,7 +33,7 @@ module csrs (
 
     // Handshaking with commit logic
     input   logic                       valid_i,
-    // output  logic                       ready_o,
+    output  logic                       ready_o,
 
     // Control from commit logic
     input   csr_instr_t                 instr_type_i,

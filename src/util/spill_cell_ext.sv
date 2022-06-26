@@ -58,7 +58,7 @@ module spill_cell_ext #(
     // CONTROL UNIT
     // ------------
 
-    spill_cell_flush_cu u_spill_cell_cu (
+    spill_cell_ext_cu u_spill_cell_cu (
         .clk_i          (clk_i),
         .rst_n_i        (rst_n_i),
         .flush_i        (flush_i),

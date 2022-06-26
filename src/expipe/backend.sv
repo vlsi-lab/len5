@@ -191,8 +191,9 @@ module backend (
 
     // Execution stage <--> commit logic
     // ---------------------------------
-    logic                       ex_rob_store_committing;
-    logic [ROB_IDX_LEN-1:0]     rob_sb_head_idx;
+    logic                       sb_comm_head_completed;
+    logic [ROB_IDX_LEN-1:0]     sb_comm_head_rob_idx;
+    logic                       comm_sb_pop_store;
     logic [ROB_IDX_LEN-1:0]     ex_cl_sb_head_rob_idx;
 
     // Execution stage <--> CSRs
@@ -213,12 +214,7 @@ module backend (
     // ---------------------
     logic                       comm_rob_ready;
     logic                       rob_comm_valid;
-    instr_t                     rob_comm_instr;
-    logic [XLEN-1:0]            rob_comm_pc;
-    logic [REG_IDX_LEN-1:0]     rob_comm_rd_idx;
-    logic [XLEN-1:0]            rob_comm_value;
-    logic                       rob_comm_except_raised;
-    except_code_t               rob_comm_except_code;
+    rob_entry_t                 rob_comm_head_entry;
     logic [ROB_IDX_LEN-1:0]     rob_comm_head_idx;
 
     // Commit logic --> (both) register status registers
@@ -489,8 +485,8 @@ module backend (
         .cdb_data_i                 (cdb_others_data),
         .cdb_data_o                 (ex_cdb_data),
 
-        .rob_head_idx_i             (rob_sb_head_idx),
-        .cl_store_committing_o      (ex_rob_store_committing),
+        .rob_head_idx_i             (sb_comm_head_rob_idx),
+        .cl_store_committing_o      (sb_comm_head_completed),
         .cl_sb_head_rob_idx_o       (ex_cl_sb_head_rob_idx),
 
         .vm_mode_i                  (csr_ex_vm_mode),
@@ -527,7 +523,7 @@ module backend (
         .data_o                 (cdb_others_data)
     );
 
-    // Reorder Buffer (ROB)
+    // Reorder Buffer (ROB)rob
     // --------------------
     rob u_rob
     (
@@ -556,14 +552,9 @@ module backend (
         .cdb_data_i             (cdb_others_data),
         .comm_ready_i           (comm_rob_ready),
         .comm_valid_o           (rob_comm_valid),
-        .comm_instr_o           (rob_comm_instr),
-        .comm_pc_o              (rob_comm_pc),
-        .comm_rd_idx_o          (rob_comm_rd_idx),
-        .comm_value_o           (rob_comm_value),
-        .comm_except_raised_o   (rob_comm_except_raised),
-	    .comm_except_code_o     (rob_comm_except_code),
+        .comm_head_entry_o      (rob_comm_head_entry),
         .comm_head_idx_o        (rob_comm_head_idx),
-        .sb_head_idx_o          (rob_sb_head_idx)
+        .sb_head_idx_o          (sb_comm_head_rob_idx)
     );
 
     // ------------
@@ -590,15 +581,11 @@ module backend (
         .il_comm_reg_idx_o      (cl_il_comm_reg_idx),
         .rob_valid_i            (rob_comm_valid),
         .rob_ready_o            (comm_rob_ready), 
-        .rob_instr_i            (rob_comm_instr),
-        .rob_pc_i               (rob_comm_pc),
-        .rob_rd_idx_i           (rob_comm_rd_idx),
-        .rob_value_i            (rob_comm_value),
-        .rob_except_raised_i    (rob_comm_except_raised),
-        .rob_except_code_i      (rob_comm_except_code),
+        .rob_head_entry_i       (rob_comm_head_entry),
         .rob_head_idx_i         (rob_comm_head_idx),
-        .sb_store_committing_i  (ex_rob_store_committing),
-        .sb_head_idx_i          (ex_cl_sb_head_rob_idx),
+        .sb_head_completed_i    (sb_comm_head_completed),
+        .sb_head_rob_idx_i      (sb_comm_head_rob_idx),
+        .sb_pop_store_o         (comm_sb_pop_store),
         .int_rs_ready_i         (int_regstat_comm_ready),
         .int_rs_valid_o         (comm_int_regstat_valid),
         .int_rf_ready_i         (intrf_comm_ready),

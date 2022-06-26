@@ -30,7 +30,10 @@ module cache_L2_system_emulator #(
     output  logic           l2c_l2arb_req_rdy_o,
     // (L2 Cache -> L2 arbiter) answer channel
     output  l2c_l2arb_ans_t l2c_l2arb_ans_o,
-    input   logic           l2arb_l2c_ans_rdy_i
+    input   logic           l2arb_l2c_ans_rdy_i,
+
+    // Memory file
+    input   string          mem_file_i = MEM_FILE_PATH
 );
 
   //--------------------\\
@@ -65,7 +68,7 @@ module cache_L2_system_emulator #(
   logic [XLEN-1:0]         memory_dw_addr;
   logic [XLEN-1:0]         memory_line_addr;
 
-  static memory_class i_memory = new(MEM_FILE_PATH);
+  memory_class i_memory = new(mem_file_i);
 
   //-----------------\\
   // CACHE REQ READY \\

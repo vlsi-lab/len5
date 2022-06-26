@@ -12,7 +12,14 @@
 ../src/memory/l2_tlb/*.sv
 ../src/memory/ptw_tpc/*.sv
 ../src/memory/*.sv
-../src/expipe/**.sv
+../src/expipe/branch-unit/*.sv
+../src/expipe/cdb/*.sv
+../src/expipe/commit-unit/*.sv
+../src/expipe/exec-units/*.sv
+../src/expipe/issue-unit/*.sv
+../src/expipe/load-store-unit/*.sv
+../src/expipe/register-file/*.sv
+../src/expipe/*.sv
 ../src/frontend/*.sv
 ../src/cu/*.sv
 ../src/*.sv

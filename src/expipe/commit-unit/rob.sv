@@ -63,12 +63,7 @@ module rob
     output  logic                       comm_valid_o,
 
     // Data to the commit logic
-    output  instr_t                     comm_instr_o,
-    output  logic [XLEN-1:0]            comm_pc_o,
-    output  logic [REG_IDX_LEN-1:0]     comm_rd_idx_o,          // the destination register (rd)
-    output  logic [XLEN-1:0]            comm_value_o,           // the result of the instruction
-    output  logic                       comm_except_raised_o,
-	output  except_code_t               comm_except_code_o,
+    output  rob_entry_t                 comm_head_entry_o,      // ROB head entry
     output  logic [ROB_IDX_LEN-1:0]     comm_head_idx_o,        // ROB head idx to update register status
 
     // Data from/to the store buffer
@@ -244,11 +239,6 @@ module rob
     assign issue_tail_idx_o     = rob_tail_idx;
 
     // To the commit logic
-    assign comm_instr_o         = rob_data[rob_head_idx].instruction;
-    assign comm_pc_o            = rob_data[rob_head_idx].instr_pc;
-    assign comm_rd_idx_o        = rob_data[rob_head_idx].rd_idx;
-    assign comm_value_o         = rob_data[rob_head_idx].res_value;
-    assign comm_except_raised_o = rob_data[rob_head_idx].except_raised;
+    assign comm_head_entry_o    = rob_data[rob_head_idx];
     assign comm_head_idx_o      = rob_head_idx;
-    assign comm_except_code_o   = rob_data[rob_head_idx].except_code;
 endmodule

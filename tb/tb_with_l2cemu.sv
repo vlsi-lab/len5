@@ -31,10 +31,19 @@ module tb_with_l2cemu;
     // ----------------
 
     // Initial program counter
-    localparam [XLEN-1:0] BOOT_PC = `BOOT_PC;
+    localparam logic [XLEN-1:0] BOOT_PC = `BOOT_PC;
+
+    // Memory dump period (in clock cycles)
+    localparam MEM_DUMP_T = 20;
+
+    // Memory file
+    localparam string MEM_DUMP_FILE = "mem_dump.txt";
 
     // INTERNAL SIGNALS
     // ----------------
+
+    // Input memory file
+    string      mem_file = "memory.txt";
 
     // Clock and reset
     logic clk;
@@ -51,17 +60,13 @@ module tb_with_l2cemu;
     // BODY
     // ----
 
-    // Clock generator
-    // ---------------
-    always #5 clk   = ~clk;
-
-    // Initialization process
-    // ----------------------
+    // Command-line options and configuration
+    // --------------------------------------
     initial begin
-        // /* Set the memory addressing mode */
-        // if (0 == $value$plusargs("BOOT_PC=%x", BOOT_PC)) begin
-        // 	`uvm_fatal("CONFIG", $sformatf("Invalid boot program counter specified"));
-        // end
+        // Set the memory file path
+        if ($value$plusargs("MEM_FILE=%s", mem_file)) begin
+            `uvm_info("CMDLINE", $sformatf("Requested memory file: %s", mem_file), UVM_INFO);
+        end
 
         /* Print boot program counter */
         `uvm_info("CONFIG", $sformatf("Boot program counter: 0x%x", BOOT_PC), UVM_MEDIUM);
@@ -74,19 +79,28 @@ module tb_with_l2cemu;
         
         /* Print FP extension information */
         `uvm_info("CONFIG", $sformatf("D extension: %s", `ifdef LEN5_FP_EN "YES" `else "NO" `endif), UVM_MEDIUM);
-
-        clk         = 1;
-        rst_n       = 0;
-
-        // reset
-        #10 rst_n = 1;
-
-        // #600 $finish;
     end
 
-    // ----
-    // DUTs
-    // ----
+    // Clock and reset generation
+    // --------------------------
+
+    initial begin
+        clk         = 1;
+        rst_n       = 0;
+        
+        #10 rst_n = 1;
+
+        // Periodically dump memory content
+        forever begin
+            repeat (MEM_DUMP_T) @(posedge clk);
+            u_cache_L2_system_emulator.i_memory.PrintMem(MEM_DUMP_FILE);
+        end
+    end
+    always #5 clk   = ~clk;
+    
+    // ---
+    // DUT
+    // ---
 
     // LEN5 Datapath
     // --------------
@@ -106,7 +120,7 @@ module tb_with_l2cemu;
     // L2$ EMULATOR
     // ------------
 
-    cache_L2_system_emulator #(`MEMORY_FILE) u_cache_L2_system_emulator
+    cache_L2_system_emulator u_cache_L2_system_emulator
     (
         .clk_i                  (clk),
         .rst_ni                 (rst_n),
@@ -114,7 +128,9 @@ module tb_with_l2cemu;
         .l2arb_l2c_req_i        (l2arb_l2c_req),
         .l2c_l2arb_req_rdy_o    (l2c_l2arb_req_rdy),
         .l2c_l2arb_ans_o        (l2c_l2arb_ans),
-        .l2arb_l2c_ans_rdy_i    (l2arb_l2c_ans_rdy)
+        .l2arb_l2c_ans_rdy_i    (l2arb_l2c_ans_rdy),
+
+        .mem_file_i             (mem_file)
     );
     
 endmodule

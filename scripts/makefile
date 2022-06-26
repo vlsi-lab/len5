@@ -32,7 +32,7 @@ TB_OPT			:= $(ROOT)/config/tb-opt.f
 ifeq (, $(shell which vlog))
 $(error 'vlog' is not in PATH. Did you run the initialization script?)
 endif
-VLOG			:= vlog -work $(VLIB) -svinputport=compat -f $(GLOBAL_OPT)
+VLOG			:= vlog -work $(VLIB) -svinputport=compat -f $(GLOBAL_OPT) +define+UVM_REPORT_DISABLE_FILE
 VLOG 			+= $(VLOG_ARGS)
 
 # RISC-V C compiler
