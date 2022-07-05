@@ -23,17 +23,30 @@ TEST_MEM		:= $(addprefix $(TEST_DIR)/mem/,$(TESTS:%=%.txt))
 AWK_FORMAT 		:= $(ROOT)/scripts/awk-mem-format.txt
 
 # LEN5 HDL files
-GLOBAL_OPT		:= $(ROOT)/config/global-opt.f
-PKG_OPT			:= $(ROOT)/config/pkg-opt.f
-SRC_OPT			:= $(ROOT)/config/src-opt.f
-TB_OPT			:= $(ROOT)/config/tb-opt.f
+PKG_SRCS 		:= 	$(ROOT)/include/len5_pkg.sv \
+					$(ROOT)/include/csr_pkg.sv \
+					$(ROOT)/include/memory_pkg.sv \
+					$(ROOT)/include/expipe_pkg.sv
+MODULES_SRCS 	:= 	$(shell find $(ROOT)/src/ -type f -name '*.sv')
+TB_SRCS 		:= 	$(ROOT)/tb/tb_with_l2cemu.sv \
+					$(ROOT)/tb/memory/cache_L2_system_emulator.sv
+# vlog options
+GLOBAL_OPT		:= 	-svinputport=compat \
+					-hazards \
+					-vmake \
+					+incdir+$(ROOT)/include \
+					+incdir+$(ROOT)/tb/memory
+UVM_OPT			:= +define+UVM_REPORT_DISABLE_FILE
+PKG_OPT			:=
+MODULE_OPT		:=
+TB_OPT			:=
 
 # SystemVerilog compiler
 ifeq (, $(shell which vlog))
 $(error 'vlog' is not in PATH. Did you run the initialization script?)
 endif
-VLOG			:= vlog -work $(VLIB) -svinputport=compat -f $(GLOBAL_OPT) +define+UVM_REPORT_DISABLE_FILE
-VLOG 			+= $(VLOG_ARGS)
+VLOG			:= vlog -work $(VLIB) $(GLOBAL_OPT) $(UVM_OPT)
+VLOG 			+= $(VLOG_ARGS) # from environment
 
 # RISC-V C compiler
 CROSS_COMPILE 	?= riscv64-unknown-elf-
@@ -57,25 +70,32 @@ all: tb test-files
 
 # Packages
 .PHONY: packages
-packages: $(VLIB)
-	@echo "Compiling LEN5 packages..."
-	$(VLOG) -F $(PKG_OPT)
+packages: $(BUILD_DIR)/pkg_list.f
+$(BUILD_DIR)/pkg_list.f: $(PKG_SRCS) | $(VLIB)
+	@echo "## Compiling LEN5 packages..."
+	@printf '%s\n' $? > $@
+	$(VLOG) $(PKG_OPT) -F $@
 
 # Source files
 .PHONY: source-files
-source-files: packages
-	@echo "Compiling LEN5 source files..."
-	$(VLOG) -F $(SRC_OPT)
+source-files: $(BUILD_DIR)/src_list.f
+$(BUILD_DIR)/src_list.f: $(MODULES_SRCS) | $(BUILD_DIR)/pkg_list.f
+	@echo "## Compiling LEN5 source files..."
+	@printf '%s\n' $? > $@
+	$(VLOG) $(MODULE_OPT) -F $@
 
 # Testbench
 .PHONY: tb
-tb: source-files
-	@echo "Compiling LEN5 testbench files..."
-	$(VLOG) -F $(TB_OPT)
+tb: $(BUILD_DIR)/tb_list.f $(TEST_MEM)
+$(BUILD_DIR)/tb_list.f: $(TB_SRCS) | $(BUILD_DIR)/src_list.f
+	@echo "## Compiling LEN5 testbench files..."
+	@printf '%s\n' $? > $@
+	$(VLOG) $(MODULE_OPT) -F $@
 
 # Test memory files
 .PHONY: test-files
 test-files: $(TEST_MEM)
+	@echo "## Compiling test files..."
 
 .PRECIOUS: $(TEST_DIR)/dump/%.dump $(TEST_DIR)/obj/%.o
 $(TEST_DIR)/mem/%.txt: $(TEST_DIR)/dump/%.dump | $(TEST_DIR)/mem
@@ -90,6 +110,7 @@ $(TEST_DIR)/obj/%.o: $(TEST_DIR)/src/%.s | $(TEST_DIR)/obj
 # QuestaSim library
 # -----------------
 $(VLIB):
+	@echo "## Creating library '$@'..."
 	mkdir -p $(@D)
 	vlib $(VLIB)
 
@@ -104,11 +125,15 @@ $(TEST_DIR)/obj $(TEST_DIR)/dump $(TEST_DIR)/mem:
 clean:
 	if [ -d $(VLIB) ]; then vdel -lib $(VLIB) -all; fi
 	$(RM) -r $(TEST_DIR)/obj $(TEST_DIR)/dump $(TEST_DIR)/mem
+	$(RM) $(BUILD_DIR)/*.f
 
 .PHONY: clean-all
 clean-all: | clean
 	$(RM) -r $(BUILD_DIR)
 
 .test:
-	@echo $(VLOG_ARGS)
-	@echo $(VLOG)
+	@echo "Packages:"
+	@printf ' - %s\n' $(PKG_SRCS)
+	@echo
+	@echo "Source files:"
+	@printf ' - %s\n' $(MODULES_SRCS)

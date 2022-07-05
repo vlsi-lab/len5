@@ -176,7 +176,7 @@ while getopts ':hls:g:R:cb:tdnf:w:im:xop:' opt; do
             BUILD_TARGET=$OPTARG
             ;;
         t) # shortcut for '-b tb' (also compile testbench files)
-            BUILD_TARGET="tb test-files"
+            BUILD_TARGET="tb"
             ;;
         d) # Clean build directory
             BUILD_TARGET=clean
