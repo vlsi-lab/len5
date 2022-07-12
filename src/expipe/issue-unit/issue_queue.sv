@@ -50,82 +50,45 @@ module issue_queue
 );
 
     // DEFINITIONS
-    // Head and tail pointers 
-    logic [IQ_IDX_LEN-1:0]      head_idx, tail_idx;
 
     // New instruction 
-    iq_entry_t                  new_entry, issued_instr;
-
-    // Pointers control
-    logic                       head_cnt_en, tail_cnt_en;
-    logic                       head_cnt_clr, tail_cnt_clr;
-
-    // ----------------------
-    // HEAD AND TAIL POINTERS
-    // ----------------------
-    
-    modn_counter #(.N(IQ_DEPTH)) head_counter
-    (
-        .clk_i      (clk_i),
-        .rst_n_i    (rst_n_i),
-        .en_i       (head_cnt_en),
-        .clr_i      (head_cnt_clr),
-        .count_o    (head_idx),
-        .tc_o       () // Not needed
-    );
-
-    modn_counter #(.N(IQ_DEPTH)) tail_counter
-    (
-        .clk_i      (clk_i),
-        .rst_n_i    (rst_n_i),
-        .en_i       (tail_cnt_en),
-        .clr_i      (tail_cnt_clr),
-        .count_o    (tail_idx),
-        .tc_o       () // Not needed
-    );
+    iq_entry_t                  new_instr, issued_instr;
 
     // ----------------
     // ISSUE QUEUE FIFO
     // ----------------
     // Assemble new queue entry with the data from the fetch unit
-    assign new_entry.valid          = fetch_valid_i;
-    assign new_entry.curr_pc        = curr_pc_i;
-    assign new_entry.instruction    = instruction_i;
-    assign new_entry.pred_target    = pred_target_i;
-    assign new_entry.pred_taken     = pred_taken_i;
-    assign new_entry.except_raised  = except_raised_i;
-    assign new_entry.except_code    = except_code_i;
+    assign new_instr.curr_pc        = curr_pc_i;
+    assign new_instr.instruction    = instruction_i;
+    assign new_instr.pred_target    = pred_target_i;
+    assign new_instr.pred_taken     = pred_taken_i;
+    assign new_instr.except_raised  = except_raised_i;
+    assign new_instr.except_code    = except_code_i;
 
-    issue_queue_fifo u_issue_queue_fifo 
-    (
-        .clk_i          (clk_i),
-        .rst_n_i        (rst_n_i),
-        .flush_i        (flush_i),
-
-        .fetch_valid_i  (fetch_valid_i),
-        .fetch_ready_o  (fetch_ready_o),
-
-        .issue_ready_i  (issue_ready_i),
-        .issue_valid_o  (issue_valid_o),
-
-        .new_entry      (new_entry),
-        .issued_instr   (issued_instr),
-
-        .head_idx       (head_idx),
-        .tail_idx       (tail_idx),
-        .head_cnt_en    (head_cnt_en),
-        .tail_cnt_en    (tail_cnt_en),
-        .head_cnt_clr   (head_cnt_clr),
-        .tail_cnt_clr   (tail_cnt_clr)
+    fifo #(
+        .DATA_T (iq_entry_t ),
+        .DEPTH  (IQ_DEPTH   )
+    )
+    u_issue_fifo (
+    	.clk_i   (clk_i         ),
+        .rst_n_i (rst_n_i       ),
+        .flush_i (flush_i       ),
+        .valid_i (fetch_valid_i ),
+        .ready_i (issue_ready_i ),
+        .valid_o (issue_valid_o ),
+        .ready_o (fetch_ready_o ),
+        .data_i  (new_instr     ),
+        .data_o  (issued_instr  )
     );
 
-    // Unpack issued instruction for the ex. pipeline
-    assign curr_pc_o        = issued_instr.curr_pc;
-    assign instruction_o    = issued_instr.instruction; 
-    assign pred_target_o    = issued_instr.pred_target;
-    assign pred_taken_o     = issued_instr.pred_taken;
-    assign except_raised_o  = issued_instr.except_raised;
-    assign except_code_o    = issued_instr.except_code;
+    // Output instruction
+    // ------------------
+    assign  curr_pc_o       = issued_instr.curr_pc;
+    assign  instruction_o   = issued_instr.instruction;
+    assign  pred_target_o   = issued_instr.pred_target;
+    assign  pred_taken_o    = issued_instr.pred_taken;
+    assign  except_raised_o = issued_instr.except_raised;
+    assign  except_code_o   = issued_instr.except_code;
 
 endmodule
 

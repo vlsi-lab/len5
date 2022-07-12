@@ -133,7 +133,6 @@ package expipe_pkg;
     // ----
 
     typedef struct packed {
-        logic                       valid;          // the ROB entry contains a valid instruction
         instr_t                     instruction;    // the instruction
         logic [XLEN-1:0]            instr_pc;       // the program counter if the instruction
         logic                       res_ready;      // the result of the instruction is ready
@@ -159,9 +158,8 @@ package expipe_pkg;
     // -----------
 
     typedef struct packed {
-        logic               valid; // The entry contains a valid instruction
         logic [XLEN-1:0]    curr_pc;
-        logic [ILEN-1:0]    instruction;
+        instr_t             instruction;
         logic [XLEN-1:0]    pred_target;
         logic               pred_taken;
         logic               except_raised;

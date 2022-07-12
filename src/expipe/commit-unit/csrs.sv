@@ -23,6 +23,7 @@
 import len5_pkg::*;
 import csr_pkg::*;
 import expipe_pkg::ROB_EXCEPT_LEN;
+import expipe_pkg::except_code_t;
 import memory_pkg::PPN_LEN;
 import memory_pkg::asid_t;
 
@@ -43,7 +44,7 @@ module csrs (
     input   logic [CSR_ADDR_LEN-1:0]    addr_i,
     input   logic [REG_IDX_LEN-1:0]     rs1_idx_i,  // source register or unsigned immediate
     input   logic [XLEN-1:0]            rs1_value_i, // data to write to the CSR
-    input   logic [ROB_EXCEPT_LEN-1:0]  exc_data_i, // exception data (e.g., FPU exceptions)
+    input   except_code_t               exc_data_i, // exception data (e.g., FPU exceptions)
     input   logic [REG_IDX_LEN-1:0]     rd_idx_i,   // destination register
     output  logic [XLEN-1:0]            data_o,
     output  logic                       acc_exc_o,  // ILLEGAL INSTRUCTION flag (invalid address or access permission)

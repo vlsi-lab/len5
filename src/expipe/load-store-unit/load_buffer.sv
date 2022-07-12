@@ -126,7 +126,7 @@ module load_buffer
     output  logic [ROB_IDX_LEN-1:0]     cdb_idx_o,
     output  logic [XLEN-1:0]            cdb_data_o,
     output  logic                       cdb_except_raised_o,
-    output  logic [ROB_EXCEPT_LEN-1:0]  cdb_except_o
+    output  except_code_t               cdb_except_o
 );
 
     // DEFINITIONS
@@ -734,7 +734,7 @@ module load_buffer
     assign cdb_idx_o            = lb_data[cdb_req_idx].dest_idx;
     assign cdb_data_o           = lb_data[cdb_req_idx].ld_value;
     assign cdb_except_raised_o  = lb_data[cdb_req_idx].except_raised;
-    assign cdb_except_o         = { {(ROB_EXCEPT_LEN-EXCEPT_TYPE_LEN){1'b0} }, lb_data[cdb_req_idx].except_code };
+    assign cdb_except_o         = lb_data[cdb_req_idx].except_code;
 
     // ----------
     // ASSERTIONS

@@ -45,6 +45,9 @@ module tb_with_l2cemu;
     // Input memory file
     string      mem_file = "memory.txt";
 
+    // Number of cycles to simulate
+    longint unsigned num_cycles = 0;    // 0: no boundary
+
     // Clock and reset
     logic clk;
 	logic rst_n;
@@ -65,14 +68,22 @@ module tb_with_l2cemu;
     initial begin
         // Set the memory file path
         if ($value$plusargs("MEM_FILE=%s", mem_file)) begin
-            `uvm_info("CMDLINE", $sformatf("Requested memory file: %s", mem_file), UVM_INFO);
+            `uvm_info("CMDLINE", "Updated memory file", UVM_INFO);
+        end
+        
+        // Set the number of cycles to simulate
+        if ($value$plusargs("N=%d", num_cycles)) begin
+            `uvm_info("CMDLINE", "Updated number of simulation cycles", UVM_INFO);
         end
 
         /* Print boot program counter */
         `uvm_info("CONFIG", $sformatf("Boot program counter: 0x%x", BOOT_PC), UVM_MEDIUM);
 
+        /* Print the number of simulation cycles */
+        `uvm_info("CONFIG", $sformatf("Number of simulation cycles: %0d", num_cycles), UVM_MEDIUM);
+
         /* Print memory file being used */
-        `uvm_info("CONFIG", $sformatf("Memory file: %s", `MEMORY_FILE), UVM_MEDIUM);
+        `uvm_info("CONFIG", $sformatf("Memory file: %s", mem_file), UVM_MEDIUM);
 
         /* Print M extension information */
         `uvm_info("CONFIG", $sformatf("M extension: %s", `ifdef LEN5_M_EN "YES" `else "NO" `endif), UVM_MEDIUM);
@@ -93,10 +104,31 @@ module tb_with_l2cemu;
         // Periodically dump memory content
         forever begin
             repeat (MEM_DUMP_T) @(posedge clk);
-            u_cache_L2_system_emulator.i_memory.PrintMem(MEM_DUMP_FILE);
+            if (0 != u_cache_L2_system_emulator.i_memory.PrintMem(MEM_DUMP_FILE)) begin
+                `uvm_fatal("TB", "ERROR while dumping memory content");
+            end
         end
     end
     always #5 clk   = ~clk;
+
+    // Load memory
+    // -----------
+    int ret = 0;
+    initial begin
+        @(negedge clk);
+        `uvm_info("FLASH", $sformatf("Flashing memory from '%s'...", mem_file), UVM_INFO);
+        ret = u_cache_L2_system_emulator.i_memory.LoadMem(mem_file);
+        if (0 > ret) begin
+            `uvm_fatal("TB", "ERROR while flashing memory");
+        end
+        `uvm_info("FLASH", $sformatf(" - loaded %0d words", ret), UVM_INFO);
+
+        // Stop the simulation after the requested number of cycles
+        if (num_cycles > 0) begin
+            repeat (num_cycles) @(posedge clk);
+            $stop;
+        end
+    end
     
     // ---
     // DUT

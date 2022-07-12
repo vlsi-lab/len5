@@ -968,10 +968,7 @@ module issue_decoder (
     // ASSERTIONS
     // ----------
     `ifndef SYNTHESIS
-    always @(except_code) begin
-        assert ((except_code != E_ILLEGAL_INSTRUCTION) && (except_code != E_BREAKPOINT)) 
-        else   `uvm_warning("ISSUE", $sformatf("Issuing instruction unknown opcode: %b", instruction_i))
-    end
+    /* Assertions here */
     `endif
     
 endmodule

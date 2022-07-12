@@ -56,7 +56,7 @@ module alu_unit
     output  logic [ROB_IDX_LEN-1:0] cdb_idx_o,
     output  logic [XLEN-1:0]        cdb_data_o,
     output  logic                   cdb_except_raised_o,
-    output  logic [ROB_EXCEPT_LEN-1:0] cdb_except_o
+    output  except_code_t           cdb_except_o
 );
 
     // ALU handshake
@@ -73,7 +73,7 @@ module alu_unit
     logic [$clog2(RS_DEPTH)-1:0] alu_rs_entry_idx;
     logic [XLEN-1:0]        alu_rs_result;
     logic                   alu_rs_except_raised;
-    logic [EXCEPT_LEN-1:0]  alu_rs_except_code;
+    except_code_t           alu_rs_except_code;
 
 generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_alu_generic_rs
 (

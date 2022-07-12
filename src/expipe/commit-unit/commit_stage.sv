@@ -19,6 +19,12 @@
 
 `include "instr_macros.svh"
 
+/* Include UVM macros */
+`include "uvm_macros.svh"
+
+/* Import UVM package */
+import uvm_pkg::*;
+
 import expipe_pkg::*;
 import len5_pkg::*;
 import csr_pkg::csr_instr_t;
@@ -92,7 +98,7 @@ module commit_stage (
     output  logic [CSR_ADDR_LEN-1:0]    csr_addr_o,
     output  logic [REG_IDX_LEN-1:0]     csr_rs1_idx_o,
     output  logic [XLEN-1:0]            csr_rs1_value_o,
-    output  logic [ROB_EXCEPT_LEN-1:0]  csr_except_data_o,
+    output  except_code_t  csr_except_data_o,
     output  logic [REG_IDX_LEN-1:0]     csr_rd_idx_o
 );
 
@@ -114,7 +120,7 @@ module commit_stage (
     logic                       mispredict;
 
     // Input register <--> commit CU
-    logic                       cu_inreg_valid;
+    logic                       cu_inreg_ready;
     logic                       inreg_cu_valid;
 
     // Input registers <--> outputs
@@ -139,12 +145,12 @@ module commit_stage (
     assign  inreg_data_in.rob_idx   = rob_head_idx_i;
 
     // Input spill cell
-    spill_cell_ext #(.DATA_T(rob_entry_t)) u_input_reg (
+    spill_cell_ext #(.DATA_T(inreg_data_t)) u_input_reg (
         .clk_i          (clk_i),
         .rst_n_i        (rst_n_i),
         .flush_i        (1'b0),
         .valid_i        (rob_valid_i),
-        .ready_i        (cu_inreg_valid),
+        .ready_i        (cu_inreg_ready),
         .valid_o        (inreg_cu_valid),
         .ready_o        (rob_ready_o),
         .data_i         (inreg_data_in),
@@ -166,14 +172,18 @@ module commit_stage (
     // COMMIT DECODER
     // --------------
     commit_decoder u_comm_decoder (
-        .instruction_i      (rob_instr_i),
-        .except_raised_i    (rob_except_raised_i),
+        .instruction_i      (inreg_data_out.data.instruction),
+        .except_raised_i    (inreg_data_out.data.except_raised),
         .comm_type_o        (cd_comm_type)
     );
 
     // -------------------
     // COMMIT CONTROL UNIT
     // -------------------
+    // NOTE: the commit CU is a Moore FSM that receives inputs from the commit
+    //       logic input register (spill cell). Since its output will only be
+    //       available the next cycle, the instruction is buffered inside the
+    //       'comm_reg' register above. 
     assign instr_opcode         = inreg_data_out.data.instruction.r.opcode;
     assign mispredict           = inreg_data_out.data.res_value[0];
     assign cu_store_comm        = (sb_head_rob_idx_i == inreg_data_out.rob_idx) && sb_head_completed_i;
@@ -185,8 +195,8 @@ module commit_stage (
         .store_comm_i       (cu_store_comm),
         .mispredict_i       (mispredict),
         .comm_reg_en_o      (comm_reg_en),
-        .valid_i            (inreg_data_out.data.valid),
-        .ready_o            (cu_inreg_valid),
+        .valid_i            (inreg_cu_valid),
+        .ready_o            (cu_inreg_ready),
         .instr_i            (inreg_data_out.data.instruction),
         .except_raised_i    (inreg_data_out.data.except_raised),
         .except_code_i      (inreg_data_out.data.except_code),
@@ -214,12 +224,9 @@ module commit_stage (
     assign  il_reg1_valid_o         = inreg_cu_valid;
     assign  il_reg1_value_o         = inreg_data_out.data.res_value;
     assign  il_reg1_idx_o           = inreg_data_out.rob_idx;
-    assign  il_comm_reg_valid_o     = cu_inreg_valid;
+    assign  il_comm_reg_valid_o     = cu_inreg_ready;
     assign  il_comm_reg_value_o     = comm_reg_data.res_value;
     assign  il_comm_reg_idx_o       = comm_reg_data.rd_idx;
-
-    // TODO: properly handle flush signal to main CU
-    assign  main_cu_flush_o         = 1'b0;
 
     assign  rs_head_idx_o           = rob_head_idx_i;
 

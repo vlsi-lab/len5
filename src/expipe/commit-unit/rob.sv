@@ -64,10 +64,7 @@ module rob
 
     // Data to the commit logic
     output  rob_entry_t                 comm_head_entry_o,      // ROB head entry
-    output  logic [ROB_IDX_LEN-1:0]     comm_head_idx_o,        // ROB head idx to update register status
-
-    // Data from/to the store buffer
-    output  logic [ROB_IDX_LEN-1:0]     sb_head_idx_o           // the head index of the ROB
+    output  logic [ROB_IDX_LEN-1:0]     comm_head_idx_o         // ROB head idx to update register status
 );
 
     // DEFINITIONS
@@ -81,9 +78,10 @@ module rob
 
     // ROB data structure 
     rob_entry_t                         rob_data [0:ROB_DEPTH-1]; 
+    logic                               rob_valid[0:ROB_DEPTH-1];
 
     // Status signals
-    logic [0:ROB_DEPTH-1]               valid_a, res_ready_a;
+    logic [0:ROB_DEPTH-1]               res_ready_a;
 
     // --------------
     // STATUS SIGNALS
@@ -91,7 +89,6 @@ module rob
     // These are required because name selection after indexing is not supported
     always_comb begin: status_signals_gen
         for (int i = 0; i < ROB_DEPTH; i++) begin
-            valid_a[i]          = rob_data[i].valid;
             res_ready_a[i]      = rob_data[i].res_ready;
         end
     end
@@ -122,7 +119,7 @@ module rob
         // --------------
         
         // PUSH A NEW INSTRUCTION IN THE QUEUE
-        if (!rob_data[rob_tail_idx].valid) begin
+        if (!rob_valid[rob_tail_idx]) begin
             issue_ready_o               = 1'b1; // tell the issue logic that an entry is valid
             if (issue_valid_i) begin
                 rob_push                = 1'b1; // push the new instruction in
@@ -137,7 +134,7 @@ module rob
         end
 
         // POP THE HEAD ENTRY WHEN IT'S READY TO COMMIT
-        if (rob_data[rob_head_idx].valid && rob_data[rob_head_idx].res_ready) begin
+        if (rob_valid[rob_head_idx] && rob_data[rob_head_idx].res_ready) begin
             comm_valid_o                = 1'b1; // tell the commit logic that an instruction is ready to commit
             if (comm_ready_i) begin
                rob_pop                  = 1'b1; // if the commit logic can accept the instruction, pop it
@@ -153,10 +150,11 @@ module rob
         if (!rst_n_i) begin
             foreach (rob_data[i]) begin
                 rob_data[i]                 <= 0;
+                rob_valid[i]                <= 1'b0;
             end
         end else if (flush_i) begin
             foreach (rob_data[i]) begin // clearing status bits is enough
-                rob_data[i].valid           <= 1'b0;
+                rob_valid[i]                <= 1'b0;
                 rob_data[i].res_ready       <= 1'b0;
                 rob_data[i].except_raised   <= 1'b0;
             end
@@ -164,7 +162,7 @@ module rob
             
             // PUSH NEW INSTRUCTION INTO THE ROB (WRITE PORT 1)
             if (rob_push) begin
-                rob_data[rob_tail_idx].valid            <= 1'b1;
+                rob_valid[rob_tail_idx]                 <= 1'b1;
                 rob_data[rob_tail_idx].instruction      <= issue_instr_i;
                 rob_data[rob_tail_idx].instr_pc         <= issue_pc_i;
                 rob_data[rob_tail_idx].rd_idx           <= issue_rd_idx_i;
@@ -190,7 +188,7 @@ module rob
             end
 
             // POP COMMITTED ENTRY
-            if (rob_pop) rob_data[rob_head_idx].valid       <= 1'b0;
+            if (rob_pop) rob_valid[rob_head_idx]       <= 1'b0;
 
         end
     end
@@ -222,18 +220,15 @@ module rob
     // ISSUE STAGE OPERANDS READ PORTS
     // -------------------------------
     // rs1 port
-    assign issue_rs1_ready_o    = rob_data[issue_rs1_idx_i].valid && rob_data[issue_rs1_idx_i].res_ready;
+    assign issue_rs1_ready_o    = rob_valid[issue_rs1_idx_i] && rob_data[issue_rs1_idx_i].res_ready;
     assign issue_rs1_value_o    = rob_data[issue_rs1_idx_i].res_value; // READ PORT 1 (res_value)
     // rs2 port
-    assign issue_rs2_ready_o    = rob_data[issue_rs2_idx_i].valid && rob_data[issue_rs2_idx_i].res_ready;
+    assign issue_rs2_ready_o    = rob_valid[issue_rs2_idx_i] && rob_data[issue_rs2_idx_i].res_ready;
     assign issue_rs2_value_o    = rob_data[issue_rs2_idx_i].res_value; // READ PORT 2 (res_value)
 
     // -----------------
     // OUTPUT EVALUATION
     // -----------------
-    
-    // To the store buffer
-    assign sb_head_idx_o        = rob_head_idx;
 
     // To the issue stage
     assign issue_tail_idx_o     = rob_tail_idx;

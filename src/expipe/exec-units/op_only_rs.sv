@@ -235,10 +235,12 @@ module op_only_rs
     // ASSERTIONS
     // ----------
     `ifndef SYNTHESIS
-    always @(negedge clk_i) begin
-        // Check if the correct order of operations is respected
-        assert (issue_valid_i && !(rs1_ready_i)) else `uvm_error("HAZARD", "Input instruction sent to operands only RS but operand is already available.")
-    end
+    // Check that assigned instructions are missing their operand
+    property p_op_not_ready;
+        @(posedge clk_i) disable iff (!rst_n_i)
+        issue_valid_i |-> !rs1_ready_i;
+    endproperty
+    a_op_not_ready: assert property (p_op_not_ready);
     `endif
 
 endmodule

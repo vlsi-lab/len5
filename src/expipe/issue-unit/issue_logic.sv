@@ -36,12 +36,7 @@ module issue_logic (
     output  logic                       iq_ready_o,
 
     // Data from the issue queue
-    input   logic [XLEN-1:0]            iq_curr_pc_i,           // the PC of the current instruction
-    input   instr_t                     iq_instruction_i,
-    input   logic [XLEN-1:0]            iq_pred_target_i,
-    input   logic                       iq_pred_taken_i,
-    input   logic                       iq_except_raised_i,
-    input   except_code_t               iq_except_code_i,
+    input   iq_entry_t                  iq_instr_i,
 
     // Handshake from/to the integer register status register
     // input   logic                       int_regstat_ready_i,        // should always be asserted
@@ -133,7 +128,7 @@ module issue_logic (
     output  logic [XLEN-1:0]            rob_pc_o,               // the PC of the current instruction
     output  logic [REG_IDX_LEN-1:0]     rob_rd_idx_o,           // the destination register index (rd)
     output  logic                       rob_except_raised_o,    // an exception has been raised
-    output  logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_o,      // the exception code
+    output  except_code_t  rob_except_code_o,      // the exception code
     output  logic [XLEN-1:0]            rob_except_aux_o,       // exception auxilliary data (e.g. offending virtual address)
     output  logic                       rob_res_ready_o,        // force the ready-to-commit state in the ROB to handle special instr. 
     output  logic [XLEN-1:0]            rob_res_value_o,        // result to save in the rob (when available, e.g., immediate)
@@ -201,16 +196,16 @@ module issue_logic (
     // INSTRUCTION INFO EXTRACTION
     // ---------------------------
     // Source and destination registers
-    assign  instr_rs1_idx           = iq_instruction_i.r.rs1;
-    assign  instr_rs2_idx           = iq_instruction_i.r.rs2;
-    assign  instr_rd_idx            = iq_instruction_i.r.rd;
+    assign  instr_rs1_idx           = iq_instr_i.instruction.r.rs1;
+    assign  instr_rs2_idx           = iq_instr_i.instruction.r.rs2;
+    assign  instr_rd_idx            = iq_instr_i.instruction.r.rd;
     // Immediate values
-    assign  instr_imm_i_value       = { {52{iq_instruction_i.i.imm11[31]}}, iq_instruction_i.i.imm11 };
-    assign  instr_imm_s_value       = { {52{iq_instruction_i.s.imm11[31]}}, iq_instruction_i.s.imm11, iq_instruction_i.s.imm4 };
-    assign  instr_imm_b_value       = { {51{iq_instruction_i.b.imm12}},  iq_instruction_i.b.imm12, iq_instruction_i.b.imm11, iq_instruction_i.b.imm10, iq_instruction_i.b.imm4, 1'b0 };
-    assign  instr_imm_u_value       = { {32{iq_instruction_i.u.imm31[31]}},  iq_instruction_i.u.imm31, 12'b0 };
-    assign  instr_imm_j_value       = { {43{iq_instruction_i.j.imm20}}, iq_instruction_i.j.imm20, iq_instruction_i.j.imm19, iq_instruction_i.j.imm11, iq_instruction_i.j.imm10, 1'b0 };
-    assign  instr_imm_rs1_value     = { '0, iq_instruction_i.r.rs1 };
+    assign  instr_imm_i_value       = { {52{iq_instr_i.instruction.i.imm11[31]}}, iq_instr_i.instruction.i.imm11 };
+    assign  instr_imm_s_value       = { {52{iq_instr_i.instruction.s.imm11[31]}}, iq_instr_i.instruction.s.imm11, iq_instr_i.instruction.s.imm4 };
+    assign  instr_imm_b_value       = { {51{iq_instr_i.instruction.b.imm12}},  iq_instr_i.instruction.b.imm12, iq_instr_i.instruction.b.imm11, iq_instr_i.instruction.b.imm10, iq_instr_i.instruction.b.imm4, 1'b0 };
+    assign  instr_imm_u_value       = { {32{iq_instr_i.instruction.u.imm31[31]}},  iq_instr_i.instruction.u.imm31, 12'b0 };
+    assign  instr_imm_j_value       = { {43{iq_instr_i.instruction.j.imm20}}, iq_instr_i.instruction.j.imm20, iq_instr_i.instruction.j.imm19, iq_instr_i.instruction.j.imm11, iq_instr_i.instruction.j.imm10, 1'b0 };
+    assign  instr_imm_rs1_value     = { '0, iq_instr_i.instruction.r.rs1 };
 
     assign rob_tail_idx             = rob_tail_idx_i;
 
@@ -235,67 +230,66 @@ module issue_logic (
         
         if (iq_valid_i && rob_ready_i) begin // an instr. can be issued
             case(id_assigned_eu)
-                // IMPORTANT: check the order of the valid/ready connections to each RS
                 EU_LOAD_BUFFER: begin   // 0
+                    ex_valid_o [EU_LOAD_BUFFER]  = 1'b1;
                     if (ex_ready_i[EU_LOAD_BUFFER]) begin // if the load buffer can accept the instruction
                         rob_valid_o     = 1'b1;
                         iq_ready_o      = 1'b1;
-                        ex_valid_o [EU_LOAD_BUFFER]  = 1'b1;
                     end
                 end
                 EU_STORE_BUFFER: begin   // 1
+                    ex_valid_o [EU_STORE_BUFFER]  = 1'b1;
                     if (ex_ready_i[EU_STORE_BUFFER]) begin // if the load buffer can accept the instruction
                         rob_valid_o     = 1'b1;
                         iq_ready_o      = 1'b1;
-                        ex_valid_o [EU_STORE_BUFFER]  = 1'b1;
                     end
                 end
                 EU_BRANCH_UNIT: begin   // 2
+                    ex_valid_o [EU_BRANCH_UNIT]  = 1'b1;
                     if (ex_ready_i[EU_BRANCH_UNIT]) begin // if the load buffer can accept the instruction
                         rob_valid_o     = 1'b1;
                         iq_ready_o      = 1'b1;
-                        ex_valid_o [EU_BRANCH_UNIT]  = 1'b1;
                     end
                 end
                 EU_INT_ALU: begin       // 3
+                    ex_valid_o [EU_INT_ALU]  = 1'b1;
                     if (ex_ready_i[EU_INT_ALU]) begin // if the load buffer can accept the instruction
                         rob_valid_o     = 1'b1;
                         iq_ready_o      = 1'b1;
-                        ex_valid_o [EU_INT_ALU]  = 1'b1;
                     end
                 end
 
             `ifdef LEN5_M_EN
                 EU_INT_MULT: begin   // 4
+                    ex_valid_o [EU_INT_MULT]  = 1'b1;
                     if (ex_ready_i[EU_INT_MULT]) begin // if the load buffer can accept the instruction
                         rob_valid_o     = 1'b1;
                         iq_ready_o      = 1'b1;
-                        ex_valid_o [EU_INT_MULT]  = 1'b1;
                     end
                 end
                 EU_INT_DIV: begin   // 5
+                    ex_valid_o [EU_INT_DIV]  = 1'b1;
                     if (ex_ready_i[EU_INT_DIV]) begin // if the load buffer can accept the instruction
                         rob_valid_o     = 1'b1;
                         iq_ready_o      = 1'b1;
-                        ex_valid_o [EU_INT_DIV]  = 1'b1;
                     end
                 end
             `endif /* LEN5_M_EN */
 
             `ifdef LEN5_FP_EN
                 EU_FPU: begin   // 6
+                    ex_valid_o [EU_FPU] = 1'b1;
                     if (ex_ready_i[EU_FPU]) begin // if the load buffer can accept the instruction
                         rob_valid_o     = 1'b1;
                         iq_ready_o      = 1'b1;
-                        ex_valid_o [EU_FPU] = 1'b1;
                     end
                 end
             `endif /* LEN5_FP_EN */
                 EU_OPERANDS_ONLY: begin // 7
+                    ex_valid_o [EU_OPERANDS_ONLY] = 1'b1;
                     if (ex_ready_i[EU_OPERANDS_ONLY]) begin
                         rob_valid_o     = 1'b1;
                         iq_ready_o      = 1'b1;
-                        ex_valid_o [EU_OPERANDS_ONLY] = 1'b1;
                     end
                 end
                 EU_NONE: begin          // the instr. is sent directly to the ROB
@@ -338,10 +332,10 @@ module issue_logic (
     // 1) special cases (e.g., the first operand is the current PC)
     // 2) CDB
     // 3) ROB
-    // 4) Commit stage buffer 0
+    // 4) Commit stage buffer 0 (spill register)
     // 5) Commit stage buffer 1
     // 6) Commit stage committing instruction buffer
-    // 7) Register files
+    // 7) Register file(s)
 
     // Select the correct integer/floating point register status register
     `ifdef LEN5_FP_EN
@@ -367,7 +361,7 @@ module issue_logic (
             // Fetch rs1
             if (id_rs1_is_pc) begin
                 rs1_ready       = 1'b1;
-                rs1_value       = iq_curr_pc_i;
+                rs1_value       = iq_instr_i.curr_pc;
             end else if (id_rs1_req) begin               // rs1 value is required
                 if (int_regstat_rs1_busy_i) begin   // the operand is provided by an in-flight instr.
                     if (rob_rs1_ready_i) begin /* the operand is already available in the ROB */
@@ -514,20 +508,20 @@ module issue_logic (
     // ------------------
     always_comb begin: exception_handling_logic
         // If an exception was raised during the fetch stage, keep it and discard exception raised during the issue phase (if any)
-        if (iq_except_raised_i) begin
+        if (iq_instr_i.except_raised) begin
             eh_except_raised            = 1'b1;
-            eh_except_code              = iq_except_code_i;
-            eh_except_aux               = iq_curr_pc_i;     // auxiliary information about the exception. They will be copied into the 
+            eh_except_code              = iq_instr_i.except_code;
+            eh_except_aux               = iq_instr_i.curr_pc;     // auxiliary information about the exception. They will be copied into the 
             eh_stall_possible           = 1'b1;             // the pipeline and issue queue will be flushed anyway
         end else if (id_except_raised) begin
             eh_except_raised            = 1'b1;
             eh_except_code              = id_except_code;
-            eh_except_aux               = iq_curr_pc_i;     // the current instruction address is passed
+            eh_except_aux               = iq_instr_i.curr_pc;     // the current instruction address is passed
             eh_stall_possible           = 1'b1;
         end else begin
             eh_except_raised            = 1'b0;             // no exception
-            eh_except_code              = iq_except_code_i; // whatever, it is ignored since rob_except_raised_o is not asserted
-            eh_except_aux               = iq_curr_pc_i;
+            eh_except_code              = iq_instr_i.except_code; // whatever, it is ignored since rob_except_raised_o is not asserted
+            eh_except_aux               = iq_instr_i.curr_pc;
             eh_stall_possible           = 1'b0;
         end
     end
@@ -537,7 +531,7 @@ module issue_logic (
     // -------------------------
     issue_decoder u_issue_decoder (
          // Instruction from the issue logic
-        .instruction_i        (iq_instruction_i), 
+        .instruction_i        (iq_instr_i.instruction), 
 
     `ifdef LEN5_PRIVILEGED_EN
         .mstatus_tsr_i        (mstatus_tsr_i),
@@ -583,9 +577,9 @@ module issue_logic (
     assign  ex_rob_idx_o                = rob_tail_idx;
 
     // Branch additional info (simply forward from the issue queue)
-    assign  ex_pred_pc_o                = iq_curr_pc_i;
-    assign  ex_pred_target_o            = iq_pred_target_i;
-    assign  ex_pred_taken_o             = iq_pred_taken_i;
+    assign  ex_pred_pc_o                = iq_instr_i.curr_pc;
+    assign  ex_pred_target_o            = iq_instr_i.pred_target;
+    assign  ex_pred_taken_o             = iq_instr_i.pred_taken;
 
     // -----------------
     // OUTPUT EVALUATION
@@ -620,8 +614,8 @@ module issue_logic (
     // To the ROB
     assign  rob_rs1_idx_o               = rob_rs1_idx;
     assign  rob_rs2_idx_o               = rob_rs2_idx;
-    assign  rob_instr_o                 = iq_instruction_i;
-    assign  rob_pc_o                    = iq_curr_pc_i;
+    assign  rob_instr_o                 = iq_instr_i.instruction;
+    assign  rob_pc_o                    = iq_instr_i.curr_pc;
     assign  rob_rd_idx_o                = instr_rd_idx;
 
     assign  rob_except_raised_o         = eh_except_raised;
@@ -630,5 +624,18 @@ module issue_logic (
 
     assign  rob_res_ready_o             = id_res_ready;
     assign  rob_res_value_o             = imm_value;
+
+    // ----------
+    // ASSERTIONS
+    // ----------
+
+    `ifndef SYNTHESIS
+    property p_assigned_eu;
+        @(posedge issue_stage.clk_i) disable iff (!issue_stage.rst_n_i)
+        iq_valid_i && rob_ready_i |-> ##0
+        rob_valid_o
+    endproperty
+    a_assigned_eu: assert property (p_assigned_eu);
+    `endif /* SYNTHESIS */
     
 endmodule

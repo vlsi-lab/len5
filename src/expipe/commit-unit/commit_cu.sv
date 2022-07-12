@@ -15,6 +15,12 @@
 // Include LEN5 configuration
 `include "len5_config.svh"
 
+/* Include UVM macros */
+`include "uvm_macros.svh"
+
+/* Import UVM package */
+import uvm_pkg::*;
+
 import len5_pkg::ILEN;
 import len5_pkg::instr_t;
 import expipe_pkg::*;
@@ -421,8 +427,17 @@ module commit_cu (
 
     // State update
     always_ff @( posedge clk_i or negedge rst_n_i ) begin : cu_state_upd
-        if (!rst_n_i)       curr_state  = RESET;
-        else                curr_state  = next_state;
+        if (!rst_n_i)       curr_state  <= RESET;
+        else                curr_state  <= next_state;
     end
     
+    // ----------
+    // DEBUG CODE
+    // ----------
+    `ifndef SYNTHESIS
+    always @(posedge clk_i) begin
+        `uvm_info("COMMIT CU", $sformatf("valid_i: %b | instr: %h | type: %s | state: %s", valid_i, instr_i, comm_type_i.name(), curr_state), UVM_INFO)
+    end
+    `endif /* SYNTHESIS */
+
 endmodule

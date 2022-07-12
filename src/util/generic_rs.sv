@@ -61,7 +61,7 @@ module generic_rs
     input   logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i, //2:0
     input   logic [XLEN-1:0]        eu_result_i,
     input   logic                   eu_except_raised_i,
-    input   logic [EXCEPT_LEN-1:0]  eu_except_code_i,
+    input   except_code_t           eu_except_code_i,
     output  logic [EU_CTL_LEN-1:0]  eu_ctl_o,
     output  logic [XLEN-1:0]        eu_rs1_o,
     output  logic [XLEN-1:0]        eu_rs2_o,
@@ -79,7 +79,7 @@ module generic_rs
     output  logic [ROB_IDX_LEN-1:0] cdb_idx_o,
     output  logic [XLEN-1:0]        cdb_data_o,
     output  logic                   cdb_except_raised_o,
-    output  logic [ROB_EXCEPT_LEN-1:0] cdb_except_o
+    output  except_code_t cdb_except_o
 );
 
     // DEFINITIONS
@@ -104,7 +104,7 @@ module generic_rs
         logic [ROB_IDX_LEN-1:0] res_idx;    // The entry of the ROB where the result will be stored
         logic [XLEN-1:0]        res_value;
         logic                   except_raised;
-        logic [EXCEPT_LEN-1:0]  except;
+        except_code_t           except_code;
     } rs_entry_t;
 
     // Reservation station pointers
@@ -242,7 +242,7 @@ module generic_rs
             if (rs_wr_res) begin
                 rs_data[eu_entry_idx_i].res_ready      <= 'b1;
                 rs_data[eu_entry_idx_i].res_value      <= eu_result_i;
-                rs_data[eu_entry_idx_i].except         <= eu_except_code_i;
+                rs_data[eu_entry_idx_i].except_code     <= eu_except_code_i;
                 rs_data[eu_entry_idx_i].except_raised  <= eu_except_raised_i;
             end
 
@@ -336,7 +336,7 @@ module generic_rs
     assign cdb_idx_o            = rs_data[cdb_idx].res_idx;
     assign cdb_data_o           = rs_data[cdb_idx].res_value;
     assign cdb_except_raised_o  = rs_data[cdb_idx].except_raised;
-    assign cdb_except_o         = { {(ROB_EXCEPT_LEN-EXCEPT_LEN){1'b0} }, rs_data[cdb_idx].except };
+    assign cdb_except_o         = rs_data[cdb_idx].except_code;
 
     // ----------
     // ASSERTIONS

@@ -33,6 +33,7 @@ module backend (
 
     // Main control unit
     output  logic                   main_cu_stall_o,
+    output  logic                   main_cu_resume_o,
     output  logic                   main_cu_flush_o,
 
     // Front-end handshaking
@@ -174,7 +175,7 @@ module backend (
     logic [XLEN-1:0]            il_rob_pc;
     logic [REG_IDX_LEN-1:0]     il_rob_rd_idx;
     logic                       il_rob_except_raised;
-    logic [ROB_EXCEPT_LEN-1:0]  il_rob_except_code;
+    except_code_t  il_rob_except_code;
     logic [XLEN-1:0]            il_rob_except_aux;
     logic                       il_rob_res_ready;
     logic [XLEN-1:0]            il_rob_res_value;
@@ -191,10 +192,9 @@ module backend (
 
     // Execution stage <--> commit logic
     // ---------------------------------
-    logic                       sb_comm_head_completed;
-    logic [ROB_IDX_LEN-1:0]     sb_comm_head_rob_idx;
-    logic                       comm_sb_pop_store;
-    logic [ROB_IDX_LEN-1:0]     ex_cl_sb_head_rob_idx;
+    logic                       cl_sb_pop_store;
+    logic                       sb_cl_store_head_completed;
+    logic [ROB_IDX_LEN-1:0]     sb_cl_store_head_rob_idx;
 
     // Execution stage <--> CSRs
     // -------------------------
@@ -249,7 +249,7 @@ module backend (
     logic [CSR_ADDR_LEN-1:0]    comm_csr_addr;
     logic [REG_IDX_LEN]         comm_csr_rs1_idx;
     logic [XLEN-1:0]            comm_csr_rs1_value;
-    logic [ROB_EXCEPT_LEN-1:0]  comm_csr_except_data;
+    except_code_t  comm_csr_except_data;
     logic [REG_IDX_LEN-1:0]     comm_csr_rd_idx;
 
     // -----------
@@ -372,7 +372,7 @@ module backend (
         .rst_n_i                (rst_n_i),
         .flush_i                (flush_i),
         .issue_valid_i          (il_int_regstat_valid),
-        .issue_ready_o          (int_regstat_il_ready),
+        // .issue_ready_o          (int_regstat_il_ready),
         .issue_rd_idx_i         (il_int_regstat_rd_idx),
         .issue_rob_idx_i        (il_int_regstat_rob_idx),
         .issue_rs1_idx_i        (il_int_regstat_rs1_idx),
@@ -382,7 +382,7 @@ module backend (
         .issue_rs2_busy_o       (int_regstat_il_rs2_busy),
         .issue_rs2_rob_idx_o    (int_regstat_il_rs2_rob_idx),
         .comm_valid_i           (comm_int_regstat_valid),
-        .comm_ready_o           (int_regstat_comm_ready),
+        // .comm_ready_o           (int_regstat_comm_ready),
         .comm_rd_idx_i          (comm_rf_rd_idx),
         .comm_head_idx_i        (comm_regstat_head_idx)
     );
@@ -394,7 +394,7 @@ module backend (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
         .comm_valid_i           (comm_intrf_valid),
-        .comm_ready_o           (intrf_comm_ready),
+        // .comm_ready_o           (intrf_comm_ready),
         .comm_rd_idx_i          (comm_rf_rd_idx),
         .comm_rd_value_i        (comm_rf_rd_value),
         .issue_rs1_idx_i        (il_intrf_rs1_idx),
@@ -485,9 +485,9 @@ module backend (
         .cdb_data_i                 (cdb_others_data),
         .cdb_data_o                 (ex_cdb_data),
 
-        .rob_head_idx_i             (sb_comm_head_rob_idx),
-        .cl_store_committing_o      (sb_comm_head_completed),
-        .cl_sb_head_rob_idx_o       (ex_cl_sb_head_rob_idx),
+        .cl_sb_pop_store_i          (cl_sb_pop_store),
+        .cl_sb_sb_head_completed_o  (sb_cl_store_head_completed),
+        .cl_sb_sb_head_rob_idx_o    (sb_cl_store_head_rob_idx),
 
         .vm_mode_i                  (csr_ex_vm_mode),
     `ifdef LEN5_FP_EN
@@ -553,8 +553,7 @@ module backend (
         .comm_ready_i           (comm_rob_ready),
         .comm_valid_o           (rob_comm_valid),
         .comm_head_entry_o      (rob_comm_head_entry),
-        .comm_head_idx_o        (rob_comm_head_idx),
-        .sb_head_idx_o          (sb_comm_head_rob_idx)
+        .comm_head_idx_o        (rob_comm_head_idx)
     );
 
     // ------------
@@ -568,6 +567,7 @@ module backend (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
         .main_cu_flush_o        (main_cu_flush_o),
+        .main_cu_resume_o       (main_cu_resume_o),
         .fe_except_raised_o     (fetch_except_raised_o),
         .fe_except_pc_o         (fetch_except_pc_o),
         .il_reg0_valid_o        (cl_il_reg0_valid),
@@ -583,17 +583,17 @@ module backend (
         .rob_ready_o            (comm_rob_ready), 
         .rob_head_entry_i       (rob_comm_head_entry),
         .rob_head_idx_i         (rob_comm_head_idx),
-        .sb_head_completed_i    (sb_comm_head_completed),
-        .sb_head_rob_idx_i      (sb_comm_head_rob_idx),
+        .sb_head_completed_i    (sb_cl_store_head_completed),
+        .sb_head_rob_idx_i      (sb_cl_store_head_rob_idx),
         .sb_pop_store_o         (comm_sb_pop_store),
-        .int_rs_ready_i         (int_regstat_comm_ready),
+        // .int_rs_ready_i         (int_regstat_comm_ready),
         .int_rs_valid_o         (comm_int_regstat_valid),
-        .int_rf_ready_i         (intrf_comm_ready),
+        // .int_rf_ready_i         (intrf_comm_ready),
         .int_rf_valid_o         (comm_intrf_valid),
     `ifdef LEN5_FP_EN
-        .fp_rs_ready_i          (fp_regstat_comm_ready),
+        // .fp_rs_ready_i          (fp_regstat_comm_ready),
         .fp_rs_valid_o          (comm_fp_regstat_valid),
-        .fp_rf_ready_i          (fprf_comm_ready),
+        // .fp_rf_ready_i          (fprf_comm_ready),
         .fp_rf_valid_o          (comm_fprf_valid),
     `endif /* LEN5_FP_EN */
         .rs_head_idx_o          (comm_regstat_head_idx),

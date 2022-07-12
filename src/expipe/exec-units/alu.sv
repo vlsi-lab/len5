@@ -43,7 +43,7 @@ module alu
     output  logic [$clog2(RS_DEPTH)-1:0] entry_idx_o,
     output  logic [XLEN-1:0]        result_o,
     output  logic                   except_raised_o,
-    output  logic [EXCEPT_LEN-1:0]  except_code_o
+    output  except_code_t           except_code_o
 );
 
     // ALU output

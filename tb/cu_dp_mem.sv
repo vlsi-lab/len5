@@ -56,7 +56,7 @@ module cu_dp_mem
   	//except_code_t     except_code_i;
 
 	logic                       except_raised_o;
-    //logic [ROB_EXCEPT_LEN-1:0]  except_code_o;
+    //except_code_t  except_code_o;
     except_code_t  except_code_o;
 
 	// From main unit

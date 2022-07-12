@@ -15,6 +15,12 @@
 // LEN5 compilation switches
 `include "len5_config.svh"
 
+/* Include UVM macros */
+`include "uvm_macros.svh"
+
+/* Import UVM package */
+import uvm_pkg::*;
+
 import len5_pkg::*;
 import expipe_pkg::*;
 
@@ -126,14 +132,25 @@ module issue_stage
     
     output  logic [ROB_IDX_LEN-1:0]     rob_rs1_idx_o,          // ROB entry containing rs1 value
     output  logic [ROB_IDX_LEN-1:0]     rob_rs2_idx_o,          // ROB entry containing rs2 value
-    output  logic [ILEN-1:0]            rob_instr_o,            // to identify the instruction
+    output  instr_t                     rob_instr_o,            // to identify the instruction
     output  logic [XLEN-1:0]            rob_pc_o,               // PC of the current instruction
     output  logic [REG_IDX_LEN-1:0]     rob_rd_idx_o,           // the destination register index (rd)
     output  logic                       rob_except_raised_o,    // an exception has been raised
-    output  logic [ROB_EXCEPT_LEN-1:0]  rob_except_code_o,      // the exception code
+    output  except_code_t  rob_except_code_o,      // the exception code
     output  logic [XLEN-1:0]            rob_except_aux_o,       // exception auxilliary data (e.g. offending virtual address)
     output  logic                       rob_res_ready_o,       // force the ready-to-commit state in the ROB to handle special instr. 
-    output  logic [XLEN-1:0]            rob_res_value_o
+    output  logic [XLEN-1:0]            rob_res_value_o,
+
+    // Commit logic data
+    input   logic                       cl_reg0_valid_i,
+    input   logic [XLEN-1:0]            cl_reg0_value_i,
+    input   logic [ROB_IDX_LEN-1:0]     cl_reg0_idx_i,
+    input   logic                       cl_reg1_valid_i,
+    input   logic [XLEN-1:0]            cl_reg1_value_i,
+    input   logic [ROB_IDX_LEN-1:0]     cl_reg1_idx_i,
+    input   logic                       cl_comm_reg_valid_i,
+    input   logic [XLEN-1:0]            cl_comm_reg_value_i,
+    input   logic [ROB_IDX_LEN-1:0]     cl_comm_reg_idx_i
 );
 
     // INTERNAL SIGNALS
@@ -141,6 +158,9 @@ module issue_stage
     // Issue queue <--> issue logic
     logic               iq_il_valid;
     logic               il_iq_ready;
+
+    // New and issued instructions 
+    iq_entry_t          new_instr, issued_instr;
 
     // Issue queue <--> issue logic
     logic [XLEN-1:0]    iq_il_curr_pc;
@@ -154,35 +174,28 @@ module issue_stage
     // ISSUE QUEUE
     // -----------
 
-    issue_queue u_issue_queue
-    (
-        .clk_i                  (clk_i),
-        .rst_n_i                (rst_n_i),
-        .flush_i                (flush_i),
+    // Assemble new queue entry with the data from the fetch unit
+    assign new_instr.curr_pc        = fetch_curr_pc_i;
+    assign new_instr.instruction    = fetch_instr_i;
+    assign new_instr.pred_target    = fetch_pred_target_i;
+    assign new_instr.pred_taken     = fetch_pred_taken_i;
+    assign new_instr.except_raised  = fetch_except_raised_i;
+    assign new_instr.except_code    = fetch_except_code_i;
 
-        // Fetch unit handshaking
-        .fetch_valid_i          (fetch_valid_i),
-        .fetch_ready_o          (fetch_ready_o),
-
-        // Fetch unit handshaking
-        .curr_pc_i              (fetch_curr_pc_i),
-        .instruction_i          (fetch_instr_i),
-        .pred_target_i          (fetch_pred_target_i),
-        .pred_taken_i           (fetch_pred_taken_i),
-        .except_raised_i        (fetch_except_raised_i),
-        .except_code_i          (fetch_except_code_i),
-
-        // Execution pipeline handshaking
-        .issue_ready_i          (il_iq_ready),
-        .issue_valid_o          (iq_il_valid),
-
-        // Execution pipeline data
-        .curr_pc_o              (iq_il_curr_pc),
-        .instruction_o          (iq_il_instr),
-        .pred_target_o          (iq_il_pred_target),
-        .pred_taken_o           (iq_il_pred_taken),
-        .except_raised_o        (iq_il_except_raised),
-        .except_code_o          (iq_il_except_code)
+    fifo #(
+        .DATA_T (iq_entry_t ),
+        .DEPTH  (IQ_DEPTH   )
+    )
+    u_issue_fifo (
+    	.clk_i   (clk_i         ),
+        .rst_n_i (rst_n_i       ),
+        .flush_i (flush_i       ),
+        .valid_i (fetch_valid_i ),
+        .ready_i (il_iq_ready   ),
+        .valid_o (iq_il_valid   ),
+        .ready_o (fetch_ready_o ),
+        .data_i  (new_instr     ),
+        .data_o  (issued_instr  )
     );
 
     // -----------
@@ -200,15 +213,10 @@ module issue_stage
         .iq_ready_o                     (il_iq_ready),
 
         // Issue queue data
-        .iq_curr_pc_i                   (iq_il_curr_pc),
-        .iq_instruction_i               (iq_il_instr),
-        .iq_pred_target_i               (iq_il_pred_target),
-        .iq_pred_taken_i                (iq_il_pred_taken),
-        .iq_except_raised_i             (iq_il_except_raised),
-        .iq_except_code_i               (iq_il_except_code),
+        .iq_instr_i                     (issued_instr),
 
         // Interger register status register handshaking
-        .int_regstat_ready_i            (int_regstat_ready_i),        
+        // .int_regstat_ready_i            (int_regstat_ready_i),        
         .int_regstat_valid_o            (int_regstat_valid_o),
 
         // Interger register status register data
@@ -298,7 +306,29 @@ module issue_stage
         .rob_except_code_o              (rob_except_code_o),
         .rob_except_aux_o               (rob_except_aux_o),
         .rob_res_ready_o                (rob_res_ready_o),
-        .rob_res_value_o                (rob_res_value_o)
-);
+        .rob_res_value_o                (rob_res_value_o),
+
+        // Data from the commit logic
+        .cl_reg0_valid_i                (cl_reg0_valid_i),
+        .cl_reg0_value_i                (cl_reg0_value_i),
+        .cl_reg0_idx_i                  (cl_reg0_idx_i),
+        .cl_reg1_valid_i                (cl_reg1_valid_i),
+        .cl_reg1_value_i                (cl_reg1_value_i),
+        .cl_reg1_idx_i                  (cl_reg1_idx_i),
+        .cl_comm_reg_valid_i            (cl_comm_reg_valid_i),
+        .cl_comm_reg_value_i            (cl_comm_reg_value_i),
+        .cl_comm_reg_idx_i              (cl_comm_reg_idx_i)
+    );
+
+    // ----------
+    // DEBUG CODE
+    // ----------
+    `ifndef SYNTHESIS
+    always @(posedge clk_i) begin
+        if (rob_valid_o && rob_ready_i) begin
+            `uvm_info("ISSUE", $sformatf("Issuing instruction: %h", rob_instr_o), UVM_HIGH);
+        end
+    end
+    `endif /* SYNTHESIS */
 
 endmodule

@@ -62,9 +62,9 @@ module load_store_unit (
     output  lsq_l1dc_req_t              dcache_req_o,
 
     // LSU <--> commit logic
-    input   logic [ROB_IDX_LEN-1:0]     rob_head_idx_i,
-    output  logic                       cl_store_committing_o,
-    output  logic [ROB_IDX_LEN-1:0]     cl_sb_head_rob_idx_o,
+    input   logic                       cl_sb_pop_store_i,
+    output  logic                       cl_sb_sb_head_completed_o,
+    output  logic [ROB_IDX_LEN-1:0]     cl_sb_sb_head_rob_idx_o,
 
     // Hanshake from/to the CDB 
     input   logic                       cdb_lb_valid_i,
@@ -442,9 +442,9 @@ module load_store_unit (
         .pfwd_value_o           (pfwd_value),
 
         // SB <--> commit logic
-        .rob_head_idx_i         (rob_head_idx_i),
-        .cl_store_committing_o (cl_store_committing_o),
-        .cl_sb_head_rob_idx_o  (cl_sb_head_rob_idx_o),
+        .cl_pop_store_i         (cl_sb_pop_store_i),
+        .cl_sb_head_completed_o (cl_sb_sb_head_completed_o),
+        .cl_sb_head_rob_idx_o   (cl_sb_sb_head_rob_idx_o),
 
         // Hanshake from/to the CDB 
         .cdb_ready_i            (cdb_sb_ready_i),

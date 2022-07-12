@@ -31,6 +31,7 @@ module main_cu
   	input   logic             	fe_except_raised_i,
 	// From backend
   	input  	logic             	be_stall_i,
+  	input  	logic             	be_resume_i,
 	input 	logic 				be_flush_i,
 
 	// To others

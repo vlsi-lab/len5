@@ -44,6 +44,7 @@ module datapath #(
     // Main control unit <--> beckend
     // ------------------------------
     logic                       be_cu_stall;
+    logic                       be_cu_resume;
     logic                       be_cu_flush;
 
     // Main control unit <--> memory system
@@ -125,6 +126,7 @@ module datapath #(
         .fe_ins_i               (fe_cu_instr),
         .fe_except_raised_i     (fe_cu_except_raised),
         .be_stall_i             (be_cu_stall),
+        .be_resume_i            (be_cu_resume),
         .be_flush_i             (be_cu_flush),
         .stall_o                (cu_others_stall),
         .flush_o                (cu_others_flush),
@@ -180,6 +182,7 @@ module datapath #(
         .rst_n_i                    (rst_n_i),
         .flush_i                    (cu_others_flush),
         .main_cu_stall_o            (be_cu_stall),
+        .main_cu_resume_o           (be_cu_resume),
         .main_cu_flush_o            (be_cu_flush),
         .fetch_valid_i              (fe_be_valid),
         .fetch_ready_o              (be_fe_ready),

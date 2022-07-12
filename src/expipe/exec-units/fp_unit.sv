@@ -57,7 +57,7 @@ module fp_unit
     output  logic [ROB_IDX_LEN-1:0] cdb_idx_o,
     output  logic [XLEN-1:0]        cdb_data_o,
     output  logic                   cdb_except_raised_o,
-    output  logic [ROB_EXCEPT_LEN-1:0] cdb_except_o,
+    output  except_code_t cdb_except_o,
 
     // CSR data
     input   logic [FCSR_FRM_LEN-1:0] csr_frm_i

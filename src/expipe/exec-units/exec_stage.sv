@@ -78,9 +78,9 @@ module exec_stage
     // ------------
 
     // Commit logic data
-    input   logic [ROB_IDX_LEN-1:0]     rob_head_idx_i,
-    output  logic                       cl_store_committing_o,
-    output  logic [ROB_IDX_LEN-1:0]     cl_sb_head_rob_idx_o,
+    input   logic                       cl_sb_pop_store_i,
+    output  logic                       cl_sb_sb_head_completed_o,
+    output  logic [ROB_IDX_LEN-1:0]     cl_sb_sb_head_rob_idx_o,
 
     // CSRs data
     input   logic [SATP_MODE_LEN-1:0]   vm_mode_i,      // virtual memory mode
@@ -136,9 +136,9 @@ module exec_stage
         .dcache_wup_i               (dcache_wup_i),
         .dcache_ready_i             (dcache_ready_i),
         .dcache_req_o               (dcache_req_o),
-        .rob_head_idx_i             (rob_head_idx_i),
-        .cl_store_committing_o      (cl_store_committing_o),
-        .cl_sb_head_rob_idx_o       (cl_sb_head_rob_idx_o),
+        .cl_sb_pop_store_i          (cl_sb_pop_store_i),
+        .cl_sb_sb_head_completed_o  (cl_sb_sb_head_completed_o),
+        .cl_sb_sb_head_rob_idx_o    (cl_sb_sb_head_rob_idx_o),
         .cdb_lb_valid_i             (cdb_valid_i),
         .cdb_sb_valid_i             (cdb_valid_i),
         .cdb_lb_ready_i             (cdb_ready_i[EU_LOAD_BUFFER]),

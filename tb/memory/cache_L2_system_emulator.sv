@@ -26,7 +26,7 @@ module cache_L2_system_emulator #(
     input   logic           rst_ni,
     input   logic           flush_i,
     // (L2 arbiter -> L2 Cache) request channel
-    input l2arb_l2c_req_t l2arb_l2c_req_i,
+    input   l2arb_l2c_req_t l2arb_l2c_req_i,
     output  logic           l2c_l2arb_req_rdy_o,
     // (L2 Cache -> L2 arbiter) answer channel
     output  l2c_l2arb_ans_t l2c_l2arb_ans_o,

@@ -31,10 +31,6 @@ module commit_decoder
     // Control to the commit logic
     output  comm_type_t             comm_type_o
 );
-
-    // DEFINITIONS
-    logic [OPCODE_LEN-1:0]          instr_opcode = instruction_i.r.opcode;
-
     // --------------------
     // COMMIT DOCODER LOGIC
     // --------------------
@@ -47,11 +43,10 @@ module commit_decoder
 
         // No exceptions raised
         else begin
-            case (instr_opcode)
+            case (instruction_i.r.opcode)
 
                 // Intructions committing to the integer RF
                 // ----------------------------------------
-                `OPCODE_ADDI,
                 `OPCODE_LUI,
                 `OPCODE_AUIPC,
                 `OPCODE_LB,

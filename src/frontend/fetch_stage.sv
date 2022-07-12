@@ -50,7 +50,7 @@ module fetch_stage
 
   // To backend
   output logic except_o,
-  //output logic [ROB_EXCEPT_LEN-1:0] except_code_o,
+  //output except_code_t except_code_o,
   output except_code_t except_code_o,
 
   // From branch unit (ex stage)
