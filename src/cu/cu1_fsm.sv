@@ -44,7 +44,7 @@ module cu1_fsm
   	input   except_code_t     	except_code_i,
 
 	//input   logic 				commit_head_cnt,
-	input   logic [ROB_IDX_LEN-1:0]	commit_head_cnt,
+	input   rob_idx_t	commit_head_cnt,
 
 	// From main unit
    	output  logic               abort_i,

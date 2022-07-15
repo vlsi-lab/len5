@@ -77,6 +77,13 @@ module datapath #(
     logic                       cu_others_flush;
     logic                       except_raised;
 
+    // Frontend <--> I$
+    // ----------------
+    frontend_icache_req_t       fe_icache_req;
+    logic                       icache_fe_addr_ready;
+    logic                       fe_icache_data_ready;
+    icache_frontend_ans_t       icache_fe_ans;
+
     // Frontend <--> backend
     // ---------------------
     logic                       be_fe_ready;
@@ -89,6 +96,20 @@ module datapath #(
     except_code_t               fe_be_except_code;
     logic                       be_fe_except;
     logic [XLEN-1:0]            be_fe_except_pc;
+
+    // Backend <--> DTLB
+    // -----------------
+    dtlb_lsq_ans_t              dtlb_be_ans;
+    dtlb_lsq_wup_t              dtlb_be_wup;
+    logic                       dtlb_be_ready;
+    lsq_dtlb_req_t              be_dtlb_req;
+
+    // Backend <--> D$
+    // ---------------
+    l1dc_lsq_ans_t              dcache_be_ans;
+    l1dc_lsq_wup_t              dcache_be_wup;
+    logic                       dcache_be_ready;
+    lsq_l1dc_req_t              be_dcache_req;
 
     // -----------------
     // MAIN CONTROL UNIT
@@ -126,8 +147,6 @@ module datapath #(
     // ---------
     // FRONT-END
     // ---------
-
-    /* TODO: modify frontend for baremetal */
 
     frontend #(.HLEN(HLEN), .BTB_BITS(BTB_BITS), .BOOT_PC(BOOT_PC)) u_frontend
     (
@@ -180,12 +199,14 @@ module datapath #(
         .fetch_res_mispredict_o     (be_fe_res.mispredict),
         .fetch_except_raised_o      (be_fe_except),
         .fetch_except_pc_o          (be_fe_except_pc),
-        .mem_valid_i                (),
-        .mem_ready_i                (),
-        .mem_valid_o                (),
-        .mem_ready_o                (),
-        .mem_req_o                  (),
-        .mem_ans_i                  (),
+        .dtlb_ans_i                 (dtlb_be_ans),
+        .dtlb_wup_i                 (dtlb_be_wup),
+        .dtlb_ready_i               (dtlb_be_ready),
+        .dtlb_req_o                 (be_dtlb_req),
+        .dcache_ans_i               (dcache_be_ans),
+        .dcache_wup_i               (dcache_be_wup),
+        .dcache_ready_i             (dcache_be_ready),
+        .dcache_req_o               (be_dcache_req),
         .mem_vmem_on_o              (csr_mem_vmem_on),
         .mem_sum_bit_o              (csr_mem_sum_bit),
         .mem_mxr_bit_o              (csr_mem_mxr_bit),
@@ -199,7 +220,52 @@ module datapath #(
     // MEMORY-SYSTEM
     // -------------
 
-    /* TODO: MEMORY SYSTEM */
+    memory_system_with_ssram u_memory_system
+    (
+        .clk_i                      (clk_i),
+        .rst_ni                     (rst_n_i),
+
+        .flush_i                    (cu_mem_flush),
+        .abort_i                    (cu_mem_abort),
+        .clr_l1tlb_mshr_i           (cu_mem_clr_l1tlb_mshr),
+        .clr_l2tlb_mshr_i           (cu_mem_clr_l2tlb_mshr),
+        .clear_dmshr_dregs_i        (cu_mem_clear_dmshr_dregs),
+
+        .synch_l1dc_l2c_i           (cu_mem_synch_l1dc_l2c),
+        .l2c_update_done_o          (mem_cu_l2c_update_done),
+
+        .vmem_on_i                  (csr_mem_vmem_on),
+        .sum_bit_i                  (csr_mem_sum_bit),
+        .mxr_bit_i                  (csr_mem_mxr_bit),
+        .priv_mode_i                (csr_mem_priv_mode),
+        .priv_mode_ls_i             (csr_mem_priv_mode_ls),
+        .base_asid_i                (csr_mem_base_asid),
+        .csr_root_ppn_i             (csr_mem_csr_root_ppn),
+
+        .L1TLB_flush_type_i         (cu_mem_L1TLB_flush_type),
+        .L2TLB_flush_type_i         (cu_mem_L2TLB_flush_type),
+        .flush_asid_i               (cu_mem_flush_asid),
+        .flush_page_i               (cu_mem_flush_page),
+
+        .frontend_icache_req_i      (fe_icache_req),
+        .icache_frontend_rdy_o      (icache_fe_addr_ready),
+        .icache_frontend_ans_o      (icache_fe_ans),
+
+        .lsq_dtlb_req_i             (be_dtlb_req),
+        .dtlb_lsq_req_rdy_o         (dtlb_be_ready),
+        .dtlb_lsq_ans_o             (dtlb_be_ans),
+        .dtlb_lsq_wup_o             (dtlb_be_wup),
+
+        .lsq_l1dc_req_i             (be_dcache_req),
+        .l1dc_lsq_req_rdy_o         (dcache_be_ready),
+        .l1dc_lsq_ans_o             (dcache_be_ans),
+        .l1dc_lsq_wup_o             (dcache_be_wup),
+
+        .l2arb_l2c_req_o            (l2arb_l2c_req_o),
+        .l2c_l2arb_req_rdy_i        (l2c_l2arb_req_rdy_i),
+        .l2c_l2arb_ans_i            (l2c_l2arb_ans_i),
+        .l2arb_l2c_ans_rdy_o        (l2arb_l2c_ans_rdy_o)
+    );
 
     // -----------------
     // OUTPUT EVALUATION

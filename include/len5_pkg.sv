@@ -115,13 +115,14 @@ package len5_pkg;
 
     // Instruction union type
     typedef union packed {
-        instr_r_type_t  r;
-        instr_r4_type_t r4;
-        instr_i_type_t  i;
-        instr_s_type_t  s;
-        instr_b_type_t  b;
-        instr_u_type_t  u;
-        instr_j_type_t  j;
+        instr_r_type_t      r;
+        instr_r4_type_t     r4;
+        instr_i_type_t      i;
+        instr_s_type_t      s;
+        instr_b_type_t      b;
+        instr_u_type_t      u;
+        instr_j_type_t      j;
+        logic [ILEN-1:0]    raw;
     } instr_t;
 
     // --------------

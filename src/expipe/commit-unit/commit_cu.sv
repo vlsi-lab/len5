@@ -42,6 +42,7 @@ module commit_cu (
     output  logic                   ready_o,
 
     input   instr_t                 instr_i,
+    input   logic                   res_ready_i,
     input   logic                   except_raised_i,
     input   except_code_t           except_code_i,
 
@@ -93,143 +94,87 @@ module commit_cu (
         COMMIT_EBREAK,      // commit EBREAK instructions
         COMMIT_XRET,        // commit xRET instructions
         COMMIT_WFI,         // wait for interrupt
-        COMMIT_EXCEPT       // handle the generated exception
+        COMMIT_EXCEPT,      // handle the generated exception
+
+        HALT                // dead-end state
     } cu_state_t;
 
     // CU current and next states
-    cu_state_t      curr_state, next_state;
+    cu_state_t      curr_state, v_next_state, next_state;
 
     // ------------
     // CONTROL UNIT
     // ------------
-    // NOTE: Mealy CU not to loose one cycle in normal execution
+    // NOTE: to avoid recomputing the next state in each state, the next state
+    //       on valid input is computed by a dedicated combinational network.
+    //       Special cases are handled by the CU's state progression network.
+
+    // Next state on valid instruction
+    always_comb begin : cu_next_state
+        case (comm_type_i)
+            COMM_TYPE_NONE:         v_next_state  = IDLE;
+            COMM_TYPE_INT_RF:   begin
+                if (res_ready_i)    v_next_state  = COMMIT_INT_RF;
+                else                v_next_state  = HALT;
+            end
+        `ifdef LEN5_FP_EN
+            COMM_TYPE_FP_RF:        begin
+                if (res_ready_i)    v_next_state  = COMMIT_FP_RF;
+                else                v_next_state  = HALT;
+            end
+        `endif /* LEN5_FP_EN */
+            COMM_TYPE_STORE: begin
+                if (!store_comm_i)  v_next_state  = WAIT_STORE;
+                else                v_next_state  = COMMIT_STORE;
+            end
+            COMM_TYPE_JUMP:         v_next_state  = COMMIT_JUMP;
+            COMM_TYPE_BRANCH: begin
+                if (mispredict_i)   v_next_state  = MIS_FLUSH;
+                else                v_next_state  = COMMIT_BRANCH;
+            end
+            COMM_TYPE_CSR:          v_next_state  = COMMIT_CSR;
+            COMM_TYPE_FENCE:        v_next_state  = COMMIT_FENCE;
+            COMM_TYPE_ECALL:        v_next_state  = COMMIT_ECALL;
+            COMM_TYPE_EBREAK:       v_next_state  = COMMIT_EBREAK;
+            COMM_TYPE_XRET:         v_next_state  = COMMIT_XRET;
+            COMM_TYPE_WFI:          v_next_state  = COMMIT_WFI;
+            COMM_TYPE_EXCEPT:       v_next_state  = COMMIT_EXCEPT;
+            default:                v_next_state  = RESET;
+        endcase
+    end
 
     // State progression
     always_comb begin : cu_state_prog
         case (curr_state)
             // Reset state
-            RESET:                      next_state  = IDLE;
+            RESET:              next_state  = IDLE;
 
             // Idle: wait for a valid instruction
             IDLE: begin
-                if (valid_i) begin
-                    case (comm_type_i)
-                        COMM_TYPE_NONE:     next_state  = IDLE;
-                        COMM_TYPE_INT_RF:   next_state  = COMMIT_INT_RF;
-                    `ifdef LEN5_FP_EN
-                        COMM_TYPE_FP_RF:    next_state  = COMMIT_FP_RF;
-                    `endif /* LEN5_FP_EN */
-                        COMM_TYPE_STORE: begin
-                            if (!store_comm_i)  next_state  = WAIT_STORE;
-                            else                next_state  = COMMIT_STORE;
-                        end
-                        COMM_TYPE_JUMP:     next_state  = COMMIT_JUMP;
-                        COMM_TYPE_BRANCH: begin
-                            if (mispredict_i)   next_state  = MIS_FLUSH;
-                            else                next_state  = COMMIT_BRANCH;
-                        end
-                        COMM_TYPE_CSR:      next_state  = COMMIT_CSR;
-                        COMM_TYPE_FENCE:    next_state  = COMMIT_FENCE;
-                        COMM_TYPE_ECALL:    next_state  = COMMIT_ECALL;
-                        COMM_TYPE_EBREAK:   next_state  = COMMIT_EBREAK;
-                        COMM_TYPE_XRET:     next_state  = COMMIT_XRET;
-                        COMM_TYPE_WFI:      next_state  = COMMIT_WFI;
-                        COMM_TYPE_EXCEPT:   next_state  = COMMIT_EXCEPT;
-                        default:            next_state  = RESET;
-                    endcase
-                end else                    next_state  = IDLE;
+                if (valid_i)    next_state  = v_next_state;
+                else            next_state  = IDLE;
             end
 
             // Commit to the integer register file
             // NOTE: do not wait for ready, the RFs are always ready
             COMMIT_INT_RF: begin
-                if (valid_i) begin
-                    case (comm_type_i)
-                        COMM_TYPE_NONE:     next_state  = IDLE;
-                        COMM_TYPE_INT_RF:   next_state  = COMMIT_INT_RF;
-                    `ifdef LEN5_FP_EN
-                        COMM_TYPE_FP_RF:    next_state  = COMMIT_FP_RF;
-                    `endif /* LEN5_FP_EN */
-                        COMM_TYPE_STORE: begin
-                            if (!store_comm_i)  next_state  = WAIT_STORE;
-                            else                next_state  = COMMIT_STORE;
-                        end
-                        COMM_TYPE_JUMP:     next_state  = COMMIT_JUMP;
-                        COMM_TYPE_BRANCH: begin
-                            if (mispredict_i)   next_state  = MIS_FLUSH;
-                            else                next_state  = COMMIT_BRANCH;
-                        end
-                        COMM_TYPE_CSR:      next_state  = COMMIT_CSR;
-                        COMM_TYPE_FENCE:    next_state  = COMMIT_FENCE;
-                        COMM_TYPE_ECALL:    next_state  = COMMIT_ECALL;
-                        COMM_TYPE_EBREAK:   next_state  = COMMIT_EBREAK;
-                        COMM_TYPE_XRET:     next_state  = COMMIT_XRET;
-                        COMM_TYPE_WFI:      next_state  = COMMIT_WFI;
-                        COMM_TYPE_EXCEPT:   next_state  = COMMIT_EXCEPT;
-                        default:            next_state  = RESET;
-                    endcase
-                end else                    next_state  = IDLE;
+                if (valid_i)    next_state  = v_next_state;
+                else            next_state  = IDLE;
             end
 
         `ifdef LEN5_FP_EN
             // Commit to the floating-point register file
             // NOTE: do not wait for ready, the RFs are always ready
             COMMIT_FP_RF: begin
-                if (valid_i) begin
-                    case (comm_type_i)
-                        COMM_TYPE_NONE:     next_state  = IDLE;
-                        COMM_TYPE_INT_RF:   next_state  = COMMIT_INT_RF;
-                        COMM_TYPE_FP_RF:    next_state  = COMMIT_FP_RF;
-                        COMM_TYPE_STORE: begin
-                            if (!store_comm_i)  next_state  = WAIT_STORE;
-                            else                next_state  = COMMIT_STORE;
-                        end
-                        COMM_TYPE_JUMP:     next_state  = COMMIT_JUMP;
-                        COMM_TYPE_BRANCH: begin
-                            if (mispredict_i)   next_state  = MIS_FLUSH;
-                            else                next_state  = COMMIT_BRANCH;
-                        end
-                        COMM_TYPE_CSR:      next_state  = COMMIT_CSR;
-                        COMM_TYPE_FENCE:    next_state  = COMMIT_FENCE;
-                        COMM_TYPE_ECALL:    next_state  = COMMIT_ECALL;
-                        COMM_TYPE_EBREAK:   next_state  = COMMIT_EBREAK;
-                        COMM_TYPE_XRET:     next_state  = COMMIT_XRET;
-                        COMM_TYPE_WFI:      next_state  = COMMIT_WFI;
-                        COMM_TYPE_EXCEPT:   next_state  = COMMIT_EXCEPT;
-                        default:            next_state  = RESET;
-                    endcase
-                end else                    next_state  = IDLE;
+                if (valid_i)    next_state  = v_next_state;
+                else            next_state  = IDLE;
             end
         `endif /* LEN5_FP_EN */
 
             // Commit store instructions
             COMMIT_STORE: begin
-                if (valid_i) begin
-                    case (comm_type_i)
-                        COMM_TYPE_NONE:     next_state  = IDLE;
-                        COMM_TYPE_INT_RF:   next_state  = COMMIT_INT_RF;
-                    `ifdef LEN5_FP_EN
-                        COMM_TYPE_FP_RF:    next_state  = COMMIT_FP_RF;
-                    `endif /* LEN5_FP_EN */
-                        COMM_TYPE_STORE: begin
-                            if (!store_comm_i)  next_state  = WAIT_STORE;
-                            else                next_state  = COMMIT_STORE;
-                        end
-                        COMM_TYPE_JUMP:     next_state  = COMMIT_JUMP;
-                        COMM_TYPE_BRANCH: begin
-                            if (mispredict_i)   next_state  = MIS_FLUSH;
-                            else                next_state  = COMMIT_BRANCH;
-                        end
-                        COMM_TYPE_CSR:      next_state  = COMMIT_CSR;
-                        COMM_TYPE_FENCE:    next_state  = COMMIT_FENCE;
-                        COMM_TYPE_ECALL:    next_state  = COMMIT_ECALL;
-                        COMM_TYPE_EBREAK:   next_state  = COMMIT_EBREAK;
-                        COMM_TYPE_XRET:     next_state  = COMMIT_XRET;
-                        COMM_TYPE_WFI:      next_state  = COMMIT_WFI;
-                        COMM_TYPE_EXCEPT:   next_state  = COMMIT_EXCEPT;
-                        default:            next_state  = RESET;
-                    endcase
-                end else                    next_state  = IDLE;
+                if (valid_i)    next_state  = v_next_state;
+                else            next_state  = IDLE;
             end
 
             // Wait for store committing
@@ -240,62 +185,14 @@ module commit_cu (
 
             // Commit jump instructions
             COMMIT_JUMP: begin
-                if (valid_i) begin
-                    case (comm_type_i)
-                        COMM_TYPE_NONE:     next_state  = IDLE;
-                        COMM_TYPE_INT_RF:   next_state  = COMMIT_INT_RF;
-                    `ifdef LEN5_FP_EN
-                        COMM_TYPE_FP_RF:    next_state  = COMMIT_FP_RF;
-                    `endif /* LEN5_FP_EN */
-                        COMM_TYPE_STORE: begin
-                            if (!store_comm_i)  next_state  = WAIT_STORE;
-                            else                next_state  = COMMIT_STORE;
-                        end
-                        COMM_TYPE_JUMP:     next_state  = COMMIT_JUMP;
-                        COMM_TYPE_BRANCH: begin
-                            if (mispredict_i)   next_state  = MIS_FLUSH;
-                            else                next_state  = COMMIT_BRANCH;
-                        end
-                        COMM_TYPE_CSR:      next_state  = COMMIT_CSR;
-                        COMM_TYPE_FENCE:    next_state  = COMMIT_FENCE;
-                        COMM_TYPE_ECALL:    next_state  = COMMIT_ECALL;
-                        COMM_TYPE_EBREAK:   next_state  = COMMIT_EBREAK;
-                        COMM_TYPE_XRET:     next_state  = COMMIT_XRET;
-                        COMM_TYPE_WFI:      next_state  = COMMIT_WFI;
-                        COMM_TYPE_EXCEPT:   next_state  = COMMIT_EXCEPT;
-                        default:            next_state  = RESET;
-                    endcase
-                end else                    next_state  = IDLE;
+                if (valid_i)    next_state  = v_next_state;
+                else            next_state  = IDLE;
             end
 
             // Correctly predicted branch: just commit
             COMMIT_BRANCH: begin
-                if (valid_i) begin
-                    case (comm_type_i)
-                        COMM_TYPE_NONE:     next_state  = IDLE;
-                        COMM_TYPE_INT_RF:   next_state  = COMMIT_INT_RF;
-                    `ifdef LEN5_FP_EN
-                        COMM_TYPE_FP_RF:    next_state  = COMMIT_FP_RF;
-                    `endif /* LEN5_FP_EN */
-                        COMM_TYPE_STORE: begin
-                            if (!store_comm_i)  next_state  = WAIT_STORE;
-                            else                next_state  = COMMIT_STORE;
-                        end
-                        COMM_TYPE_JUMP:     next_state  = COMMIT_JUMP;
-                        COMM_TYPE_BRANCH: begin
-                            if (mispredict_i)   next_state  = MIS_FLUSH;
-                            else                next_state  = COMMIT_BRANCH;
-                        end
-                        COMM_TYPE_CSR:      next_state  = COMMIT_CSR;
-                        COMM_TYPE_FENCE:    next_state  = COMMIT_FENCE;
-                        COMM_TYPE_ECALL:    next_state  = COMMIT_ECALL;
-                        COMM_TYPE_EBREAK:   next_state  = COMMIT_EBREAK;
-                        COMM_TYPE_XRET:     next_state  = COMMIT_XRET;
-                        COMM_TYPE_WFI:      next_state  = COMMIT_WFI;
-                        COMM_TYPE_EXCEPT:   next_state  = COMMIT_EXCEPT;
-                        default:            next_state  = RESET;
-                    endcase
-                end else                    next_state  = IDLE;
+                if (valid_i)    next_state  = v_next_state;
+                else            next_state  = IDLE;
             end
 
             // Flush the in-flight instructions
@@ -306,32 +203,8 @@ module commit_cu (
 
             // Atomically read and write CSRs
             COMMIT_CSR: begin
-                if (valid_i) begin
-                    case (comm_type_i)
-                        COMM_TYPE_NONE:     next_state  = IDLE;
-                        COMM_TYPE_INT_RF:   next_state  = COMMIT_INT_RF;
-                    `ifdef LEN5_FP_EN
-                        COMM_TYPE_FP_RF:    next_state  = COMMIT_FP_RF;
-                    `endif /* LEN5_FP_EN */
-                        COMM_TYPE_STORE: begin
-                            if (!store_comm_i)  next_state  = WAIT_STORE;
-                            else                next_state  = COMMIT_STORE;
-                        end
-                        COMM_TYPE_JUMP:     next_state  = COMMIT_JUMP;
-                        COMM_TYPE_BRANCH: begin
-                            if (mispredict_i)   next_state  = MIS_FLUSH;
-                            else                next_state  = COMMIT_BRANCH;
-                        end
-                        COMM_TYPE_CSR:      next_state  = COMMIT_CSR;
-                        COMM_TYPE_FENCE:    next_state  = COMMIT_FENCE;
-                        COMM_TYPE_ECALL:    next_state  = COMMIT_ECALL;
-                        COMM_TYPE_EBREAK:   next_state  = COMMIT_EBREAK;
-                        COMM_TYPE_XRET:     next_state  = COMMIT_XRET;
-                        COMM_TYPE_WFI:      next_state  = COMMIT_WFI;
-                        COMM_TYPE_EXCEPT:   next_state  = COMMIT_EXCEPT;
-                        default:            next_state  = RESET;
-                    endcase
-                end else                    next_state  = IDLE;
+                if (valid_i)    next_state  = v_next_state;
+                else            next_state  = IDLE;
             end
 
             /* TODO: properly handle the following instructions */
@@ -342,8 +215,11 @@ module commit_cu (
             COMMIT_WFI:         next_state  = IDLE;
             COMMIT_EXCEPT:      next_state  = IDLE;
 
+            // HALT state (deadlock)
+            HALT:               next_state  = HALT;
+
             // Unexpected state
-            default:                next_state  = RESET;
+            default:            next_state  = RESET;
         endcase
     end
 
@@ -351,6 +227,7 @@ module commit_cu (
     always_comb begin : cu_out_eval
         // Default values
         ready_o             = 1'b0;
+        comm_reg_en_o       = 1'b0;
         int_rs_valid_o      = 1'b0;
         int_rf_valid_o      = 1'b0;
     `ifdef LEN5_FP_EN
@@ -368,12 +245,14 @@ module commit_cu (
 
             IDLE: begin
                 ready_o         = 1'b1;
+                comm_reg_en_o   = 1'b1;
             end
 
             COMMIT_INT_RF: begin
                 ready_o         = 1'b1;
                 int_rs_valid_o  = 1'b1;
                 int_rf_valid_o  = 1'b1;
+                comm_reg_en_o   = 1'b1;
             end
 
         `ifdef LEN5_FP_EN
@@ -381,12 +260,14 @@ module commit_cu (
                 ready_o         = 1'b1;
                 fp_rs_valid_o   = 1'b1;
                 fp_rf_valid_o   = 1'b1;
+                comm_reg_en_o   = 1'b1;
             end
         `endif /* LEN5_FP_EN */
 
             COMMIT_STORE: begin
                 ready_o         = 1'b1;
                 sb_pop_store_o  = 1'b1;
+                comm_reg_en_o   = 1'b1;
             end
 
             WAIT_STORE:; // use default values
@@ -395,10 +276,12 @@ module commit_cu (
                 ready_o         = 1'b1;
                 int_rf_valid_o  = 1'b1;
                 int_rs_valid_o  = 1'b1;
+                comm_reg_en_o   = 1'b1;
             end
 
             COMMIT_BRANCH: begin
                 ready_o         = 1'b1;
+                comm_reg_en_o   = 1'b1;
             end
 
             MIS_FLUSH: begin
@@ -411,16 +294,30 @@ module commit_cu (
 
             COMMIT_CSR: begin
                 csr_valid_o     = 1'b1;
+                comm_reg_en_o   = 1'b1;
             end
 
             /* TODO: properly handle the following instructions */
-            COMMIT_FENCE:;
-            COMMIT_ECALL:;
-            COMMIT_EBREAK:;
-            COMMIT_XRET:;
-            COMMIT_WFI:;
-            COMMIT_EXCEPT:;
+            COMMIT_FENCE: begin
+                comm_reg_en_o   = 1'b1;
+            end
+            COMMIT_ECALL: begin
+                comm_reg_en_o   = 1'b1;
+            end
+            COMMIT_EBREAK: begin
+                comm_reg_en_o   = 1'b1;
+            end
+            COMMIT_XRET: begin
+                comm_reg_en_o   = 1'b1;
+            end
+            COMMIT_WFI: begin
+                comm_reg_en_o   = 1'b1;
+            end
+            COMMIT_EXCEPT: begin
+                comm_reg_en_o   = 1'b1;
+            end
 
+            HALT:;
             default:;
         endcase
     end

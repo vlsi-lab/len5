@@ -49,7 +49,7 @@ module vaddr_adder #(IDX_LEN = 8)
     output  logic                       is_store_o,
     output  logic [XLEN-1:0]            vaddr_o,
     output  logic [IDX_LEN-1:0]         lsb_idx_o,
-    output  vadder_except_t             except_o
+    output  except_code_t               except_o
 );
 
     // DEFINITIONS

@@ -12,43 +12,54 @@
 // Author: Michele Caon
 // Date: 29/10/2019
 
-module prio_2way_arbiter
-(
-    // Input valid signals
-    input logic [1:0] valid_i,
+module prio_2way_arbiter #(
+    parameter type DATA_T
+) (
+    // Handshaking
+    input   logic       high_prio_valid_i,  // from upstream hardware
+    input   logic       low_prio_valid_i,   // from upstream hardware
+    input   logic       ready_i,            // from downstream hardware
+    output  logic       valid_o,            // to downstream hardware
+    output  logic       high_prio_ready_o,  // to upstream hardware
+    output  logic       low_prio_ready_o,   // to upstream hardware
 
-    // Input ready signal
-    input logic ready_i,
-
-    // Output valid signal
-    output logic valid_o,
-
-    // Output ready signals
-    output logic [1:0] ready_o,
-
-    // Selector (usually connected to a mux)
-    output logic select_o
+    // Data
+    input   DATA_T      high_prio_data_i,
+    input   DATA_T      low_prio_data_i,
+    output  DATA_T      data_o
 );
+    // INTERNAL SIGNALS
+    // ----------------
+    logic   sel_high_prio;
 
+    // Ready generation
     // ----------------
-    // READY GENERATION
-    // ----------------
-    // - No ready signal is asserted if the input ready signal is not
-    // - If only one of the inputs is valid, that request is accepted
-    // - If both request are valid, the lower-order one is accepted (valid_i[0])
     always_comb begin: ready_gen
+        // Default (downstram not ready)
+        high_prio_ready_o   = 1'b0;
+        low_prio_ready_o    = 1'b0;
+        sel_high_prio       = 1'b1;
+        
+        // Downstream ready
         if (ready_i) begin
-            case(valid_i)
-                2'b00: ready_o = 2'b11; // valid_i[0] = 0, valid_i[1] = 0
-                2'b01: ready_o = 2'b01; // valid_i[0] = 1, valid_i[1] = 0
-                2'b10: ready_o = 2'b10; // valid_i[0] = 1, valid_i[1] = 0
-                2'b11: ready_o = 2'b01; // valid_i[0] = 1, valid_i[1] = 1
-
-                default: ready_o = 2'b00; // default values
-            endcase
-        end else ready_o = 2'b00; // default values
-        select_o = ready_o[1]; // 1 if valid[1] is served
-        valid_o = |valid_i; // 1 if at least one input is valid
+            if (high_prio_valid_i) begin
+                high_prio_ready_o   = 1'b1;
+                low_prio_ready_o    = 1'b0;
+                sel_high_prio       = 1'b1;
+            end else if (low_prio_valid_i) begin
+                high_prio_ready_o   = 1'b0;
+                low_prio_ready_o    = 1'b1;
+                sel_high_prio       = 1'b0;
+            end else begin
+                high_prio_ready_o   = 1'b1;
+                low_prio_ready_o    = 1'b1;
+                sel_high_prio       = 1'b1;
+            end
+        end
     end
+
+    // Output multiplexer
+    // ------------------
+    assign data_o  = (sel_high_prio) ? high_prio_data_i : low_prio_data_i;
 
 endmodule

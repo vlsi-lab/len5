@@ -39,9 +39,9 @@ module op_only_rs
     // Data from the decode stage
     // input   logic [OP_ONLY_CTL_LEN-1:0]    ctl_i,
     input   logic                           rs1_ready_i,
-    input   logic [ROB_IDX_LEN-1:0]         rs1_idx_i,
+    input   rob_idx_t         rs1_idx_i,
     input   logic [XLEN-1:0]                rs1_value_i,
-    input   logic [ROB_IDX_LEN-1:0]         dest_idx_i,
+    input   rob_idx_t         dest_idx_i,
 
     // Hanshake from/to the CDB 
     input   logic                           cdb_ready_i,
@@ -61,9 +61,9 @@ module op_only_rs
     typedef struct packed {
         logic                   valid;      // The entry contains a valid instruction
         logic                   rs1_ready;  // The first operand value is available in 'rs1_value'
-        logic [ROB_IDX_LEN-1:0] rs1_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
+        rob_idx_t rs1_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
         logic [XLEN-1:0]        rs1_value;  // The value of the first operand
-        logic [ROB_IDX_LEN-1:0] dest_idx;   // The entry of the ROB assigned to the current instruction
+        rob_idx_t dest_idx;   // The entry of the ROB assigned to the current instruction
     } rs_entry_t;
 
     // Reservation station pointers

@@ -12,49 +12,58 @@
 // Author: Michele Caon
 // Date: 29/10/2019
 
-module fair_2way_arbiter
-(
-    input logic clk_i,
-    input logic rst_n_i,
+module fair_2way_arbiter #(
+    parameter type DATA_T
+) (
+    input   logic       clk_i,
+    input   logic       rst_n_i,
 
-    // Input valid signals
-    input logic [1:0] valid_i,
+    // Handshaking
+    input   logic       valid_a_i,
+    input   logic       valid_b_i,
+    input   logic       ready_i,
+    output  logic       valid_o,
+    output  logic       ready_a_o,
+    output  logic       ready_b_o,
 
-    // Input ready signal
-    input logic ready_i,
-
-    // Output valid signal
-    output logic valid_o,
-
-    // Output ready signals
-    output logic [1:0] ready_o,
-
-    // Selector (usually connected to a mux)
-    output logic select_o
+    // Data
+    input   DATA_T      data_a_i,
+    input   DATA_T      data_b_i,
+    output  DATA_T      data_o
 );
     // DEFINITIONS
-    logic last_served;
+    logic last_served_a;
+    logic sel_a;
 
+    // Ready generation
     // ----------------
-    // READY GENERATION
-    // ----------------
-    // - No ready signal is asserted if the input ready signal is not
-    // - If only one of the inputs is valid, that request is accepted
-    // - If both requests are valid (conflict), the one that wasn't served on last conflict is served
     always_comb begin: ready_gen
+        // Default (downstram not ready)
+        ready_a_o   = 1'b0;
+        ready_b_o   = 1'b0;
+        sel_a       = 1'b1;
+        
+        // Downstream ready
         if (ready_i) begin
-            case(valid_i)
-                2'b00: ready_o = 2'b11; // valid_i[0] = 0, valid_i[1] = 0
-                2'b01: ready_o = 2'b01; // valid_i[0] = 1, valid_i[1] = 0
-                2'b10: ready_o = 2'b10; // valid_i[0] = 1, valid_i[1] = 0
-                2'b11: ready_o = (last_served) ? (2'b01) : (2'b10); // valid_i[0] = 1, valid_i[1] = 1
-
-                default: ready_o = 2'b00; // default values
-            endcase
-        end else ready_o = 2'b00; // default values
-        select_o = ready_o[1]; // 1 if valid[1] is served
-        valid_o = |valid_i; // 1 if at least one input is valid
+            if (valid_a_i && !valid_b_i) begin
+                ready_a_o   = 1'b1;
+                ready_b_o   = 1'b0;
+                sel_a       = 1'b1;
+            end else if (valid_b_i && !valid_a_i) begin
+                ready_a_o   = 1'b0;
+                ready_b_o   = 1'b1;
+                sel_a       = 1'b0;
+            end else if (valid_a_i && valid_b_i) begin
+                ready_a_o   = ~last_served_a;
+                ready_b_o   = last_served_a;
+                sel_a       = ~last_served_a;
+            end
+        end
     end
+
+    // Output multiplexer
+    // ------------------
+    assign data_o  = (sel_a) ? data_a_i : data_b_i;
 
     // -----------------------
     // LAST SERVED ON CONFLICT
@@ -62,8 +71,9 @@ module fair_2way_arbiter
     // This flip-flop stores the last input that was accepted during a conflict (both valid asserted). When a new conflict takes place, the other input is served instead.
     always @(posedge clk_i or negedge rst_n_i) begin: last_served_ff
         if (!rst_n_i) begin
-            last_served <= 1'b0;
-        end else if (valid_i == 2'b11 && ready_i) last_served <= ~last_served;
+            last_served_a <= 1'b0;
+        end else if (valid_a_i && valid_b_i && ready_i) 
+            last_served_a <= ~last_served_a;
     end
 
 endmodule

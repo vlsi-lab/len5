@@ -87,7 +87,7 @@ module cu_dp_mem
 
   	// LSQ <-> d-Cache
  	logic                 l1dc_lsq_req_rdy_o;
-	logic [ROB_IDX_LEN-1:0] rob_head_idx_o;
+	rob_idx_t rob_head_idx_o;
 
 	//l2arb_l2c_req_t       l2arb_l2c_req_o;
   	//logic                 l2c_l2arb_req_rdy_i;

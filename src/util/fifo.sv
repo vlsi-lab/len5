@@ -42,7 +42,7 @@ module fifo #(
     // ----------------
 
     // Head and tail counters
-    logic [$clog2(DEPTH)-1:0]   head_cnt, tail_cnt;
+    logic [$clog2(DEPTH)-1:0]   head_idx, tail_idx;
     logic                       head_cnt_en, tail_cnt_en;
     logic                       head_cnt_clr, tail_cnt_clr;
 
@@ -96,6 +96,9 @@ module fifo #(
     // -----------
     // FIFO UPDATE
     // -----------
+    // NOTE: operations priority:
+    // 1) push
+    // 2) pop
     always_ff @( posedge clk_i or negedge rst_n_i ) begin : fifo_update
         if (!rst_n_i) begin
             foreach (data[i]) begin
@@ -107,12 +110,13 @@ module fifo #(
                 data_valid[i]   <= 1'b0;    // clearing valid is enough
             end
         end else begin
-            if (fifo_push) begin
-                data[tail_cnt]          <= data_i;
-                data_valid[tail_cnt]    <= 1'b1;
-            end
-            if (fifo_pop) begin
-                data_valid[head_cnt]    <= 1'b0;
+            foreach (data[i]) begin
+                if (fifo_push && tail_idx == i) begin
+                    data_valid[i]    <= 1'b1;
+                    data[i]          <= data_i;
+                end else if (fifo_pop && head_idx == i) begin
+                    data_valid[i]    <= 1'b0;
+                end
             end
         end
     end

@@ -44,11 +44,11 @@ module issue_logic (
 
     // Data from/to the integer register status register
     input   logic                       int_regstat_rs1_busy_i,     // rs1 value is in the ROB or has to be computed
-    input   logic [ROB_IDX_LEN-1:0]     int_regstat_rs1_rob_idx_i,  // the index of the ROB where the result is found
+    input   rob_idx_t     int_regstat_rs1_rob_idx_i,  // the index of the ROB where the result is found
     input   logic                       int_regstat_rs2_busy_i,     // rs1 value is in the ROB or has to be computed
-    input   logic [ROB_IDX_LEN-1:0]     int_regstat_rs2_rob_idx_i,  // the index of the ROB where the result is found
+    input   rob_idx_t     int_regstat_rs2_rob_idx_i,  // the index of the ROB where the result is found
     output  logic [REG_IDX_LEN-1:0]     int_regstat_rd_idx_o,       // destination register of the issuing instruction
-    output  logic [ROB_IDX_LEN-1:0]     int_regstat_rob_idx_o,      // ROB index where the instruction is being allocated (tail pointer of the ROB)
+    output  rob_idx_t     int_regstat_rob_idx_o,      // ROB index where the instruction is being allocated (tail pointer of the ROB)
     output  logic [REG_IDX_LEN-1:0]     int_regstat_rs1_idx_o,      // first source register index
     output  logic [REG_IDX_LEN-1:0]     int_regstat_rs2_idx_o,      // second source register index
 
@@ -65,11 +65,11 @@ module issue_logic (
 
     // Data from/to the floating point register status register
     input   logic                       fp_regstat_rs1_busy_i,     // rs1 value is in the ROB or has to be computed
-    input   logic [ROB_IDX_LEN-1:0]     fp_regstat_rs1_rob_idx_i,  // the index of the ROB where the result is found
+    input   rob_idx_t     fp_regstat_rs1_rob_idx_i,  // the index of the ROB where the result is found
     input   logic                       fp_regstat_rs2_busy_i,     // rs1 value is in the ROB or has to be computed
-    input   logic [ROB_IDX_LEN-1:0]     fp_regstat_rs2_rob_idx_i,  // the index of the ROB where the result is found
+    input   rob_idx_t     fp_regstat_rs2_rob_idx_i,  // the index of the ROB where the result is found
     output  logic [REG_IDX_LEN-1:0]     fp_regstat_rd_idx_o,       // destination register of the issuing instruction
-    output  logic [ROB_IDX_LEN-1:0]     fp_regstat_rob_idx_o,      // ROB index where the instruction is being allocated (tail pointer of the ROB)
+    output  rob_idx_t     fp_regstat_rob_idx_o,      // ROB index where the instruction is being allocated (tail pointer of the ROB)
     output  logic [REG_IDX_LEN-1:0]     fp_regstat_rs1_idx_o,      // first source register index
     output  logic [REG_IDX_LEN-1:0]     fp_regstat_rs2_idx_o,      // second source register index
 
@@ -92,13 +92,13 @@ module issue_logic (
     // Data to the execution pipeline reservation stations
     output  logic [MAX_EU_CTL_LEN-1:0]  ex_eu_ctl_o,            // controls for the associated EU
     output  logic                       ex_rs1_ready_o,         // first operand is ready at issue time (from the RF or the ROB)
-    output  logic [ROB_IDX_LEN-1:0]     ex_rs1_idx_o,           // the index of the ROB where the first operand can be found (if not ready)
+    output  rob_idx_t     ex_rs1_idx_o,           // the index of the ROB where the first operand can be found (if not ready)
     output  logic [XLEN-1:0]            ex_rs1_value_o,         // the value of the first operand (if ready)
     output  logic                       ex_rs2_ready_o,         // second operand is ready at issue time (from the RF or the ROB)
-    output  logic [ROB_IDX_LEN-1:0]     ex_rs2_idx_o,           // the index of the ROB where the first operand can be found (if not ready)
+    output  rob_idx_t     ex_rs2_idx_o,           // the index of the ROB where the first operand can be found (if not ready)
     output  logic [XLEN-1:0]            ex_rs2_value_o,         // the value of the first operand (if ready)
     output  logic [XLEN-1:0]            ex_imm_value_o,         // the value of the immediate field
-    output  logic [ROB_IDX_LEN-1:0]     ex_rob_idx_o,           // the location of the ROB assigned to the instruction
+    output  rob_idx_t     ex_rob_idx_o,           // the location of the ROB assigned to the instruction
     output  logic [XLEN-1:0]            ex_pred_pc_o,              // the PC of the current issuing instr (branches only)
     output  logic [XLEN-1:0]            ex_pred_target_o,          // the predicted target of the current issuing instr (branches only)
     output  logic                       ex_pred_taken_o,           // the predicted taken bit of the current issuing instr (branches only)
@@ -109,7 +109,7 @@ module issue_logic (
 	// Data from the cdb
 	input   logic                       cdb_except_raised_i,
 	input   logic [XLEN-1:0]            cdb_value_i,
-	input   logic [ROB_IDX_LEN-1:0]		cdb_rob_idx_i,
+	input   rob_idx_t		cdb_rob_idx_i,
 
     // Handshake from/to the ROB
     input   logic                       rob_ready_i,            // the ROB has an empty entry available
@@ -120,10 +120,12 @@ module issue_logic (
     input   logic [XLEN-1:0]            rob_rs1_value_i,        // the value of the first operand
     input   logic                       rob_rs2_ready_i,        // the second operand is ready in the ROB
     input   logic [XLEN-1:0]            rob_rs2_value_i,        // the value of the second operand
-    input   logic [ROB_IDX_LEN-1:0]     rob_tail_idx_i,         // the entry of the ROB where the instr is being allocated
+    input   rob_idx_t     rob_tail_idx_i,         // the entry of the ROB where the instr is being allocated
     
-    output  logic [ROB_IDX_LEN-1:0]     rob_rs1_idx_o,          // ROB entry containing rs1 value
-    output  logic [ROB_IDX_LEN-1:0]     rob_rs2_idx_o,          // ROB entry containing rs2 value
+    output  rob_idx_t     rob_rs1_idx_o,          // ROB entry containing rs1 value
+    output  rob_idx_t     rob_rs2_idx_o,          // ROB entry containing rs2 value
+    output  rob_entry_t                 rob_data_o,             // data to the ROB
+
     output  instr_t                     rob_instr_o,            // to identify the instruction
     output  logic [XLEN-1:0]            rob_pc_o,               // the PC of the current instruction
     output  logic [REG_IDX_LEN-1:0]     rob_rd_idx_o,           // the destination register index (rd)
@@ -136,13 +138,13 @@ module issue_logic (
     // Data from the commit logic (for operands fetch)
     input   logic                       cl_reg0_valid_i,
     input   logic [XLEN-1:0]            cl_reg0_value_i,
-    input   logic [ROB_IDX_LEN-1:0]     cl_reg0_idx_i,
+    input   rob_idx_t     cl_reg0_idx_i,
     input   logic                       cl_reg1_valid_i,
     input   logic [XLEN-1:0]            cl_reg1_value_i,
-    input   logic [ROB_IDX_LEN-1:0]     cl_reg1_idx_i,
+    input   rob_idx_t     cl_reg1_idx_i,
     input   logic                       cl_comm_reg_valid_i,
     input   logic [XLEN-1:0]            cl_comm_reg_value_i,
-    input   logic [ROB_IDX_LEN-1:0]     cl_comm_reg_idx_i
+    input   rob_idx_t     cl_comm_reg_idx_i
 );
 
     // DEFINITIONS
@@ -156,13 +158,13 @@ module issue_logic (
     logic [XLEN-1:0]                    instr_imm_rs1_value;    // for CSR immediate instr.
     logic [XLEN-1:0]                    imm_value;              // selected immediate
 
-    logic [ROB_IDX_LEN-1:0]             rob_tail_idx;
+    rob_idx_t             rob_tail_idx;
 
     // Handshake control
     // logic                               regstat_ready;
 
     // Operand fetch
-    logic [ROB_IDX_LEN-1:0]             rob_rs1_idx, rob_rs2_idx;
+    rob_idx_t             rob_rs1_idx, rob_rs2_idx;
     logic                               rs1_ready, rs2_ready;
     logic [XLEN-1:0]                    rs1_value, rs2_value;
 
@@ -614,16 +616,13 @@ module issue_logic (
     // To the ROB
     assign  rob_rs1_idx_o               = rob_rs1_idx;
     assign  rob_rs2_idx_o               = rob_rs2_idx;
-    assign  rob_instr_o                 = iq_instr_i.instruction;
-    assign  rob_pc_o                    = iq_instr_i.curr_pc;
-    assign  rob_rd_idx_o                = instr_rd_idx;
-
-    assign  rob_except_raised_o         = eh_except_raised;
-    assign  rob_except_code_o           = eh_except_code;
-    assign  rob_except_aux_o            = eh_except_aux;
-
-    assign  rob_res_ready_o             = id_res_ready;
-    assign  rob_res_value_o             = imm_value;
+    assign  rob_data_o.instruction      = iq_instr_i.instruction;
+    assign  rob_data_o.instr_pc         = iq_instr_i.curr_pc;
+    assign  rob_data_o.res_ready        = id_res_ready;
+    assign  rob_data_o.res_value        = (eh_except_raised) ? eh_except_aux : imm_value;
+    assign  rob_data_o.rd_idx           = instr_rd_idx;
+    assign  rob_data_o.except_raised    = eh_except_raised;
+    assign  rob_data_o.except_code      = eh_except_code;
 
     // ----------
     // ASSERTIONS

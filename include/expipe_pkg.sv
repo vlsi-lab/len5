@@ -132,6 +132,8 @@ package expipe_pkg;
     // ROB
     // ----
 
+    typedef rob_idx_t rob_idx_t;
+
     typedef struct packed {
         instr_t                     instruction;    // the instruction
         logic [XLEN-1:0]            instr_pc;       // the program counter if the instruction
@@ -147,7 +149,7 @@ package expipe_pkg;
     // ----
     
     typedef struct packed {
-        logic [ROB_IDX_LEN-1:0]     rob_idx;
+        rob_idx_t                   rob_idx;
         logic [XLEN-1:0]            value;
         logic                       except_raised;
         except_code_t               except_code;
@@ -171,9 +173,17 @@ package expipe_pkg;
     // ---------------
     
     typedef struct packed {
-        logic [ROB_IDX_LEN-1:0]     busy;       /* at most as many entry in the ROB, the current (this instruction) */
-        logic [ROB_IDX_LEN-1:0]     rob_idx;
+        rob_idx_t     busy;       /* at most as many entry in the ROB, the current (this instruction) */
+        rob_idx_t     rob_idx;
     } regstat_entry_t;
+
+    // Operand data
+    // ------------
+    typedef struct packed {
+        logic                   ready;
+        rob_idx_t               rob_idx;
+        logic [XLEN-1:0]        value;
+    } op_data_t;
 
     // -----------
     // ISSUE LOGIC
@@ -259,19 +269,19 @@ package expipe_pkg;
         logic                       store_dep;         // the entry must wait for alla previous store to commit before it can be executed
         logic                       pfwd_attempted;    // the entry is ready for the cache access
         `ifdef ENABLE_AGE_BASED_SELECTOR
-        logic [ROB_IDX_LEN-1:0]     entry_age;         // the age of the entry, used for scheduling
+        rob_idx_t     entry_age;         // the age of the entry, used for scheduling
         `endif
         logic [STBUFF_IDX_LEN:0]    older_stores;      // Number of older uncommitted stores (if 0, the entry is dependency-free)
         logic [LDST_TYPE_LEN-1:0]   load_type;         // LB, LBU, LH, LHU, LW, LWU, LD
         logic                       rs1_ready;         // the value of rs1 contained in 'rs1_value' field is valid
-        logic [ROB_IDX_LEN-1:0]     rs1_idx;           // the index of the ROB that will contain the base address
+        rob_idx_t     rs1_idx;           // the index of the ROB that will contain the base address
         logic [XLEN-1:0]            rs1_value;         // the value of the base address
         logic [XLEN-1:0]            imm_value;         // the value of the immediate field (offset)
         logic                       vaddr_ready;       // the virtual address has already been computed
         logic [XLEN-1:0]            vaddr;             // the virtual address
         logic                       paddr_ready;       // the address translation (TLB access) has already completed
         logic [PPN_LEN-1:0]         ppn;  // the physical page number
-        logic [ROB_IDX_LEN-1:0]     dest_idx;          // the entry of the ROB where the loaded value will be stored
+        rob_idx_t     dest_idx;          // the entry of the ROB where the loaded value will be stored
         logic                       except_raised;
         except_code_t               except_code;       // exception code 
         logic [XLEN-1:0]            ld_value;          // the value loaded from memory
@@ -283,14 +293,14 @@ package expipe_pkg;
         logic                       valid;              // the entry contains a valid instructions
         logic                       busy;               // The entry is waiting for an operation to complete
         `ifdef ENABLE_AGE_BASED_SELECTOR
-        logic [ROB_IDX_LEN-1:0]     entry_age;          // the age of the entry, used for scheduling
+        rob_idx_t     entry_age;          // the age of the entry, used for scheduling
         `endif
         logic [LDST_TYPE_LEN-1:0]   store_type;         // SB, SH, SW, SD
         logic                       rs1_ready;          // the value of rs1 (BASE ADDRESS) contained in 'rs1_value' field is valid
-        logic [ROB_IDX_LEN-1:0]     rs1_idx;            // the index of the ROB that will contain the base address
+        rob_idx_t     rs1_idx;            // the index of the ROB that will contain the base address
         logic [XLEN-1:0]            rs1_value;          // the value of the BASE ADDRESS
         logic                       rs2_ready;          // the value of rs2 (VALUE to be stored) contained in 'rs2_value' field is valid
-        logic [ROB_IDX_LEN-1:0]     rs2_idx;            // the index of the ROB that will contain the base address
+        rob_idx_t     rs2_idx;            // the index of the ROB that will contain the base address
         logic [XLEN-1:0]            rs2_value;          // the value to be stored in memory
         logic [XLEN-1:0]            imm_value;          // the value of the immediate field (offset)
         logic                       vaddr_ready;        // the virtual address has already been computed
@@ -298,11 +308,47 @@ package expipe_pkg;
         logic                       paddr_ready;        // the address translation (TLB access) has already completed
         logic [PPN_LEN-1:0]         ppn;                // the physical address (last 12 MSBs are identical to virtual address
         // logic                       dc_completed;       // the D$ completed the write request
-        logic [ROB_IDX_LEN-1:0]     dest_idx;           // the entry of the ROB where the loaded value will be stored
+        rob_idx_t     dest_idx;           // the entry of the ROB where the loaded value will be stored
         logic                       except_raised;
         except_code_t               except_code;        // exception code
         logic                       completed;          // the value has been stored to the D$
     } sb_entry_t;
+
+    // Address adder interface
+    // -----------------------
+    
+    // Request
+    typedef struct packed {
+        logic [BUFF_IDX_LEN-1:0]    tag;
+        logic                       is_store;
+        ldst_type_t                 ls_type;
+        logic [XLEN-1:0]            base;
+        logic [XLEN-1:0]            offs;
+    } adder_req_t;
+
+    // Answer
+    typedef struct packed {
+        logic [BUFF_IDX_LEN-1:0]    tag;
+        logic [XLEN-1:0]            result;
+        logic                       except_raised;
+        except_code_t               except_code;
+    } adder_ans_t;
+
+    // Memory interface
+    // ----------------
+    typedef struct packed {
+        logic [BUFF_IDX_LEN-1:0]    tag;    // instruction tag
+        logic                       is_store;
+        ldst_type_t                 ls_type;
+        logic [XLEN-1:0]            addr;   // physical address
+        logic [XLEN-1:0]            value;
+    } mem_req_t;
+
+    /* Load memory answer */
+    typedef struct packed {
+        logic [BUFF_IDX_LEN-1:0]    tag;    // load instruction tag
+        logic [XLEN-1:0]            value;  // fetched value
+    } mem_ans_t;
 
     // ------------
     // COMMIT LOGIC

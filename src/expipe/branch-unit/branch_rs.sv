@@ -45,13 +45,13 @@ module branch_rs
     // Data from the decode stage
     input   logic [BU_CTL_LEN-1:0]          branch_type_i,
     input   logic                           rs1_ready_i,
-    input   logic [ROB_IDX_LEN-1:0]         rs1_idx_i,
+    input   rob_idx_t         rs1_idx_i,
     input   logic [XLEN-1:0]                rs1_value_i,
     input   logic                           rs2_ready_i,
-    input   logic [ROB_IDX_LEN-1:0]         rs2_idx_i,
+    input   rob_idx_t         rs2_idx_i,
     input   logic [XLEN-1:0]                rs2_value_i,
     input   logic [XLEN-1:0]                imm_value_i,
-    input   logic [ROB_IDX_LEN-1:0]         dest_idx_i,
+    input   rob_idx_t         dest_idx_i,
     input   logic [XLEN-1:0]                pred_pc_i,
     input   logic [XLEN-1:0]                pred_target_i,
     input   logic                           pred_taken_i,
@@ -92,16 +92,16 @@ module branch_rs
         logic                   busy;       // The instruction is being executed in the assigned EU
         logic [BU_CTL_LEN-1:0]  branch_type;// Branch type for the branch unit
         logic                   rs1_ready;  // The first operand value is available in 'rs1_value'
-        logic [ROB_IDX_LEN-1:0] rs1_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
+        rob_idx_t rs1_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
         logic [XLEN-1:0]        rs1_value;  // The value of the first operand
         logic                   rs2_ready;  // The second operand value is available in 'rs2_value'
-        logic [ROB_IDX_LEN-1:0] rs2_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
+        rob_idx_t rs2_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
         logic [XLEN-1:0]        rs2_value;  // The value of the second operand
         logic [XLEN-1:0]        imm_value;  // Immediate value
         logic [XLEN-1:0]        pred_pc;    // Program counter of the current instruction (from the fetch stage)
         logic [XLEN-1:0]        pred_target;// Predicted target program counter (from the fetch stage)
         logic                   pred_taken; // Branch outcome prediction (from the fetch stage)
-        logic [ROB_IDX_LEN-1:0] res_idx;    // The entry of the ROB where the result will be stored
+        rob_idx_t res_idx;    // The entry of the ROB where the result will be stored
         logic                   mispredicted;// the branch was mispredicted
         logic                   res_ready;  // The value of the result is available in 'mispredicted'"
     } rs_entry_t;

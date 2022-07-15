@@ -42,9 +42,9 @@ module op_only_unit
 
     // Data from the decode stage
     input   logic                           rs1_ready_i,
-    input   logic [ROB_IDX_LEN-1:0]         rs1_idx_i,
+    input   rob_idx_t         rs1_idx_i,
     input   logic [XLEN-1:0]                rs1_value_i,
-    input   logic [ROB_IDX_LEN-1:0]         dest_idx_i,
+    input   rob_idx_t         dest_idx_i,
 
     // Hanshake from/to the CDB 
     input   logic                           cdb_ready_i,

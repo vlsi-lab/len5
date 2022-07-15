@@ -20,7 +20,7 @@
  *          increasing the critical path. Use with caution.
  */
 
-module fifo #(
+module fifo_comb_ready #(
     parameter type  DATA_T  = logic[8:0],
     parameter int   DEPTH   = 4
 ) (

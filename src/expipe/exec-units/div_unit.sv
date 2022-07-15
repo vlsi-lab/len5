@@ -37,12 +37,12 @@ module div_unit
     // Data from the issue stage
     input   logic [EU_CTL_LEN-1:0]  eu_ctl_i,
     input   logic                   rs1_ready_i,
-    input   logic [ROB_IDX_LEN-1:0] rs1_idx_i,
+    input   rob_idx_t rs1_idx_i,
     input   logic [XLEN-1:0]        rs1_value_i,
     input   logic                   rs2_ready_i,
-    input   logic [ROB_IDX_LEN-1:0] rs2_idx_i,          
+    input   rob_idx_t rs2_idx_i,          
     input   logic [XLEN-1:0]        rs2_value_i,        // can contain immediate for I type instructions
-    input   logic [ROB_IDX_LEN-1:0] dest_idx_i,
+    input   rob_idx_t dest_idx_i,
 
     // Hanshake from/to the CDB 
     input   logic                   cdb_ready_i,
@@ -50,10 +50,10 @@ module div_unit
     output  logic                   cdb_valid_o,
 
     // Data from/to the CDB
-    input   logic [ROB_IDX_LEN-1:0] cdb_idx_i,
+    input   rob_idx_t cdb_idx_i,
     input   logic [XLEN-1:0]        cdb_data_i,
     input   logic                   cdb_except_raised_i,
-    output  logic [ROB_IDX_LEN-1:0] cdb_idx_o,
+    output  rob_idx_t cdb_idx_o,
     output  logic [XLEN-1:0]        cdb_data_o,
     output  logic                   cdb_except_raised_o,
     output  except_code_t cdb_except_o

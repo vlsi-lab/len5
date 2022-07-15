@@ -1,7 +1,7 @@
-// Copyright 2019 Politecnico di Torino.
+// Copyright 2022 Politecnico di Torino.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 2.0 (the "License"); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
+// compliance with the License. You may obtain a copy of the License at
 // http://solderpad.org/licenses/SHL-2.0. Unless required by applicable law
 // or agreed to in writing, software, hardware and materials distributed under
 // this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
@@ -10,7 +10,7 @@
 //
 // File: store_buffer.sv
 // Author: Michele Caon
-// Date: 27/10/2019
+// Date: 15/07/2022
 
 // LEN5 compilation switches
 `include "len5_config.svh"
@@ -20,868 +20,371 @@
 import uvm_pkg::*;
 
 import len5_pkg::XLEN;
-import len5_pkg::STBUFF_DEPTH;
 
 import expipe_pkg::*;
-import memory_pkg::*;
 
-import csr_pkg::satp_mode_t;
-import csr_pkg::SATP_MODE_LEN;
-import csr_pkg::BARE; 
-import csr_pkg::SV39;
-import csr_pkg::SV48;
-
-module store_buffer 
-(
+/**
+ * @brief	Bare-metal store buffer.
+ *
+ * @details	Store buffer without support for virtual memory (no TLB), intended
+ *          to be directly connected to a memory module.
+ */
+module store_buffer #(
+    parameter DEPTH = 4
+) (
     input   logic                       clk_i,
     input   logic                       rst_n_i,
     input   logic                       flush_i,
-	
 
-    input   logic [SATP_MODE_LEN-1:0]   vm_mode_i,          // virtual memory MODE (from the 'satp' CSR)
+    /* Issue stage */
+    input   logic                       issue_valid_i,
+    output  logic                       issue_ready_o,
+    input   ldst_type_t                 issue_type_i,   // byte, halfword, ...
+    input   op_data_t                   issue_rs1_i,    // base address
+    input   op_data_t                   issue_rs2_i,    // data to store
+    input   logic [XLEN-1:0]            issue_imm_i,    // offset
+    input   rob_idx_t                   issue_dest_rob_idx_i,
 
-    // Handshake from/to issue arbiter
-    input   logic                       issue_logic_valid_i,
-    output  logic                       issue_logic_ready_o,
+    /* Commit stage */
+    input   logic                       commit_pop_store_i,
+    output  logic                       commit_sb_head_completed_o,
+    output  rob_idx_t                   commit_sb_head_rob_idx_o,
 
-    // Data from the decode stage
-    input   logic [LDST_TYPE_LEN-1:0]   store_type_i,
-    input   logic                       rs1_ready_i,        // first operand already fetched from RF/ROB
-    input   logic [ROB_IDX_LEN-1:0]     rs1_idx_i,
-    input   logic [XLEN-1:0]            rs1_value_i,
-    input   logic                       rs2_ready_i,        // second operand already fetched from RF/ROB
-    input   logic [ROB_IDX_LEN-1:0]     rs2_idx_i,
-    input   logic [XLEN-1:0]            rs2_value_i,
-    input   logic [XLEN-1:0]            imm_value_i,        // The immediate field of the load instruction
-    input   logic [ROB_IDX_LEN-1:0]     dest_idx_i,
-
-    // Handshake from/to the virtual address adder
-    input   logic                       vadder_ready_i,
-    input   logic                       vadder_valid_i,
-    output  logic                       vadder_valid_o,
-    output  logic                       vadder_ready_o,
-
-    // Data from/to the virtual address adder
-    input   logic [XLEN-1:0]            vadder_vaddr_i,
-    input   logic [STBUFF_IDX_LEN-1:0]  vadder_idx_i,
-    input   vadder_except_t             vadder_except_i,    // LD_ADDR_MISALIGNED or LD_PAGE_FAULT exceptions
-    output  logic                       vadder_isstore_o,
-    output  logic [XLEN-1:0]            rs1_value_o,
-    output  logic [XLEN-1:0]            imm_value_o,
-    output  logic [STBUFF_IDX_LEN-1:0]  vadder_idx_o,
-    output  logic [LDST_TYPE_LEN-1:0]   vadder_sttype_o,
-
-    // Handshake from/to the TLB
-    input   logic                       dtlb_wu_valid_i,
-    input   logic                       dtlb_ans_valid_i,
-    input   logic                       dtlb_ready_i,
-    output  logic                       dtlb_valid_o, 
-    output  logic                       dtlb_ready_o, //
-
-    // Data from/to the TLB
-    input   logic [VPN_LEN-1:0]         dtlb_vaddr_i,
-    input   logic [PPN_LEN-1:0]         dtlb_ppn_i,
-    input   exception_e                 dtlb_except_i,
-    input   logic [STBUFF_IDX_LEN-1:0]  dtlb_idx_i,
-    output  logic                       dtlb_isstore_o,
-    output  logic [VPN_LEN-1:0]         dtlb_vaddr_o,
-    output  logic [STBUFF_IDX_LEN-1:0]  dtlb_idx_o,
-
-    // Handshake from/to the D$
-    input   logic                       dcache_wu_valid_i,
-    input   logic                       dcache_ans_valid_i,
-    input   logic                       dcache_ready_i,
-    output  logic                       dcache_valid_o,
-    output  logic                       dcache_ready_o, //
-
-    // Data from/to the D$
-    input   logic [DCACHE_L1_LINE_A_LEN-1:0] dcache_lineaddr_i,
-    input   logic [STBUFF_IDX_LEN-1:0]  dcache_idx_i,
-    output  logic                       dcache_isstore_o,
-    output  logic [XLEN-1:0]            dcache_paddr_o,
-    output  logic [XLEN-1:0]            dcache_value_o,
-    output  logic [STBUFF_IDX_LEN-1:0]  dcache_idx_o,
-    output  logic [LDST_TYPE_LEN-1:0]   dcache_sttype_o,
-
-    // Data from/to the load buffer
-    input   logic [XLEN-1:0]            vfwd_vaddr_i,
-    input   logic [XLEN-1:0]            pfwd_paddr_i,
-    input   logic [LDST_TYPE_LEN-1:0]   vfwd_ldtype_i,
-    input   logic [LDST_TYPE_LEN-1:0]   pfwd_ldtype_i,
-    input   logic [STBUFF_IDX_LEN:0]    vfwd_older_stores_i,
-    input   logic [STBUFF_IDX_LEN:0]    pfwd_older_stores_i,
-    output  logic [STBUFF_IDX_LEN:0]    inflight_store_cnt_o, // number of uncommitted store instructions in the store buffer
-    output  logic                       lb_store_committing_o, // A store is committing in the store buffer
-    output  logic                       vfwd_hit_o,
-    output  logic                       vfwd_depfree_o,
-    output  logic                       pfwd_hit_o,
-    output  logic                       pfwd_depfree_o,
-    output  logic [XLEN-1:0]            vfwd_value_o,
-    output  logic [XLEN-1:0]            pfwd_value_o,
-
-    // Commit logic <--> store buffer
-    input   logic                       cl_pop_store_i,     // pop the head store iunstruction in the store buffer
-    output  logic                       cl_sb_head_completed_o,
-    output  logic [ROB_IDX_LEN-1:0]     cl_sb_head_rob_idx_o,
-
-    // Hanshake from/to the CDB 
+    /* Common data bus (CDB) */
+    input   logic                       cdb_valid_i,
     input   logic                       cdb_ready_i,
-    input   logic                       cdb_valid_i,        // to know if the CDB is carrying valid data
     output  logic                       cdb_valid_o,
+    input   cdb_data_t                  cdb_data_i,
+    output  cdb_data_t                  cdb_data_o,
 
-    // Data from/to the CDB
-    input   logic [ROB_IDX_LEN-1:0]     cdb_idx_i,
-    input   logic [XLEN-1:0]            cdb_data_i,
-    input   logic                       cdb_except_raised_i,
-    output  logic [ROB_IDX_LEN-1:0]     cdb_idx_o,
-    output  logic [XLEN-1:0]            cdb_data_o,
-    output  logic                       cdb_except_raised_o,
-    output  except_code_t               cdb_except_o
+    /* Address adder */
+    input   logic                       adder_valid_i,
+    input   logic                       adder_ready_i,
+    output  logic                       adder_valid_o,
+    output  logic                       adder_ready_o,
+    input   adder_ans_t                 adder_ans_i,
+    output  adder_req_t                 adder_req_o,
+
+    /* Memory system */
+    input   logic                       mem_valid_i,
+    input   logic                       mem_ready_i,
+    output  logic                       mem_valid_o,
+    output  logic                       mem_ready_o,
+    output  mem_req_t                   mem_req_o,
+    input   mem_ans_t                   mem_ans_i
+
+    /* Load buffer (store-to-load forwarding) */ /* TODO */
+    // input   logic [XLEN-1:0]            lb_addr_i,          // load address
+    // input   ldst_type_t                 lb_type_i,          // load type
+    // input   logic [STBUFF_IDX_LEN:0]    lb_older_cnt_i,     // nummber of older store instructions
+    // output  logic [STBUFF_IDX_LEN-1:0]  lb_pending_cnt_o,   // number of uncommitted store instructions
+    // output  logic                       lb_committing_o,    // a store is committing
+    // output  logic                       lb_hit_o,           // store data can be forwarded
+    // output  logic [XLEN-1:0]            lb_value_o,         // store value
 );
+
+    // Load buffer data type
+    // ---------------------
     
-    // DEFINITIONS
+    /* Load instruction status */
+    typedef enum logic [2:0] {
+        STORE_S_EMPTY,
+        STORE_S_RS12_PENDING,
+        STORE_S_RS1_PENDING,
+        STORE_S_RS2_PENDING,
+        STORE_S_ADDR_PENDING,
+        STORE_S_WAIT_ROB,
+        STORE_S_MEM_PENDING,
+        STORE_S_COMPLETED,
+        STORE_S_HALT    // for debug
+    } sb_state_t;
 
-    // Store buffer pointers
-    logic [STBUFF_IDX_LEN-1:0]      sb_head_idx, sb_tail_idx; // head and tail pointers
-    logic [STBUFF_IDX_LEN-1:0]      vadder_req_idx, dtlb_req_idx, cdb_req_idx; // request indexes
-    logic                           vadder_idx_valid, dtlb_idx_valid, cdb_idx_valid;
+    /* Load instruction data */
+    typedef struct packed {
+        ldst_type_t                 store_type;
+        rob_idx_t                   rs1_rob_idx;
+        logic [XLEN-1:0]            rs1_value;
+        rob_idx_t                   rs2_rob_idx;
+        logic [XLEN-1:0]            rs2_value;
+        rob_idx_t                   dest_rob_idx;
+        logic [XLEN-1:0]            imm_addr_value; // immediate offset, then replaced with resulting address
+        logic                       except_raised;
+        except_code_t               except_code;
+        logic [XLEN-1:0]            value;
+    } sb_data_t;
 
-    // head and tail counters control
-    logic                           head_cnt_en, head_cnt_clr, tail_cnt_en, tail_cnt_clr;
+    /* Load instruction command */
+    typedef enum logic [2:0] {
+        STORE_OP_NONE,
+        STORE_OP_PUSH,
+        STORE_OP_SAVE_RS12,
+        STORE_OP_SAVE_RS1,
+        STORE_OP_SAVE_RS2,
+        STORE_OP_SAVE_ADDR,
+        STORE_OP_MEM_REQ
+    } sb_op_t;
 
-    // In-flight stores counter
-    logic [STBUFF_IDX_LEN:0]        inflight_count; 
-
-    // Operation control
-    logic                           sb_push, sb_pop, sb_vadder_req, sb_vadder_ans, sb_dtlb_req, sb_dtlb_wu, sb_dtlb_ans, sb_dcache_req, sb_dcache_wu, sb_dcache_ans, sb_cdb_req;
-
-    // Store buffer data structure
-    sb_entry_t                      sb_data[0:STBUFF_DEPTH-1];
-
-    // Status signals 
-    logic [STBUFF_DEPTH-1:0]        valid_a, busy_a, rs1_ready_a, vaddr_ready_a, paddr_ready_a, except_raised_a, completed_a;
-    `ifdef ENABLE_AGE_BASED_SELECTOR
-    logic [ROB_IDX_LEN-1:0]         entry_age_a [0:STBUFF_DEPTH-1];
-    `endif
-    logic [XLEN-1:0]                paddr_a [0:STBUFF_DEPTH-1];
-
-    // -------------------------
-    // STATUS SIGNALS GENERATION
-    // -------------------------
-    // These are required because name selection after indexing is not supported
-    always_comb begin: status_signals_gen
-        for (int i = 0; i < STBUFF_DEPTH; i++) begin
-            valid_a[i]          = sb_data[i].valid;
-            busy_a[i]           = sb_data[i].busy;
-            rs1_ready_a[i]      = sb_data[i].rs1_ready;
-            vaddr_ready_a[i]    = sb_data[i].vaddr_ready;
-            paddr_ready_a[i]    = sb_data[i].paddr_ready;
-            except_raised_a[i]  = sb_data[i].except_raised;
-            completed_a[i]      = sb_data[i].completed;
-            `ifdef ENABLE_AGE_BASED_SELECTOR
-            entry_age_a[i]      = sb_data[i].entry_age;
-            `endif
-        end
-    end
-
-    // -------------------------
-    // COMPLETE PHYSICAL ADDRESS
-    // -------------------------
-    always_comb begin: paddr_gen
-        for (int i = 0; i < STBUFF_DEPTH; i++) begin
-            paddr_a[i] = { {(XLEN-PADDR_LEN){1'b0}}, sb_data[i].ppn, sb_data[i].vaddr[PAGE_OFFSET_LEN-1:0] };
-        end
-    end
-
-    // --------------------------
-    // STORE BUFFER CONTROL LOGIC
-    // --------------------------
-    // Generates the control signals that trigger specific operations on the data structure based in input and status signals.
-    always_comb begin: sb_control_logic
-        // DEFAULT VALUES
-        // Operation control
-        sb_push             = 1'b0;
-        sb_pop              = 1'b0;
-        
-        sb_vadder_req       = 1'b0;
-        sb_vadder_ans       = 1'b0;
-        
-        sb_dtlb_req         = 1'b0;
-        sb_dtlb_wu          = 1'b0;
-        sb_dtlb_ans         = 1'b0;
-        
-        sb_dcache_req       = 1'b0;
-        sb_dcache_wu        = 1'b0;
-        sb_dcache_ans       = 1'b0;
-
-        sb_cdb_req          = 1'b0;
-
-        // Handshake control
-        issue_logic_ready_o     = 1'b0;
-        
-        vadder_valid_o      = 1'b0;
-        vadder_ready_o      = 1'b1;     // Always ready to accept computed virtual address
-        
-        dtlb_valid_o        = 1'b0;
-        dtlb_ready_o        = 1'b1;     // Always ready to accept the physical address
-        
-        dcache_valid_o      = 1'b0;
-        dcache_ready_o      = 1'b1;     // Always ready to accept D$ answer
-
-        cdb_valid_o         = 1'b0;
-
-        // Head and tail counters control
-        head_cnt_en         = 1'b0;
-        head_cnt_clr        = flush_i;  // clear when flushing 
-        tail_cnt_en         = 1'b0;
-        tail_cnt_clr        = flush_i;  // clear when flushing 
-
-        // --------
-        // REQUESTS
-        // --------
-
-        // PUSH NEW INSTRUCTION
-        // Push a new instruction in the queue if the selected entry is empty (i.e. not valid) and the decoder is sending a valid instruction to the load buffer
-        if (!sb_data[sb_tail_idx].valid) begin
-            issue_logic_ready_o = 1'b1; // Notify the arbiter that an instruction can be accepted
-            if (issue_logic_valid_i) begin 
-                sb_push = 1'b1; // If the arbiter is sending a valid instruction, push it into the queue
-                tail_cnt_en = 1'b1;
-            end
-        end
-
-        // REQUEST TO THE VIRTUAL ADDRESS ADDER
-        // The selected entry must be valid (other checks are performed by the selector)
-        if (sb_data[vadder_req_idx].valid) begin
-            vadder_valid_o = 1'b1;
-            if (vadder_ready_i) sb_vadder_req = 1'b1; // The adder can accept the request, and the entry is marked as busy
-        end
-
-        // REQUEST TO THE TLB
-        // The selected entry must be valid (other checks are performed by the selector)
-        if (sb_data[dtlb_req_idx].valid) begin
-            dtlb_valid_o = 1'b1; // The TLB can accept the request, so the entry can be marked as busy
-            if (dtlb_ready_i) sb_dtlb_req = 1'b1;
-        end
-
-        // REQUEST TO THE D$
-        // The cache request can be performed if the head instruction of the store buffer:
-        // - is valid
-        // - is not busy (it hasn't performed the request yet)
-        // - has no recorded exceptions
-        // - has its physical address ready
-        // - is not completed
-        if (sb_data[sb_head_idx].valid && !sb_data[sb_head_idx].busy && !sb_data[sb_head_idx].except_raised && sb_data[sb_head_idx].paddr_ready && !sb_data[sb_head_idx].completed) begin
-            dcache_valid_o = 1'b1;
-            if (dcache_ready_i) sb_dcache_req = 1'b1; // the D$ can accept the request
-        end
-
-        // REQUEST TO THE CDB
-        // The selected entry must be valid and the cache access must be completed (checked by the CDB selector)
-        if (cdb_idx_valid) begin
-            cdb_valid_o = 1'b1;
-            if (cdb_ready_i) sb_cdb_req = 1'b1; // the CDB can accept the request, so the entry can be marked as completed
-        end
-
-        // POP INSTRUCTION
-        // The head instruction can be popped if it's completed and its also at the head of the ROB. This corresponds to the instruction commit. 
-        if (cl_pop_store_i) begin
-            sb_pop = 1'b1;
-            head_cnt_en = 1'b1;
-        end
-
-        // -------
-        // ANSWERS
-        // -------
-
-        // VIRTUAL ADDRESS ADDER ANSWER
-        if (vadder_valid_i) begin
-            sb_vadder_ans = 1'b1;
-        end 
-
-        // TLB ANSWER/WAKE-UP
-        if (dtlb_wu_valid_i) begin
-            sb_dtlb_wu = 1'b1;
-        end 
-        if (dtlb_ans_valid_i) begin
-            sb_dtlb_ans = 1'b1; 
-        end
-
-        // D$ ANSWER/WAKE-UP
-        if (dcache_wu_valid_i) begin
-            sb_dcache_wu = 1'b1;
-        end
-        if (dcache_ans_valid_i) begin
-            sb_dcache_ans = 1'b1;
-        end
-    end
-
-    // ------------------------
-    // STORE BUFFER DATA UPDATE
-    // ------------------------
-    always_ff @(posedge clk_i or negedge rst_n_i) begin: sb_data_update
-        if (!rst_n_i) begin // Asynchronous reset
-            foreach (sb_data[i]) begin
-                sb_data[i]                  <= 0;
-            end
-        end else if (flush_i) begin // Synchronous flush: clering status fields is enough
-            foreach (sb_data[i]) begin
-                sb_data[i].valid            <= 1'b0;
-                sb_data[i].busy             <= 1'b0;
-                sb_data[i].rs1_ready        <= 1'b0;
-                sb_data[i].rs2_ready        <= 1'b0;
-                sb_data[i].vaddr_ready      <= 1'b0;
-                sb_data[i].paddr_ready      <= 1'b0;
-                sb_data[i].except_raised    <= 1'b0;
-                sb_data[i].completed        <= 1'b0;
-            end
-        end else begin 
-
-            // -------------------
-            // PARALLEL OPERATIONS
-            // -------------------
-
-            foreach (sb_data[i]) begin
-                
-                // RETRIEVE BASE ADDRES AND VALUE TO BE STORED FROM THE CDB (parallel port 1: rs1_value)
-                if (sb_data[i].valid && !sb_data[i].rs1_ready) begin
-                    if (cdb_valid_i && !cdb_except_raised_i && (sb_data[i].rs1_idx == cdb_idx_i)) begin
-                        sb_data[i].rs1_ready <= 1'b1;
-                        sb_data[i].rs1_value <= cdb_data_i;
-                    end
-                end
-                if (sb_data[i].valid && !sb_data[i].rs2_ready) begin
-                    if (cdb_valid_i && !cdb_except_raised_i && (sb_data[i].rs2_idx == cdb_idx_i)) begin
-                        sb_data[i].rs2_ready <= 1'b1;
-                        sb_data[i].rs2_value <= cdb_data_i;
-                    end
-                end
-
-                // TLB WAKE UP
-                if (sb_dtlb_wu) begin
-                    if (sb_data[i].valid && sb_data[i].busy && !sb_data[i].paddr_ready && (sb_data[i].vaddr[VADDR_LEN-1:PAGE_OFFSET_LEN] == dtlb_vaddr_i)) begin
-                        // Exception handling
-                        case(dtlb_except_i)
-                            PageFault: begin
-                                sb_data[i].busy             <= 1'b0; 
-                                sb_data[i].except_raised    <= 1'b1;
-                                sb_data[i].except_code      <= E_ST_PAGE_FAULT;
-                                sb_data[i].rs2_value        <= sb_data[i].vaddr; // copy the offending virtual address in the result field so it can be used during exception handling (this overwrites the valued to be copied in memory)
-                                sb_data[i].completed        <= 1'b1; // mark the entry as completed so the cache access is skipped
-                            end
-                            AccessException: begin
-                                sb_data[i].busy             <= 1'b0; 
-                                sb_data[i].except_raised    <= 1'b1;
-                                sb_data[i].except_code      <= E_ST_ACCESS_FAULT;
-                                sb_data[i].rs2_value        <= sb_data[i].vaddr; // copy the offending virtual address in the result field so it can be used during exception handling
-                                sb_data[i].completed        <= 1'b1; // mark the entry as completed so the cache access is skipped
-                            end
-                            NoException: begin // normal execution
-                                sb_data[i].busy             <= 1'b0; // clear busy bit so the instruction can be replayed
-                            end
-                            default: begin
-                                sb_data[i].busy             <= 1'b0; // clear busy so vaddr forwarding is skipped
-                                sb_data[i].except_raised    <= 1'b1;
-                                sb_data[i].except_code      <= E_UNKNOWN; // reserved code 10
-                                sb_data[i].rs2_value        <= sb_data[i].vaddr;
-                                sb_data[i].completed        <= 1'b1;
-                            end
-                        endcase
-                    end
-                end
-            end
-
-            // ----------------
-            // WRITE OPERATIONS
-            // ----------------
-
-            // PUSH NEW INSTRUCTION
-            if (sb_push) begin
-                sb_data[sb_tail_idx].valid          <= 1'b1;
-                sb_data[sb_tail_idx].busy           <= 1'b0;
-                `ifdef ENABLE_AGE_BASED_SELECTOR
-                sb_data[sb_tail_idx].entry_age      <= 0;
-                `endif
-                sb_data[sb_tail_idx].store_type     <= store_type_i;
-                sb_data[sb_tail_idx].rs1_ready      <= rs1_ready_i;
-                sb_data[sb_tail_idx].rs1_idx        <= rs1_idx_i;
-                sb_data[sb_tail_idx].rs1_value      <= rs1_value_i;
-                sb_data[sb_tail_idx].rs2_ready      <= rs2_ready_i;
-                sb_data[sb_tail_idx].rs2_idx        <= rs2_idx_i;
-                sb_data[sb_tail_idx].rs2_value      <= rs2_value_i;
-                sb_data[sb_tail_idx].imm_value      <= imm_value_i;
-                sb_data[sb_tail_idx].vaddr_ready    <= 1'b0;
-                sb_data[sb_tail_idx].paddr_ready    <= 1'b0;
-                sb_data[sb_tail_idx].dest_idx       <= dest_idx_i;
-                sb_data[sb_tail_idx].except_raised  <= 1'b0;
-                sb_data[sb_tail_idx].completed      <= 1'b0;
-
-                `ifdef ENABLE_AGE_BASED_SELECTOR
-                // Update the age of all valid entries
-                foreach(sb_data[i]) begin
-                    if (sb_tail_idx != i[STBUFF_IDX_LEN-1:0] && sb_data[i].valid) sb_data[i].entry_age <= sb_data[i].entry_age + 1;
-                end
-                `endif
-            end
-
-            // REQUEST TO THE VIRTUAL ADDRESS ADDER
-            if (sb_vadder_req) begin
-                sb_data[vadder_req_idx].busy    <= 1'b1;
-            end
-
-            // REQUEST TO THE TLB
-            if (sb_dtlb_req) begin
-                sb_data[dtlb_req_idx].busy      <= 1'b1;
-            end
-
-            // REQUEST TO THE D$
-            if (sb_dcache_req) begin
-                sb_data[sb_head_idx].busy       <= 1'b1;
-            end
-
-            // POP THE HEAD INSTRUCTION (COMMIT)
-            if (sb_pop) begin
-                sb_data[sb_head_idx].valid      <= 1'b0; // Pop the committed instruction
-            end
-            
-            // --------------
-            // PROCESS ANWERS
-            // --------------
-
-            // VIRTUAL ADDRESS ADDER ANSWER (WRITE PORT 1: entry.vaddr, entry.rs2_value)
-            if (sb_vadder_ans) begin
-                // Exception handling
-                case(vadder_except_i)
-                    VADDER_ALIGN_EXCEPT: begin
-                        sb_data[vadder_idx_i].busy          <= 1'b0; 
-                        sb_data[vadder_idx_i].except_raised <= 1'b1;
-                        sb_data[vadder_idx_i].except_code   <= E_ST_ADDR_MISALIGNED;
-                        sb_data[vadder_idx_i].rs2_value     <= vadder_vaddr_i; // The virtual address is copied in the rs2 value field instead of the loaded value, so it will be sent to the CDB (i.e. the ROB)
-                        sb_data[vadder_idx_i].completed     <= 1'b1; // Mark the entry as completed so TLB and D$ accesses are skipped
-                    end
-                    VADDER_PAGE_EXCEPT: begin
-                        sb_data[vadder_idx_i].busy          <= 1'b0; 
-                        sb_data[vadder_idx_i].except_raised <= 1'b1;
-                        sb_data[vadder_idx_i].except_code   <= E_ST_PAGE_FAULT;
-                        sb_data[vadder_idx_i].rs2_value     <= vadder_vaddr_i; // The virtual address is copied in the rs2 value field so it will be sent to the CDB (i.e. the ROB)
-                        sb_data[vadder_idx_i].completed     <= 1'b1; // Mark the entry as completed so TLB and D$ accesses are skipped
-                    end
-                    VADDER_NO_EXCEPT: begin
-                        // If virtual memory is not enabled, save the virtual address in the physical address field
-                        if (vm_mode_i == BARE) begin
-                            sb_data[vadder_idx_i].paddr_ready <= 1'b1;
-                            sb_data[vadder_idx_i].ppn       <= vadder_vaddr_i[PADDR_LEN-1:PAGE_OFFSET_LEN];
-                        end
-                        sb_data[vadder_idx_i].busy          <= 1'b0; // clear the busy bit so the entry can proceed to the TLB access
-                        sb_data[vadder_idx_i].vaddr_ready   <= 1'b1; // the virtual address is available
-                        sb_data[vadder_idx_i].vaddr         <= vadder_vaddr_i; // the virtual address is copied in the entry
-                    end
-                    default: begin // unknown exception
-                        sb_data[vadder_idx_i].busy          <= 1'b0; 
-                        sb_data[vadder_idx_i].except_raised <= 1'b1;
-                        sb_data[vadder_idx_i].except_code   <= E_UNKNOWN; // reserved code d10
-                        sb_data[vadder_idx_i].rs2_value     <= vadder_vaddr_i;
-                        sb_data[vadder_idx_i].completed     <= 1'b1;
-                    end
-                endcase
-            end
-
-            // TLB ANSWER (WRITE PORT 2: entry.ppn, entry.rs2_value)
-            if (sb_dtlb_ans) begin
-                // Exception handling
-                case(dtlb_except_i)
-                    PageFault: begin
-                        sb_data[dtlb_idx_i].busy            <= 1'b0; 
-                        sb_data[dtlb_idx_i].except_raised   <= 1'b1;
-                        sb_data[dtlb_idx_i].except_code     <= E_ST_PAGE_FAULT;
-                        sb_data[dtlb_idx_i].rs2_value       <= sb_data[dtlb_idx_i].vaddr; // copy the offending virtual address in the rs2 value field so it can be used during exception handling
-                        sb_data[dtlb_idx_i].completed       <= 1'b1; // mark the entry as completed so the cache access is skipped
-                    end
-                    AccessException: begin
-                        sb_data[dtlb_idx_i].busy            <= 1'b0; 
-                        sb_data[dtlb_idx_i].except_raised   <= 1'b1;
-                        sb_data[dtlb_idx_i].except_code     <= E_ST_ACCESS_FAULT;
-                        sb_data[dtlb_idx_i].rs2_value       <= sb_data[dtlb_idx_i].vaddr; // copy the offending virtual address in the rs2 value field so it can be used during exception handling
-                        sb_data[dtlb_idx_i].completed       <= 1'b1; // mark the entry as completed so the cache access is skipped
-                    end
-                    NoException: begin // normal execution
-                        sb_data[dtlb_idx_i].busy            <= 1'b0; // clear busy bit so the entry can proceed to cache access
-                        sb_data[dtlb_idx_i].paddr_ready     <= 1'b1;
-                        sb_data[dtlb_idx_i].ppn             <= dtlb_ppn_i; // last 12 bits are not translated
-                    end
-                    default: begin
-                        sb_data[dtlb_idx_i].busy            <= 1'b0;
-                        sb_data[dtlb_idx_i].except_raised   <= 1'b1;
-                        sb_data[dtlb_idx_i].except_code     <= E_UNKNOWN; // reserved code 10
-                        sb_data[dtlb_idx_i].rs2_value       <= sb_data[dtlb_idx_i].vaddr;
-                        sb_data[dtlb_idx_i].completed       <= 1'b1;
-                    end
-                endcase
-            end
-
-            // D$ ANSWER (WRITE PORT 3: entry.value)
-            if (sb_dcache_ans) begin
-                sb_data[dcache_idx_i].busy          <= 1'b0; // clear the busy bit
-                sb_data[dcache_idx_i].completed     <= 1'b1;
-            end
-
-            // D$ WAKE-UP: only the head entry can be waken up being the only one that performed the cache request
-            if (sb_dcache_wu) begin
-                if (sb_data[sb_head_idx].valid && sb_data[sb_head_idx].busy && sb_data[sb_head_idx].paddr_ready && (paddr_a[sb_head_idx][XLEN-1:(DCACHE_L1_WORD_A_LEN+DCACHE_L1_LINE_OFF_A_LEN)] == dcache_lineaddr_i)) begin
-                    sb_data[sb_head_idx].busy <= 1'b0; // clear the busy bit so the instruction can be replayed
-                end
-            end
-
-            // CDB ANSWER
-            if (sb_cdb_req) begin
-                sb_data[cdb_req_idx].completed <= 1'b1; // the entry is marked as completed so it will skip TLB access, D$ access and won't be selected again to write on the CDB
-            end
-        end
-    end
-
-    // ----------------
-    // FORWARDING LOGIC
+    // INTERNAL SIGNALS
     // ----------------
 
-    // VIRTUAL ADDRESS FORWARDING (PARALLEL ACCES 1: very complex due to RAW hazard check)
-    logic vfwd_allowed, vfwd_hit, vfwd_depfree;
-    logic [STBUFF_IDX_LEN-1:0] vfwd_idx;
+    // Head, tail, and address calculation counters
+    logic [$clog2(DEPTH)-1:0]   head_idx, tail_idx, addr_idx, mem_idx;
+    logic                       head_cnt_en, tail_cnt_en, addr_cnt_en;
+    logic                       head_cnt_clr, tail_cnt_clr, addr_cnt_clr;
 
-    always_comb begin: virtual_fwd_logic
-        
-        // Default values:
-        vfwd_allowed    = 1'b1;
-        vfwd_depfree    = 1'b1;
-        vfwd_idx        = 0;
+    // Load buffer data
+    sb_data_t       data[DEPTH];
+    sb_state_t      curr_state[DEPTH], next_state[DEPTH];
 
-        for (int i = 0; i < STBUFF_DEPTH; i++) begin
-            if ((i[STBUFF_IDX_LEN-1:0] - sb_tail_idx) < (sb_head_idx + vfwd_older_stores_i - sb_tail_idx)) begin
-                if (!sb_data[i].vaddr_ready) vfwd_allowed = 1'b0;
-                else if ((i[STBUFF_IDX_LEN-1:0] - sb_tail_idx) >= vfwd_idx - sb_tail_idx) begin
-                    case(sb_data[i].store_type)
+    // Load buffer control
+    logic           push, pop, save_rs, save_addr, mem_done;
+    logic           match_rs1[DEPTH], match_rs2[DEPTH];
+    sb_op_t         sb_op[DEPTH];
 
-                        LS_DOUBLEWORD: begin
-                            if (vfwd_vaddr_i[XLEN-1 : 3] == sb_data[i].vaddr[XLEN-1 : 3]) begin
-                                vfwd_depfree    = 1'b0;
-                                vfwd_idx        = i[STBUFF_IDX_LEN-1:0];
-                            end
-                        end
+    // -----------------
+    // FIFO CONTROL UNIT
+    // -----------------
 
-                        LS_WORD, LS_WORD_U: begin
-                            case(vfwd_ldtype_i)
-                                LS_DOUBLEWORD: begin
-                                    vfwd_allowed = 1'b0; // can't load a doubleword from a word
-                                    vfwd_depfree = 1'b0;
-                                end
-                                LS_WORD, LS_WORD_U, LS_HALFWORD, LS_HALFWORD_U, LS_BYTE, LS_BYTE_U: begin
-                                   if (vfwd_vaddr_i[XLEN-1 : 2] == sb_data[i].vaddr[XLEN-1 : 2]) begin
-                                        vfwd_depfree    = 1'b0;
-                                        vfwd_idx        = i[STBUFF_IDX_LEN-1:0];
-                                    end else begin
-                                        vfwd_allowed = 1'b0; // can't load the other word
-                                        vfwd_depfree = 1'b0;
-                                    end
-                                end
-                                default: vfwd_allowed = 1'b0;
-                            endcase
-                        end
+    // Push, pop, save controls
+    assign  push        = issue_valid_i && issue_ready_o;
+    assign  pop         = cdb_valid_o && cdb_ready_i;
+    assign  save_rs     = cdb_valid_i;
+    assign  save_addr   = adder_valid_i && adder_ready_o;
+    assign  mem_done    = mem_valid_i;
+  
+    // Counters control
+    assign  head_cnt_clr    = flush_i;
+    assign  tail_cnt_clr    = flush_i;
+    assign  addr_cnt_clr    = flush_i;
+    assign  head_cnt_en     = pop;
+    assign  tail_cnt_en     = push;
+    assign  addr_cnt_en     = save_addr;
 
-                        LS_HALFWORD, LS_HALFWORD_U: begin
-                            case(vfwd_ldtype_i)
-                                LS_DOUBLEWORD, LS_WORD, LS_WORD_U: begin
-                                    vfwd_allowed = 1'b0; // can't load a doubleword or a word from a halfword
-                                    vfwd_depfree = 1'b0;
-                                end
-                                LS_HALFWORD, LS_HALFWORD_U, LS_BYTE, LS_BYTE_U: begin
-                                   if (vfwd_vaddr_i[XLEN-1 : 1] == sb_data[i].vaddr[XLEN-1 : 1]) begin
-                                        vfwd_depfree    = 1'b0;
-                                        vfwd_idx        = i[STBUFF_IDX_LEN-1:0];
-                                    end else begin
-                                        vfwd_allowed = 1'b0; // can't load the other halfwords
-                                        vfwd_depfree = 1'b0;
-                                    end
-                                end
-                                default: vfwd_allowed = 1'b0;
-                            endcase
-                        end
-
-                        LS_BYTE, LS_BYTE_U: begin
-                            case(vfwd_ldtype_i)
-                                LS_DOUBLEWORD, LS_WORD, LS_WORD_U, LS_HALFWORD, LS_HALFWORD_U: begin
-                                    vfwd_allowed = 1'b0; // can't load a doubleword, word or halfword from a byte
-                                    vfwd_depfree = 1'b0;
-                                end
-                                LS_BYTE, LS_BYTE_U: begin
-                                   if (vfwd_vaddr_i == sb_data[i].vaddr) begin
-                                        vfwd_depfree    = 1'b0;
-                                        vfwd_idx        = i[STBUFF_IDX_LEN-1:0];
-                                    end else begin
-                                        vfwd_allowed = 1'b0; // can't load the other bytes
-                                        vfwd_depfree = 1'b0;
-                                    end
-                                end
-                                default: vfwd_allowed = 1'b0;
-                            endcase
-                        end
-
-                        default: vfwd_allowed = 1'b0;
-                    endcase
-                end
-            end
+    // Match signals
+    always_comb begin : p_match_rs
+        foreach (data[i]) begin
+            match_rs1[i]    = (cdb_data_i.rob_idx == data[i].rs1_rob_idx);
+            match_rs2[i]    = (cdb_data_i.rob_idx == data[i].rs2_rob_idx);
         end
-
-        // Hit only if the most recent older store have the data available
-        vfwd_hit = (sb_data[vfwd_idx].rs2_ready) ? 1'b1 : 1'b0;
     end
 
-    // PHYSICAL ADDRESS FORWARDING (PARALLEL ACCES 2: very complex due to RAW hazard check)
-    logic pfwd_allowed, pfwd_hit, pfwd_depfree;
-    logic [STBUFF_IDX_LEN-1:0] pfwd_idx;
+    // State progression
+    // NOTE: Mealy to avoid sampling useless data
+    always_comb begin : p_state_prog
+        // Default operation
+        foreach (sb_op[i])  sb_op[i] = STORE_OP_NONE;
 
-    always_comb begin: physical_fwd_logic
-        
-        // Default values:
-        pfwd_allowed    = 1'b1;
-        pfwd_depfree    = 1'b1;
-        pfwd_idx        = 0;
-
-        for (int i = 0; i < STBUFF_DEPTH; i++) begin
-            if ((i[STBUFF_IDX_LEN-1:0] - sb_tail_idx) < (sb_head_idx + pfwd_older_stores_i - sb_tail_idx)) begin
-                if (!sb_data[i].paddr_ready) pfwd_allowed = 1'b0;
-                else if ((i[STBUFF_IDX_LEN-1:0] - sb_tail_idx) >= pfwd_idx - sb_tail_idx) begin
-                    case(sb_data[i].store_type)
-
-                        LS_DOUBLEWORD: begin
-                            if (pfwd_paddr_i[XLEN-1 : 3] == paddr_a[i][XLEN-1 : 3]) begin
-                                pfwd_depfree    = 1'b0;
-                                pfwd_idx        = i[STBUFF_IDX_LEN-1:0];
-                            end
-                        end
-
-                        LS_WORD, LS_WORD_U: begin
-                            case(pfwd_ldtype_i)
-                                LS_DOUBLEWORD: begin
-                                    pfwd_allowed = 1'b0; // can't load a doubleword from a word
-                                    pfwd_depfree = 1'b0;
-                                end
-                                LS_WORD, LS_WORD_U, LS_HALFWORD, LS_HALFWORD_U, LS_BYTE, LS_BYTE_U: begin
-                                   if (pfwd_paddr_i[XLEN-1 : 2] == paddr_a[i][XLEN-1 : 2]) begin
-                                        pfwd_depfree    = 1'b0;
-                                        pfwd_idx        = i[STBUFF_IDX_LEN-1:0];
-                                    end else begin
-                                        pfwd_allowed = 1'b0; // can't load the other word
-                                        pfwd_depfree = 1'b0;
-                                    end
-                                end
-                                default: pfwd_allowed = 1'b0;
-                            endcase
-                        end
-
-                        LS_HALFWORD, LS_HALFWORD_U: begin
-                            case(pfwd_ldtype_i)
-                                LS_DOUBLEWORD, LS_WORD, LS_WORD_U: begin
-                                    pfwd_allowed = 1'b0; // can't load a doubleword or a word from a halfword
-                                    pfwd_depfree = 1'b0;
-                                end
-                                LS_HALFWORD, LS_HALFWORD_U, LS_BYTE, LS_BYTE_U: begin
-                                   if (pfwd_paddr_i[XLEN-1 : 1] == paddr_a[i][XLEN-1 : 1]) begin
-                                        pfwd_depfree    = 1'b0;
-                                        pfwd_idx        = i[STBUFF_IDX_LEN-1:0];
-                                    end else begin
-                                        pfwd_allowed = 1'b0; // can't load the other halfwords
-                                        pfwd_depfree = 1'b0;
-                                    end
-                                end
-                                default: pfwd_allowed = 1'b0;
-                            endcase
-                        end
-
-                        LS_BYTE, LS_BYTE_U: begin
-                            case(pfwd_ldtype_i)
-                                LS_DOUBLEWORD, LS_WORD, LS_WORD_U, LS_HALFWORD, LS_HALFWORD_U: begin
-                                    pfwd_allowed = 1'b0; // can't load a doubleword, word or halfword from a byte
-                                    pfwd_depfree = 1'b0;
-                                end
-                                LS_BYTE, LS_BYTE_U: begin
-                                   if (pfwd_paddr_i == paddr_a[i]) begin
-                                        pfwd_depfree    = 1'b0;
-                                        pfwd_idx        = i[STBUFF_IDX_LEN-1:0];
-                                    end else begin
-                                        pfwd_allowed = 1'b0; // can't load the other bytes
-                                        pfwd_depfree = 1'b0;
-                                    end
-                                end
-                                default: pfwd_allowed = 1'b0;
-                            endcase
-                        end
-
-                        default: pfwd_allowed = 1'b0;
-                    endcase
+        foreach (curr_state[i]) begin
+            case (curr_state[i])
+                STORE_S_EMPTY: begin // push
+                    if (push && tail_idx == i) begin
+                        sb_op[i]        = STORE_OP_PUSH;
+                        if (issue_rs1_i.ready)
+                            next_state[i]   = STORE_S_ADDR_PENDING;
+                        else                    
+                            next_state[i]   = STORE_S_RS1_PENDING;
+                    end else 
+                        next_state[i] = STORE_S_EMPTY; 
                 end
-            end
+                STORE_S_RS12_PENDING: begin // save rs1 and/or rs2 value from CDB
+                    if (save_rs) begin
+                        if (match_rs1[i] && match_rs2[i]) begin
+                            sb_op[i]        = STORE_OP_SAVE_RS12;
+                            next_state[i]   = STORE_S_ADDR_PENDING;
+                        end else if (match_rs1[i]) begin
+                            sb_op[i]        = STORE_OP_SAVE_RS1;
+                            next_state[i]   = STORE_S_RS2_PENDING;
+                        end else if (match_rs2[i]) begin
+                            sb_op[i]        = STORE_OP_SAVE_RS2;
+                            next_state[i]   = STORE_S_RS1_PENDING;
+                        end else 
+                            next_state[i]   = STORE_S_RS12_PENDING;
+                    end else 
+                        next_state[i]   = STORE_S_RS12_PENDING;
+                end
+                STORE_S_RS1_PENDING: begin // save rs2 value from CDB
+                    if (save_rs && match_rs1[i]) begin
+                        sb_op[i]        = STORE_OP_SAVE_RS1;
+                        next_state[i]   = STORE_S_ADDR_PENDING;
+                    end else
+                        next_state[i]   = STORE_S_RS1_PENDING;
+                end
+                STORE_S_RS2_PENDING: begin // save rs2 value from CDB
+                    if (save_rs && match_rs2[i]) begin
+                        sb_op[i]        = STORE_OP_SAVE_RS2;
+                        next_state[i]   = STORE_S_ADDR_PENDING;
+                    end else
+                        next_state[i]   = STORE_S_RS1_PENDING;
+                end
+                STORE_S_ADDR_PENDING: begin // save address (from adder)
+                    if (save_addr && adder_ans_i.tag == i) begin
+                        sb_op[i]        = STORE_OP_SAVE_ADDR;
+                        if (adder_ans_i.except_raised)
+                            next_state[i]   = STORE_S_COMPLETED;
+                        else
+                            next_state[i]   = STORE_S_MEM_PENDING;
+                    end else
+                        next_state[i]   = STORE_S_ADDR_PENDING;
+                end
+                STORE_S_WAIT_ROB: begin
+                    if (head_idx == i && commit_pop_store_i) begin
+                        next_state[i]   = STORE_S_MEM_PENDING;
+                    end else
+                        next_state[i]   = STORE_S_WAIT_ROB;
+                end
+                STORE_S_MEM_PENDING: begin // wait for commit
+                    if (head_idx == i && mem_done) begin
+                        next_state[i]   = STORE_S_COMPLETED;
+                    end else
+                        next_state[i]   = STORE_S_MEM_PENDING;
+                end
+                STORE_S_COMPLETED: begin
+                    if (pop && head_idx == i)
+                        next_state[i]   = STORE_S_EMPTY;
+                    else 
+                        next_state[i]   = STORE_S_COMPLETED;
+                end
+                default: next_state[i]  = STORE_S_HALT;
+            endcase
         end
-
-        // Hit only if the most recent older store have the data available
-        pfwd_hit = (sb_data[pfwd_idx].rs2_ready) ? 1'b1 : 1'b0;
     end
 
+    // State update
+    always_ff @( posedge clk_i or negedge rst_n_i ) begin : p_state_update
+        if (!rst_n_i) foreach (curr_state[i]) curr_state[i] <= STORE_S_EMPTY;
+        else if (flush_i) foreach (curr_state[i]) curr_state[i] <= STORE_S_EMPTY;
+        else curr_state <= next_state;
+    end
 
-    // ------------------------
-    // IN-FLIGHT STORES COUNTER
-    // ------------------------
-    // It is the difference between the tail and head pointers. However, when the store buffer is full of uncommitted stores, this difference is 0, like when the buffer is empty. So, the MSB is set accordingly.
-    assign inflight_count[STBUFF_IDX_LEN]       = &valid_a; // MSB is 1 if all are valid
-    assign inflight_count[STBUFF_IDX_LEN-1:0]   = sb_tail_idx - sb_head_idx;
-    
-    // ----------------------
-    // HEAD AND TAIL COUNTERS
-    // ----------------------
-    modn_counter #(.N(STBUFF_DEPTH)) head_counter
-    (
-        .clk_i      (clk_i),
-        .rst_n_i    (rst_n_i),
-        .en_i       (head_cnt_en),
-        .clr_i      (head_cnt_clr),
-        .count_o    (sb_head_idx),
-        .tc_o       ()              // Not needed
-    );
+    // ------------------
+    // LOAD BUFFER UPDATE
+    // ------------------
 
-    modn_counter #(.N(STBUFF_DEPTH)) tail_counter
-    (
-        .clk_i      (clk_i),
-        .rst_n_i    (rst_n_i),
-        .en_i       (tail_cnt_en),
-        .clr_i      (tail_cnt_clr),
-        .count_o    (sb_tail_idx),
-        .tc_o       ()              // Not needed
-    );
-    
-    // ------------------------------------
-    // VIRTUAL ADDRESS COMPUTATION SELECTOR
-    // ------------------------------------
-    `ifdef ENABLE_AGE_BASED_SELECTOR
-    // The selector follows a "first come first served" scheduling policy. The oldest valid entry whose base address from rs1 is available and whose virtual address hasn't been computed yet (vaddr_ready = 0) is selected to be sent to the virtual address adder
-    age_based_sel #(.N(STBUFF_DEPTH), .AGE_LEN(ROB_IDX_LEN)) vaddr_req_selector
-    (
-        .lines_i    (valid_a & ~busy_a & rs1_ready_a & ~vaddr_ready_a & ~completed_a),
-        .ages_i     (entry_age_a),
-        .enc_o      (vadder_req_idx),
-        .valid_o    (vadder_idx_valid)
-    );
-    `else
-    // Simple priority encoder
-    prio_enc #(.N(STBUFF_DEPTH)) vaddr_req_selector
-    (
-        .lines_i    (valid_a & ~busy_a & rs1_ready_a & ~vaddr_ready_a & ~completed_a),
-        .enc_o      (vadder_req_idx),
-        .valid_o    (vadder_idx_valid)
-    );
-    `endif
+    // NOTE: operations priority:
+    // 1) push
+    // 2) pop
+    // 3) update memory value
+    // 4) update address
+    // 5) update rs1 (from CDB)
+    always_ff @( posedge clk_i or negedge rst_n_i ) begin : p_lb_update
+        if (!rst_n_i) begin
+            foreach (data[i]) begin
+                data[i]         <= '0;
+            end
+        end else begin
+            /* Performed the required action for each instruction */
+            foreach (sb_op[i]) begin
+                case (sb_op[i])
+                    STORE_OP_PUSH: begin
+                        data[i].store_type       = issue_type_i;
+                        data[i].rs1_rob_idx     = issue_rs1_i.rob_idx;
+                        data[i].rs1_value       = issue_rs1_i.value;
+                        data[i].rs2_rob_idx     = issue_rs2_i.rob_idx;
+                        data[i].rs2_value       = issue_rs2_i.value;
+                        data[i].dest_rob_idx    = issue_dest_rob_idx_i;
+                        data[i].imm_addr_value  = issue_imm_i;
+                        data[i].except_raised   = 1'b0;
+                    end
+                    STORE_OP_SAVE_RS12: begin
+                        data[i].rs1_value       = cdb_data_i.value;
+                        data[i].rs2_value       = cdb_data_i.value;
+                    end
+                    STORE_OP_SAVE_RS1: begin
+                        data[i].rs1_value       = cdb_data_i.value;
+                    end
+                    STORE_OP_SAVE_RS2: begin
+                        data[i].rs2_value       = cdb_data_i.value;
+                    end
+                    STORE_OP_SAVE_ADDR: begin
+                        data[i].imm_addr_value  = adder_ans_i.result;
+                        data[i].except_raised   = adder_ans_i.except_raised;
+                        data[i].except_code     = adder_ans_i.except_code;
+                    end
+                    default:;
+                endcase
+            end
+        end
+    end
 
-    // --------------------
-    // DTLB ACCESS SELECTOR
-    // --------------------
-    `ifdef ENABLE_AGE_BASED_SELECTOR
-    // The selector follows a "first come first served" scheduling policy. The oldest valid entry whose virtual address has already be computed and that's not busy or completed is selected for the address translation
-    age_based_sel #(.N(STBUFF_DEPTH), .AGE_LEN(ROB_IDX_LEN)) dtlb_req_selector
-    (
-        .lines_i    (valid_a & ~busy_a & vaddr_ready_a & ~paddr_ready_a & ~except_raised_a & ~completed_a),
-        .ages_i     (entry_age_a),
-        .enc_o      (dtlb_req_idx),
-        .valid_o    (dtlb_idx_valid)
-    );
-    `else
-    // Simple priority encoder
-    prio_enc #(.N(STBUFF_DEPTH)) dtlb_req_selector
-    (
-        .lines_i    (valid_a & ~busy_a & vaddr_ready_a & ~paddr_ready_a & ~except_raised_a & ~completed_a),
-        .enc_o      (dtlb_req_idx),
-        .valid_o    (dtlb_idx_valid)
-    );
-    `endif
-
-    // ------------
-    // CDB SELECTOR
-    // ------------
-    `ifdef ENABLE_AGE_BASED_SELECTOR
-    // Stores access the CDB only to signal occurred exceptions to the ROB. Exceptions can be raised during the address translation or during the TLB access. 
-    age_based_sel #(.N(STBUFF_DEPTH), .AGE_LEN(ROB_IDX_LEN)) cdb_req_selector
-    (
-        .lines_i    (valid_a & completed_a),
-        .ages_i     (entry_age_a),
-        .enc_o      (cdb_req_idx),
-        .valid_o    (cdb_idx_valid)
-    );
-    `else
-    // Simple priority encoder
-    prio_enc #(.N(STBUFF_DEPTH)) cdb_req_selector
-    (
-        .lines_i    (valid_a & completed_a),
-        .enc_o      (cdb_req_idx),
-        .valid_o    (cdb_idx_valid)
-    );
-    `endif
-    
     // -----------------
     // OUTPUT EVALUATION
     // -----------------
 
-    // TO THE VIRTUAL ADDRESS ADDER (OPERANDS READ PORT 1)
-    assign vadder_isstore_o = 1'b1;                                 // the instruction is a store
-    assign rs1_value_o      = sb_data[vadder_req_idx].rs1_value;
-    assign imm_value_o      = sb_data[vadder_req_idx].imm_value;
-    assign vadder_idx_o     = vadder_req_idx;
-    assign vadder_sttype_o  = sb_data[vadder_req_idx].store_type;
+    /* Issue stage */
+    assign issue_ready_o   = curr_state[tail_idx] == STORE_S_EMPTY;
 
-    // TO THE TLB
-    assign dtlb_isstore_o = 1'b1; // the instruction is a store
-    assign dtlb_vaddr_o = sb_data[dtlb_req_idx].vaddr[VADDR_LEN-1:PAGE_OFFSET_LEN]; // (VADDR READ PORT 1)
-    assign dtlb_idx_o   = dtlb_req_idx;
-
-    // TO THE D$ 
-    assign dcache_isstore_o = 1'b1; // the instruction is a store
-    assign dcache_paddr_o   = paddr_a[sb_head_idx];             // (PADDR READ PORT 1)
-    assign dcache_value_o   = sb_data[sb_head_idx].rs2_value;   // (RS2 READ PORT 1)
-    assign dcache_idx_o     = sb_head_idx;
-    assign dcache_sttype_o  = sb_data[sb_head_idx].store_type;
-
-    // TO THE LOAD BUFFER
-    assign inflight_store_cnt_o     = inflight_count;
-
-    // VIRTUAL ADDRESS FORWARDING (PARALLEL PORT 1)
-    // Virtual address forwarding is valid only if all previous stores have ready vaddr
-    assign vfwd_depfree_o   = vfwd_allowed & vfwd_depfree;
-    assign vfwd_hit_o       = vfwd_allowed & vfwd_hit;
-    assign vfwd_value_o     = sb_data[vfwd_idx].rs2_value;      // (RS2 READ PORT 2)
-
-    // VIRTUAL ADDRESS FORWARDING (PARALLEL PORT 2)
-    // Phisical address forwarding is valid only if all previous stores have ready vaddr
-    assign pfwd_depfree_o   = pfwd_allowed & pfwd_depfree;
-    assign pfwd_hit_o       = pfwd_allowed & pfwd_hit;
-    assign pfwd_value_o     = sb_data[pfwd_idx].rs2_value;      // (RS2 READ PORT 3)
-
-    // TO THE COMMIT LOGIC
-    assign cl_sb_head_completed_o   = sb_data[sb_head_idx].valid && sb_data[sb_head_idx].completed && !sb_data[sb_head_idx].except_raised;
-    assign cl_sb_head_rob_idx_o     = sb_head_idx;
-
-    // TO THE CDB
-    assign cdb_idx_o            = sb_data[cdb_req_idx].dest_idx;
-    assign cdb_data_o           = sb_data[cdb_req_idx].rs2_value;   // (RS2 READ PORT 4)
-    assign cdb_except_raised_o  = sb_data[cdb_req_idx].except_raised;
-    assign cdb_except_o         = sb_data[cdb_req_idx].except_code;
+    /* Commit stage */
+    assign commit_sb_head_completed_o   = curr_state[head_idx] == STORE_S_COMPLETED;
+    assign commit_sb_head_rob_idx_o     = data[head_idx].dest_rob_idx;
     
+    /* CDB */
+    assign cdb_valid_o         = curr_state[head_idx] == STORE_S_COMPLETED;
+    assign cdb_data_o.rob_idx  = data[head_idx].dest_rob_idx;
+
+    /* Address adder */
+    assign adder_valid_o           = curr_state[addr_idx] == STORE_S_ADDR_PENDING;
+    assign adder_ready_o           = 1'b1; // always ready to accept data from the adder
+    assign adder_req_o.tag         = addr_idx;
+    assign adder_req_o.is_store    = 1'b1;
+    assign adder_req_o.base        = data[addr_idx].rs1_value;
+    assign adder_req_o.offs        = data[addr_idx].imm_addr_value;
+    assign adder_req_o.ls_type     = data[addr_idx].store_type;
+
+    /* Memory system */
+    assign mem_valid_o          = curr_state[head_idx] == STORE_S_MEM_PENDING;
+    assign mem_ready_o          = 1'b1;
+    assign mem_req_o.tag        = head_idx;
+    assign mem_req_o.is_store   = 1'b1;
+    assign mem_req_o.ls_type    = data[head_idx].store_type;
+    assign mem_req_o.addr       = data[head_idx].imm_addr_value;
+
+    // --------
+    // COUNTERS
+    // --------
+
+    modn_counter #(
+        .N (DEPTH)
+    ) u_head_counter (
+    	.clk_i   (clk_i         ),
+        .rst_n_i (rst_n_i       ),
+        .en_i    (head_cnt_en   ),
+        .clr_i   (head_cnt_clr  ),
+        .count_o (head_idx      ),
+        .tc_o    () // not needed
+    );
+
+    modn_counter #(
+        .N (DEPTH)
+    ) u_tail_counter (
+    	.clk_i   (clk_i         ),
+        .rst_n_i (rst_n_i       ),
+        .en_i    (tail_cnt_en   ),
+        .clr_i   (tail_cnt_clr  ),
+        .count_o (tail_idx      ),
+        .tc_o    () // not needed
+    );
+
+    modn_counter #(
+        .N (DEPTH)
+    ) u_addr_counter (
+    	.clk_i   (clk_i         ),
+        .rst_n_i (rst_n_i       ),
+        .en_i    (addr_cnt_en   ),
+        .clr_i   (addr_cnt_clr  ),
+        .count_o (addr_idx      ),
+        .tc_o    () // not needed
+    );
+
     // ----------
     // ASSERTIONS
     // ----------
     `ifndef SYNTHESIS
-    always @(negedge clk_i) begin
-        // Notice when the load buffer is full
-        assert (valid_a !== '1) else `uvm_info("BUFFSIZE", $sformatf("Store buffer full (%0d entries): you might want to increase its depth", STBUFF_DEPTH), UVM_HIGH)
-        foreach (sb_data[i]) begin
-            // Check if the correct order of operations is respected
-            assert (sb_data[i].except_code != E_UNKNOWN) else `uvm_error("EXCEPTION", $sformatf("Store buffer entry %4d has encountered an unknown exception", i))
+    always @(posedge clk_i) begin
+        foreach (curr_state[i]) begin
+            a_error: assert (curr_state[i] != STORE_S_HALT)
+                else `uvm_error("STORE BUFFER", "CU in HALT state");
         end
     end
-    `endif
+    `endif /* SYNTHESIS */
 
 endmodule

@@ -1,7 +1,7 @@
-// Copyright 2019 Politecnico di Torino.
+// Copyright 2022 Politecnico di Torino.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 2.0 (the "License"); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
+// compliance with the License. You may obtain a copy of the License at
 // http://solderpad.org/licenses/SHL-2.0. Unless required by applicable law
 // or agreed to in writing, software, hardware and materials distributed under
 // this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
@@ -10,230 +10,198 @@
 //
 // File: rob.sv
 // Author: Michele Caon
-// Date: 03/11/2019
-
-// LEN5 compilation switches
-`include "len5_config.svh"
+// Date: 14/07/2022
 
 import len5_pkg::XLEN;
-import len5_pkg::ILEN;
 import len5_pkg::REG_IDX_LEN;
-import len5_pkg::ROB_DEPTH;
-import len5_pkg::instr_t;
 import expipe_pkg::*;
 
-module rob 
-(
-    input   logic                       clk_i,
-    input   logic                       rst_n_i,
-    input   logic                       flush_i,
+/**
+ * @brief	Reaorder Buffer
+ *
+ * @details	Based on a simple FIFO queue and expanded to support
+ *          updates from the CDB.
+ */
+module rob #(
+    parameter int   DEPTH   = 4
+) (
+    /* Clock and reset */
+    input   logic                   clk_i,
+    input   logic                   rst_n_i,
+    input   logic                   flush_i,
 
-    // Handhsake from/to the issue stage
-    input   logic                       issue_valid_i,
-    output  logic                       issue_ready_o,
+    /* Issue stage */
+    input   logic                   issue_valid_i,      // from upstream hardware
+    output  logic                   issue_ready_o,      // to upstream hardware
+    input   rob_entry_t             issue_data_i,
+    output  rob_idx_t issue_tail_idx_o,   // the ROB entry where the new instruction is being allocated
+    input   rob_idx_t issue_rs1_rob_idx_i,
+    output  logic                   issue_rs1_ready_o,
+    output  logic [XLEN-1:0]        issue_rs1_value_o,
+    input   rob_idx_t issue_rs2_rob_idx_i,
+    output  logic                   issue_rs2_ready_o,
+    output  logic [XLEN-1:0]        issue_rs2_value_o,
+    
+    /* Commit stage */
+    output  logic                   comm_valid_o,       // to downstream hardware
+    input   logic                   comm_ready_i,       // from downstream hardware
+    output  rob_entry_t             comm_data_o,
+    output  rob_idx_t comm_head_idx_o,    // ROB head idx to update register status
 
-    // Data from/to the issue stage
-    output  logic                       issue_rs1_ready_o,      // the result is ready
-    input   logic [ROB_IDX_LEN-1:0]     issue_rs1_idx_i,        // ROB entry containing rs1 value 
-    output  logic [XLEN-1:0]            issue_rs1_value_o,      // the value of the first operand
-    output  logic                       issue_rs2_ready_o,      // the result is ready
-    input   logic [ROB_IDX_LEN-1:0]     issue_rs2_idx_i,        // ROB entry containing rs2 value
-    output  logic [XLEN-1:0]            issue_rs2_value_o,      // the value of the second operand
-
-    input   instr_t                     issue_instr_i,         // to identify the instruction
-    input   logic [XLEN-1:0]            issue_pc_i,             // the PC of the instruction being issued, needed for exception handling
-    input   logic [REG_IDX_LEN-1:0]     issue_rd_idx_i,         // the destination register index (rd)
-    input   logic                       issue_except_raised_i,  // an exception has been raised
-    input   except_code_t               issue_except_code_i,    // the exception code
-    input   logic [XLEN-1:0]            issue_except_aux_i,     // exception auxilliary data (e.g. offending virtual address)
-    input   logic                       issue_res_ready_i,      // to force result ready in special cases that are ready to commit from the issue phase
-    input   logic [XLEN-1:0]            issue_res_value_i,
-
-    output  logic [ROB_IDX_LEN-1:0]     issue_tail_idx_o,       // the ROB entry where the new instruction is being allocated
-
-    // Handhsake from the CDB
-    input   logic                       cdb_valid_i,
-    output  logic                       cdb_ready_o,
-
-    // Data from the CDB
-    input cdb_data_t                    cdb_data_i,
-
-    // Handshake from/to the committing logic
-    input   logic                       comm_ready_i,
-    output  logic                       comm_valid_o,
-
-    // Data to the commit logic
-    output  rob_entry_t                 comm_head_entry_o,      // ROB head entry
-    output  logic [ROB_IDX_LEN-1:0]     comm_head_idx_o         // ROB head idx to update register status
+    /* Common data bus (CDB) */
+    input   logic                   cdb_valid_i,
+    input   cdb_data_t              cdb_data_i
 );
 
-    // DEFINITIONS
-    
-    // Head and tail pointers
-    logic [ROB_IDX_LEN-1:0]             rob_head_idx, rob_tail_idx;
-    logic                               rob_tail_en1, rob_head_en, rob_head_clr, rob_tail_en, rob_tail_clr;
+    // INTERNAL SIGNALS
+    // ----------------
 
-    // Operation control
-    logic                               rob_push, rob_pop, rob_wr_res;
+    // Head and tail counters
+    logic [$clog2(DEPTH)-1:0]   head_idx, tail_idx;
+    logic                       head_cnt_en, tail_cnt_en;
+    logic                       head_cnt_clr, tail_cnt_clr;
 
-    // ROB data structure 
-    rob_entry_t                         rob_data [0:ROB_DEPTH-1]; 
-    logic                               rob_valid[0:ROB_DEPTH-1];
+    // FIFO data
+    logic                       data_valid[DEPTH];
+    rob_entry_t                 data[DEPTH];
 
-    // Status signals
-    logic [0:ROB_DEPTH-1]               res_ready_a;
-
-    // --------------
-    // STATUS SIGNALS
-    // --------------
-    // These are required because name selection after indexing is not supported
-    always_comb begin: status_signals_gen
-        for (int i = 0; i < ROB_DEPTH; i++) begin
-            res_ready_a[i]      = rob_data[i].res_ready;
-        end
-    end
+    // FIFO control
+    logic                       fifo_push, fifo_pop, update_res;
 
     // -----------------
-    // ROB CONTROL LOGIC
+    // FIFO CONTROL UNIT
     // -----------------
-    always_comb begin: rob_control_logic
-        // DEFAULT VALUES
-        // Operation control
-        rob_push            = 1'b0;
-        rob_pop             = 1'b0;
-        rob_wr_res          = 1'b0;
 
-        // Hanshake control
-        issue_ready_o       = 1'b0;
-        cdb_ready_o         = 1'b1; // Always ready to accept data from the CDB
-        comm_valid_o        = 1'b0;
+    // Push/pop/update control
+    assign  fifo_push   = issue_valid_i && issue_ready_o;
+    assign  fifo_pop    = comm_valid_o && comm_ready_i;
+    assign  update_res  = cdb_valid_i;
 
-        // Head and tail counters control
-        rob_head_en         = 1'b0; 
-        rob_head_clr        = flush_i;     
-        rob_tail_en         = 1'b0; 
-        rob_tail_clr        = flush_i;    
+    // Counters control
+    assign  head_cnt_clr    = flush_i;
+    assign  tail_cnt_clr    = flush_i;
+    assign  head_cnt_en     = fifo_pop;
+    assign  tail_cnt_en     = fifo_push;
 
-        // --------------
-        // ROB OPERATIONS
-        // --------------
-        
-        // PUSH A NEW INSTRUCTION IN THE QUEUE
-        if (!rob_valid[rob_tail_idx]) begin
-            issue_ready_o               = 1'b1; // tell the issue logic that an entry is valid
-            if (issue_valid_i) begin
-                rob_push                = 1'b1; // push the new instruction in
-                rob_tail_en            = 1'b1; // increment the tail pointer
-                //rob_tail_en             = rob_tail_en1;
-            end
-        end
-
-        // WRITE THE DATA FROM THE CDB  
-        if (cdb_valid_i) begin
-            rob_wr_res                  = 1'b1; 
-        end
-
-        // POP THE HEAD ENTRY WHEN IT'S READY TO COMMIT
-        if (rob_valid[rob_head_idx] && rob_data[rob_head_idx].res_ready) begin
-            comm_valid_o                = 1'b1; // tell the commit logic that an instruction is ready to commit
-            if (comm_ready_i) begin
-               rob_pop                  = 1'b1; // if the commit logic can accept the instruction, pop it
-               rob_head_en              = 1'b1; // increment the head pointer 
-            end
-        end
-    end
-    
-    // ---------------
-    // ROB DATA UPDATE
-    // ---------------
-    always_ff @(posedge clk_i or negedge rst_n_i) begin: rob_data_update
+    // -----------
+    // FIFO UPDATE
+    // -----------
+    // NOTE: operations priority:
+    // 1) push (from issue stage)
+    // 2) pop
+    // 3) update result (from CDB)
+    always_ff @( posedge clk_i or negedge rst_n_i ) begin : p_fifo_update
         if (!rst_n_i) begin
-            foreach (rob_data[i]) begin
-                rob_data[i]                 <= 0;
-                rob_valid[i]                <= 1'b0;
+            foreach (data[i]) begin
+                data_valid[i]   <= 1'b0;
+                data[i]         <= '0;
             end
         end else if (flush_i) begin
-            foreach (rob_data[i]) begin // clearing status bits is enough
-                rob_valid[i]                <= 1'b0;
-                rob_data[i].res_ready       <= 1'b0;
-                rob_data[i].except_raised   <= 1'b0;
+            foreach (data[i]) begin
+                data_valid[i]   <= 1'b0;    // clearing valid is enough
             end
-        end else begin // Normal operation
-            
-            // PUSH NEW INSTRUCTION INTO THE ROB (WRITE PORT 1)
-            if (rob_push) begin
-                rob_valid[rob_tail_idx]                 <= 1'b1;
-                rob_data[rob_tail_idx].instruction      <= issue_instr_i;
-                rob_data[rob_tail_idx].instr_pc         <= issue_pc_i;
-                rob_data[rob_tail_idx].rd_idx           <= issue_rd_idx_i;
-                rob_data[rob_tail_idx].except_raised    <= issue_except_raised_i;
-                if (issue_except_raised_i) begin
-                    rob_data[rob_tail_idx].res_value    <= issue_except_aux_i;  // copy auxiliary data in result field so they can be used at commit to handle the exception or special instr. tha don't have to wait for a result
-                    rob_data[rob_tail_idx].except_code  <= issue_except_code_i;
-                    rob_data[rob_tail_idx].res_ready    <= 1'b1;
-                end else if (issue_res_ready_i) begin
-                    rob_data[rob_tail_idx].res_value    <= issue_res_value_i;
-                    rob_data[rob_tail_idx].res_ready    <= 1'b1;
-                end else begin
-                    rob_data[rob_tail_idx].res_ready    <= 1'b0;
+        end else begin
+            foreach (data[i]) begin
+                if (fifo_push && tail_idx == i) begin
+                    data_valid[i]    <= 1'b1;
+                    data[i]          <= issue_data_i;
+                end else if (fifo_pop && head_idx == i) begin
+                    data_valid[i]    <= 1'b0;
+                end else if (update_res && cdb_data_i.rob_idx == i) begin
+                    data[i].res_ready      <= 1'b1;
+                    data[i].res_value      <= cdb_data_i.value;
+                    data[i].except_raised  <= cdb_data_i.except_raised;
+                    data[i].except_code    <= cdb_data_i.except_code;
                 end
             end
-
-            // WRITE THE DATA FROM THE CDB (WRITE PORT 2)
-            if (rob_wr_res) begin
-                rob_data[cdb_data_i.rob_idx].res_ready      <= 1'b1;
-                rob_data[cdb_data_i.rob_idx].res_value      <= cdb_data_i.value;
-                rob_data[cdb_data_i.rob_idx].except_raised  <= cdb_data_i.except_raised;
-                rob_data[cdb_data_i.rob_idx].except_code    <= cdb_data_i.except_code;
-            end
-
-            // POP COMMITTED ENTRY
-            if (rob_pop) rob_valid[rob_head_idx]       <= 1'b0;
-
         end
     end
 
     // ----------------------
-    // HEAD AND TAIL POINTERS
+    // HEAD AND TAIL COUNTERS
     // ----------------------
-    modn_counter #(.N(ROB_DEPTH)) head_counter
-    (
-        .clk_i      (clk_i),
-        .rst_n_i    (rst_n_i),
-        .en_i       (rob_head_en),
-        .clr_i      (rob_head_clr),
-        .count_o    (rob_head_idx),
-        .tc_o       ()              // Not needed
+
+    modn_counter #(
+        .N (DEPTH)
+    ) u_head_counter (
+    	.clk_i   (clk_i         ),
+        .rst_n_i (rst_n_i       ),
+        .en_i    (head_cnt_en   ),
+        .clr_i   (head_cnt_clr  ),
+        .count_o (head_idx      ),
+        .tc_o    () // not needed
     );
 
-    modn_counter #(.N(ROB_DEPTH)) tail_counter
-    (
-        .clk_i      (clk_i),
-        .rst_n_i    (rst_n_i),
-        .en_i       (rob_tail_en),
-        .clr_i      (rob_tail_clr),
-        .count_o    (rob_tail_idx),
-        .tc_o       ()              // Not needed
+    modn_counter #(
+        .N (DEPTH)
+    ) u_tail_counter (
+    	.clk_i   (clk_i         ),
+        .rst_n_i (rst_n_i       ),
+        .en_i    (tail_cnt_en   ),
+        .clr_i   (tail_cnt_clr  ),
+        .count_o (tail_idx      ),
+        .tc_o    () // not needed
     );
 
-    // -------------------------------
-    // ISSUE STAGE OPERANDS READ PORTS
-    // -------------------------------
-    // rs1 port
-    assign issue_rs1_ready_o    = rob_valid[issue_rs1_idx_i] && rob_data[issue_rs1_idx_i].res_ready;
-    assign issue_rs1_value_o    = rob_data[issue_rs1_idx_i].res_value; // READ PORT 1 (res_value)
-    // rs2 port
-    assign issue_rs2_ready_o    = rob_valid[issue_rs2_idx_i] && rob_data[issue_rs2_idx_i].res_ready;
-    assign issue_rs2_value_o    = rob_data[issue_rs2_idx_i].res_value; // READ PORT 2 (res_value)
+    // --------------
+    // OUTPUT CONTROL
+    // --------------
 
-    // -----------------
-    // OUTPUT EVALUATION
-    // -----------------
+    /* Issue stage */
+    assign  issue_ready_o       = !data_valid[tail_idx];
+    assign  issue_tail_idx_o    = tail_idx;
+    assign  issue_rs1_ready_o   = data[issue_rs1_rob_idx_i].res_ready;
+    assign  issue_rs1_value_o   = data[issue_rs1_rob_idx_i].res_value;
+    assign  issue_rs2_ready_o   = data[issue_rs2_rob_idx_i].res_ready;
+    assign  issue_rs2_value_o   = data[issue_rs2_rob_idx_i].res_value;
+    
+    /* Commit stage */
+    assign  comm_valid_o    = data_valid[head_idx];
+    assign  comm_data_o     = data[head_idx];
+    assign  comm_head_idx_o = head_idx;
 
-    // To the issue stage
-    assign issue_tail_idx_o     = rob_tail_idx;
+    // ----------
+    // ASSERTIONS
+    // ----------
+    `ifndef SYNTHESIS
+    property p_fifo_push;
+        @(posedge clk_i) disable iff (!rst_n_i || flush_i)
+        issue_valid_i && issue_ready_o |-> ##1
+        comm_valid_o ##0
+        data_valid[$past(tail_idx)] == 1'b1 ##0
+        data[$past(tail_idx)] == $past(issue_data_i);
+    endproperty
+    a_fifo_push: assert property (p_fifo_push)
+    else $error("comm_valid_o: %b | past data_valid: %b | past data: %h | past issue_data_i: %h", comm_valid_o, data_valid[$past(tail_idx)], data[$past(tail_idx)], $past(issue_data_i));
 
-    // To the commit logic
-    assign comm_head_entry_o    = rob_data[rob_head_idx];
-    assign comm_head_idx_o      = rob_head_idx;
+    property p_fifo_pop;
+        @(posedge clk_i) disable iff (!rst_n_i || flush_i)
+        comm_valid_o && comm_ready_i |-> ##1
+        issue_ready_o == 1'b1 ##0
+        data_valid[$past(head_idx)] == 1'b0;
+    endproperty
+    a_fifo_pop: assert property (p_fifo_pop);
+
+    property p_ready_n;
+        @(posedge clk_i) disable iff (!rst_n_i || flush_i)
+        !comm_ready_i && comm_valid_o |-> ##1
+        comm_valid_o;
+    endproperty
+    a_ready_n: assert property (p_ready_n);
+
+    property p_push_pop;
+        @(posedge clk_i) disable iff (!rst_n_i)
+        fifo_push && fifo_pop |->
+        head_idx != tail_idx;
+    endproperty
+    a_push_pop: assert property (p_push_pop);
+
+    property p_cdb_valid;
+        @(posedge clk_i) disable iff (!rst_n_i)
+        cdb_valid_i |->
+        data_valid[cdb_data_i.rob_idx];
+    endproperty
+    a_cdb_valid: assert property (p_cdb_valid);
+    `endif /* SYNTHESIS */
+
 endmodule

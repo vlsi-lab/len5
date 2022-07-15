@@ -27,7 +27,7 @@ PKG_SRCS 		:= 	$(ROOT)/include/len5_pkg.sv \
 					$(ROOT)/include/csr_pkg.sv \
 					$(ROOT)/include/memory_pkg.sv \
 					$(ROOT)/include/expipe_pkg.sv
-MODULES_SRCS 	:= 	$(shell find $(ROOT)/src/ -type f -name '*.sv')
+MODULES_SRCS 	:= 	$(shell find $(ROOT)/src/ -type f -name '*.sv' -not -path "$(ROOT)/src/expipe/load-store-unit-vm/*")
 TB_SRCS 		:= 	$(ROOT)/tb/tb_with_l2cemu.sv \
 					$(ROOT)/tb/memory/cache_L2_system_emulator.sv
 # vlog options

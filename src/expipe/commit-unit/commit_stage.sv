@@ -46,13 +46,13 @@ module commit_stage (
     // Issue logic <--> commit logic
     output  logic                       il_reg0_valid_o,
     output  logic [XLEN-1:0]            il_reg0_value_o,
-    output  logic [ROB_IDX_LEN-1:0]     il_reg0_idx_o,
+    output  rob_idx_t     il_reg0_idx_o,
     output  logic                       il_reg1_valid_o,
     output  logic [XLEN-1:0]            il_reg1_value_o,
-    output  logic [ROB_IDX_LEN-1:0]     il_reg1_idx_o,
+    output  rob_idx_t     il_reg1_idx_o,
     output  logic                       il_comm_reg_valid_o,
     output  logic [XLEN-1:0]            il_comm_reg_value_o,
-    output  logic [ROB_IDX_LEN-1:0]     il_comm_reg_idx_o,
+    output  rob_idx_t     il_comm_reg_idx_o,
 
     // Control to the ROB
     input   logic                       rob_valid_i,
@@ -60,11 +60,11 @@ module commit_stage (
 
     // Data from the ROB
     input   rob_entry_t                 rob_head_entry_i,
-    input   logic [ROB_IDX_LEN-1:0]     rob_head_idx_i,
+    input   rob_idx_t                   rob_head_idx_i,
 
     // Commit logic <--> store buffer
     input   logic                       sb_head_completed_i,
-    input   logic [ROB_IDX_LEN-1:0]     sb_head_rob_idx_i,
+    input   rob_idx_t                   sb_head_rob_idx_i,
     output  logic                       sb_pop_store_o,     // pop the head store iunstruction in the store buffer
 
 	// Commit logic <--> register files and status
@@ -80,7 +80,7 @@ module commit_stage (
 `endif /* LEN5_FP_EN */
 
     // Data to the register status registers
-    output  logic [ROB_IDX_LEN-1:0]     rs_head_idx_o,
+    output  rob_idx_t     rs_head_idx_o,
 
     // Data to the register files
     output  logic [REG_IDX_LEN-1:0]     rd_idx_o,           // the index of the destination register (rd)
@@ -108,7 +108,7 @@ module commit_stage (
     // Input register data
     typedef struct packed {
         rob_entry_t             data;
-        logic [ROB_IDX_LEN-1:0] rob_idx;
+        rob_idx_t rob_idx;
     } inreg_data_t;
 
     // Commit decoder
@@ -130,6 +130,7 @@ module commit_stage (
     // Committing instruction register
     logic                       comm_reg_en;
     rob_entry_t                 comm_reg_data;
+    logic                       comm_reg_valid;
 
     // commit CU --> others
     logic                       cu_instr_valid;
@@ -164,8 +165,14 @@ module commit_stage (
     // -------------------------------
 
     always_ff @( posedge clk_i or negedge rst_n_i ) begin : comm_reg
-        if (!rst_n_i)           comm_reg_data   = 'h0;
-        else if (comm_reg_en)   comm_reg_data   = inreg_data_out.data;
+        if (!rst_n_i) begin
+            comm_reg_data   = 'h0;
+            comm_reg_valid  = 1'b0;
+        end
+        else if (comm_reg_en) begin
+            comm_reg_data   = inreg_data_out.data;
+            comm_reg_valid  = inreg_cu_valid;
+        end
     end
 
     // --------------
@@ -198,6 +205,7 @@ module commit_stage (
         .valid_i            (inreg_cu_valid),
         .ready_o            (cu_inreg_ready),
         .instr_i            (inreg_data_out.data.instruction),
+        .res_ready_i        (inreg_data_out.data.res_ready),
         .except_raised_i    (inreg_data_out.data.except_raised),
         .except_code_i      (inreg_data_out.data.except_code),
         .int_rs_valid_o     (int_rs_valid_o),
@@ -224,11 +232,15 @@ module commit_stage (
     assign  il_reg1_valid_o         = inreg_cu_valid;
     assign  il_reg1_value_o         = inreg_data_out.data.res_value;
     assign  il_reg1_idx_o           = inreg_data_out.rob_idx;
-    assign  il_comm_reg_valid_o     = cu_inreg_ready;
+    assign  il_comm_reg_valid_o     = comm_reg_valid;
     assign  il_comm_reg_value_o     = comm_reg_data.res_value;
     assign  il_comm_reg_idx_o       = comm_reg_data.rd_idx;
 
     assign  rs_head_idx_o           = rob_head_idx_i;
+
+    // Data to the register file(s)
+    assign  rd_idx_o                = comm_reg_data.rd_idx;
+    assign  rd_value_o              = comm_reg_data.res_value;
 
     // Data to CSRs
     assign  csr_funct3_o            = comm_reg_data.instruction.i.funct3;

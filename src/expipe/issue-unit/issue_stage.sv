@@ -52,11 +52,11 @@ module issue_stage
 
     // Integer register status register data
     input   logic                       int_regstat_rs1_busy_i,     // rs1 value is in the ROB or has to be computed
-    input   logic [ROB_IDX_LEN-1:0]     int_regstat_rs1_rob_idx_i,  // the index of the ROB where the result is found
+    input   rob_idx_t     int_regstat_rs1_rob_idx_i,  // the index of the ROB where the result is found
     input   logic                       int_regstat_rs2_busy_i,     // rs1 value is in the ROB or has to be computed
-    input   logic [ROB_IDX_LEN-1:0]     int_regstat_rs2_rob_idx_i,  // the index of the ROB where the result is found
+    input   rob_idx_t     int_regstat_rs2_rob_idx_i,  // the index of the ROB where the result is found
     output  logic [REG_IDX_LEN-1:0]     int_regstat_rd_idx_o,       // destination register of the issuing instruction
-    output  logic [ROB_IDX_LEN-1:0]int_regstat_rob_idx_o,//ROB index where the instruction is being allocated(tail pointer of the ROB)
+    output  rob_idx_tint_regstat_rob_idx_o,//ROB index where the instruction is being allocated(tail pointer of the ROB)
     output  logic [REG_IDX_LEN-1:0]     int_regstat_rs1_idx_o,      // first source register index
     output  logic [REG_IDX_LEN-1:0]     int_regstat_rs2_idx_o,      // second source register index
 
@@ -73,11 +73,11 @@ module issue_stage
 
 	// Floating-point register status register data
     input   logic                       fp_regstat_rs1_busy_i,     // rs1 value is in the ROB or has to be computed
-    input   logic [ROB_IDX_LEN-1:0]     fp_regstat_rs1_rob_idx_i,  // the index of the ROB where the result is found
+    input   rob_idx_t     fp_regstat_rs1_rob_idx_i,  // the index of the ROB where the result is found
     input   logic                       fp_regstat_rs2_busy_i,     // rs1 value is in the ROB or has to be computed
-    input   logic [ROB_IDX_LEN-1:0]     fp_regstat_rs2_rob_idx_i,  // the index of the ROB where the result is found
+    input   rob_idx_t     fp_regstat_rs2_rob_idx_i,  // the index of the ROB where the result is found
     output  logic [REG_IDX_LEN-1:0]     fp_regstat_rd_idx_o,       // destination register of the issuing instruction
-    output  logic [ROB_IDX_LEN-1:0] fp_regstat_rob_idx_o,//ROB index where the instruction is being allocated(tail pointer of the ROB)
+    output  rob_idx_t fp_regstat_rob_idx_o,//ROB index where the instruction is being allocated(tail pointer of the ROB)
     output  logic [REG_IDX_LEN-1:0]     fp_regstat_rs1_idx_o,      // first source register index
     output  logic [REG_IDX_LEN-1:0]     fp_regstat_rs2_idx_o,      // second source register index
 
@@ -100,13 +100,13 @@ module issue_stage
     // Execution pipeline data
     output  logic [MAX_EU_CTL_LEN-1:0]  ex_eu_ctl_o,            // controls for the associated EU
     output  logic                       ex_rs1_ready_o,         // first operand is ready at issue time (from the RF or the ROB)
-    output  logic [ROB_IDX_LEN-1:0]     ex_rs1_idx_o,    // the index of the ROB where the first operand can be found (if not ready
+    output  rob_idx_t     ex_rs1_idx_o,    // the index of the ROB where the first operand can be found (if not ready
     output  logic [XLEN-1:0]            ex_rs1_value_o,         // the value of the first operand (if ready)
     output  logic                       ex_rs2_ready_o,         // second operand is ready at issue time (from the RF or the ROB)
-    output  logic [ROB_IDX_LEN-1:0]     ex_rs2_idx_o,    // the index of the ROB where the first operand can be found (if not ready)
+    output  rob_idx_t     ex_rs2_idx_o,    // the index of the ROB where the first operand can be found (if not ready)
     output  logic [XLEN-1:0]            ex_rs2_value_o,         // the value of the first operand (if ready)
     output  logic [XLEN-1:0]            ex_imm_value_o, // the value of the immediate field (for st and branches)                   
-    output  logic [ROB_IDX_LEN-1:0]     ex_rob_idx_o,           // the location of the ROB assigned to the instruction
+    output  rob_idx_t     ex_rob_idx_o,           // the location of the ROB assigned to the instruction
     output  logic [XLEN-1:0]            ex_pred_pc_o,              // the PC of the current issuing instr (branches only)
     output  logic [XLEN-1:0]            ex_pred_target_o,  // the predicted target of the current issuing instr (branches only)
     output  logic                       ex_pred_taken_o,   // the predicted taken bit of the current issuing instr (branches only)
@@ -117,7 +117,7 @@ module issue_stage
 	// CDB data
 	input   logic                       cdb_except_raised_i,
 	input   logic [XLEN-1:0]            cdb_value_i,
-	input   logic [ROB_IDX_LEN-1:0]		cdb_rob_idx_i,
+	input   rob_idx_t		cdb_rob_idx_i,
 
     // ROB handshaking
     input   logic                       rob_ready_i,            // the ROB has an empty entry available
@@ -128,29 +128,22 @@ module issue_stage
     input   logic [XLEN-1:0]            rob_rs1_value_i,        // the value of the first operand
     input   logic                       rob_rs2_ready_i,        // the second operand is ready in the ROB
     input   logic [XLEN-1:0]            rob_rs2_value_i,        // the value of the second operand
-    input   logic [ROB_IDX_LEN-1:0]     rob_tail_idx_i,         // the entry of the ROB where the instr is being allocated
+    input   rob_idx_t     rob_tail_idx_i,         // the entry of the ROB where the instr is being allocated
     
-    output  logic [ROB_IDX_LEN-1:0]     rob_rs1_idx_o,          // ROB entry containing rs1 value
-    output  logic [ROB_IDX_LEN-1:0]     rob_rs2_idx_o,          // ROB entry containing rs2 value
-    output  instr_t                     rob_instr_o,            // to identify the instruction
-    output  logic [XLEN-1:0]            rob_pc_o,               // PC of the current instruction
-    output  logic [REG_IDX_LEN-1:0]     rob_rd_idx_o,           // the destination register index (rd)
-    output  logic                       rob_except_raised_o,    // an exception has been raised
-    output  except_code_t  rob_except_code_o,      // the exception code
-    output  logic [XLEN-1:0]            rob_except_aux_o,       // exception auxilliary data (e.g. offending virtual address)
-    output  logic                       rob_res_ready_o,       // force the ready-to-commit state in the ROB to handle special instr. 
-    output  logic [XLEN-1:0]            rob_res_value_o,
+    output  rob_idx_t     rob_rs1_idx_o,          // ROB entry containing rs1 value
+    output  rob_idx_t     rob_rs2_idx_o,          // ROB entry containing rs2 value
+    output  rob_entry_t                 rob_data_o,             // data to the ROB
 
     // Commit logic data
     input   logic                       cl_reg0_valid_i,
     input   logic [XLEN-1:0]            cl_reg0_value_i,
-    input   logic [ROB_IDX_LEN-1:0]     cl_reg0_idx_i,
+    input   rob_idx_t     cl_reg0_idx_i,
     input   logic                       cl_reg1_valid_i,
     input   logic [XLEN-1:0]            cl_reg1_value_i,
-    input   logic [ROB_IDX_LEN-1:0]     cl_reg1_idx_i,
+    input   rob_idx_t     cl_reg1_idx_i,
     input   logic                       cl_comm_reg_valid_i,
     input   logic [XLEN-1:0]            cl_comm_reg_value_i,
-    input   logic [ROB_IDX_LEN-1:0]     cl_comm_reg_idx_i
+    input   rob_idx_t     cl_comm_reg_idx_i
 );
 
     // INTERNAL SIGNALS
@@ -299,14 +292,7 @@ module issue_stage
         .rob_tail_idx_i                 (rob_tail_idx_i),         
         .rob_rs1_idx_o                  (rob_rs1_idx_o),
         .rob_rs2_idx_o                  (rob_rs2_idx_o),
-        .rob_instr_o                    (rob_instr_o),
-        .rob_pc_o                       (rob_pc_o),
-        .rob_rd_idx_o                   (rob_rd_idx_o),
-        .rob_except_raised_o            (rob_except_raised_o),
-        .rob_except_code_o              (rob_except_code_o),
-        .rob_except_aux_o               (rob_except_aux_o),
-        .rob_res_ready_o                (rob_res_ready_o),
-        .rob_res_value_o                (rob_res_value_o),
+        .rob_data_o                     (rob_data_o),
 
         // Data from the commit logic
         .cl_reg0_valid_i                (cl_reg0_valid_i),
@@ -326,7 +312,7 @@ module issue_stage
     `ifndef SYNTHESIS
     always @(posedge clk_i) begin
         if (rob_valid_o && rob_ready_i) begin
-            `uvm_info("ISSUE", $sformatf("Issuing instruction: %h", rob_instr_o), UVM_HIGH);
+            `uvm_info("ISSUE", $sformatf("Issuing instruction: %h", rob_data_o.instruction.raw), UVM_HIGH);
         end
     end
     `endif /* SYNTHESIS */

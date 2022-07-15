@@ -55,13 +55,17 @@ module backend (
     output  logic                   fetch_except_raised_o,
     output  logic [XLEN-1:0]        fetch_except_pc_o,
 
-    /* Memory system */
-    input   logic                   mem_valid_i,
-    input   logic                   mem_ready_i,
-    output  logic                   mem_valid_o,
-    output  logic                   mem_ready_o,
-    output  mem_req_t               mem_req_o,
-    input   mem_ans_t               mem_ans_i
+    // TLB
+    input   dtlb_lsq_ans_t          dtlb_ans_i,
+    input   dtlb_lsq_wup_t          dtlb_wup_i,
+    input   logic                   dtlb_ready_i,
+    output  lsq_dtlb_req_t          dtlb_req_o,
+
+    // D$
+    input   l1dc_lsq_ans_t          dcache_ans_i,
+    input   l1dc_lsq_wup_t          dcache_wup_i,
+    input   logic                   dcache_ready_i,
+    output  lsq_l1dc_req_t          dcache_req_o,
 
     // CSRs <--> memory system
     output  logic                   mem_vmem_on_o,
@@ -145,13 +149,13 @@ module backend (
     logic                       il_ex_valid [0:EU_N-1];
     logic [MAX_EU_CTL_LEN-1:0]  il_ex_eu_ctl;
     logic                       il_ex_rs1_ready;
-    rob_idx_t                   il_ex_rs1_idx;
+    rob_idx_t     il_ex_rs1_idx;
     logic [XLEN-1:0]            il_ex_rs1_value;
     logic                       il_ex_rs2_ready;
-    rob_idx_t                   il_ex_rs2_idx;
+    rob_idx_t     il_ex_rs2_idx;
     logic [XLEN-1:0]            il_ex_rs2_value;
     logic [XLEN-1:0]            il_ex_imm_value;
-    rob_idx_t                   il_ex_rob_idx;
+    rob_idx_t     il_ex_rob_idx;
     logic [XLEN-1:0]            il_ex_pred_pc;
     logic [XLEN-1:0]            il_ex_pred_target;
     logic                       il_ex_pred_taken;
@@ -164,9 +168,9 @@ module backend (
     logic [XLEN-1:0]            rob_il_rs1_value;
     logic                       rob_il_rs2_ready;
     logic [XLEN-1:0]            rob_il_rs2_value;
-    rob_idx_t                   rob_il_tail_idx;
-    rob_idx_t                   il_rob_rs1_idx;
-    rob_idx_t                   il_rob_rs2_idx;
+    rob_idx_t     rob_il_tail_idx;
+    rob_idx_t     il_rob_rs1_idx;
+    rob_idx_t     il_rob_rs2_idx;
     rob_entry_t                 il_rob_data;
 
     // Issue stage <--> CSRs
@@ -183,7 +187,7 @@ module backend (
     // ---------------------------------
     logic                       cl_sb_pop_store;
     logic                       sb_cl_store_head_completed;
-    rob_idx_t                   sb_cl_store_head_rob_idx;
+    rob_idx_t     sb_cl_store_head_rob_idx;
 
     // Execution stage <--> CSRs
     // -------------------------
@@ -204,11 +208,11 @@ module backend (
     logic                       comm_rob_ready;
     logic                       rob_comm_valid;
     rob_entry_t                 rob_comm_head_entry;
-    rob_idx_t                   rob_comm_head_idx;
+    rob_idx_t     rob_comm_head_idx;
 
     // Commit logic --> (both) register status registers
     // -------------------------------------------------
-    rob_idx_t                   comm_regstat_head_idx;
+    rob_idx_t     comm_regstat_head_idx;
 
     // Commit logic --> (both) register files
     // --------------------------------------
@@ -219,13 +223,13 @@ module backend (
     // ----------------------------
     logic                       cl_il_reg0_valid;
     logic [XLEN-1:0]            cl_il_reg0_value;
-    rob_idx_t                   cl_il_reg0_idx;
+    rob_idx_t     cl_il_reg0_idx;
     logic                       cl_il_reg1_valid;
     logic [XLEN-1:0]            cl_il_reg1_value;
-    rob_idx_t                   cl_il_reg1_idx;
+    rob_idx_t     cl_il_reg1_idx;
     logic                       cl_il_comm_reg_valid;
     logic [XLEN-1:0]            cl_il_comm_reg_value;
-    rob_idx_t                   cl_il_comm_reg_idx;
+    rob_idx_t     cl_il_comm_reg_idx;
 
     // Commit logic <--> CSRs
     // ----------------------
@@ -238,7 +242,7 @@ module backend (
     logic [CSR_ADDR_LEN-1:0]    comm_csr_addr;
     logic [REG_IDX_LEN]         comm_csr_rs1_idx;
     logic [XLEN-1:0]            comm_csr_rs1_value;
-    except_code_t               comm_csr_except_data;
+    except_code_t  comm_csr_except_data;
     logic [REG_IDX_LEN-1:0]     comm_csr_rd_idx;
 
     // -----------
@@ -476,12 +480,15 @@ module backend (
         .csr_frm_i                  (csr_ex_frm),
     `endif /* LEN5_FP_EN */
 
-        .mem_valid_i                (mem_valid_i),
-        .mem_ready_i                (mem_ready_i),
-        .mem_valid_o                (mem_valid_o),
-        .mem_ready_o                (mem_ready_o),
-        .mem_req_o                  (mem_req_o),
-        .mem_ans_i                  (mem_ans_i),
+        .dtlb_ans_i                 (dtlb_ans_i),
+        .dtlb_wup_i                 (dtlb_wup_i),
+        .dtlb_ready_i               (dtlb_ready_i),
+        .dtlb_req_o                 (dtlb_req_o),
+        
+        .dcache_ans_i               (dcache_ans_i),
+        .dcache_wup_i               (dcache_wup_i),
+        .dcache_ready_i             (dcache_ready_i),
+        .dcache_req_o               (dcache_req_o)
     );
 
     // Common Data Bus (CDB)

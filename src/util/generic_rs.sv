@@ -44,12 +44,12 @@ module generic_rs
     // Data from the issue stage
     input   logic [EU_CTL_LEN-1:0]  eu_ctl_i,
     input   logic                   rs1_ready_i,
-    input   logic [ROB_IDX_LEN-1:0] rs1_idx_i,
+    input   rob_idx_t rs1_idx_i,
     input   logic [XLEN-1:0]        rs1_value_i,
     input   logic                   rs2_ready_i,
-    input   logic [ROB_IDX_LEN-1:0] rs2_idx_i,          
+    input   rob_idx_t rs2_idx_i,          
     input   logic [XLEN-1:0]        rs2_value_i,        // can contain immediate for I type instructions
-    input   logic [ROB_IDX_LEN-1:0] dest_idx_i,
+    input   rob_idx_t dest_idx_i,
 
     // Handshake from/to the execution unit
     input   logic                   eu_ready_i,
@@ -73,10 +73,10 @@ module generic_rs
     output  logic                   cdb_valid_o,
 
     // Data from/to the CDB
-    input   logic [ROB_IDX_LEN-1:0] cdb_idx_i,
+    input   rob_idx_t cdb_idx_i,
     input   logic [XLEN-1:0]        cdb_data_i,
     input   logic                   cdb_except_raised_i,
-    output  logic [ROB_IDX_LEN-1:0] cdb_idx_o,
+    output  rob_idx_t cdb_idx_o,
     output  logic [XLEN-1:0]        cdb_data_o,
     output  logic                   cdb_except_raised_o,
     output  except_code_t cdb_except_o
@@ -91,17 +91,17 @@ module generic_rs
         logic                   valid;      // The entry contains a valid instruction
         logic                   busy;       // The instruction is being executed in the assigned EU
         `ifdef ENABLE_AGE_BASED_SELECTOR
-        logic [ROB_IDX_LEN-1:0] entry_age; // The age of the entry, used for scheduling
+        rob_idx_t entry_age; // The age of the entry, used for scheduling
         `endif
         logic [EU_CTL_LEN-1:0]  eu_ctl;     // Control signals for the EU
         logic                   rs1_ready;  // The first operand value is available in 'rs1_value'
-        logic [ROB_IDX_LEN-1:0] rs1_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
+        rob_idx_t rs1_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
         logic [XLEN-1:0]        rs1_value;  // The value of the first operand
         logic                   rs2_ready;  // The second operand value is available in 'rs2_value'
-        logic [ROB_IDX_LEN-1:0] rs2_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
+        rob_idx_t rs2_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
         logic [XLEN-1:0]        rs2_value;  // The value of the second operand
         logic                   res_ready;  // The value of the result is available in 'res_value'"
-        logic [ROB_IDX_LEN-1:0] res_idx;    // The entry of the ROB where the result will be stored
+        rob_idx_t res_idx;    // The entry of the ROB where the result will be stored
         logic [XLEN-1:0]        res_value;
         logic                   except_raised;
         except_code_t           except_code;
@@ -117,7 +117,7 @@ module generic_rs
     // Status signals
     logic   [RS_DEPTH-1:0]      valid_a, busy_a; // valid entries, empty entries
     logic   [RS_DEPTH-1:0]      ex_ready_a, res_ready_a; // Ready operands / ready result entries 
-    logic [ROB_IDX_LEN-1:0]     entry_age_a [0:RS_DEPTH-1];
+    rob_idx_t     entry_age_a [0:RS_DEPTH-1];
 
     // RS control signals
     logic                       rs_insert, rs_ex, rs_pop, rs_wr_res;
