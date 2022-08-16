@@ -26,10 +26,14 @@ AWK_FORMAT 		:= $(ROOT)/scripts/awk-mem-format.txt
 PKG_SRCS 		:= 	$(ROOT)/include/len5_pkg.sv \
 					$(ROOT)/include/csr_pkg.sv \
 					$(ROOT)/include/memory_pkg.sv \
+					$(ROOT)/include/fetch_pkg.sv \
 					$(ROOT)/include/expipe_pkg.sv
-MODULES_SRCS 	:= 	$(shell find $(ROOT)/src/ -type f -name '*.sv' -not -path "$(ROOT)/src/expipe/load-store-unit-vm/*")
+# NOTE: currently compile non virtual memory source only
+MODULES_SRCS 	:= 	$(shell find $(ROOT)/src/ -type f -name '*.sv' -not -path "$(ROOT)/src/**-vm/*" -not -path "$(ROOT)/src/**_vm.sv")
 TB_SRCS 		:= 	$(ROOT)/tb/tb_with_l2cemu.sv \
-					$(ROOT)/tb/memory/cache_L2_system_emulator.sv
+					$(ROOT)/tb/memory/cache_L2_system_emulator.sv \
+					$(ROOT)/tb/memory/memory_bare_emu.sv
+
 # vlog options
 GLOBAL_OPT		:= 	-svinputport=compat \
 					-hazards \
@@ -91,6 +95,12 @@ $(BUILD_DIR)/tb_list.f: $(TB_SRCS) | $(BUILD_DIR)/src_list.f
 	@echo "## Compiling LEN5 testbench files..."
 	@printf '%s\n' $? > $@
 	$(VLOG) $(MODULE_OPT) -F $@
+
+# Custom files
+.PHONY: custom-src
+custom-src: $(BUILD_DIR)/$(CUSTOM_SRC_LIST) | $(BUILD_DIR)/pkg_list.f
+	@echo "## Compiling custom source files..."
+	$(VLOG) $(MODULE_OPT) -F $<
 
 # Test memory files
 .PHONY: test-files

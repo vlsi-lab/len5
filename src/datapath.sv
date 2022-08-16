@@ -14,8 +14,8 @@
 
 import len5_pkg::*;
 import memory_pkg::*;
+import fetch_pkg::*;
 import csr_pkg::csr_priv_t;
-import expipe_pkg::except_code_t;
 
 module datapath #(
     parameter [XLEN-1:0]    BOOT_PC = 'h0
@@ -24,12 +24,13 @@ module datapath #(
     input   logic               clk_i,
     input   logic               rst_n_i,
 
-    // Datapath <--> L2$ emulator
-    input   logic               l2c_l2arb_req_rdy_i,
-    input   l2c_l2arb_ans_t     l2c_l2arb_ans_i,
-    output  l2arb_l2c_req_t     l2arb_l2c_req_o,
-    output  logic               l2arb_l2c_ans_rdy_o,
-    output  logic               l2c_flush_o
+    // Datapath <--> memory emulator
+    input   logic               mem_valid_i,
+    input   logic               mem_ready_i,
+    output  logic               mem_valid_o,
+    output  logic               mem_ready_o,
+    input   mem_ans_t           mem_ans_i,
+    output  mem_req_t           mem_req_o          
 );
 
     // ----------------
@@ -61,16 +62,6 @@ module datapath #(
     asid_t                      cu_mem_flush_asid;
     vpn_t                       cu_mem_flush_page;
 
-    // CSRs <--> memory system
-    // -----------------------
-    logic                       csr_mem_vmem_on;
-    logic                       csr_mem_sum_bit;
-    logic                       csr_mem_mxr_bit;
-    csr_priv_t                  csr_mem_priv_mode;
-    csr_priv_t                  csr_mem_priv_mode_ls;
-    asid_t                      csr_mem_base_asid;
-    logic [PPN_LEN-1:0]         csr_mem_csr_root_ppn;
-
     // Main control unit <--> others
     // -----------------------------
     logic                       cu_others_stall;
@@ -84,6 +75,7 @@ module datapath #(
     logic [ILEN-1:0]            fe_be_instr;
     logic [XLEN-1:0]            fe_be_curr_pc;
     prediction_t                fe_be_pred;
+    logic                       be_fe_res_valid;
     resolution_t                be_fe_res;
     logic                       fe_be_except;
     except_code_t               fe_be_except_code;
@@ -127,35 +119,11 @@ module datapath #(
     // FRONT-END
     // ---------
 
-    /* TODO: modify frontend for baremetal */
-
-    frontend #(.HLEN(HLEN), .BTB_BITS(BTB_BITS), .BOOT_PC(BOOT_PC)) u_frontend
-    (
-        .clk_i                  (clk_i),
-        .rst_n_i                (rst_n_i),
-        .flush_i                (cu_others_flush),
-        .addr_o                 (fe_icache_req.vaddr),
-        .addr_valid_o           (fe_icache_req.valid),
-        .addr_ready_i           (icache_fe_addr_ready),
-        .data_ready_o           (fe_icache_data_ready),
-        .icache_frontend_ans_i  (icache_fe_ans),
-        .issue_ready_i          (be_fe_ready),
-        .issue_valid_o          (fe_be_valid),
-        .instruction_o          (fe_be_instr),
-        .curr_pc_o              (fe_be_curr_pc),
-        .pred_o                 (fe_be_pred),
-        .res_i                  (be_fe_res),
-        .except_o               (fe_be_except),
-        .except_code_o          (fe_be_except_code),
-        .except_i               (be_fe_except),
-        .except_pc_i            (be_fe_except_pc) 
-    );
+    
 
     // --------
     // BACK-END
     // --------
-
-    // TODO: what is fe_be_pred.pc?
 
     backend u_backend
     (
@@ -176,36 +144,22 @@ module datapath #(
         .fetch_res_pc_o             (be_fe_res.pc),
         .fetch_res_target_o         (be_fe_res.target),
         .fetch_res_taken_o          (be_fe_res.taken),
-        .fetch_res_valid_o          (be_fe_res.valid),
+        .fetch_res_valid_o          (be_fe_res_valid),
         .fetch_res_mispredict_o     (be_fe_res.mispredict),
         .fetch_except_raised_o      (be_fe_except),
         .fetch_except_pc_o          (be_fe_except_pc),
-        .mem_valid_i                (),
-        .mem_ready_i                (),
-        .mem_valid_o                (),
-        .mem_ready_o                (),
-        .mem_req_o                  (),
-        .mem_ans_i                  (),
-        .mem_vmem_on_o              (csr_mem_vmem_on),
-        .mem_sum_bit_o              (csr_mem_sum_bit),
-        .mem_mxr_bit_o              (csr_mem_mxr_bit),
-        .mem_priv_mode_o            (csr_mem_priv_mode),
-        .mem_priv_mode_ls_o         (csr_mem_priv_mode_ls),
-        .mem_base_asid_o            (csr_mem_base_asid),
-        .mem_csr_root_ppn_o         (csr_mem_csr_root_ppn)
+        .mem_valid_i                (mem_valid_i),
+        .mem_ready_i                (mem_ready_i),
+        .mem_valid_o                (mem_valid_o),
+        .mem_ready_o                (mem_ready_o),
+        .mem_req_o                  (mem_req_o),
+        .mem_ans_i                  (mem_ans_i)
     );
 
     // -------------
     // MEMORY-SYSTEM
     // -------------
-
-    /* TODO: MEMORY SYSTEM */
-
-    // -----------------
-    // OUTPUT EVALUATION
-    // -----------------
-
-    // L2$ flush
-    assign  l2c_flush_o         = cu_mem_flush;
+    // NOTE: in the bare-metal version, the load-store unit is directly
+    //       connected to the memory.
     
 endmodule

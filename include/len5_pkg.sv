@@ -125,6 +125,32 @@ package len5_pkg;
         logic [ILEN-1:0]    raw;
     } instr_t;
 
+    // ---------------
+    // EXCEPTION CODES
+    // ---------------
+    
+    localparam EXCEPT_TYPE_LEN = 5; // to fit the last four bits of the mcause/scause CSR and the fflags of the fcsr CSR
+
+    // This are the LSBs of the entire exception codes defined by the specs. This are used in the execution pipeline to save area. This code can be directly appended when writing mcause/scause CSRs during exception handling
+    typedef enum logic [EXCEPT_TYPE_LEN-1:0] {
+        E_I_ADDR_MISALIGNED   = 'h0,
+        E_I_ACCESS_FAULT      = 'h1,
+        E_ILLEGAL_INSTRUCTION = 'h2,
+        E_BREAKPOINT          = 'h3,
+        E_LD_ADDR_MISALIGNED  = 'h4,
+        E_LD_ACCESS_FAULT     = 'h5,
+        E_ST_ADDR_MISALIGNED  = 'h6,
+        E_ST_ACCESS_FAULT     = 'h7,
+        E_ENV_CALL_UMODE      = 'h8,
+        E_ENV_CALL_SMODE      = 'h9,
+        E_ENV_CALL_MMODE      = 'hb,
+        E_INSTR_PAGE_FAULT    = 'hc,
+        E_LD_PAGE_FAULT       = 'hd,
+        E_ST_PAGE_FAULT       = 'hf,
+        
+        E_UNKNOWN             = 'ha // reserved code 10, used for debugging
+    } except_code_t;
+
     // --------------
     // I-cache
     // --------------
@@ -136,36 +162,6 @@ package len5_pkg;
         logic [XLEN-1:0]                    pc;
         logic [ICACHE_INSTR-1:0][ILEN-1:0]  line;
     } icache_out_t;
-
-    // --------------
-    // Frontend
-    // --------------
-
-    // g-share branch predictor history length
-    localparam  HLEN = 4;
-
-    // Branch target buffer bits 
-    localparam  BTB_BITS = 4;
-
-    // instruction selector enums
-    typedef enum logic [1:0] { current_pc = 'h0, prev_pc = 'h1, line_pc = 'h2 } pc_src_t;
-    typedef enum logic [1:0] { cache_out = 'h0, line_reg = 'h1, line_bak = 'h2 } line_src_t;
-
-    // prediction structure
-    typedef struct packed {
-        logic [XLEN-1:0]  pc;
-        logic [XLEN-1:0]  target;
-        logic             taken;
-    } prediction_t;
-
-    // resolution structure
-    typedef struct packed {
-        logic [XLEN-1:0]  pc;
-        logic [XLEN-1:0]  target;
-        logic             taken;
-        logic             valid;
-        logic             mispredict;
-    } resolution_t;
 
     // -----------
     // Branch unit
@@ -197,6 +193,9 @@ package len5_pkg;
     // LOAD/STORE UNIT
     localparam LDBUFF_DEPTH = 4; // number of entries in the load buffer
     localparam STBUFF_DEPTH = 4; // number of entries in the store buffer
+    localparam LDBUFF_IDX_LEN = $clog2(LDBUFF_DEPTH); // load buffer address width
+    localparam STBUFF_IDX_LEN = $clog2(STBUFF_DEPTH); // store buffer address width
+    localparam BUFF_IDX_LEN = (LDBUFF_IDX_LEN > STBUFF_IDX_LEN) ? (LDBUFF_IDX_LEN) : (STBUFF_IDX_LEN); // the largest of the two. Useful when comparing indexes from both
 
     // ROB
     localparam ROB_DEPTH = 4; // Number of entries in the ROB. This also tells the number of instruction that coexist in the execution pipeline at the same time

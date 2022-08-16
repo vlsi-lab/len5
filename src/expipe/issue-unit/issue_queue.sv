@@ -12,10 +12,7 @@
 // Author: Michele Caon
 // Date: 17/10/2019
 
-import len5_pkg::XLEN;
-import len5_pkg::ILEN;
-import len5_pkg::IQ_DEPTH;
-
+import len5_pkg::*;
 import expipe_pkg::*;
 
 module issue_queue 

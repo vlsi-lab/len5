@@ -16,16 +16,7 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-import len5_pkg::XLEN;
-import len5_pkg::ILEN;
-import len5_pkg::branch_type_t;
-import len5_pkg::BEQ;
-import len5_pkg::BNE;
-import len5_pkg::BLT;
-import len5_pkg::BGE;
-import len5_pkg::BLTU;
-import len5_pkg::BGEU;
-
+import len5_pkg::*;
 import expipe_pkg::*;
 
 module branch_rs 

@@ -16,6 +16,7 @@
 
 import expipe_pkg::*;
 import len5_pkg::*;
+import memory_pkg::*;
 
 /**
  * @brief	Bare-metal load-store unit.
@@ -38,7 +39,7 @@ module load_store_unit #(
     output  logic                       issue_lb_ready_o,
     output  logic                       issue_sb_ready_o,
 
-    input   ldst_type_t                 issue_type_i,   // byte, halfword, ...
+    input   ldst_width_t                issue_type_i,   // byte, halfword, ...
     input   op_data_t                   issue_rs1_i,    // base address
     input   op_data_t                   issue_rs2_i,    // data to store
     input   logic [XLEN-1:0]            issue_imm_i,    // offset
@@ -77,7 +78,7 @@ module load_store_unit #(
     adder_req_t                 lb_adderarb_req, sb_adderarb_req;
     logic                       adderarb_lb_valid, adderarb_sb_valid;
     logic                       adderarb_lb_ready, adderarb_sb_ready;
-    adder_ans_t                 adderarb_lsb_ans;
+    adder_ans_t                 adder_lsb_ans;
 
     // Address adder arbiter <--> address adder
     logic                       adderarb_adder_valid;
@@ -85,7 +86,6 @@ module load_store_unit #(
     logic                       adder_adderarb_valid;
     logic                       adder_adderarb_ready;
     adder_req_t                 adderarb_adder_req;
-    adder_ans_t                 adder_adderarb_ans;
 
     // Load/store buffer <--> memory arbiter
     logic                       lb_memarb_valid, sb_memarb_valid;
@@ -93,7 +93,6 @@ module load_store_unit #(
     adder_req_t                 lb_memarb_req, sb_memarb_req;
     logic                       memarb_lb_valid, memarb_sb_valid;
     logic                       memarb_lb_ready, memarb_sb_ready;
-    adder_ans_t                 memarb_lsb_ans;
 
     // ----------------------
     // LOAD AND STORE BUFFERS
@@ -121,7 +120,7 @@ module load_store_unit #(
         .adder_ready_i              (adderarb_lb_ready    ),
         .adder_valid_o              (lb_adderarb_valid    ),
         .adder_ready_o              (lb_adderarb_ready    ),
-        .adder_ans_i                (adderarb_lsb_ans     ),
+        .adder_ans_i                (adder_lsb_ans        ),
         .adder_req_o                (lb_adderarb_req      ),
         .mem_valid_i                (memarb_lb_valid      ),
         .mem_ready_i                (memarb_lb_ready      ),
@@ -157,7 +156,7 @@ module load_store_unit #(
         .adder_ready_i              (adderarb_sb_ready          ),
         .adder_valid_o              (sb_adderarb_valid          ),
         .adder_ready_o              (sb_adderarb_ready          ),
-        .adder_ans_i                (adderarb_lsb_ans           ),
+        .adder_ans_i                (adder_lsb_ans              ),
         .adder_req_o                (sb_adderarb_req            ),
         .mem_valid_i                (memarb_sb_valid            ),
         .mem_ready_i                (memarb_sb_ready            ),
@@ -170,7 +169,7 @@ module load_store_unit #(
     // -------------
     // ADDRESS ADDER
     // -------------
-    // NOTE: shared among load and store buffer
+    // NOTE: shared between load and store buffers
     address_adder u_address_adder(
     	.clk_i   (clk_i                ),
         .rst_n_i (rst_n_i              ),
@@ -180,8 +179,66 @@ module load_store_unit #(
         .valid_o (adder_adderarb_valid ),
         .ready_o (adder_adderarb_ready ),
         .req_i   (adderarb_adder_req   ),
-        .ans_o   (adder_adderarb_ans   )
+        .ans_o   (adder_lsb_ans        )
     );
+
+    // --------------
+    // MEMORY ARBITER
+    // --------------
+    `ifdef ENABLE_STORE_PRIO_2WAY_ARBITER
+    // The store buffer, connected to valid_i[0] is given higher priority than the load buffer. This should increase the hit ratio of the store to load forwarding. However, it increases the load execution latency. Depending on the scenario, performance may be better or worse than the fair arbiter.
+
+    prio_2way_arbiter #(
+        .DATA_T (mem_req_t)
+    ) u_mem_arbiter	(
+        .high_prio_valid_i (sb_memarb_valid ),
+        .low_prio_valid_i  (lb_memarb_valid ),
+        .ready_i           (mem_ready_i     ),
+        .valid_o           (mem_valid_o     ),
+        .high_prio_ready_o (memarb_sb_ready ),
+        .low_prio_ready_o  (memarb_lb_ready ),
+        .high_prio_data_i  (sb_memarb_req   ),
+        .low_prio_data_i   (lb_memarb_req   ),
+        .data_o            (mem_req_o       )
+    );
+    `else
+    fair_2way_arbiter #(
+        .DATA_T (mem_req_t )
+    ) u_mem_arbiter (	
+        .clk_i     (clk_i           ),
+        .rst_n_i   (rst_n_i         ),
+        .valid_a_i (sb_memarb_valid ),
+        .valid_b_i (lb_memarb_valid ),
+        .ready_i   (mem_ready_i     ),
+        .valid_o   (mem_valid_o     ),
+        .ready_a_o (memarb_sb_ready ),
+        .ready_b_o (memarb_lb_ready ),
+        .data_a_i  (sb_memarb_req   ),
+        .data_b_i  (lb_memarb_req   ),
+        .data_o    (mem_req_o       )
+    );
+    `endif
+
+    // Answer decoder
+    always_comb begin : mem_ans_decoder
+        memarb_lb_valid = 1'b0;
+        memarb_sb_valid = 1'b0;
+        mem_ready_o     = 1'b0;
+
+        if (mem_valid_i) begin
+            case (mem_ans_i.acc_type)
+                MEM_ACC_LD: begin
+                    memarb_lb_valid = 1'b1;
+                    mem_ready_o     = lb_memarb_ready;
+                end
+                MEM_ACC_ST: begin
+                    memarb_sb_valid = 1'b1;
+                    mem_ready_o     = sb_memarb_ready;
+                end
+                default:;
+            endcase
+        end
+    end
 
     // --------------------------------
     // VIRTUAL ADDRESS ADDER HS ARBITER
@@ -219,5 +276,22 @@ module load_store_unit #(
         .data_o    (adderarb_adder_req   )
     );
     `endif
+
+    // Answer decoder
+    always_comb begin : adder_ans_decoder
+        adderarb_lb_valid       = 1'b0;
+        adderarb_sb_valid       = 1'b0;
+        adderarb_adder_ready    = 1'b0;
+
+        if (adder_adderarb_valid) begin
+            if (adder_lsb_ans.is_store) begin
+                adderarb_sb_valid       = 1'b1;
+                adderarb_adder_ready    = sb_adderarb_ready;
+            end else begin
+                adderarb_lb_valid       = 1'b1;
+                adderarb_adder_ready    = lb_adderarb_ready;
+            end
+        end
+    end
 
 endmodule

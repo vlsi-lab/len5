@@ -13,7 +13,6 @@
 // Date: 26/07/2019
 
 import len5_pkg::*;
-import fetch_pkg::*;
 
 /* verilator lint_off BLKLOOPINIT */
 module gshare
@@ -25,8 +24,7 @@ module gshare
   input   logic             rst_n_i,
   input   logic             flush_i,
   input   logic [XLEN-1:0]  pc_i,
-  input   logic             res_valid_i,
-  input   resolution_t      res_i,
+  input resolution_t      res_i,
 
   output  logic             taken_o
 );
@@ -48,7 +46,7 @@ module gshare
     end else begin
       if (flush_i) begin: bht_sync_flush
         history <= '0;
-      end else if (res_valid_i) begin: bht_shift
+      end else if (res_i.valid) begin: bht_shift
         history <= {history[HLEN-2:0], res_i.taken};
       end
     end
@@ -62,7 +60,7 @@ module gshare
     pht_d = pht_q;
 
     // If a valid branch resolution arrives, update counters
-    if (res_valid_i) begin: c2b_fsm
+    if (res_i.valid) begin: c2b_fsm
       case (pht_q[index_w])
         SNT: begin
           if (res_i.taken)

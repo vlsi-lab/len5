@@ -17,6 +17,9 @@
 
 import len5_pkg::*;
 import expipe_pkg::*;
+import memory_pkg::mem_req_t;
+import memory_pkg::mem_ans_t;
+import csr_pkg::SATP_MODE_LEN;
 
 module exec_stage
 (
@@ -106,8 +109,8 @@ module exec_stage
     assign issue_rs2_data.value   = issue_rs2_value_i;
 
     load_store_unit #(
-        .LB_DEPTH (LB_DEPTH ),
-        .SB_DEPTH (SB_DEPTH )
+        .LB_DEPTH (LDBUFF_DEPTH ),
+        .SB_DEPTH (STBUFF_DEPTH )
     ) u_load_store_unit (
     	.clk_i                          (clk_i                            ),
         .rst_n_i                        (rst_n_i                          ),
@@ -116,7 +119,7 @@ module exec_stage
         .issue_sb_valid_i               (issue_valid_i[EU_STORE_BUFFER]   ),
         .issue_lb_ready_o               (issue_ready_o[EU_LOAD_BUFFER]    ),
         .issue_sb_ready_o               (issue_ready_o[EU_STORE_BUFFER]   ),
-        .issue_type_i                   (issue_eu_ctl_i[LDST_TYPE_LEN-1:0]),
+        .issue_type_i                   (issue_eu_ctl_i[2:0]),
         .issue_rs1_i                    (issue_rs1_data                   ),
         .issue_rs2_i                    (issue_rs2_data                   ),
         .issue_imm_i                    (issue_imm_value_i                ),

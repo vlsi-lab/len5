@@ -62,15 +62,6 @@ module backend (
     output  logic                   mem_ready_o,
     output  mem_req_t               mem_req_o,
     input   mem_ans_t               mem_ans_i
-
-    // CSRs <--> memory system
-    output  logic                   mem_vmem_on_o,
-    output  logic                   mem_sum_bit_o,
-    output  logic                   mem_mxr_bit_o,
-    output  csr_priv_t              mem_priv_mode_o,
-    output  csr_priv_t              mem_priv_mode_ls_o,
-    output  asid_t                  mem_base_asid_o,
-    output  logic [PPN_LEN-1:0]     mem_csr_root_ppn_o
 );
 
     // ----------------
@@ -481,7 +472,7 @@ module backend (
         .mem_valid_o                (mem_valid_o),
         .mem_ready_o                (mem_ready_o),
         .mem_req_o                  (mem_req_o),
-        .mem_ans_i                  (mem_ans_i),
+        .mem_ans_i                  (mem_ans_i)
     );
 
     // Common Data Bus (CDB)
@@ -610,13 +601,13 @@ module backend (
     `ifdef LEN5_PRIVILEGED_EN
         .mstatus_tsr_o      (csr_il_mstatus_tsr),
     `endif /* LEN5_PRIVILEGED_EN */
-        .mem_vmem_on_o      (mem_vmem_on_o),
-        .mem_sum_bit_o      (mem_sum_bit_o),
-        .mem_mxr_bit_o      (mem_mxr_bit_o),
-        .mem_priv_mode_o    (mem_priv_mode_o),
-        .mem_priv_mode_ls_o (mem_priv_mode_ls_o),
-        .mem_base_asid_o    (mem_base_asid_o),
-        .mem_csr_root_ppn_o (mem_csr_root_ppn_o)
+        .mem_vmem_on_o      (),
+        .mem_sum_bit_o      (),
+        .mem_mxr_bit_o      (),
+        .mem_priv_mode_o    (),
+        .mem_priv_mode_ls_o (),
+        .mem_base_asid_o    (),
+        .mem_csr_root_ppn_o ()
     );
 
 endmodule

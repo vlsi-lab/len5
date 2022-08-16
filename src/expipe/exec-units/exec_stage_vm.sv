@@ -8,7 +8,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: exec_stage.sv
+// File: exec_stage_vm.sv
 // Author: Michele Caon, Walid Walid
 // Date: 17/11/2021
 
@@ -26,7 +26,7 @@ import memory_pkg::lsq_l1dc_req_t;
 import csr_pkg::satp_mode_t;
 import csr_pkg::SATP_MODE_LEN;
 
-module exec_stage
+module exec_stage_vm
 (
     // Clock, reset, and flush
     input   logic                       clk_i,
@@ -119,7 +119,7 @@ module exec_stage
         .issue_sb_valid_i           (issue_valid_i[EU_STORE_BUFFER]),
         .lb_issue_ready_o           (issue_ready_o[EU_LOAD_BUFFER]),
         .sb_issue_ready_o           (issue_ready_o[EU_STORE_BUFFER]),
-        .ldst_type_i                (issue_eu_ctl_i[LDST_TYPE_LEN-1:0]),
+        .ldst_type_i                (issue_eu_ctl_i[2:0]),
         .rs1_ready_i                (issue_rs1_ready_i),
         .rs1_idx_i                  (issue_rs1_idx_i),
         .rs1_value_i                (issue_rs1_value_i),

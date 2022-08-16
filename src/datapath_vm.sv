@@ -8,16 +8,15 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: datapath.sv
+// File: datapath_vm.sv
 // Author: Michele Caon
 // Date: 19/11/2021
 
 import len5_pkg::*;
 import memory_pkg::*;
 import csr_pkg::csr_priv_t;
-import expipe_pkg::except_code_t;
 
-module datapath #(
+module datapath_vm #(
     parameter [XLEN-1:0]    BOOT_PC = 'h0
 ) (
     // Clock and reset
@@ -176,7 +175,7 @@ module datapath #(
 
     // TODO: what is fe_be_pred.pc?
 
-    backend u_backend
+    backend_vm u_backend
     (
         .clk_i                      (clk_i),
         .rst_n_i                    (rst_n_i),

@@ -24,6 +24,7 @@ import uvm_pkg::*;
 
 import len5_pkg::*;
 import expipe_pkg::*;
+import memory_pkg::*;
 
 module issue_decoder (
     // Instruction from the issue logic
@@ -224,7 +225,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_LB) && 
                 (instruction_i.i.funct3 == `FUNCT3_LB)) begin
             assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl[LB_CTL_LEN-1:0]      = LS_BYTE;
+            eu_ctl                      = LS_BYTE;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
             regstat_upd                 = 1'b1;
@@ -234,7 +235,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_LH) && 
                 (instruction_i.i.funct3 == `FUNCT3_LH)) begin
             assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl[LB_CTL_LEN-1:0]      = LS_HALFWORD;
+            eu_ctl                      = LS_HALFWORD;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
             regstat_upd                 = 1'b1;
@@ -244,7 +245,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_LW) && 
                 (instruction_i.i.funct3 == `FUNCT3_LW)) begin
             assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl[LB_CTL_LEN-1:0]      = LS_WORD;
+            eu_ctl                      = LS_WORD;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
             regstat_upd                 = 1'b1;
@@ -254,7 +255,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_LD) && 
                 (instruction_i.i.funct3 == `FUNCT3_LD)) begin
             assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl[LB_CTL_LEN-1:0]      = LS_DOUBLEWORD;
+            eu_ctl                      = LS_DOUBLEWORD;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
             regstat_upd                 = 1'b1;
@@ -264,7 +265,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_LBU) && 
                 (instruction_i.i.funct3 == `FUNCT3_LBU)) begin
             assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl[LB_CTL_LEN-1:0]      = LS_BYTE_U;
+            eu_ctl                      = LS_BYTE_U;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
             regstat_upd                 = 1'b1;
@@ -274,7 +275,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_LHU) && 
                 (instruction_i.i.funct3 == `FUNCT3_LHU)) begin
             assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl[LB_CTL_LEN-1:0]      = LS_HALFWORD_U;
+            eu_ctl                      = LS_HALFWORD_U;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
             regstat_upd                 = 1'b1;
@@ -284,7 +285,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_LWU) && 
                 (instruction_i.i.funct3 == `FUNCT3_LWU)) begin
             assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl[LB_CTL_LEN-1:0]      = LS_WORD_U;
+            eu_ctl                      = LS_WORD_U;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
             regstat_upd                 = 1'b1;
@@ -294,7 +295,7 @@ module issue_decoder (
         else if ((instruction_i.s.opcode == `OPCODE_SB) && 
                 (instruction_i.s.funct3 == `FUNCT3_SB)) begin
             assigned_eu                 = EU_STORE_BUFFER;
-            eu_ctl[SB_CTL_LEN-1:0]      = LS_BYTE;
+            eu_ctl                      = LS_BYTE;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_S;
@@ -304,7 +305,7 @@ module issue_decoder (
         else if ((instruction_i.s.opcode == `OPCODE_SH) && 
                 (instruction_i.s.funct3 == `FUNCT3_SH)) begin
             assigned_eu                 = EU_STORE_BUFFER;
-            eu_ctl[SB_CTL_LEN-1:0]      = LS_HALFWORD;
+            eu_ctl                      = LS_HALFWORD;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_S;
@@ -314,7 +315,7 @@ module issue_decoder (
         else if ((instruction_i.s.opcode == `OPCODE_SW) && 
                 (instruction_i.s.funct3 == `FUNCT3_SW)) begin
             assigned_eu                 = EU_STORE_BUFFER;
-            eu_ctl[SB_CTL_LEN-1:0]      = LS_WORD;
+            eu_ctl                      = LS_WORD;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_S;
@@ -324,7 +325,7 @@ module issue_decoder (
         else if ((instruction_i.s.opcode == `OPCODE_SD) && 
                 (instruction_i.s.funct3 == `FUNCT3_SD)) begin
             assigned_eu                 = EU_STORE_BUFFER;
-            eu_ctl[SB_CTL_LEN-1:0]      = LS_DOUBLEWORD;
+            eu_ctl                      = LS_DOUBLEWORD;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_S;

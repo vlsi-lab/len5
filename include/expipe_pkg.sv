@@ -30,6 +30,7 @@ package expipe_pkg;
     import memory_pkg::PPN_LEN;
     import memory_pkg::PADDR_LEN;
     import memory_pkg::PAGE_OFFSET_LEN;
+    import memory_pkg::ldst_width_t;
 
     // ----------
     // PARAMETERS
@@ -38,7 +39,7 @@ package expipe_pkg;
     // ROB
     // ---
     localparam ROB_IDX_LEN = $clog2(ROB_DEPTH);//3 // ROB index width
-    localparam ROB_EXCEPT_LEN = 5;  // to fit the last four bits of the mcause/scause CSR and the fflags of the fcsr CSR
+    localparam ROB_EXCEPT_LEN = EXCEPT_TYPE_LEN;
 
     // ISSUE QUEUE
     // -----------
@@ -66,13 +67,6 @@ package expipe_pkg;
     // RESERVATION STATIONS
     // --------------------
 
-    // WIDTH OF THE CONTROL FIELDS IN THE DIFFERENT EUs
-    // LOAD BUFFER
-    localparam  LB_CTL_LEN      = 3;            // load type, see load buffer section below
-    
-    // STORE BUFFER
-    localparam  SB_CTL_LEN      = LB_CTL_LEN;   // same type as load
-
     // BRANCH UNIT
     localparam  BU_CTL_LEN      = BRANCH_TYPE_LEN; // size of 'branch_type_t' from len5_pkg
 
@@ -99,40 +93,11 @@ package expipe_pkg;
     // MAXIMUM DIMENSION OF EU_CONTROL FIELDS
     localparam MAX_EU_CTL_LEN   = ALU_CTL_LEN;  // this must be set to the maximum of the previous parameters
 
-    localparam LDBUFF_IDX_LEN = $clog2(LDBUFF_DEPTH); //3 // load buffer address width
-    localparam STBUFF_IDX_LEN = $clog2(STBUFF_DEPTH); //3 // store buffer address width
-    localparam BUFF_IDX_LEN = (LDBUFF_IDX_LEN > STBUFF_IDX_LEN) ? (LDBUFF_IDX_LEN) : (STBUFF_IDX_LEN); // the largest of the two. Useful when comparing indexes from both
-    localparam EXCEPT_TYPE_LEN = ROB_EXCEPT_LEN; // only the last four bits of the mcause/scause CSR
-    localparam LDST_TYPE_LEN = LB_CTL_LEN; // 3 bits: 7 types of load (lb, lh, lw, ld, lbu, lhu, ldu), 4 types of store (sb, sh, sw and sd)
-
-    // ----------------
-    // EXCEPTION CODES
-    // ----------------
-    // This are the LSBs of the entire exception codes defined by the specs. This are used in the execution pipeline to save area. This code can be directly appended when writing mcause/scause CSRs during exception handling
-    typedef enum logic [ROB_EXCEPT_LEN-1:0] {
-        E_I_ADDR_MISALIGNED   = 'h0,
-        E_I_ACCESS_FAULT      = 'h1,
-        E_ILLEGAL_INSTRUCTION = 'h2,
-        E_BREAKPOINT          = 'h3,
-        E_LD_ADDR_MISALIGNED  = 'h4,
-        E_LD_ACCESS_FAULT     = 'h5,
-        E_ST_ADDR_MISALIGNED  = 'h6,
-        E_ST_ACCESS_FAULT     = 'h7,
-        E_ENV_CALL_UMODE      = 'h8,
-        E_ENV_CALL_SMODE      = 'h9,
-        E_ENV_CALL_MMODE      = 'hb,
-        E_INSTR_PAGE_FAULT    = 'hc,
-        E_LD_PAGE_FAULT       = 'hd,
-        E_ST_PAGE_FAULT       = 'hf,
-        
-        E_UNKNOWN             = 'ha // reserved code 10, used for debugging
-    } except_code_t;
-
     // ----
     // ROB
     // ----
 
-    typedef rob_idx_t rob_idx_t;
+    typedef logic [ROB_IDX_LEN-1:0] rob_idx_t;
 
     typedef struct packed {
         instr_t                     instruction;    // the instruction
@@ -251,16 +216,6 @@ package expipe_pkg;
     // ---------------
     // LOAD-STORE UNIT
     // ---------------
-
-    typedef enum logic [LDST_TYPE_LEN-1:0] { 
-        LS_BYTE,
-        LS_BYTE_U,
-        LS_HALFWORD,
-        LS_HALFWORD_U,
-        LS_WORD,
-        LS_WORD_U,
-        LS_DOUBLEWORD
-    } ldst_type_t;
     
     // LOAD BUFFER ENTRY TYPE
     typedef struct packed {
@@ -272,7 +227,7 @@ package expipe_pkg;
         rob_idx_t     entry_age;         // the age of the entry, used for scheduling
         `endif
         logic [STBUFF_IDX_LEN:0]    older_stores;      // Number of older uncommitted stores (if 0, the entry is dependency-free)
-        logic [LDST_TYPE_LEN-1:0]   load_type;         // LB, LBU, LH, LHU, LW, LWU, LD
+        ldst_width_t                 load_type;         // LB, LBU, LH, LHU, LW, LWU, LD
         logic                       rs1_ready;         // the value of rs1 contained in 'rs1_value' field is valid
         rob_idx_t     rs1_idx;           // the index of the ROB that will contain the base address
         logic [XLEN-1:0]            rs1_value;         // the value of the base address
@@ -295,7 +250,7 @@ package expipe_pkg;
         `ifdef ENABLE_AGE_BASED_SELECTOR
         rob_idx_t     entry_age;          // the age of the entry, used for scheduling
         `endif
-        logic [LDST_TYPE_LEN-1:0]   store_type;         // SB, SH, SW, SD
+        ldst_width_t                 store_type;         // SB, SH, SW, SD
         logic                       rs1_ready;          // the value of rs1 (BASE ADDRESS) contained in 'rs1_value' field is valid
         rob_idx_t     rs1_idx;            // the index of the ROB that will contain the base address
         logic [XLEN-1:0]            rs1_value;          // the value of the BASE ADDRESS
@@ -321,7 +276,7 @@ package expipe_pkg;
     typedef struct packed {
         logic [BUFF_IDX_LEN-1:0]    tag;
         logic                       is_store;
-        ldst_type_t                 ls_type;
+        ldst_width_t                ls_type;
         logic [XLEN-1:0]            base;
         logic [XLEN-1:0]            offs;
     } adder_req_t;
@@ -329,26 +284,11 @@ package expipe_pkg;
     // Answer
     typedef struct packed {
         logic [BUFF_IDX_LEN-1:0]    tag;
+        logic                       is_store;
         logic [XLEN-1:0]            result;
         logic                       except_raised;
         except_code_t               except_code;
     } adder_ans_t;
-
-    // Memory interface
-    // ----------------
-    typedef struct packed {
-        logic [BUFF_IDX_LEN-1:0]    tag;    // instruction tag
-        logic                       is_store;
-        ldst_type_t                 ls_type;
-        logic [XLEN-1:0]            addr;   // physical address
-        logic [XLEN-1:0]            value;
-    } mem_req_t;
-
-    /* Load memory answer */
-    typedef struct packed {
-        logic [BUFF_IDX_LEN-1:0]    tag;    // load instruction tag
-        logic [XLEN-1:0]            value;  // fetched value
-    } mem_ans_t;
 
     // ------------
     // COMMIT LOGIC

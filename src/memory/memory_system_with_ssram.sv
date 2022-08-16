@@ -15,6 +15,7 @@
 import len5_pkg::*;
 import memory_pkg::*;
 import csr_pkg::csr_priv_t;
+import fetch_pkg::*;
 
 module memory_system_with_ssram
 (

@@ -15,16 +15,7 @@
 // LEN5 compilation switches
 `include "len5_config.svh"
 
-import len5_pkg::XLEN;
-import len5_pkg::ILEN;
-import len5_pkg::I_IMM;
-import len5_pkg::S_IMM;
-import len5_pkg::B_IMM;
-import len5_pkg::U_IMM;
-import len5_pkg::J_IMM;
-import len5_pkg::REG_IDX_LEN;
-import len5_pkg::instr_t;
-
+import len5_pkg::*;
 import expipe_pkg::*;
 
 module issue_logic (

@@ -18,10 +18,10 @@
 // Import UVM report macros
 `include "uvm_macros.svh"
 import uvm_pkg::*;
-
 import len5_pkg::XLEN;
-
+import len5_pkg::except_code_t;
 import expipe_pkg::*;
+import memory_pkg::*;
 
 /**
  * @brief	Bare-metal store buffer.
@@ -39,7 +39,7 @@ module store_buffer #(
     /* Issue stage */
     input   logic                       issue_valid_i,
     output  logic                       issue_ready_o,
-    input   ldst_type_t                 issue_type_i,   // byte, halfword, ...
+    input   ldst_width_t                 issue_type_i,   // byte, halfword, ...
     input   op_data_t                   issue_rs1_i,    // base address
     input   op_data_t                   issue_rs2_i,    // data to store
     input   logic [XLEN-1:0]            issue_imm_i,    // offset
@@ -75,7 +75,7 @@ module store_buffer #(
 
     /* Load buffer (store-to-load forwarding) */ /* TODO */
     // input   logic [XLEN-1:0]            lb_addr_i,          // load address
-    // input   ldst_type_t                 lb_type_i,          // load type
+    // input   ldst_width_t                 lb_type_i,          // load type
     // input   logic [STBUFF_IDX_LEN:0]    lb_older_cnt_i,     // nummber of older store instructions
     // output  logic [STBUFF_IDX_LEN-1:0]  lb_pending_cnt_o,   // number of uncommitted store instructions
     // output  logic                       lb_committing_o,    // a store is committing
@@ -87,7 +87,7 @@ module store_buffer #(
     // ---------------------
     
     /* Load instruction status */
-    typedef enum logic [2:0] {
+    typedef enum logic [3:0] {
         STORE_S_EMPTY,
         STORE_S_RS12_PENDING,
         STORE_S_RS1_PENDING,
@@ -101,7 +101,7 @@ module store_buffer #(
 
     /* Load instruction data */
     typedef struct packed {
-        ldst_type_t                 store_type;
+        ldst_width_t                 store_type;
         rob_idx_t                   rs1_rob_idx;
         logic [XLEN-1:0]            rs1_value;
         rob_idx_t                   rs2_rob_idx;
@@ -121,7 +121,7 @@ module store_buffer #(
         STORE_OP_SAVE_RS1,
         STORE_OP_SAVE_RS2,
         STORE_OP_SAVE_ADDR,
-        STORE_OP_MEM_REQ
+        STORE_OP_SAVE_MEM
     } sb_op_t;
 
     // INTERNAL SIGNALS
@@ -234,6 +234,7 @@ module store_buffer #(
                 end
                 STORE_S_MEM_PENDING: begin // wait for commit
                     if (head_idx == i && mem_done) begin
+                        sb_op[i]        = STORE_OP_SAVE_MEM;
                         next_state[i]   = STORE_S_COMPLETED;
                     end else
                         next_state[i]   = STORE_S_MEM_PENDING;
@@ -276,29 +277,33 @@ module store_buffer #(
             foreach (sb_op[i]) begin
                 case (sb_op[i])
                     STORE_OP_PUSH: begin
-                        data[i].store_type       = issue_type_i;
-                        data[i].rs1_rob_idx     = issue_rs1_i.rob_idx;
-                        data[i].rs1_value       = issue_rs1_i.value;
-                        data[i].rs2_rob_idx     = issue_rs2_i.rob_idx;
-                        data[i].rs2_value       = issue_rs2_i.value;
-                        data[i].dest_rob_idx    = issue_dest_rob_idx_i;
-                        data[i].imm_addr_value  = issue_imm_i;
-                        data[i].except_raised   = 1'b0;
+                        data[i].store_type      <= issue_type_i;
+                        data[i].rs1_rob_idx     <= issue_rs1_i.rob_idx;
+                        data[i].rs1_value       <= issue_rs1_i.value;
+                        data[i].rs2_rob_idx     <= issue_rs2_i.rob_idx;
+                        data[i].rs2_value       <= issue_rs2_i.value;
+                        data[i].dest_rob_idx    <= issue_dest_rob_idx_i;
+                        data[i].imm_addr_value  <= issue_imm_i;
+                        data[i].except_raised   <= 1'b0;
                     end
                     STORE_OP_SAVE_RS12: begin
-                        data[i].rs1_value       = cdb_data_i.value;
-                        data[i].rs2_value       = cdb_data_i.value;
+                        data[i].rs1_value       <= cdb_data_i.value;
+                        data[i].rs2_value       <= cdb_data_i.value;
                     end
                     STORE_OP_SAVE_RS1: begin
-                        data[i].rs1_value       = cdb_data_i.value;
+                        data[i].rs1_value       <= cdb_data_i.value;
                     end
                     STORE_OP_SAVE_RS2: begin
-                        data[i].rs2_value       = cdb_data_i.value;
+                        data[i].rs2_value       <= cdb_data_i.value;
                     end
                     STORE_OP_SAVE_ADDR: begin
-                        data[i].imm_addr_value  = adder_ans_i.result;
-                        data[i].except_raised   = adder_ans_i.except_raised;
-                        data[i].except_code     = adder_ans_i.except_code;
+                        data[i].imm_addr_value  <= adder_ans_i.result;
+                        data[i].except_raised   <= adder_ans_i.except_raised;
+                        data[i].except_code     <= adder_ans_i.except_code;
+                    end
+                    STORE_OP_SAVE_MEM: begin
+                        data[i].except_raised   <= mem_ans_i.except_raised;
+                        data[i].except_code     <= mem_ans_i.except_code;
                     end
                     default:;
                 endcase
@@ -334,7 +339,7 @@ module store_buffer #(
     assign mem_valid_o          = curr_state[head_idx] == STORE_S_MEM_PENDING;
     assign mem_ready_o          = 1'b1;
     assign mem_req_o.tag        = head_idx;
-    assign mem_req_o.is_store   = 1'b1;
+    assign mem_req_o.acc_type   = MEM_ACC_ST;
     assign mem_req_o.ls_type    = data[head_idx].store_type;
     assign mem_req_o.addr       = data[head_idx].imm_addr_value;
 

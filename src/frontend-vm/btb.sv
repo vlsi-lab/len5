@@ -13,8 +13,6 @@
 // Date: 2/8/2019
 
 import len5_pkg::*;
-import fetch_pkg::*;
-
 
 /* verilator lint_off BLKLOOPINIT */
 module btb
@@ -28,7 +26,7 @@ module btb
   input   logic [XLEN-1:0]        pc_i,
   input   logic                   valid_i,
   input   logic                   del_entry_i,
-  input   resolution_t            res_i,
+  input resolution_t            res_i,
 
   output  logic                   hit_o,
   output  logic [XLEN-OFFSET-1:0] target_o

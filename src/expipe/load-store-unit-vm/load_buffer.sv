@@ -697,8 +697,8 @@ module load_buffer
     (
         .type_i     (lb_data[dcache_idx_i].load_type),
         .byte_off   (paddr_a[dcache_idx_i][2:0]),
-        .line_i     (dcache_value_i),
-        .line_o     (dcache_value)
+        .data_i     (dcache_value_i),
+        .data_o     (dcache_value)
     );
 
     // -----------------

@@ -8,7 +8,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: backend.sv
+// File: backend_vm.sv
 // Author: Michele Caon
 // Date: 17/11/2021
 
@@ -25,7 +25,7 @@ import csr_pkg::satp_mode_t;
 import csr_pkg::csr_instr_t;
 import memory_pkg::*;
 
-module backend (
+module backend_vm (
     // Clock, reset, and flush
     input   logic                   clk_i,
     input   logic                   rst_n_i,

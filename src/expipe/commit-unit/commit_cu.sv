@@ -23,6 +23,7 @@ import uvm_pkg::*;
 
 import len5_pkg::ILEN;
 import len5_pkg::instr_t;
+import len5_pkg::except_code_t;
 import expipe_pkg::*;
 import csr_pkg::*;
 

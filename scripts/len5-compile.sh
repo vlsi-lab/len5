@@ -350,14 +350,19 @@ if [ $CUSTOM_SRC -ne 0 ]; then
     > $COMPILE_OPT_FILE
     [ ! "$SV_PKG_LIST" = "" ] && echo "$SV_PKG_LIST" >> $COMPILE_OPT_FILE
     [ ! "$SV_SRC_LIST" = "" ] && echo "$SV_SRC_LIST" >> $COMPILE_OPT_FILE
-    VLOG_ARGS="$VLOG_ARGS -F $COMPILE_OPT_FILE"
-    export VLOG_ARGS=$VLOG_ARGS
-    to_run_script "export VLOG_ARGS=\"$VLOG_ARGS\""
+    
+    export CUSTOM_SRC_LIST=$(basename $COMPILE_OPT_FILE)
+    to_run_script "export CUSTOM_SRC_LIST=\"$(basename $COMPILE_OPT_FILE)\""
+    BUILD_TARGET="$BUILD_TARGET custom-src"
 fi
 
 # Export variables for make
+export VLOG_ARGS=$VLOG_ARGS
+to_run_script "export VLOG_ARGS=\"$VLOG_ARGS\""
 export VLIB=$VLIB_PATH
+to_run_script "export VLIB=\"$VLIB\""
 export BUILD_DIR=$SIM_DIR
+to_run_script "export BUILD_DIR=\"$BUILD_DIR\""
 
 # Launch make
 log "Compiling source files..."

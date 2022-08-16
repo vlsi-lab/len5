@@ -13,7 +13,6 @@
 // Date: 7/8/2019
 
 import len5_pkg::*;
-import fetch_pkg::*;
 
 module bpu
 #(
@@ -25,8 +24,7 @@ module bpu
   input   logic             rst_n_i,
   input   logic             flush_i,
   input   logic [XLEN-1:0]  pc_i,
-  input   logic             res_valid_i,
-  input   resolution_t      res_i,
+  input resolution_t  res_i,
 
   output  prediction_t      pred_o
 );
@@ -63,7 +61,7 @@ module bpu
     );
   
   // Assignments
-  assign btb_update     = res_valid_i & res_i.mispredict;
+  assign btb_update     = res_i.valid & res_i.mispredict;
   assign btb_del_entry  = res_i.mispredict & ~res_i.taken;
   assign pred_o.pc      = pc_i;
   assign pred_o.taken   = gshare_taken & btb_hit;

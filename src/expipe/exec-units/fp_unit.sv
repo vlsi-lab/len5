@@ -12,8 +12,7 @@
 // Author: Michele Caon
 // Date: 17/11/2021
 
-import len5_pkg::XLEN;
-import len5_pkg::ILEN;
+import len5_pkg::*;
 import expipe_pkg::*;
 import csr_pkg::FCSR_FRM_LEN;
 

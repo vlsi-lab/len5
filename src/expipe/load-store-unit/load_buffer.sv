@@ -18,10 +18,10 @@
 // Import UVM report macros
 `include "uvm_macros.svh"
 import uvm_pkg::*;
-
 import len5_pkg::XLEN;
-
+import len5_pkg::except_code_t;
 import expipe_pkg::*;
+import memory_pkg::*;;
 
 /**
  * @brief	Bare-metal load buffer.
@@ -39,7 +39,7 @@ module load_buffer #(
     /* Issue stage */
     input   logic                       issue_valid_i,
     output  logic                       issue_ready_o,
-    input   ldst_type_t                 issue_type_i,   // byte, halfword, ...
+    input   ldst_width_t                 issue_type_i,   // byte, halfword, ...
     input   op_data_t                   issue_rs1_i,    // base address
     input   logic [XLEN-1:0]            issue_imm_i,    // offset
     input   rob_idx_t                   issue_dest_rob_idx_i,
@@ -73,7 +73,7 @@ module load_buffer #(
     // input   logic                       sb_hit_i,           // store data can be forwarded
     // input   logic [XLEN-1:0]            sb_value_i,         // store value
     // output  logic [XLEN-1:0]            sb_addr_o,          // load address
-    // output  ldst_type_t                 sb_type_o,          // load type
+    // output  ldst_width_t                 sb_type_o,          // load type
     // output  logic [STBUFF_IDX_LEN:0]    sb_older_cnt_o,     // nummber of older store instructions
 );
     // Load buffer data type
@@ -91,7 +91,7 @@ module load_buffer #(
 
     /* Load instruction data */
     typedef struct packed {
-        ldst_type_t                 load_type;
+        ldst_width_t                 load_type;
         // logic [STBUFF_IDX_LEN-1:0]  older_stores;
         rob_idx_t                   rs1_rob_idx;
         logic [XLEN-1:0]            rs1_value;
@@ -126,6 +126,10 @@ module load_buffer #(
     // Load buffer control
     logic           push, pop, save_rs1, save_addr, save_mem;
     lb_op_t         lb_op[DEPTH];
+
+    // Byte selector
+    logic [(XLEN>>3)-1:0]   byte_offs;
+    logic [XLEN-1:0]        read_data;
 
     // -----------------
     // FIFO CONTROL UNIT
@@ -184,7 +188,7 @@ module load_buffer #(
                         next_state[i]   = LOAD_S_ADDR_PENDING;
                 end
                 LOAD_S_MEM_PENDING: begin // save memory value (from memory)
-                    if (save_mem && head_idx == i) begin
+                    if (save_mem && mem_ans_i.tag == i) begin
                         lb_op[i]        = LOAD_OP_SAVE_MEM;
                         next_state[i]   = LOAD_S_COMPLETED;
                     end else
@@ -244,7 +248,9 @@ module load_buffer #(
                         data[i].except_code     <= adder_ans_i.except_code;
                     end
                     LOAD_OP_SAVE_MEM: begin
-                        data[i].value           = mem_ans_i.value;
+                        data[i].value           <= read_data;
+                        data[i].except_raised   <= mem_ans_i.except_raised;
+                        data[i].except_code     <= mem_ans_i.except_code;
                     end
                     default:;
                 endcase
@@ -276,9 +282,23 @@ module load_buffer #(
     assign mem_valid_o         = curr_state[mem_idx] == LOAD_S_MEM_PENDING;
     assign mem_ready_o         = 1'b1;
     assign mem_req_o.tag       = mem_idx;
-    assign mem_req_o.is_store  = 1'b0;
+    assign mem_req_o.acc_type  = MEM_ACC_LD;
     assign mem_req_o.ls_type   = data[mem_idx].load_type;
     assign mem_req_o.addr      = data[mem_idx].imm_addr_value;
+
+    // -------------
+    // BYTE SELECTOR
+    // -------------
+    // NOTE: the memory is expected to provide a doubleword regardless of
+    //       the load width. This module extracts and sign-extends only the
+    //       requested data from the fetched doubleword. 
+    assign  byte_offs   = data[mem_ans_i.tag].imm_addr_value[2:0];
+    byte_selector u_byte_selector (
+    	.type_i   (data[mem_ans_i.tag].load_type ),
+        .byte_off (byte_offs                     ),
+        .data_i   (mem_ans_i.value               ),
+        .data_o   (read_data                     )
+    );
 
     // --------
     // COUNTERS

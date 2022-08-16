@@ -16,7 +16,7 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-import len5_pkg::XLEN;
+import len5_pkg::*;
 import expipe_pkg::*;
 
 module op_only_rs

@@ -12,8 +12,9 @@
 // Author: Michele Caon
 // Date: 15/07/2022
 
-import len5_pkg::XLEN;
+import len5_pkg::*;
 import expipe_pkg::*;
+import memory_pkg::*;
 
 /**
  * @brief	Address adder.
@@ -57,6 +58,7 @@ module address_adder (
     // Address adder
     // -------------
     assign ans.tag              = req_i.tag;
+    assign ans.is_store         = req_i.is_store;
     assign ans.result           = req_i.base + req_i.offs;
     assign ans.except_raised    = align_except;
     assign ans.except_code      = (req_i.is_store) ? E_ST_ADDR_MISALIGNED : E_LD_ADDR_MISALIGNED; // without VM, only alignment exceptions are possible

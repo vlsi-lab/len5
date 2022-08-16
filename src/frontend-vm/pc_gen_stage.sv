@@ -13,7 +13,6 @@
 // Date: 03/10/2019
 
 import len5_pkg::*;
-import fetch_pkg::*;
 
 module pc_gen_stage
 #(
@@ -23,7 +22,6 @@ module pc_gen_stage
   input   logic             rst_n_i,
   input   logic             except_i,
   input   logic [XLEN-1:0]  except_pc_i,
-  input   logic             res_valid_i,
   input   resolution_t      res_i,
   input   prediction_t      pred_i,
   input   logic             fetch_ready_i,
@@ -35,8 +33,8 @@ module pc_gen_stage
   logic [XLEN-1:0] next_pc, add_pc, adder_out;
 
   // Mux + adder
-  assign add_pc = (res_valid_i && res_i.mispredict) ? res_i.pc : pc_o;
-  assign adder_out = add_pc + ILEN >> 3;
+  assign add_pc = (res_i.valid && res_i.mispredict) ? res_i.pc : pc_o;
+  assign adder_out = add_pc + ILEN/8;
 
   // Priority list for choosing next PC:
   // 1) Exception
@@ -46,7 +44,7 @@ module pc_gen_stage
   always_comb begin: pc_priority_enc
     if (except_i) begin
       next_pc = except_pc_i;
-    end else if (res_valid_i && res_i.mispredict) begin
+    end else if (res_i.valid && res_i.mispredict) begin
       if (res_i.taken) begin
         next_pc = res_i.target;
       end else begin

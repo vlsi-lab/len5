@@ -23,6 +23,7 @@
 import len5_pkg::XLEN;
 import expipe_pkg::ROB_IDX_LEN;
 import expipe_pkg::cdb_data_t;
+import expipe_pkg::rob_idx_t;
 
 module op_only_unit
 #(
@@ -42,9 +43,9 @@ module op_only_unit
 
     // Data from the decode stage
     input   logic                           rs1_ready_i,
-    input   rob_idx_t         rs1_idx_i,
+    input   rob_idx_t                       rs1_idx_i,
     input   logic [XLEN-1:0]                rs1_value_i,
-    input   rob_idx_t         dest_idx_i,
+    input   rob_idx_t                       dest_idx_i,
 
     // Hanshake from/to the CDB 
     input   logic                           cdb_ready_i,
