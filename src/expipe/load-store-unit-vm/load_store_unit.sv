@@ -343,7 +343,7 @@ module load_store_unit (
 
         // Data from/to the CDB
         .cdb_idx_i              (cdb_lsb_data_i.rob_idx),
-        .cdb_data_i             (cdb_lsb_data_i.value),
+        .cdb_res_value_i        (cdb_lsb_data_i.res_value),
         .cdb_except_raised_i    (cdb_lsb_data_i.except_raised),
         .cdb_idx_o              (lb_cdb_data_o.rob_idx),
         .cdb_data_o             (lb_cdb_data_o.value),
@@ -453,7 +453,7 @@ module load_store_unit (
 
         // Data from/to the CDB
         .cdb_idx_i              (cdb_lsb_data_i.rob_idx),
-        .cdb_data_i             (cdb_lsb_data_i.value),
+        .cdb_res_value_i        (cdb_lsb_data_i.res_value),
         .cdb_except_raised_i    (cdb_lsb_data_i.except_raised),
         .cdb_idx_o              (sb_cdb_data_o.rob_idx),
         .cdb_data_o             (sb_cdb_data_o.value),

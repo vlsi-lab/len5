@@ -90,7 +90,7 @@ module issue_logic (
     output  logic [XLEN-1:0]            ex_rs2_value_o,         // the value of the first operand (if ready)
     output  logic [XLEN-1:0]            ex_imm_value_o,         // the value of the immediate field
     output  rob_idx_t     ex_rob_idx_o,           // the location of the ROB assigned to the instruction
-    output  logic [XLEN-1:0]            ex_pred_pc_o,              // the PC of the current issuing instr (branches only)
+    output  logic [XLEN-1:0]            ex_curr_pc_o,              // the PC of the current issuing instr (branches only)
     output  logic [XLEN-1:0]            ex_pred_target_o,          // the predicted target of the current issuing instr (branches only)
     output  logic                       ex_pred_taken_o,           // the predicted taken bit of the current issuing instr (branches only)
 
@@ -111,17 +111,16 @@ module issue_logic (
     input   logic [XLEN-1:0]            rob_rs1_value_i,        // the value of the first operand
     input   logic                       rob_rs2_ready_i,        // the second operand is ready in the ROB
     input   logic [XLEN-1:0]            rob_rs2_value_i,        // the value of the second operand
-    input   rob_idx_t     rob_tail_idx_i,         // the entry of the ROB where the instr is being allocated
+    input   rob_idx_t                   rob_tail_idx_i,         // the entry of the ROB where the instr is being allocated
     
-    output  rob_idx_t     rob_rs1_idx_o,          // ROB entry containing rs1 value
-    output  rob_idx_t     rob_rs2_idx_o,          // ROB entry containing rs2 value
+    output  rob_idx_t                   rob_rs1_idx_o,          // ROB entry containing rs1 value
+    output  rob_idx_t                   rob_rs2_idx_o,          // ROB entry containing rs2 value
     output  rob_entry_t                 rob_data_o,             // data to the ROB
-
     output  instr_t                     rob_instr_o,            // to identify the instruction
     output  logic [XLEN-1:0]            rob_pc_o,               // the PC of the current instruction
     output  logic [REG_IDX_LEN-1:0]     rob_rd_idx_o,           // the destination register index (rd)
     output  logic                       rob_except_raised_o,    // an exception has been raised
-    output  except_code_t  rob_except_code_o,      // the exception code
+    output  except_code_t               rob_except_code_o,      // the exception code
     output  logic [XLEN-1:0]            rob_except_aux_o,       // exception auxilliary data (e.g. offending virtual address)
     output  logic                       rob_res_ready_o,        // force the ready-to-commit state in the ROB to handle special instr. 
     output  logic [XLEN-1:0]            rob_res_value_o,        // result to save in the rob (when available, e.g., immediate)
@@ -129,13 +128,13 @@ module issue_logic (
     // Data from the commit logic (for operands fetch)
     input   logic                       cl_reg0_valid_i,
     input   logic [XLEN-1:0]            cl_reg0_value_i,
-    input   rob_idx_t     cl_reg0_idx_i,
+    input   rob_idx_t                   cl_reg0_idx_i,
     input   logic                       cl_reg1_valid_i,
     input   logic [XLEN-1:0]            cl_reg1_value_i,
-    input   rob_idx_t     cl_reg1_idx_i,
+    input   rob_idx_t                   cl_reg1_idx_i,
     input   logic                       cl_comm_reg_valid_i,
     input   logic [XLEN-1:0]            cl_comm_reg_value_i,
-    input   rob_idx_t     cl_comm_reg_idx_i
+    input   rob_idx_t                   cl_comm_reg_idx_i
 );
 
     // DEFINITIONS
@@ -207,11 +206,11 @@ module issue_logic (
     // -----------------
 
     // Select the corresponding register status register ready signal
-// `ifdef LEN5_FP_EN
-//     assign regstat_ready    = (id_fp_rs) ? fp_regstat_ready_i : int_regstat_ready_i;
-// `else
-//     assign regstat_ready    = int_regstat_ready_i;
-// `endif /* LEN5_FP_EN */
+    // `ifdef LEN5_FP_EN
+    //     assign regstat_ready    = (id_fp_rs) ? fp_regstat_ready_i : int_regstat_ready_i;
+    // `else
+    //     assign regstat_ready    = int_regstat_ready_i;
+    // `endif /* LEN5_FP_EN */
 
     always_comb begin: issue_control_logic
         // Default values 
@@ -570,7 +569,7 @@ module issue_logic (
     assign  ex_rob_idx_o                = rob_tail_idx;
 
     // Branch additional info (simply forward from the issue queue)
-    assign  ex_pred_pc_o                = iq_instr_i.curr_pc;
+    assign  ex_curr_pc_o                = iq_instr_i.curr_pc;
     assign  ex_pred_target_o            = iq_instr_i.pred_target;
     assign  ex_pred_taken_o             = iq_instr_i.pred_taken;
 

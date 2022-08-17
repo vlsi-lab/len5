@@ -107,7 +107,7 @@ module issue_stage
     output  logic [XLEN-1:0]            ex_rs2_value_o,         // the value of the first operand (if ready)
     output  logic [XLEN-1:0]            ex_imm_value_o, // the value of the immediate field (for st and branches)                   
     output  rob_idx_t     ex_rob_idx_o,           // the location of the ROB assigned to the instruction
-    output  logic [XLEN-1:0]            ex_pred_pc_o,              // the PC of the current issuing instr (branches only)
+    output  logic [XLEN-1:0]            ex_curr_pc_o,              // the PC of the current issuing instr (branches only)
     output  logic [XLEN-1:0]            ex_pred_target_o,  // the predicted target of the current issuing instr (branches only)
     output  logic                       ex_pred_taken_o,   // the predicted taken bit of the current issuing instr (branches only)
 
@@ -268,7 +268,7 @@ module issue_stage
         .ex_rs2_value_o                 (ex_rs2_value_o),
         .ex_imm_value_o                 (ex_imm_value_o),
         .ex_rob_idx_o                   (ex_rob_idx_o),
-        .ex_pred_pc_o                   (ex_pred_pc_o),
+        .ex_curr_pc_o                   (ex_curr_pc_o),
         .ex_pred_target_o               (ex_pred_target_o),
         .ex_pred_taken_o                (ex_pred_taken_o),
 

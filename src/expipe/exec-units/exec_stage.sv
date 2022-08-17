@@ -53,7 +53,7 @@ module exec_stage
     input   logic [XLEN-1:0]            issue_rs2_value_i,  // the value of the first operand (if ready)
     input   logic [XLEN-1:0]            issue_imm_value_i,  // the value of the immediate field (for st and branches)                   
     input   rob_idx_t                   issue_rob_idx_i,    // the location of the ROB assigned to the instruction
-    input   logic [XLEN-1:0]            issue_pred_pc_i,    // the PC of the current issuing instr (branches only)
+    input   logic [XLEN-1:0]            issue_curr_pc_i,    // the PC of the current issuing instr (branches only)
     input   logic [XLEN-1:0]            issue_pred_target_i,// the predicted target of the current issuing instr (branches only)
     input   logic                       issue_pred_taken_i, // the predicted taken bit of the current issuing instr (branches only)
 
@@ -163,7 +163,7 @@ module exec_stage
         .rs2_value_i                (issue_rs2_value_i),
         .imm_value_i                (issue_imm_value_i),
         .dest_idx_i                 (issue_rob_idx_i),
-        .pred_pc_i                  (issue_pred_pc_i),
+        .curr_pc_i                  (issue_curr_pc_i),
         .pred_target_i              (issue_pred_target_i),
         .pred_taken_i               (issue_pred_taken_i),
         .res_pc_o                   (fetch_res_pc_o),

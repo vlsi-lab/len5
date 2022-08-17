@@ -19,9 +19,7 @@ import len5_pkg::instr_t;
 import memory_pkg::*;
 import fetch_pkg::mem_if_ans_reg_t;
 
-module fetch_mem_if #(
-    parameter   PC_FIFO_DEPTH = 2   // number of request that the memory can accept before providing an answer
-) (
+module fetch_mem_if (
     input   logic               clk_i,
     input   logic               rst_n_i,
 

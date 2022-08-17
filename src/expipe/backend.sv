@@ -143,7 +143,7 @@ module backend (
     logic [XLEN-1:0]            il_ex_rs2_value;
     logic [XLEN-1:0]            il_ex_imm_value;
     rob_idx_t                   il_ex_rob_idx;
-    logic [XLEN-1:0]            il_ex_pred_pc;
+    logic [XLEN-1:0]            il_ex_curr_pc;
     logic [XLEN-1:0]            il_ex_pred_target;
     logic                       il_ex_pred_taken;
 
@@ -303,7 +303,7 @@ module backend (
         .ex_rs2_value_o                 (il_ex_rs2_value),
         .ex_imm_value_o                 (il_ex_imm_value),
         .ex_rob_idx_o                   (il_ex_rob_idx),
-        .ex_pred_pc_o                   (il_ex_pred_pc),
+        .ex_curr_pc_o                   (il_ex_curr_pc),
         .ex_pred_target_o               (il_ex_pred_target),
         .ex_pred_taken_o                (il_ex_pred_taken),
 
@@ -448,7 +448,7 @@ module backend (
         .issue_rs2_value_i          (il_ex_rs2_value),
         .issue_imm_value_i          (il_ex_imm_value),
         .issue_rob_idx_i            (il_ex_rob_idx),
-        .issue_pred_pc_i            (il_ex_pred_pc),
+        .issue_curr_pc_i            (il_ex_curr_pc),
         .issue_pred_target_i        (il_ex_pred_target),
         .issue_pred_taken_i         (il_ex_pred_taken),
 

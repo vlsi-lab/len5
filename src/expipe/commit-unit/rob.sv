@@ -109,7 +109,8 @@ module rob #(
                     data_valid[i]    <= 1'b0;
                 end else if (update_res && cdb_data_i.rob_idx == i) begin
                     data[i].res_ready      <= 1'b1;
-                    data[i].res_value      <= cdb_data_i.value;
+                    data[i].res_value      <= cdb_data_i.res_value;
+                    data[i].res_aux        <= cdb_data_i.res_aux;
                     data[i].except_raised  <= cdb_data_i.except_raised;
                     data[i].except_code    <= cdb_data_i.except_code;
                 end

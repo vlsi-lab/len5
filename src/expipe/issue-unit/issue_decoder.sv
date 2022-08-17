@@ -140,8 +140,8 @@ module issue_decoder (
 
         // JAL
         else if (instruction_i.j.opcode == `OPCODE_JAL) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl                      = ALU_ADD;
+            assigned_eu                 = EU_BRANCH_UNIT;
+            eu_ctl                      = JUMP;
             imm_format                  = IMM_TYPE_J;
             rs1_is_pc                   = 1'b1;         // first operand is pc
             rs2_is_imm                  = 1'b1;         // second operand is J-immediate

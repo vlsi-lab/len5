@@ -93,6 +93,22 @@ package expipe_pkg;
     // MAXIMUM DIMENSION OF EU_CONTROL FIELDS
     localparam MAX_EU_CTL_LEN   = ALU_CTL_LEN;  // this must be set to the maximum of the previous parameters
 
+    // ---
+    // ALL
+    // ---
+
+    // Jump/branch auxiliary information
+    typedef struct packed {
+        logic   mispredicted;
+        logic   taken;
+    } res_aux_jb_t;
+
+    // EU result auxiliary data
+    typedef union packed {
+        res_aux_t       jb;
+        logic [1:0]     raw;
+    } res_aux_t;
+
     // ----
     // ROB
     // ----
@@ -101,9 +117,10 @@ package expipe_pkg;
 
     typedef struct packed {
         instr_t                     instruction;    // the instruction
-        logic [XLEN-1:0]            instr_pc;       // the program counter if the instruction
+        logic [XLEN-1:0]            instr_pc;       // the program counter of the instruction
         logic                       res_ready;      // the result of the instruction is ready
         logic [XLEN-1:0]            res_value;      // the value of the result (from the EU)
+        res_aux_data_t              res_aux;        // result auxiliary data
         logic [REG_IDX_LEN-1:0]     rd_idx;         // the destination register (rd)
         logic                       except_raised;  // an exception has been raised
         except_code_t               except_code;    // the exception code
@@ -115,7 +132,8 @@ package expipe_pkg;
     
     typedef struct packed {
         rob_idx_t                   rob_idx;
-        logic [XLEN-1:0]            value;
+        logic [XLEN-1:0]            res_value;
+        res_aux_t                   res_aux;
         logic                       except_raised;
         except_code_t               except_code;
     } cdb_data_t;
@@ -213,6 +231,30 @@ package expipe_pkg;
         EU_NONE             //the instruction is directly sent to the ROB (csr, special instructions, etc.)
     } issue_eu_t;
 
+    // -----------
+    // BRANCH UNIT
+    // -----------
+
+    // Reservation station entry 
+    typedef struct packed {
+        logic                   valid;      // The entry contains a valid instruction
+        logic                   busy;       // The instruction is being executed in the assigned EU
+        logic [BU_CTL_LEN-1:0]  branch_type;// Branch type for the branch unit
+        logic                   rs1_ready;  // The first operand value is available in 'rs1_value'
+        rob_idx_t               rs1_idx;    // The entry of the rob that will contain the required operand
+        logic [XLEN-1:0]        rs1_value;  // The value of the first operand
+        logic                   rs2_ready;  // The second operand value is available in 'rs2_value'
+        rob_idx_t               rs2_idx;    // The entry of the rob that will contain the required operand
+        logic [XLEN-1:0]        rs2_value;  // The value of the second operand
+        logic [XLEN-1:0]        imm_value;  // Immediate value
+        logic [XLEN-1:0]        curr_pc;    // Program counter of the current instruction
+        logic [XLEN-1:0]        target;     // Predicted target PC, later replaced by computed target PC
+        logic                   taken;      // Branch outcome prediction, then replaced by computed outcome
+        rob_idx_t               res_idx;    // The entry of the ROB where the result will be stored
+        logic                   mispredicted;// the branch was mispredicted
+        logic                   res_ready;  // The value of the result is available in 'mispredicted'"
+    } bu_rs_entry_t;
+
     // ---------------
     // LOAD-STORE UNIT
     // ---------------
@@ -227,16 +269,16 @@ package expipe_pkg;
         rob_idx_t     entry_age;         // the age of the entry, used for scheduling
         `endif
         logic [STBUFF_IDX_LEN:0]    older_stores;      // Number of older uncommitted stores (if 0, the entry is dependency-free)
-        ldst_width_t                 load_type;         // LB, LBU, LH, LHU, LW, LWU, LD
+        ldst_width_t                load_type;         // LB, LBU, LH, LHU, LW, LWU, LD
         logic                       rs1_ready;         // the value of rs1 contained in 'rs1_value' field is valid
-        rob_idx_t     rs1_idx;           // the index of the ROB that will contain the base address
+        rob_idx_t                   rs1_idx;           // the index of the ROB that will contain the base address
         logic [XLEN-1:0]            rs1_value;         // the value of the base address
         logic [XLEN-1:0]            imm_value;         // the value of the immediate field (offset)
         logic                       vaddr_ready;       // the virtual address has already been computed
         logic [XLEN-1:0]            vaddr;             // the virtual address
         logic                       paddr_ready;       // the address translation (TLB access) has already completed
         logic [PPN_LEN-1:0]         ppn;  // the physical page number
-        rob_idx_t     dest_idx;          // the entry of the ROB where the loaded value will be stored
+        rob_idx_t                   dest_idx;          // the entry of the ROB where the loaded value will be stored
         logic                       except_raised;
         except_code_t               except_code;       // exception code 
         logic [XLEN-1:0]            ld_value;          // the value loaded from memory
@@ -248,14 +290,14 @@ package expipe_pkg;
         logic                       valid;              // the entry contains a valid instructions
         logic                       busy;               // The entry is waiting for an operation to complete
         `ifdef ENABLE_AGE_BASED_SELECTOR
-        rob_idx_t     entry_age;          // the age of the entry, used for scheduling
+        rob_idx_t                   entry_age;          // the age of the entry, used for scheduling
         `endif
-        ldst_width_t                 store_type;         // SB, SH, SW, SD
+        ldst_width_t                store_type;         // SB, SH, SW, SD
         logic                       rs1_ready;          // the value of rs1 (BASE ADDRESS) contained in 'rs1_value' field is valid
-        rob_idx_t     rs1_idx;            // the index of the ROB that will contain the base address
+        rob_idx_t                   rs1_idx;            // the index of the ROB that will contain the base address
         logic [XLEN-1:0]            rs1_value;          // the value of the BASE ADDRESS
         logic                       rs2_ready;          // the value of rs2 (VALUE to be stored) contained in 'rs2_value' field is valid
-        rob_idx_t     rs2_idx;            // the index of the ROB that will contain the base address
+        rob_idx_t                   rs2_idx;            // the index of the ROB that will contain the base address
         logic [XLEN-1:0]            rs2_value;          // the value to be stored in memory
         logic [XLEN-1:0]            imm_value;          // the value of the immediate field (offset)
         logic                       vaddr_ready;        // the virtual address has already been computed
@@ -263,7 +305,7 @@ package expipe_pkg;
         logic                       paddr_ready;        // the address translation (TLB access) has already completed
         logic [PPN_LEN-1:0]         ppn;                // the physical address (last 12 MSBs are identical to virtual address
         // logic                       dc_completed;       // the D$ completed the write request
-        rob_idx_t     dest_idx;           // the entry of the ROB where the loaded value will be stored
+        rob_idx_t                   dest_idx;           // the entry of the ROB where the loaded value will be stored
         logic                       except_raised;
         except_code_t               except_code;        // exception code
         logic                       completed;          // the value has been stored to the D$

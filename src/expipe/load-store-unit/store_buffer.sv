@@ -323,8 +323,12 @@ module store_buffer #(
     assign commit_sb_head_rob_idx_o     = data[head_idx].dest_rob_idx;
     
     /* CDB */
-    assign cdb_valid_o         = curr_state[head_idx] == STORE_S_COMPLETED;
-    assign cdb_data_o.rob_idx  = data[head_idx].dest_rob_idx;
+    assign cdb_valid_o              = curr_state[head_idx] == STORE_S_COMPLETED;
+    assign cdb_data_o.rob_idx       = data[head_idx].dest_idx;
+    assign cdb_data_o.res_value     = '0;
+    assign cdb_data_o.res_aux       = data[head_idx].rs2_value;
+    assign cdb_data_o.except_raised = data[head_idx].except_raised;
+    assign cdb_data_o.except_code   = data[head_idx].except_code;
 
     /* Address adder */
     assign adder_valid_o           = curr_state[addr_idx] == STORE_S_ADDR_PENDING;

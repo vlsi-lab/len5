@@ -27,6 +27,7 @@ import uvm_pkg::*;
 
 import expipe_pkg::*;
 import len5_pkg::*;
+import fetch_pkg::resolution_t;
 import csr_pkg::csr_instr_t;
 import csr_pkg::CSR_ADDR_LEN;
 import csr_pkg::CSR_INSTR;
@@ -40,19 +41,21 @@ module commit_stage (
     output  logic                       main_cu_resume_o,
 
     // Data to frontend
+    output  logic                       fe_res_valid_o,
+    output  resolution_t                fe_res_o,
     output  logic                       fe_except_raised_o,
     output  logic [XLEN-1:0]            fe_except_pc_o,
 
     // Issue logic <--> commit logic
     output  logic                       il_reg0_valid_o,
     output  logic [XLEN-1:0]            il_reg0_value_o,
-    output  rob_idx_t     il_reg0_idx_o,
+    output  rob_idx_t                   il_reg0_idx_o,
     output  logic                       il_reg1_valid_o,
     output  logic [XLEN-1:0]            il_reg1_value_o,
-    output  rob_idx_t     il_reg1_idx_o,
+    output  rob_idx_t                   il_reg1_idx_o,
     output  logic                       il_comm_reg_valid_o,
     output  logic [XLEN-1:0]            il_comm_reg_value_o,
-    output  rob_idx_t     il_comm_reg_idx_o,
+    output  rob_idx_t                   il_comm_reg_idx_o,
 
     // Control to the ROB
     input   logic                       rob_valid_i,
@@ -117,9 +120,9 @@ module commit_stage (
     // ROB <--> input register
 	logic [OPCODE_LEN -1:0]     instr_opcode;
 	logic                       sb_store_committing_t;
-    logic                       mispredict;
 
     // Input register <--> commit CU
+    logic                       inreg_cu_mispredicted;
     logic                       cu_inreg_ready;
     logic                       inreg_cu_valid;
 
@@ -132,10 +135,16 @@ module commit_stage (
     rob_entry_t                 comm_reg_data;
     logic                       comm_reg_valid;
 
-    // commit CU --> others
+    // Jump adder and MUX's
+    logic [XLEN-1:0]            link_addr;
+    logic [XLEN-1:0]            rd_value;
+    logic                       fe_res_taken;
+
+    // commit CU <--> others
     logic                       cu_instr_valid;
     logic                       cu_store_comm;
     logic                       cu_csr_type;
+    logic                       cu_is_jump;
 
     // ------------------------
     // INPUT ROB ENTRY REGISTER
@@ -191,17 +200,18 @@ module commit_stage (
     //       logic input register (spill cell). Since its output will only be
     //       available the next cycle, the instruction is buffered inside the
     //       'comm_reg' register above. 
-    assign instr_opcode         = inreg_data_out.data.instruction.r.opcode;
-    assign mispredict           = inreg_data_out.data.res_value[0];
-    assign cu_store_comm        = (sb_head_rob_idx_i == inreg_data_out.rob_idx) && sb_head_completed_i;
+    assign instr_opcode             = inreg_data_out.data.instruction.r.opcode;
+    assign inreg_cu_mispredicted    = inreg_data_out.data.res_aux.jb.mispredicted;
+    assign cu_store_comm            = (sb_head_rob_idx_i == inreg_data_out.rob_idx) && sb_head_completed_i;
 
     commit_cu u_commit_cu (
         .clk_i              (clk_i),
         .rst_n_i            (rst_n_i),
         .comm_type_i        (cd_comm_type),
         .store_comm_i       (cu_store_comm),
-        .mispredict_i       (mispredict),
+        .mispredict_i       (inreg_cu_mispredicted),
         .comm_reg_en_o      (comm_reg_en),
+        .is_jump_o          (cu_is_jump),
         .valid_i            (inreg_cu_valid),
         .ready_o            (cu_inreg_ready),
         .instr_i            (inreg_data_out.data.instruction),
@@ -217,13 +227,26 @@ module commit_stage (
         .sb_pop_store_o     (sb_pop_store_o),
         .csr_valid_o        (csr_valid_o),
         .csr_type_o         (csr_instr_type_o),
+        .fe_res_valid_o     (fe_res_valid_o),
         .flush_o            (main_cu_flush_o),
         .resume_o           (main_cu_resume_o)
     );
+
+    // Jump commit adder and MUX's
+    // ---------------------------
+    assign  link_addr       = comm_reg_data.instr_pc + (ILEN >> 3);
+    assign  rd_value        = (cu_is_jump) ? link_addr : comm_reg_data.res_value;
+    assign  fe_res_taken    = (cu_is_jump) ? 1'b1 : comm_reg_data.res_aux.jb.taken;
     
     // -----------------
     // OUTPUT EVALUATION
     // -----------------
+
+    // Data to front-end
+    assign  fe_res_o.pc         = comm_reg_data.instr_pc;
+    assign  fe_res_o.target     = {comm_reg_data.res_value[XLEN-1:1], 1'b0};  // computed target address
+    assign  fe_res_o.taken      = fe_res_taken;
+    assign  fe_res_o.mispredict = comm_reg_data.res_aux.jb.mispredicted;
 
     // Data to the issue logic
     assign  il_reg0_valid_o         = inreg_buff_full;
@@ -240,7 +263,7 @@ module commit_stage (
 
     // Data to the register file(s)
     assign  rd_idx_o                = comm_reg_data.rd_idx;
-    assign  rd_value_o              = comm_reg_data.res_value;
+    assign  rd_value_o              = rd_value;
 
     // Data to CSRs
     assign  csr_funct3_o            = comm_reg_data.instruction.i.funct3;

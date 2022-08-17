@@ -97,7 +97,7 @@ fetch_stage #(.HLEN(HLEN),.BTB_BITS(BTB_BITS)) fetch_stage_u
   .res_i			(res_i)  
 );
 
-pc_gen_stage #(.BOOT_PC(BOOT_PC)) pc_gen_stage_u
+pc_gen #(.BOOT_PC(BOOT_PC)) pc_gen_u
 (
   .clk_i    		(clk_i),
   .rst_n_i  		(rst_n_i),

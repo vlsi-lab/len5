@@ -36,14 +36,14 @@ module branch_rs
     // Data from the decode stage
     input   logic [BU_CTL_LEN-1:0]          branch_type_i,
     input   logic                           rs1_ready_i,
-    input   rob_idx_t         rs1_idx_i,
+    input   rob_idx_t                       rs1_idx_i,
     input   logic [XLEN-1:0]                rs1_value_i,
     input   logic                           rs2_ready_i,
-    input   rob_idx_t         rs2_idx_i,
+    input   rob_idx_t                       rs2_idx_i,
     input   logic [XLEN-1:0]                rs2_value_i,
     input   logic [XLEN-1:0]                imm_value_i,
-    input   rob_idx_t         dest_idx_i,
-    input   logic [XLEN-1:0]                pred_pc_i,
+    input   rob_idx_t                       dest_idx_i,
+    input   logic [XLEN-1:0]                curr_pc_i,
     input   logic [XLEN-1:0]                pred_target_i,
     input   logic                           pred_taken_i,
 
@@ -54,11 +54,12 @@ module branch_rs
     output  logic                           bu_ready_o,
 
     // Data from/to the execution unit
-    input   logic                           mispredict_i, // mispredcition result
+    input   logic                           bu_res_mis_i,   // mispredcition result
+    input   logic                           bu_res_taken_i, // branch outcome
     output  logic [XLEN-1:0]                bu_rs1_o,
     output  logic [XLEN-1:0]                bu_rs2_o,
     output  logic [XLEN-1:0]                bu_imm_o,
-    output  logic [XLEN-1:0]                bu_pred_pc_o,
+    output  logic [XLEN-1:0]                bu_curr_pc_o,
     output  logic [XLEN-1:0]                bu_pred_target_o,
     output  logic                           bu_pred_taken_o,
     output  logic [BU_CTL_LEN-1:0]          bu_branch_type_o,
@@ -69,33 +70,13 @@ module branch_rs
     output  logic                           cdb_valid_o,
 
     // Data from/to the CDB
-    input cdb_data_t                      cdb_data_i,
+    input   cdb_data_t                      cdb_data_i,
     output  cdb_data_t                      cdb_data_o
 );
 
     // DEFINITIONS
 
     localparam RS_IDX_LEN = $clog2(RS_DEPTH); //3 reservation station address width
-
-    // Reservation station entry 
-    typedef struct packed {
-        logic                   valid;      // The entry contains a valid instruction
-        logic                   busy;       // The instruction is being executed in the assigned EU
-        logic [BU_CTL_LEN-1:0]  branch_type;// Branch type for the branch unit
-        logic                   rs1_ready;  // The first operand value is available in 'rs1_value'
-        rob_idx_t rs1_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
-        logic [XLEN-1:0]        rs1_value;  // The value of the first operand
-        logic                   rs2_ready;  // The second operand value is available in 'rs2_value'
-        rob_idx_t rs2_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
-        logic [XLEN-1:0]        rs2_value;  // The value of the second operand
-        logic [XLEN-1:0]        imm_value;  // Immediate value
-        logic [XLEN-1:0]        pred_pc;    // Program counter of the current instruction (from the fetch stage)
-        logic [XLEN-1:0]        pred_target;// Predicted target program counter (from the fetch stage)
-        logic                   pred_taken; // Branch outcome prediction (from the fetch stage)
-        rob_idx_t res_idx;    // The entry of the ROB where the result will be stored
-        logic                   mispredicted;// the branch was mispredicted
-        logic                   res_ready;  // The value of the result is available in 'mispredicted'"
-    } rs_entry_t;
 
     // Reservation station pointers
     logic [RS_IDX_LEN-1:0]      tail_idx, ex_idx, head_idx, wr_res_idx; 
@@ -104,14 +85,14 @@ module branch_rs
     logic                       head_cnt_en, head_cnt_clr, ex_cnt_en, ex_cnt_clr, tail_cnt_en, tail_cnt_clr,wr_res_cnt_en, wr_res_cnt_clr;
 
     // The actual reservation station data structure
-    rs_entry_t  rs_data[0:RS_DEPTH-1];
+    bu_rs_entry_t  rs_data[0:RS_DEPTH-1];
     
     // Status signals
-    logic   valid_a[0:RS_DEPTH-1], busy_a[0:RS_DEPTH-1]; // valid entries, empty entries
-    logic   ex_ready_a[0:RS_DEPTH-1], res_ready_a[0:RS_DEPTH-1]; // Ready operands / ready result entries 
+    logic           valid_a[0:RS_DEPTH-1], busy_a[0:RS_DEPTH-1]; // valid entries, empty entries
+    logic           ex_ready_a[0:RS_DEPTH-1], res_ready_a[0:RS_DEPTH-1]; // Ready operands / ready result entries 
 
     // RS control signals
-    logic                       rs_push, rs_ex, rs_pop, rs_wr_res;
+    logic          rs_push, rs_ex, rs_pop, rs_wr_res;
 
     // --------------
     // STATUS SIGNALS
@@ -253,9 +234,9 @@ module branch_rs
                 rs_data[tail_idx].rs2_idx           <= rs2_idx_i;
                 rs_data[tail_idx].rs2_value         <= rs2_value_i;
                 rs_data[tail_idx].imm_value         <= imm_value_i;
-                rs_data[tail_idx].pred_pc           <= pred_pc_i;
-                rs_data[tail_idx].pred_target       <= pred_target_i;
-                rs_data[tail_idx].pred_taken        <= pred_taken_i;
+                rs_data[tail_idx].curr_pc           <= curr_pc_i;
+                rs_data[tail_idx].target            <= pred_target_i;
+                rs_data[tail_idx].taken             <= pred_taken_i;
                 rs_data[tail_idx].res_idx           <= dest_idx_i;
                 rs_data[tail_idx].res_ready         <= 1'b0;
             end
@@ -267,9 +248,10 @@ module branch_rs
 
             // Save the result from the branch unit
             if (rs_wr_res) begin
-                rs_data[wr_res_idx]                 <= 1'b0; // clear the busy bit
+                rs_data[wr_res_idx].busy            <= 1'b0; // clear the busy bit
                 rs_data[wr_res_idx].res_ready       <= 1'b1; // mark the entry as completed
-                rs_data[wr_res_idx].mispredicted    <= mispredict_i; // misprediction info from the branch unit
+                rs_data[wr_res_idx].mispredicted    <= bu_res_mis_i;
+                rs_data[wr_res_idx].taken           <= bu_res_taken_i;
             end
 
             // Send a result to the CDB
@@ -331,16 +313,18 @@ module branch_rs
     assign bu_rs1_o                 = rs_data[ex_idx].rs1_value;
     assign bu_rs2_o                 = rs_data[ex_idx].rs2_value;
     assign bu_imm_o                 = rs_data[ex_idx].imm_value;
-    assign bu_pred_pc_o             = rs_data[ex_idx].pred_pc;
-    assign bu_pred_target_o         = rs_data[ex_idx].pred_target;
-    assign bu_pred_taken_o          = rs_data[ex_idx].pred_taken;
+    assign bu_curr_pc_o             = rs_data[ex_idx].curr_pc;
+    assign bu_pred_target_o         = rs_data[ex_idx].target;
+    assign bu_pred_taken_o          = rs_data[ex_idx].taken;
     assign bu_branch_type_o         = rs_data[ex_idx].branch_type;
 
     // To the CDB
-    assign cdb_data_o.rob_idx       = rs_data[head_idx].res_idx;
-    assign cdb_data_o.value         = { {(XLEN-1){1'b0}}, rs_data[head_idx].mispredicted }; // store the misprediction information in the value field of the CDB (result field of the ROB)
-    assign cdb_data_o.except_raised = 1'b0; // no exception can be raised  (Wrong, First check the Missp if ok then cheeck address misaglined)
-    assign cdb_data_o.except_code   = E_UNKNOWN;
+    assign cdb_data_o.rob_idx                   = rs_data[head_idx].res_idx;
+    assign cdb_data_o.res_value                 = rs_data[head_idx].target;
+    assign cdb_data_o.res_aux.jb.mispredicted   = rs_data[head_idx].mispredicted;
+    assign cdb_data_o.res_aux.jb.taken          = rs_data[head_idx].taken;
+    assign cdb_data_o.except_raised             = 1'b0; // no exception can be raised  (Wrong, First check the Missp if ok then check address misaglined)
+    assign cdb_data_o.except_code               = E_UNKNOWN;
 
     // ----------
     // ASSERTIONS

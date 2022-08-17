@@ -72,13 +72,10 @@ module generic_rs
     output  logic                   cdb_valid_o,
 
     // Data from/to the CDB
-    input   rob_idx_t cdb_idx_i,
-    input   logic [XLEN-1:0]        cdb_data_i,
+    input   rob_idx_t               cdb_idx_i,
+    input   logic [XLEN-1:0]        cdb_res_value_i,
     input   logic                   cdb_except_raised_i,
-    output  rob_idx_t cdb_idx_o,
-    output  logic [XLEN-1:0]        cdb_data_o,
-    output  logic                   cdb_except_raised_o,
-    output  except_code_t cdb_except_o
+    output  cdb_data_t              cdb_data_o
 );
 
     // DEFINITIONS
@@ -251,13 +248,13 @@ module generic_rs
                     if (!rs_data[i].rs1_ready) begin
                         if (cdb_valid_i && !cdb_except_raised_i && (rs_data[i].rs1_idx == cdb_idx_i)) begin
                             rs_data[i].rs1_ready    <= 'b1;
-                            rs_data[i].rs1_value    <= cdb_data_i;
+                            rs_data[i].rs1_value    <= cdb_res_value_i;
                         end
                     end
                     if (!rs_data[i].rs2_ready) begin
                         if (cdb_valid_i && !cdb_except_raised_i && (rs_data[i].rs2_idx == cdb_idx_i)) begin
                             rs_data[i].rs2_ready    <= 'b1;
-                            rs_data[i].rs2_value    <= cdb_data_i;
+                            rs_data[i].rs2_value    <= cdb_res_value_i;
                         end
                     end
                 end
@@ -332,10 +329,11 @@ module generic_rs
     assign eu_entry_idx_o          = ex_idx;
 
     // To CDB (READ PORT 2: reads different fields from READ PORT 1)
-    assign cdb_idx_o            = rs_data[cdb_idx].res_idx;
-    assign cdb_data_o           = rs_data[cdb_idx].res_value;
-    assign cdb_except_raised_o  = rs_data[cdb_idx].except_raised;
-    assign cdb_except_o         = rs_data[cdb_idx].except_code;
+    assign cdb_data_o.rob_idx       = rs_data[cdb_idx].res_idx;
+    assign cdb_data_o.res_value     = rs_data[cdb_idx].res_value;
+    assign cdb_data_o.res_aux       = '0;
+    assign cdb_data_o.except_raised = rs_data[cdb_idx].except_raised;
+    assign cdb_data_o.except_code   = rs_data[cdb_idx].except_code;
 
     // ----------
     // ASSERTIONS

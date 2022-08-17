@@ -131,12 +131,9 @@ module store_buffer
 
     // Data from/to the CDB
     input   rob_idx_t     cdb_idx_i,
-    input   logic [XLEN-1:0]            cdb_data_i,
+    input   logic [XLEN-1:0]            cdb_res_value_i,
     input   logic                       cdb_except_raised_i,
-    output  rob_idx_t     cdb_idx_o,
-    output  logic [XLEN-1:0]            cdb_data_o,
-    output  logic                       cdb_except_raised_o,
-    output  except_code_t               cdb_except_o
+    output  cdb_data_t                  cdb_data_o
 );
     
     // DEFINITIONS
@@ -347,13 +344,13 @@ module store_buffer
                 if (sb_data[i].valid && !sb_data[i].rs1_ready) begin
                     if (cdb_valid_i && !cdb_except_raised_i && (sb_data[i].rs1_idx == cdb_idx_i)) begin
                         sb_data[i].rs1_ready <= 1'b1;
-                        sb_data[i].rs1_value <= cdb_data_i;
+                        sb_data[i].rs1_value <= cdb_res_value_i;
                     end
                 end
                 if (sb_data[i].valid && !sb_data[i].rs2_ready) begin
                     if (cdb_valid_i && !cdb_except_raised_i && (sb_data[i].rs2_idx == cdb_idx_i)) begin
                         sb_data[i].rs2_ready <= 1'b1;
-                        sb_data[i].rs2_value <= cdb_data_i;
+                        sb_data[i].rs2_value <= cdb_res_value_i;
                     end
                 end
 
@@ -865,10 +862,11 @@ module store_buffer
     assign cl_sb_head_rob_idx_o     = sb_head_idx;
 
     // TO THE CDB
-    assign cdb_idx_o            = sb_data[cdb_req_idx].dest_idx;
-    assign cdb_data_o           = sb_data[cdb_req_idx].rs2_value;   // (RS2 READ PORT 4)
-    assign cdb_except_raised_o  = sb_data[cdb_req_idx].except_raised;
-    assign cdb_except_o         = sb_data[cdb_req_idx].except_code;
+    assign cdb_data_o.rob_idx       = sb_data[cdb_req_idx].dest_idx;
+    assign cdb_data_o.res_value     = sb_data[cdb_req_idx].rs2_value;   // (RS2 READ PORT 4)
+    assign cdb_data_o.res_aux       = '0;
+    assign cdb_data_o.except_raised = sb_data[cdb_req_idx].except_raised;
+    assign cdb_data_o.except_code   = sb_data[cdb_req_idx].except_code;
     
     // ----------
     // ASSERTIONS

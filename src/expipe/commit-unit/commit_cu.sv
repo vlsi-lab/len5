@@ -37,6 +37,7 @@ module commit_cu (
     input   logic                   store_comm_i,   // a store instruction is ready to commit
     input   logic                   mispredict_i,   // branch misprediction
     output  logic                   comm_reg_en_o,  // commit enable
+    output  logic                   is_jump_o,      // the committing is a jump
 
     // ROB <--> CU
     input   logic                   valid_i,
@@ -70,6 +71,7 @@ module commit_cu (
     output  csr_instr_t             csr_type_o,
 
     // CU <--> others
+    output  logic                   fe_res_valid_o,
     output  logic                   flush_o,
     output  logic                   resume_o    // to the main CU
 );
@@ -86,6 +88,7 @@ module commit_cu (
         COMMIT_STORE,       // commit store instructions
         WAIT_STORE,         // wait for a store instruction to commit from the store buffer
         COMMIT_JUMP,        // commit jump-and-link instructions
+        COMMIT_JUMP_MIS,    // commit jumps and restart
         COMMIT_BRANCH,      // commit correctly predicted branch instructions
         MIS_FLUSH,          // handle branch misprediction
         MIS_LOAD_PC,        // load correct PC after misprediction
@@ -128,7 +131,10 @@ module commit_cu (
                 if (!store_comm_i)  v_next_state  = WAIT_STORE;
                 else                v_next_state  = COMMIT_STORE;
             end
-            COMM_TYPE_JUMP:         v_next_state  = COMMIT_JUMP;
+            COMM_TYPE_JUMP: begin
+                if (mispredict_i)   v_next_state  = COMMIT_JUMP_MIS;
+                esle                v_next_state  = COMMIT_JUMP;
+            end
             COMM_TYPE_BRANCH: begin
                 if (mispredict_i)   v_next_state  = MIS_FLUSH;
                 else                v_next_state  = COMMIT_BRANCH;
@@ -190,6 +196,11 @@ module commit_cu (
                 else            next_state  = IDLE;
             end
 
+            // Commit jump with mispredition
+            COMMIT_JUMP_MIS:
+                if (valid_i)    next_state  = v_next_state;
+                else            next_state  = IDLE;
+
             // Correctly predicted branch: just commit
             COMMIT_BRANCH: begin
                 if (valid_i)    next_state  = v_next_state;
@@ -229,6 +240,7 @@ module commit_cu (
         // Default values
         ready_o             = 1'b0;
         comm_reg_en_o       = 1'b0;
+        is_jump_o           = 1'b0;
         int_rs_valid_o      = 1'b0;
         int_rf_valid_o      = 1'b0;
     `ifdef LEN5_FP_EN
@@ -238,6 +250,7 @@ module commit_cu (
         sb_pop_store_o      = 1'b0;
         csr_valid_o         = 1'b0;
         csr_type_o          = CSR_INSTR;
+        fe_res_valid_o      = 1'b0;
         flush_o             = 1'b0;
         resume_o            = 1'b0;
 
@@ -278,6 +291,16 @@ module commit_cu (
                 int_rf_valid_o  = 1'b1;
                 int_rs_valid_o  = 1'b1;
                 comm_reg_en_o   = 1'b1;
+                is_jump_o       = 1'b1;
+                fe_res_valid_o  = 1'b1;
+            end
+
+            COMMIT_JUMP_MIS: begin
+                int_rf_valid_o  = 1'b1;
+                int_rs_valid_o  = 1'b1;
+                is_jump_o       = 1'b1;
+                fe_res_valid_o  = 1'b1;
+                flush_o         = 1'b1;
             end
 
             COMMIT_BRANCH: begin

@@ -121,12 +121,9 @@ module load_buffer
 
     // Data from/to the CDB
     input   rob_idx_t     cdb_idx_i,
-    input   logic [XLEN-1:0]            cdb_data_i,
+    input   logic [XLEN-1:0]            cdb_res_value_i,
     input   logic                       cdb_except_raised_i,
-    output  rob_idx_t     cdb_idx_o,
-    output  logic [XLEN-1:0]            cdb_data_o,
-    output  logic                       cdb_except_raised_o,
-    output  except_code_t               cdb_except_o
+    output  cdb_data_t                  cdb_data_o
 );
 
     // DEFINITIONS
@@ -334,7 +331,7 @@ module load_buffer
                 if (lb_data[i].valid && !lb_data[i].rs1_ready) begin
                     if (cdb_valid_i && !cdb_except_raised_i && (lb_data[i].rs1_idx == cdb_idx_i)) begin
                         lb_data[i].rs1_ready <= 1'b1;
-                        lb_data[i].rs1_value <= cdb_data_i;
+                        lb_data[i].rs1_value <= cdb_res_value_i;
                     end
                 end
                 
@@ -731,10 +728,11 @@ module load_buffer
     assign pfwd_older_stores_o  = lb_data[pfwd_idx].older_stores; // (OLDER STORES READ PORT 2)
 
     // TO THE CDB
-    assign cdb_idx_o            = lb_data[cdb_req_idx].dest_idx;
-    assign cdb_data_o           = lb_data[cdb_req_idx].ld_value;
-    assign cdb_except_raised_o  = lb_data[cdb_req_idx].except_raised;
-    assign cdb_except_o         = lb_data[cdb_req_idx].except_code;
+    assign cdb_data_o.rob_idx       = lb_data[cdb_req_idx].dest_idx;
+    assign cdb_data_o.res_value     = lb_data[cdb_req_idx].ld_value;
+    assign cdb_data_o.res_aux       = '0;
+    assign cdb_data_o.except_raised = lb_data[cdb_req_idx].except_raised;
+    assign cdb_data_o.except_code   = lb_data[cdb_req_idx].except_code;
 
     // ----------
     // ASSERTIONS

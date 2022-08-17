@@ -50,12 +50,9 @@ module div_unit
 
     // Data from/to the CDB
     input   rob_idx_t cdb_idx_i,
-    input   logic [XLEN-1:0]        cdb_data_i,
+    input   logic [XLEN-1:0]        cdb_res_value_i,
     input   logic                   cdb_except_raised_i,
-    output  rob_idx_t cdb_idx_o,
-    output  logic [XLEN-1:0]        cdb_data_o,
-    output  logic                   cdb_except_raised_o,
-    output  except_code_t cdb_except_o
+    output  cdb_data_t              cdb_data_o
 );
 
     // Handshake from/to the execution unit
@@ -106,12 +103,9 @@ generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_d
     .cdb_valid_i (cdb_valid_i),
     .cdb_valid_o (cdb_valid_o),
     .cdb_idx_i (cdb_idx_i),
-    .cdb_data_i (cdb_data_i),
+    .cdb_res_value_i (cdb_res_value_i),
     .cdb_except_raised_i (cdb_except_raised_i),
-    .cdb_idx_o (cdb_idx_o),
-    .cdb_data_o (cdb_data_o),
-    .cdb_except_raised_o (cdb_except_raised_o),
-    .cdb_except_o (cdb_except_o)
+    .cdb_data_o (cdb_data_o)
 );
 
 div #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_div

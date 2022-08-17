@@ -44,12 +44,16 @@ module memory_bare_emu #(
     // ---------------------
     initial begin
         mem = new(MEM_FILE);
-        mem.LoadMem();
+        if (mem.LoadMem() < 0) begin
+            `uvm_fatal("MEM EMU", "Unable to load instruction memory")
+        end
 
         // Dump the memory content in each cycle 
         while (1) begin
             @(posedge clk_i);
-            mem.PrintMem(DUMP_FILE);
+            if (mem.PrintMem(DUMP_FILE)) begin
+                `uvm_error("MEM EMU", "Unable to dump memory content to file");
+            end
         end
     end
 

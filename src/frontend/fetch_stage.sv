@@ -20,16 +20,13 @@ import fetch_pkg::*;
 module fetch_stage
 #(
     parameter HLEN = 4,
-    parameter BTB_BITS = 4
+    parameter BTB_BITS = 4,
+    parameter BOOT_PC = 64'h0
 )
 (
     input   logic               clk_i,
     input   logic               rst_n_i,
     input   logic               flush_i,
-    
-    // From/to PC gen stage
-    input   logic [XLEN-1:0]    pc_i,
-    // output  logic               fetch_ready_o,
 
     // From/to memory
     input   logic               mem_valid_i,
@@ -51,6 +48,8 @@ module fetch_stage
     output  except_code_t       except_code_o,
 
     // From commit unit
+    input   logic               except_raised_i,
+    input   logic [XLEN-1:0]    except_pc_i,
     input   logic               res_valid_i,
     input   resolution_t        res_i  
 );
@@ -67,8 +66,41 @@ module fetch_stage
 
     // PC GENERATOR
     // ------------
+    pc_gen #(
+        .BOOT_PC (BOOT_PC )
+    ) u_pc_gen(
+    	.clk_i           (clk_i           ),
+        .rst_n_i         (rst_n_i         ),
+        .except_raised_i (except_raised_i ),
+        .except_pc_i     (except_pc_i     ),
+        .res_valid_i     (res_valid_i     ),
+        .res_i           (res_i           ),
+        .pred_valid_i    (pred_valid_i    ),
+        .pred_i          (pred_i          ),
+        .fetch_ready_i   (fetch_ready_i   ),
+        .pc_o            (pc_o            )
+    );
 
     // MEMORY INTERFACE
     // ----------------
+    fetch_mem_if u_mem_if (	
+        .clk_i                 (clk_i                 ),
+        .rst_n_i               (rst_n_i               ),
+        .fetch_valid_i         (fetch_valid_i         ),
+        .fetch_ready_i         (fetch_ready_i         ),
+        .fetch_valid_o         (fetch_valid_o         ),
+        .fetch_ready_o         (fetch_ready_o         ),
+        .fetch_pc_i            (fetch_pc_i            ),
+        .fetch_instr_o         (fetch_instr_o         ),
+        .fetch_pc_o            (fetch_pc_o            ),
+        .fetch_except_raised_o (fetch_except_raised_o ),
+        .fetch_except_code_o   (fetch_except_code_o   ),
+        .mem_valid_i           (mem_valid_i           ),
+        .mem_ready_i           (mem_ready_i           ),
+        .mem_valid_o           (mem_valid_o           ),
+        .mem_ready_o           (mem_ready_o           ),
+        .mem_ans_i             (mem_ans_i             ),
+        .mem_req_o             (mem_req_o             )
+    );
 
 endmodule
