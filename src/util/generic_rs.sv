@@ -27,8 +27,7 @@ module generic_rs
     RS_DEPTH = 4, // must be a power of 2,
     
     // EU-specific parameters
-    EU_CTL_LEN = 4,
-    EXCEPT_LEN = 2
+    EU_CTL_LEN = 4
 )
 (
     input   logic                   clk_i,
@@ -57,14 +56,14 @@ module generic_rs
     output  logic                   eu_ready_o,
 
     // Data from/to the execution unit
-    input   logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i, //2:0
+    input   logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i,
     input   logic [XLEN-1:0]        eu_result_i,
     input   logic                   eu_except_raised_i,
     input   except_code_t           eu_except_code_i,
     output  logic [EU_CTL_LEN-1:0]  eu_ctl_o,
     output  logic [XLEN-1:0]        eu_rs1_o,
     output  logic [XLEN-1:0]        eu_rs2_o,
-    output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o,   //2 to be produced at the end of execution together with the result
+    output  logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o,
 
     // Hanshake from/to the CDB 
     input   logic                   cdb_ready_i,
@@ -82,38 +81,40 @@ module generic_rs
 
     localparam RS_IDX_LEN = $clog2(RS_DEPTH); //3 reservation station address width
 
-    // Reservation station entry 
+    // Generic reservation station entry 
     typedef struct packed {
         logic                   valid;      // The entry contains a valid instruction
         logic                   busy;       // The instruction is being executed in the assigned EU
         `ifdef ENABLE_AGE_BASED_SELECTOR
-        rob_idx_t entry_age; // The age of the entry, used for scheduling
+        rob_idx_t               entry_age; // The age of the entry, used for scheduling
         `endif
         logic [EU_CTL_LEN-1:0]  eu_ctl;     // Control signals for the EU
         logic                   rs1_ready;  // The first operand value is available in 'rs1_value'
-        rob_idx_t rs1_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
+        rob_idx_t               rs1_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
         logic [XLEN-1:0]        rs1_value;  // The value of the first operand
         logic                   rs2_ready;  // The second operand value is available in 'rs2_value'
-        rob_idx_t rs2_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
+        rob_idx_t               rs2_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
         logic [XLEN-1:0]        rs2_value;  // The value of the second operand
         logic                   res_ready;  // The value of the result is available in 'res_value'"
-        rob_idx_t res_idx;    // The entry of the ROB where the result will be stored
+        rob_idx_t               res_idx;    // The entry of the ROB where the result will be stored
         logic [XLEN-1:0]        res_value;
         logic                   except_raised;
         except_code_t           except_code;
-    } rs_entry_t;
+    } generic_rs_entry_t;
 
     // Reservation station pointers
     logic [RS_IDX_LEN-1:0]      new_idx, ex_idx, cdb_idx;// next free entry, entry chosen for execution and entry chosen for CDB access
     logic                       new_idx_valid, ex_idx_valid, cdb_idx_valid;
     
     // The actual reservation station data structure
-    rs_entry_t                  rs_data[0:RS_DEPTH-1];
+    generic_rs_entry_t          rs_data[0:RS_DEPTH-1];
 
     // Status signals
     logic   [RS_DEPTH-1:0]      valid_a, busy_a; // valid entries, empty entries
     logic   [RS_DEPTH-1:0]      ex_ready_a, res_ready_a; // Ready operands / ready result entries 
-    rob_idx_t     entry_age_a [0:RS_DEPTH-1];
+    `ifdef ENABLE_AGE_BASED_SELECTOR
+    rob_idx_t                   entry_age_a [0:RS_DEPTH-1];
+    `endif /* ENABLE_AGE_BASED_SELECTOR */
 
     // RS control signals
     logic                       rs_insert, rs_ex, rs_pop, rs_wr_res;
@@ -189,17 +190,9 @@ module generic_rs
             foreach (rs_data[i]) begin
                 rs_data[i]                  <= 0;
             end
-        end else if (flush_i) begin // Synchronous flush: clearing status info is enough
+        end else if (flush_i) begin // Synchronous flush: clearing valid is enough
             foreach (rs_data[i]) begin
                 rs_data[i].valid            <= 1'b0;
-                rs_data[i].busy             <= 1'b0;
-                `ifdef ENABLE_AGE_BASED_SELECTOR
-                rs_data[i].entry_age        <= 0;
-                `endif
-                rs_data[i].rs1_ready        <= 1'b0;
-                rs_data[i].rs2_ready        <= 1'b0;
-                rs_data[i].res_ready        <= 1'b0;
-                rs_data[i].except_raised    <= 1'b0;
             end
         end else begin // Normal update
             

@@ -161,7 +161,7 @@ module op_only_rs
                     if (!rs_data[i].rs1_ready) begin
                         if (cdb_valid_i && !cdb_data_i.except_raised && (rs_data[i].rs1_idx == cdb_data_i.rob_idx)) begin
                             rs_data[i].rs1_ready    <= 'b1;
-                            rs_data[i].rs1_value    <= cdb_data_i.value;
+                            rs_data[i].rs1_value    <= cdb_data_i.res_value;
                         end
                     end
                 end

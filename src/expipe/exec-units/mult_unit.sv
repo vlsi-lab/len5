@@ -20,8 +20,7 @@ module mult_unit
     RS_DEPTH = 4, // must be a power of 2,
     
     // EU-specific parameters
-    EU_CTL_LEN = 4,
-    EXCEPT_LEN = 2
+    EU_CTL_LEN = 4
 )
 (
     input   logic                   clk_i,
@@ -69,9 +68,9 @@ module mult_unit
     logic [$clog2(RS_DEPTH)-1:0] mult_rs_entry_idx;
     logic [XLEN-1:0]        mult_rs_result;
     logic                   mult_rs_except_raised;
-    logic [EXCEPT_LEN-1:0]  mult_rs_except_code;
+    except_code_t           mult_rs_except_code;
 
-generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_mult_generic_rs
+generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH)) u_mult_generic_rs
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
@@ -107,7 +106,7 @@ generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_m
     .cdb_data_o (cdb_data_o)
 );
 
-mult #(.EU_CTL_LEN (EU_CTL_LEN), .PIPE_DEPTH(MULT_PIPE_DEPTH), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_mult
+mult #(.EU_CTL_LEN (EU_CTL_LEN), .PIPE_DEPTH(MULT_PIPE_DEPTH), .RS_DEPTH (RS_DEPTH)) u_mult
 (
     .clk_i              (clk_i),
     .rst_n_i            (rst_n_i),

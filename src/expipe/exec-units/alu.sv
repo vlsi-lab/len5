@@ -20,8 +20,7 @@ module alu
     parameter RS_DEPTH      = 4, // it must be a power of 2
     
     // EU-specific parameters
-    parameter EU_CTL_LEN    = 4,
-    parameter EXCEPT_LEN    = 2
+    parameter EU_CTL_LEN    = 4
 )
 (
     input   logic                   clk_i,

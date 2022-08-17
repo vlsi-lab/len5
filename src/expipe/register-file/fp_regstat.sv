@@ -21,16 +21,14 @@ import expipe_pkg::*;
 module fp_regstat 
 #( 
     REG_NUM = 32,                               // power of 2
-    localparam  REG_IDX_LEN = $clog2(REG_NUM)   //5 // not exposed
+    localparam  REG_IDX_LEN = $clog2(REG_NUM)
 ) 
 (
     input   logic                   clk_i,
     input   logic                   rst_n_i,
-    input   logic                   flush_i,
 
     // Handshake from/to the issue logic
     input   logic                   issue_valid_i,
-    // output  logic                   issue_ready_o,
 
     // Data from/to the issue logic
     input   logic [REG_IDX_LEN-1:0] issue_rd_idx_i,         // destination register of the issuing instruction
@@ -45,7 +43,6 @@ module fp_regstat
 
     // Handshake from/to the commit logic
     input   logic                   comm_valid_i,
-    // output  logic                   comm_ready_o,
 
     // Data from the commit logic
     input   logic [REG_IDX_LEN-1:0] comm_rd_idx_i,          // destination register of the committing instr.
@@ -95,18 +92,12 @@ module fp_regstat
             foreach (regstat_data[i]) begin
                 regstat_data[i]                 <= 0;
             end
-        end else if (flush_i) begin // Synchronous flush: clearing status info is enough
-            foreach (regstat_data[i]) begin // Synchronous clear
-                regstat_data[i]                 <= 0;
-            end
         end else begin // Normal update 
 
             // WRITE DESTINATION ROB ENTRY FROM ISSUE STAGE (WRITE PORT 1)
             // The ROB entry assigned to the issuing instructioin (tail of the ROB) is recorded in the corresponding destination register entry
             if (regstat_issue_upd) begin
                 regstat_data[issue_rd_idx_i].busy           += 1'b1;            // a new in-flight instruction is writing rd
-                
-                //regstat_data[issue_rd_idx_i].busy           <= 1'b1;            // a new in-flight instruction is writing rd
                 regstat_data[issue_rd_idx_i].rob_idx        <= issue_rob_idx_i; // rd value will be available in this ROB entry
             end
 

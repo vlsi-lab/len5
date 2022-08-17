@@ -24,7 +24,6 @@ package len5_pkg;
 
     // Global constants
     localparam ILEN = 32; // instruction length
-    localparam OFFSET = $clog2(ILEN/8); // 2 LSB of addresses are always 0, so no use in using them for indexing
     localparam XLEN = 64;
     localparam FLEN = 64;
 

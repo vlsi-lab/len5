@@ -42,7 +42,7 @@ BUILD_TARGET=source-files
 VLIB_PATH=$SIM_DIR/work
 
 # Simulation options
-TOP_MODULE_FILE=$LEN5_ROOT_DIR/tb/tb_with_l2cemu.sv
+TOP_MODULE_FILE=$LEN5_ROOT_DIR/tb/tb_bare.sv
 SIM_MACRO="$SIM_DIR/sim.do"
 SIM_WAVE_ZOOM=1000 # ns
 SIM_OPT="-sv_seed random" # default simulator options

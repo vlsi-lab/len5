@@ -36,7 +36,7 @@ always_ff @ (posedge clk_i or negedge rst_n_i) begin
     if (!rst_n_i) begin
         count_o <= 0; // Asynchronous reset
     end
-    else if (clr_i || tc_o) begin
+    else if (clr_i || (en_i && tc_o)) begin
         count_o <= 0; // Synchronous clear when requested or when reaching the threshold
     end
     else if (en_i) begin

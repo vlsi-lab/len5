@@ -18,7 +18,9 @@ import fetch_pkg::*;
 import csr_pkg::csr_priv_t;
 
 module datapath #(
-    parameter [XLEN-1:0]    BOOT_PC = 'h0
+    parameter PC_GEN_BOOT_PC = 64'h0,
+    parameter BPU_HISTORY_LEN = 4,
+    parameter BPU_BTB_BITS = 4
 ) (
     // Clock and reset
     input   logic               clk_i,
@@ -37,123 +39,91 @@ module datapath #(
     // INTERNAL SIGNALS
     // ----------------
 
-    // Main control unit <--> frontend
-    // -------------------------------
-    logic [ILEN-1:0]            fe_cu_instr;
-    logic                       fe_cu_except_raised;
-
-    // Main control unit <--> beckend
-    // ------------------------------
-    logic                       be_cu_stall;
-    logic                       be_cu_resume;
-    logic                       be_cu_flush;
-
-    // Main control unit <--> memory system
-    // ------------------------------------
-    logic                       cu_mem_flush;
-    logic                       cu_mem_abort;
-    logic                       cu_mem_clr_l1tlb_mshr;
-    logic                       cu_mem_clr_l2tlb_mshr;
-    logic                       cu_mem_clear_dmshr_dregs;
-    logic                       cu_mem_synch_l1dc_l2c;
-    logic                       mem_cu_l2c_update_done;
-    tlb_flush_e                 cu_mem_L1TLB_flush_type;
-    tlb_flush_e                 cu_mem_L2TLB_flush_type;
-    asid_t                      cu_mem_flush_asid;
-    vpn_t                       cu_mem_flush_page;
-
-    // Main control unit <--> others
-    // -----------------------------
-    logic                       cu_others_stall;
-    logic                       cu_others_flush;
-    logic                       except_raised;
-
     // Frontend <--> backend
     // ---------------------
-    logic                       be_fe_ready;
-    logic                       fe_be_valid;
-    logic [ILEN-1:0]            fe_be_instr;
-    logic [XLEN-1:0]            fe_be_curr_pc;
-    prediction_t                fe_be_pred;
-    logic                       be_fe_res_valid;
-    resolution_t                be_fe_res;
-    logic                       fe_be_except;
-    except_code_t               fe_be_except_code;
-    logic                       be_fe_except;
-    logic [XLEN-1:0]            be_fe_except_pc;
+    logic               fe_be_valid;
+    logic               be_fe_ready;
+    logic [ILEN-1:0]    fe_be_instr;
+    prediction_t        fe_be_pred;
+    logic               fe_be_except_raised;
+    except_code_t       fe_be_except_code;
+    logic               be_fe_bpu_flush;
+    logic               be_fe_res_valid;
+    resolution_t        be_fe_res;
+    logic               be_fe_except_raised;
+    logic [XLEN-1:0]    be_fe_except_pc;
 
-    // -----------------
-    // MAIN CONTROL UNIT
-    // -----------------
+    // Frontend <--> Memory Arbiter
+    // ----------------------------
+    logic               fe_mem_valid;
+    logic               mem_fe_ready;
+    mem_req_t           fe_mem_req;
+    logic               mem_fe_valid;
+    logic               fe_mem_ready;
 
-    // Reuse instruction and exception info from frontend to backend
-    assign  fe_cu_instr         = fe_be_instr;
-    assign  fe_cu_except_raised = fe_be_except;
-
-    main_cu u_main_cu
-    (
-        .clk_i                  (clk_i),
-        .rst_n_i                (rst_n_i),
-        .fe_ins_i               (fe_cu_instr),
-        .fe_except_raised_i     (fe_cu_except_raised),
-        .be_stall_i             (be_cu_stall),
-        .be_resume_i            (be_cu_resume),
-        .be_flush_i             (be_cu_flush),
-        .stall_o                (cu_others_stall),
-        .flush_o                (cu_others_flush),
-        
-        .mem_flush_o            (cu_mem_flush),
-        .mem_abort_o            (cu_mem_abort),
-        .mem_l2c_update_done    (mem_cu_l2c_update_done),
-        .mem_clr_l1tlb_mshr     (cu_mem_clr_l1tlb_mshr),
-        .mem_clr_l2tlb_mshr     (cu_mem_clr_l2tlb_mshr),
-        .mem_clear_dmshr_dregs  (cu_mem_clear_dmshr_dregs),
-        .mem_synch_l1dc_l2c     (cu_mem_synch_l1dc_l2c),
-        .mem_L1TLB_flush_type   (cu_mem_L1TLB_flush_type),
-        .mem_L2TLB_flush_type   (cu_mem_L2TLB_flush_type),
-        .mem_flush_asid         (cu_mem_flush_asid),
-        .mem_flush_page         (cu_mem_flush_page)
-    );
+    // Backend <--> Mmeory Arbiter
+    // ---------------------------
+    logic               be_mem_valid;
+    logic               mem_be_ready;
+    mem_req_t           be_mem_req;
+    logic               mem_be_valid;
+    logic               be_mem_ready;
 
     // ---------
     // FRONT-END
     // ---------
 
-    
+    fetch_stage #(
+        .HLEN     (BPU_HISTORY_LEN ),
+        .BTB_BITS (BPU_BTB_BITS    ),
+        .BOOT_PC  (PC_GEN_BOOT_PC  )
+    ) u_fetch_stage (
+    	.clk_i                 (clk_i                 ),
+        .rst_n_i               (rst_n_i               ),
+        .flush_i               (flush_i               ),
+        .flush_bpu_i           (be_fe_bpu_flush       ),
+        .mem_valid_i           (mem_fe_valid          ),
+        .mem_ready_i           (mem_fe_ready          ),
+        .mem_valid_o           (fe_mem_valid          ),
+        .mem_ready_o           (fe_mem_ready          ),
+        .mem_ans_i             (mem_ans_i             ),
+        .mem_req_o             (fe_mem_req            ),
+        .issue_ready_i         (be_fe_ready           ),
+        .issue_valid_o         (fe_be_valid           ),
+        .issue_instr_o         (fe_be_instr           ),
+        .issue_pred_o          (fe_be_pred            ),
+        .issue_except_raised_o (fe_be_except_raised   ),
+        .issue_except_code_o   (fe_be_except_code     ),
+        .comm_except_raised_i  (be_fe_except_raised   ),
+        .comm_except_pc_i      (be_fe_except_pc       ),
+        .comm_res_valid_i      (be_fe_res_valid       ),
+        .comm_res_i            (be_fe_res             )
+    );
 
     // --------
     // BACK-END
     // --------
 
-    backend u_backend
-    (
-        .clk_i                      (clk_i),
-        .rst_n_i                    (rst_n_i),
-        .flush_i                    (cu_others_flush),
-        .main_cu_stall_o            (be_cu_stall),
-        .main_cu_resume_o           (be_cu_resume),
-        .main_cu_flush_o            (be_cu_flush),
-        .fetch_valid_i              (fe_be_valid),
-        .fetch_ready_o              (be_fe_ready),
-        .fetch_curr_pc_i            (fe_be_curr_pc),
-        .fetch_instr_i              (fe_be_instr),
-        .fetch_pred_target_i        (fe_be_pred.target),
-        .fetch_pred_taken_i         (fe_be_pred.taken),
-        .fetch_except_raised_i      (fe_be_except),
-        .fetch_except_code_i        (fe_be_except_code),
-        .fetch_res_pc_o             (be_fe_res.pc),
-        .fetch_res_target_o         (be_fe_res.target),
-        .fetch_res_taken_o          (be_fe_res.taken),
-        .fetch_res_valid_o          (be_fe_res_valid),
-        .fetch_res_mispredict_o     (be_fe_res.mispredict),
-        .fetch_except_raised_o      (be_fe_except),
-        .fetch_except_pc_o          (be_fe_except_pc),
-        .mem_valid_i                (mem_valid_i),
-        .mem_ready_i                (mem_ready_i),
-        .mem_valid_o                (mem_valid_o),
-        .mem_ready_o                (mem_ready_o),
-        .mem_req_o                  (mem_req_o),
-        .mem_ans_i                  (mem_ans_i)
+    backend u_backend(
+    	.clk_i                 (clk_i                 ),
+        .rst_n_i               (rst_n_i               ),
+        .fetch_valid_i         (fe_be_valid           ),
+        .fetch_ready_o         (be_fe_ready           ),
+        .fetch_instr_i         (fe_be_instr           ),
+        .fetch_pred_i          (fe_be_pred            ),
+        .fetch_except_raised_i (fe_be_except_raised   ),
+        .fetch_except_code_i   (fe_be_except_code     ),
+        .fetch_bpu_flush_o     (be_fe_bpu_flush       ),
+        .fetch_res_valid_o     (be_fe_res_valid       ),
+        .fetch_res_o           (be_fe_res             ),
+        .fetch_except_raised_o (be_fe_except_raised   ),
+        .fetch_except_pc_o     (be_fe_except_pc       ),
+        .mem_valid_i           (mem_be_valid          ),
+        .mem_ready_i           (mem_be_ready          ),
+        .mem_valid_o           (be_mem_valid          ),
+        .mem_ready_o           (be_mem_ready          ),
+        .mem_req_o             (be_mem_req            ),
+        .mem_ans_i             (mem_ans_i             )
     );
 
     // -------------
@@ -161,5 +131,40 @@ module datapath #(
     // -------------
     // NOTE: in the bare-metal version, the load-store unit is directly
     //       connected to the memory.
+
+    // MEMORY REQUEST ARBITER
+    // ----------------------
+    prio_2way_arbiter #(
+        .DATA_T (mem_req_t )
+    ) u_mem_req_arbiter (
+        .high_prio_valid_i (fe_mem_valid  ),
+        .low_prio_valid_i  (be_mem_valid  ),
+        .ready_i           (mem_ready_i   ),
+        .valid_o           (mem_valid_o   ),
+        .high_prio_ready_o (mem_fe_ready  ),
+        .low_prio_ready_o  (mem_be_ready  ),
+        .high_prio_data_i  (fe_mem_req    ),
+        .low_prio_data_i   (be_mem_req    ),
+        .data_o            (mem_req_o     )
+    );
+
+    // MEMORY ANSWER DECODER
+    // ---------------------
+    always_comb begin : mem_ans_decoder
+        mem_fe_valid    = 1'b0;
+        mem_be_valid    = 1'b0;
+        mem_ready_o     = 1'b0;
+
+        if (mem_valid_i) begin
+            if (mem_ans_i.acc_type == MEM_ACC_INSTR) begin
+                mem_fe_valid    = 1'b1;
+                mem_ready_o     = fe_mem_ready;
+            end else begin
+                mem_be_valid    = 1'b1;
+                mem_ready_o     = be_mem_ready;
+            end
+        end
+    end
+    
     
 endmodule

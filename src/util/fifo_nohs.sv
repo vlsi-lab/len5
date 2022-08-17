@@ -8,17 +8,20 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: fifo.sv
+// File: fifo_nohs.sv
 // Author: Michele Caon
-// Date: 11/07/2022
+// Date: 17/08/2022
 
 /**
- * @brief	FIFO queue
+ * @brief	FIFO without handshaking
  *
- * @details	FIFO queue handled with head and tail counters.
+ * @details	FIFO buffer without valid/ready interface. The push/pop operations
+ *          are externally controlled through dedicated signals. No check is
+ *          performed on the push operation: if the FIFO is full, the oldest
+ *          data is overwritten, so choose the FIFO size carefully.
  */
 
-module fifo #(
+module fifo_nohs #(
     parameter type  DATA_T  = logic[8:0],
     parameter int   DEPTH   = 4
 ) (
@@ -27,11 +30,9 @@ module fifo #(
     input   logic       rst_n_i,
     input   logic       flush_i,
 
-    /* Handshaking */
-    input   logic       valid_i,    // from upstream hardware
-    input   logic       ready_i,    // from downstream hardware
-    output  logic       valid_o,    // to downstream hardware
-    output  logic       ready_o,    // to upstream hardware
+    /* Control */
+    input   logic       push_i,
+    input   logic       pop_i,
 
     /* Data */
     input   DATA_T      data_i,
@@ -49,9 +50,6 @@ module fifo #(
     // FIFO data
     DATA_T                      data[DEPTH];
     logic                       data_valid[DEPTH];
-
-    // FIFO control
-    logic                       fifo_push, fifo_pop;
 
     // ----------------------
     // HEAD AND TAIL COUNTERS
@@ -83,15 +81,11 @@ module fifo #(
     // FIFO CONTROL UNIT
     // -----------------
 
-    // Push/pop control
-    assign  fifo_push   = valid_i && ready_o;
-    assign  fifo_pop    = valid_o && ready_i;
-
     // Counters control
     assign  head_cnt_clr    = flush_i;
     assign  tail_cnt_clr    = flush_i;
-    assign  head_cnt_en     = fifo_pop;
-    assign  tail_cnt_en     = fifo_push;
+    assign  head_cnt_en     = pop_i;
+    assign  tail_cnt_en     = push_i;
 
     // -----------
     // FIFO UPDATE
@@ -111,10 +105,10 @@ module fifo #(
             end
         end else begin
             foreach (data[i]) begin
-                if (fifo_push && tail_cnt == i) begin
+                if (push_i && tail_cnt == i) begin
                     data_valid[i]    <= 1'b1;
                     data[i]          <= data_i;
-                end else if (fifo_pop && head_cnt == i) begin
+                end else if (pop_i && head_cnt == i) begin
                     data_valid[i]    <= 1'b0;
                 end
             end
@@ -125,40 +119,18 @@ module fifo #(
     // OUTPUT CONTROL
     // --------------
 
-    // NOTE: output valid when head entry is valid
-    //       output ready when tail entry is empty
-    assign  valid_o     = data_valid[head_cnt];
-    assign  ready_o     = !data_valid[tail_cnt];
     assign  data_o      = data[head_cnt];
 
     // ----------
     // ASSERTIONS
     // ----------
     `ifndef SYNTHESIS
-    property p_fifo_push;
+    property p_fifo_full;
         @(posedge clk_i) disable iff (!rst_n_i || flush_i)
-        valid_i && ready_o |-> ##1
-        valid_o ##0
-        data_valid[$past(tail_cnt)] == 1'b1 ##0
-        data[$past(tail_cnt)] == $past(data_i);
+        (tail_cnt == head_cnt) && data_valid[head_cnt] |-> 
+        !push_i
     endproperty
-    a_fifo_push: assert property (p_fifo_push)
-    else $error("valid_o: %b | past data_valid: %b | past data: %h | past data_i: %h", valid_o, data_valid[$past(tail_cnt)], data[$past(tail_cnt)], $past(data_i));
-
-    property p_fifo_pop;
-        @(posedge clk_i) disable iff (!rst_n_i || flush_i)
-        valid_o && ready_i |-> ##1
-        ready_o == 1'b1 ##0
-        data_valid[$past(head_cnt)] == 1'b0;
-    endproperty
-    a_fifo_pop: assert property (p_fifo_pop);
-
-    property p_ready_n;
-        @(posedge clk_i) disable iff (!rst_n_i || flush_i)
-        !ready_i && valid_o |-> ##1
-        valid_o;
-    endproperty
-    a_ready_n: assert property (p_ready_n);
+    a_fifo_full: assert property (p_fifo_full);
     `endif /* SYNTHESIS */
 
 endmodule

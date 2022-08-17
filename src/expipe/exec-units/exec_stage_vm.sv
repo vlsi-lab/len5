@@ -191,7 +191,7 @@ module exec_stage_vm
 
     // Integer ALU
     // -----------
-    alu_unit #(.EU_CTL_LEN (ALU_CTL_LEN), .RS_DEPTH (ALU_RS_DEPTH), .EXCEPT_LEN(ALU_EXCEPT_LEN)) u_alu_unit
+    alu_unit #(.EU_CTL_LEN (ALU_CTL_LEN), .RS_DEPTH (ALU_RS_DEPTH)) u_alu_unit
     (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
@@ -221,7 +221,7 @@ module exec_stage_vm
     `ifdef LEN5_M_EN
     // Integer multiplier
     // ------------------
-    mult_unit #(.EU_CTL_LEN (MULT_CTL_LEN), .RS_DEPTH (MULT_RS_DEPTH), .EXCEPT_LEN(MULT_EXCEPT_LEN)) u_mult_unit
+    mult_unit #(.EU_CTL_LEN (MULT_CTL_LEN), .RS_DEPTH (MULT_RS_DEPTH)) u_mult_unit
     (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
@@ -250,7 +250,7 @@ module exec_stage_vm
 
     // Integer divider
     // ---------------
-    div_unit #(.EU_CTL_LEN (DIV_CTL_LEN), .RS_DEPTH (DIV_RS_DEPTH), .EXCEPT_LEN(DIV_EXCEPT_LEN)) u_div_unit
+    div_unit #(.EU_CTL_LEN (DIV_CTL_LEN), .RS_DEPTH (DIV_RS_DEPTH)) u_div_unit
     (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
@@ -283,7 +283,7 @@ module exec_stage_vm
     // -------------------
 
     `ifdef LEN5_FP_EN
-    fp_unit #(.EU_CTL_LEN (FPU_CTL_LEN), .RS_DEPTH (FPU_RS_DEPTH), .EXCEPT_LEN(FPU_EXCEPT_LEN)) u_fpu_unit
+    fp_unit #(.EU_CTL_LEN (FPU_CTL_LEN), .RS_DEPTH (FPU_RS_DEPTH)) u_fpu_unit
     (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),

@@ -88,7 +88,6 @@ module spill_cell_flush #(
             end
 
             // Register B
-            // NOTE: to test CONN, replace b_en with a_en in this register
             always_ff @( posedge clk_i or negedge rst_n_i ) begin : reg_b
                 if (!rst_n_i)       b_data_q    <= '0;
                 else if (b_en)      b_data_q    <= data_i;

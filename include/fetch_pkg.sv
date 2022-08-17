@@ -20,11 +20,15 @@
 
 package fetch_pkg;
     import len5_pkg::XLEN;
+    import len5_pkg::ILEN;
     import len5_pkg::except_code_t;
 
     // ----------
     // PARAMETERS
     // ----------
+
+    // Instruction address offset
+    localparam  OFFSET = $clog2(ILEN/8); // 2 LSB of addresses are always 0, so no use in using them for indexing
 
     // g-share branch predictor history length
     localparam  HLEN = 4;
@@ -58,7 +62,7 @@ package fetch_pkg;
     // Memory interface answer spill cell data type
     typedef struct packed {
         logic [XLEN-1:0]    instr;
-        logic [XLEN-1:0]    addr;
+        prediction_t        pred_data;
         logic               except_raised;
         except_code_t       except_code;
     } mem_if_ans_reg_t;

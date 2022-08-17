@@ -21,8 +21,7 @@ module fp_unit
     RS_DEPTH = 4, // must be a power of 2,
     
     // EU-specific parameters
-    EU_CTL_LEN = 4,
-    EXCEPT_LEN = 2
+    EU_CTL_LEN = 4
 )
 (
     input   logic                   clk_i,
@@ -69,13 +68,13 @@ module fp_unit
     logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i;
     logic [XLEN-1:0]        eu_result_i;
     logic                   eu_except_raised_i;
-    logic [EXCEPT_LEN-1:0]  eu_except_code_i;
+    except_code_t           eu_except_code_i;
     logic [EU_CTL_LEN-1:0]  eu_ctl_o;
     logic [XLEN-1:0]        eu_rs1_o;
     logic [XLEN-1:0]        eu_rs2_o;
     logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o;
 
-generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_fpu_generic_rs
+generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH)) u_fpu_generic_rs
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
@@ -112,7 +111,7 @@ generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_f
     .cdb_data_o (cdb_data_o)
 );
 
-fpu #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_fpu
+fpu #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH)) u_fpu
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),

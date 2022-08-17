@@ -36,17 +36,18 @@ module commit_stage (
 	input   logic                       clk_i,
     input   logic                       rst_n_i,
 
-    // Control to the main control unit
-    output  logic                       main_cu_flush_o,
-    output  logic                       main_cu_resume_o,
+    // Misprediction flush signal
+    output  logic                       mis_flush_o, // flush after misprediction
 
     // Data to frontend
+    output  logic                       fe_bpu_flush_o, // flush the Branch Prediction Unit internal structures
     output  logic                       fe_res_valid_o,
     output  resolution_t                fe_res_o,
     output  logic                       fe_except_raised_o,
     output  logic [XLEN-1:0]            fe_except_pc_o,
 
     // Issue logic <--> commit logic
+    output  logic                       il_resume_o, // resume execution after stall
     output  logic                       il_reg0_valid_o,
     output  logic [XLEN-1:0]            il_reg0_value_o,
     output  rob_idx_t                   il_reg0_idx_o,
@@ -71,19 +72,15 @@ module commit_stage (
     output  logic                       sb_pop_store_o,     // pop the head store iunstruction in the store buffer
 
 	// Commit logic <--> register files and status
-    // input   logic                       int_rs_ready_i,
     output  logic                       int_rs_valid_o,
-    // input   logic                       int_rf_ready_i,
     output  logic                       int_rf_valid_o,
 `ifdef LEN5_FP_EN
-    // input   logic                       fp_rs_ready_i,
     output  logic                       fp_rs_valid_o,
-    // input   logic                       fp_rf_ready_i,
     output  logic                       fp_rf_valid_o,
 `endif /* LEN5_FP_EN */
 
     // Data to the register status registers
-    output  rob_idx_t     rs_head_idx_o,
+    output  rob_idx_t                   rs_head_idx_o,
 
     // Data to the register files
     output  logic [REG_IDX_LEN-1:0]     rd_idx_o,           // the index of the destination register (rd)
@@ -101,7 +98,7 @@ module commit_stage (
     output  logic [CSR_ADDR_LEN-1:0]    csr_addr_o,
     output  logic [REG_IDX_LEN-1:0]     csr_rs1_idx_o,
     output  logic [XLEN-1:0]            csr_rs1_value_o,
-    output  except_code_t  csr_except_data_o,
+    output  except_code_t               csr_except_code_o,
     output  logic [REG_IDX_LEN-1:0]     csr_rd_idx_o
 );
 
@@ -135,10 +132,9 @@ module commit_stage (
     rob_entry_t                 comm_reg_data;
     logic                       comm_reg_valid;
 
-    // Jump adder and MUX's
+    // Jump adder and MUX
     logic [XLEN-1:0]            link_addr;
     logic [XLEN-1:0]            rd_value;
-    logic                       fe_res_taken;
 
     // commit CU <--> others
     logic                       cu_instr_valid;
@@ -228,15 +224,15 @@ module commit_stage (
         .csr_valid_o        (csr_valid_o),
         .csr_type_o         (csr_instr_type_o),
         .fe_res_valid_o     (fe_res_valid_o),
-        .flush_o            (main_cu_flush_o),
-        .resume_o           (main_cu_resume_o)
+        .fe_bpu_flush_o     (fe_bpu_flush_o),
+        .mis_flush_o        (mis_flush_o),
+        .issue_resume_o     (il_resume_o)
     );
 
-    // Jump commit adder and MUX's
-    // ---------------------------
+    // Jump commit adder and MUX
+    // -------------------------
     assign  link_addr       = comm_reg_data.instr_pc + (ILEN >> 3);
     assign  rd_value        = (cu_is_jump) ? link_addr : comm_reg_data.res_value;
-    assign  fe_res_taken    = (cu_is_jump) ? 1'b1 : comm_reg_data.res_aux.jb.taken;
     
     // -----------------
     // OUTPUT EVALUATION
@@ -244,9 +240,11 @@ module commit_stage (
 
     // Data to front-end
     assign  fe_res_o.pc         = comm_reg_data.instr_pc;
-    assign  fe_res_o.target     = {comm_reg_data.res_value[XLEN-1:1], 1'b0};  // computed target address
-    assign  fe_res_o.taken      = fe_res_taken;
+    assign  fe_res_o.target     = comm_reg_data.res_value;  // computed target address
+    assign  fe_res_o.taken      = comm_reg_data.res_aux.jb.taken;
     assign  fe_res_o.mispredict = comm_reg_data.res_aux.jb.mispredicted;
+    assign  fe_except_raised_o  = comm_reg_data.except_raised;
+    assign  fe_except_pc_o      = 64'hffffffffffffffff; // TODO: add proper exception handling
 
     // Data to the issue logic
     assign  il_reg0_valid_o         = inreg_buff_full;
@@ -270,7 +268,7 @@ module commit_stage (
     assign  csr_addr_o              = comm_reg_data.instruction.i.imm11;
     assign  csr_rs1_idx_o           = comm_reg_data.instruction.r.rs1;
     assign  csr_rs1_value_o         = comm_reg_data.res_value;
-    assign  csr_except_data_o       = comm_reg_data.except_code;
+    assign  csr_except_code_o       = comm_reg_data.except_code;
     assign  csr_rd_idx_o            = comm_reg_data.rd_idx;
     
 endmodule

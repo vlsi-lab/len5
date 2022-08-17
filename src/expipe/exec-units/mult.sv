@@ -21,8 +21,7 @@ module mult
     parameter PIPE_DEPTH    = 4,    // number of pipeline levels (>0)
     
     // EU-specific parameters
-    parameter EU_CTL_LEN    = 4,
-    parameter EXCEPT_LEN    = 2
+    parameter EU_CTL_LEN    = 4
 )
 (
     input   logic                   clk_i,
@@ -43,7 +42,7 @@ module mult
     output  logic [$clog2(RS_DEPTH)-1:0] entry_idx_o,
     output  logic [XLEN-1:0]        result_o,
     output  logic                   except_raised_o,
-    output  logic [EXCEPT_LEN-1:0]  except_code_o
+    output  except_code_t           except_code_o
 );
 
     // MULT output

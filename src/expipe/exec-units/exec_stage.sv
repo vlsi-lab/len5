@@ -166,11 +166,6 @@ module exec_stage
         .curr_pc_i                  (issue_curr_pc_i),
         .pred_target_i              (issue_pred_target_i),
         .pred_taken_i               (issue_pred_taken_i),
-        .res_pc_o                   (fetch_res_pc_o),
-        .res_target_o               (fetch_res_target_o),
-        .res_taken_o                (fetch_res_taken_o),
-        .res_valid_o                (fetch_res_valid_o),
-        .res_mispredict_o           (fetch_res_mispredict_o),
         .cdb_ready_i                (cdb_ready_i[EU_BRANCH_UNIT]),
         .cdb_valid_i                (cdb_valid_i),
         .cdb_valid_o                (cdb_valid_o[EU_BRANCH_UNIT]),
@@ -184,7 +179,7 @@ module exec_stage
 
     // Integer ALU
     // -----------
-    alu_unit #(.EU_CTL_LEN (ALU_CTL_LEN), .RS_DEPTH (ALU_RS_DEPTH), .EXCEPT_LEN(ALU_EXCEPT_LEN)) u_alu_unit
+    alu_unit #(.EU_CTL_LEN (ALU_CTL_LEN), .RS_DEPTH (ALU_RS_DEPTH)) u_alu_unit
     (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
@@ -203,18 +198,15 @@ module exec_stage
         .cdb_valid_i            (cdb_valid_i),
         .cdb_valid_o            (cdb_valid_o[EU_INT_ALU]),
         .cdb_idx_i              (cdb_data_i.rob_idx),
-        .cdb_data_i             (cdb_data_i.value),
+        .cdb_res_value_i        (cdb_data_i.res_value),
         .cdb_except_raised_i    (cdb_data_i.except_raised),
-        .cdb_idx_o              (cdb_data_o[EU_INT_ALU].rob_idx),
-        .cdb_data_o             (cdb_data_o[EU_INT_ALU].value),
-        .cdb_except_raised_o    (cdb_data_o[EU_INT_ALU].except_raised),
-        .cdb_except_o           (cdb_data_o[EU_INT_ALU].except_code)
+        .cdb_data_o             (cdb_data_o[EU_INT_ALU])
     );
 
     `ifdef LEN5_M_EN
     // Integer multiplier
     // ------------------
-    mult_unit #(.EU_CTL_LEN (MULT_CTL_LEN), .RS_DEPTH (MULT_RS_DEPTH), .EXCEPT_LEN(MULT_EXCEPT_LEN)) u_mult_unit
+    mult_unit #(.EU_CTL_LEN (MULT_CTL_LEN), .RS_DEPTH (MULT_RS_DEPTH)) u_mult_unit
     (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
@@ -235,15 +227,12 @@ module exec_stage
         .cdb_idx_i              (cdb_data_i.rob_idx),
         .cdb_data_i             (cdb_data_i.value),
         .cdb_except_raised_i    (cdb_data_i.except_raised),
-        .cdb_idx_o              (cdb_data_o[EU_INT_MULT].rob_idx),,
-        .cdb_data_o             (cdb_data_o[EU_INT_MULT].value),
-        .cdb_except_raised_o    (cdb_data_o[EU_INT_MULT].except_raised),
-        .cdb_except_o           (cdb_data_o[EU_INT_MULT].except_code)
+        .cdb_data_o             (cdb_data_o[EU_INT_MULT])
     );
 
     // Integer divider
     // ---------------
-    div_unit #(.EU_CTL_LEN (DIV_CTL_LEN), .RS_DEPTH (DIV_RS_DEPTH), .EXCEPT_LEN(DIV_EXCEPT_LEN)) u_div_unit
+    div_unit #(.EU_CTL_LEN (DIV_CTL_LEN), .RS_DEPTH (DIV_RS_DEPTH)) u_div_unit
     (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
@@ -264,10 +253,7 @@ module exec_stage
         .cdb_idx_i              (cdb_data_i.rob_idx),
         .cdb_data_i             (cdb_data_i.value),
         .cdb_except_raised_i    (cdb_data_i.except_raised),
-        .cdb_idx_o              (cdb_data_o[EU_INT_DIV].rob_idx),
-        .cdb_data_o             (cdb_data_o[EU_INT_DIV].value),
-        .cdb_except_raised_o    (cdb_data_o[EU_INT_DIV].except_raised),
-        .cdb_except_o           (cdb_data_o[EU_INT_DIV].except_code)
+        .cdb_data_o             (cdb_data_o[EU_INT_DIV])
     );
     `endif /* LEN5_M_EN */
 
@@ -276,7 +262,7 @@ module exec_stage
     // -------------------
 
     `ifdef LEN5_FP_EN
-    fp_unit #(.EU_CTL_LEN (FPU_CTL_LEN), .RS_DEPTH (FPU_RS_DEPTH), .EXCEPT_LEN(FPU_EXCEPT_LEN)) u_fpu_unit
+    fp_unit #(.EU_CTL_LEN (FPU_CTL_LEN), .RS_DEPTH (FPU_RS_DEPTH)) u_fpu_unit
     (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
@@ -297,10 +283,7 @@ module exec_stage
         .cdb_idx_i              (cdb_data_i.rob_idx),
         .cdb_data_i             (cdb_data_i.value),
         .cdb_except_raised_i    (cdb_data_i.except_raised),
-        .cdb_idx_o              (cdb_data_o[EU_FPU].rob_idx),
-        .cdb_data_o             (cdb_data_o[EU_FPU].value),
-        .cdb_except_raised_o    (cdb_data_o[EU_FPU].except_raised),
-        .cdb_except_o           (cdb_data_o[EU_FPU].except_code),
+        .cdb_data_o             (cdb_data_o[EU_FPU]),
         .csr_frm_i              (csr_frm_i)
     );
     `endif /* LEN5_FP_EN */

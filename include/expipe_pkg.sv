@@ -71,20 +71,16 @@ package expipe_pkg;
     localparam  BU_CTL_LEN      = BRANCH_TYPE_LEN; // size of 'branch_type_t' from len5_pkg
 
     // ALU
-    localparam  ALU_EXCEPT_LEN  = 2;
     localparam  ALU_CTL_LEN     = 4;            // ALU operation control
 
     // MULT
-    localparam  MULT_EXCEPT_LEN = 2;
     localparam  MULT_CTL_LEN    = 3;            // integer multiplier operation control
     localparam  MULT_PIPE_DEPTH = 5;
 
     // DIV
-    localparam  DIV_EXCEPT_LEN  = 2;
     localparam  DIV_CTL_LEN     = 2;            // integer divider operation control
 
     // FPU
-    localparam  FPU_EXCEPT_LEN  = 2;
     localparam  FPU_CTL_LEN     = 4;            // floating point multiplier operation control
 
     // OPERANDS ONLY
@@ -105,7 +101,7 @@ package expipe_pkg;
 
     // EU result auxiliary data
     typedef union packed {
-        res_aux_t       jb;
+        res_aux_jb_t    jb;
         logic [1:0]     raw;
     } res_aux_t;
 
@@ -120,7 +116,7 @@ package expipe_pkg;
         logic [XLEN-1:0]            instr_pc;       // the program counter of the instruction
         logic                       res_ready;      // the result of the instruction is ready
         logic [XLEN-1:0]            res_value;      // the value of the result (from the EU)
-        res_aux_data_t              res_aux;        // result auxiliary data
+        res_aux_t                   res_aux;        // result auxiliary data
         logic [REG_IDX_LEN-1:0]     rd_idx;         // the destination register (rd)
         logic                       except_raised;  // an exception has been raised
         except_code_t               except_code;    // the exception code
@@ -239,6 +235,9 @@ package expipe_pkg;
     typedef struct packed {
         logic                   valid;      // The entry contains a valid instruction
         logic                   busy;       // The instruction is being executed in the assigned EU
+        `ifdef ENABLE_AGE_BASED_SELECTOR
+        rob_idx_t               entry_age; // The age of the entry, used for scheduling
+        `endif
         logic [BU_CTL_LEN-1:0]  branch_type;// Branch type for the branch unit
         logic                   rs1_ready;  // The first operand value is available in 'rs1_value'
         rob_idx_t               rs1_idx;    // The entry of the rob that will contain the required operand
@@ -248,68 +247,89 @@ package expipe_pkg;
         logic [XLEN-1:0]        rs2_value;  // The value of the second operand
         logic [XLEN-1:0]        imm_value;  // Immediate value
         logic [XLEN-1:0]        curr_pc;    // Program counter of the current instruction
-        logic [XLEN-1:0]        target;     // Predicted target PC, later replaced by computed target PC
-        logic                   taken;      // Branch outcome prediction, then replaced by computed outcome
+        logic                   res_ready;  // the computed target address and branch outcome are available
         rob_idx_t               res_idx;    // The entry of the ROB where the result will be stored
+        logic                   taken;      // Branch outcome prediction, then replaced by computed outcome
+        logic [XLEN-1:0]        target;     // Predicted target PC, later replaced by computed target PC
         logic                   mispredicted;// the branch was mispredicted
-        logic                   res_ready;  // The value of the result is available in 'mispredicted'"
     } bu_rs_entry_t;
 
     // ---------------
     // LOAD-STORE UNIT
     // ---------------
     
-    // LOAD BUFFER ENTRY TYPE
-    typedef struct packed {
-        logic                       valid;             // the entry contains a valid instructions
-        logic                       busy;              // The entry is waiting for an operation to complete
-        logic                       store_dep;         // the entry must wait for alla previous store to commit before it can be executed
-        logic                       pfwd_attempted;    // the entry is ready for the cache access
-        `ifdef ENABLE_AGE_BASED_SELECTOR
-        rob_idx_t     entry_age;         // the age of the entry, used for scheduling
-        `endif
-        logic [STBUFF_IDX_LEN:0]    older_stores;      // Number of older uncommitted stores (if 0, the entry is dependency-free)
-        ldst_width_t                load_type;         // LB, LBU, LH, LHU, LW, LWU, LD
-        logic                       rs1_ready;         // the value of rs1 contained in 'rs1_value' field is valid
-        rob_idx_t                   rs1_idx;           // the index of the ROB that will contain the base address
-        logic [XLEN-1:0]            rs1_value;         // the value of the base address
-        logic [XLEN-1:0]            imm_value;         // the value of the immediate field (offset)
-        logic                       vaddr_ready;       // the virtual address has already been computed
-        logic [XLEN-1:0]            vaddr;             // the virtual address
-        logic                       paddr_ready;       // the address translation (TLB access) has already completed
-        logic [PPN_LEN-1:0]         ppn;  // the physical page number
-        rob_idx_t                   dest_idx;          // the entry of the ROB where the loaded value will be stored
-        logic                       except_raised;
-        except_code_t               except_code;       // exception code 
-        logic [XLEN-1:0]            ld_value;          // the value loaded from memory
-        logic                       completed;         // the value has been fetched from D$
-    } lb_entry_t;
+    /* Load instruction status */
+    typedef enum logic [2:0] {
+        LOAD_S_EMPTY,
+        LOAD_S_RS1_PENDING,
+        LOAD_S_ADDR_PENDING,
+        LOAD_S_MEM_PENDING,
+        LOAD_S_COMPLETED,
+        LOAD_S_HALT     // for debug
+    } lb_state_t;
 
-    // STORE BUFFER ENTRY TYPE
+    /* Load instruction data */
     typedef struct packed {
-        logic                       valid;              // the entry contains a valid instructions
-        logic                       busy;               // The entry is waiting for an operation to complete
-        `ifdef ENABLE_AGE_BASED_SELECTOR
-        rob_idx_t                   entry_age;          // the age of the entry, used for scheduling
-        `endif
-        ldst_width_t                store_type;         // SB, SH, SW, SD
-        logic                       rs1_ready;          // the value of rs1 (BASE ADDRESS) contained in 'rs1_value' field is valid
-        rob_idx_t                   rs1_idx;            // the index of the ROB that will contain the base address
-        logic [XLEN-1:0]            rs1_value;          // the value of the BASE ADDRESS
-        logic                       rs2_ready;          // the value of rs2 (VALUE to be stored) contained in 'rs2_value' field is valid
-        rob_idx_t                   rs2_idx;            // the index of the ROB that will contain the base address
-        logic [XLEN-1:0]            rs2_value;          // the value to be stored in memory
-        logic [XLEN-1:0]            imm_value;          // the value of the immediate field (offset)
-        logic                       vaddr_ready;        // the virtual address has already been computed
-        logic [XLEN-1:0]            vaddr;              // the virtual address
-        logic                       paddr_ready;        // the address translation (TLB access) has already completed
-        logic [PPN_LEN-1:0]         ppn;                // the physical address (last 12 MSBs are identical to virtual address
-        // logic                       dc_completed;       // the D$ completed the write request
-        rob_idx_t                   dest_idx;           // the entry of the ROB where the loaded value will be stored
+        ldst_width_t                 load_type;
+        // logic [STBUFF_IDX_LEN-1:0]  older_stores;
+        rob_idx_t                   rs1_rob_idx;
+        logic [XLEN-1:0]            rs1_value;
+        rob_idx_t                   dest_rob_idx;
+        logic [XLEN-1:0]            imm_addr_value; // immediate offset, then replaced with resulting address
         logic                       except_raised;
-        except_code_t               except_code;        // exception code
-        logic                       completed;          // the value has been stored to the D$
-    } sb_entry_t;
+        except_code_t               except_code;
+        logic [XLEN-1:0]            value;
+    } lb_data_t;
+
+    /* Load instruction command */
+    typedef enum logic [2:0] {
+        LOAD_OP_NONE,
+        LOAD_OP_PUSH,
+        LOAD_OP_SAVE_RS1,
+        LOAD_OP_SAVE_ADDR,
+        LOAD_OP_SAVE_MEM
+    } lb_op_t;
+
+    // STORE BUFFER DATA TYPES
+    // -----------------------
+
+    /* Store instruction status */
+    typedef enum logic [3:0] {
+        STORE_S_EMPTY,
+        STORE_S_RS12_PENDING,
+        STORE_S_RS1_PENDING,
+        STORE_S_RS2_PENDING,
+        STORE_S_ADDR_PENDING,
+        STORE_S_WAIT_ROB,
+        STORE_S_MEM_PENDING,
+        STORE_S_COMPLETED,
+        STORE_S_HALT    // for debug
+    } sb_state_t;
+
+    /* Store instruction data */
+    typedef struct packed {
+        ldst_width_t                store_type;
+        rob_idx_t                   rs1_rob_idx;
+        logic [XLEN-1:0]            rs1_value;
+        rob_idx_t                   rs2_rob_idx;
+        logic [XLEN-1:0]            rs2_value;
+        rob_idx_t                   dest_rob_idx;
+        logic [XLEN-1:0]            imm_addr_value; // immediate offset, then replaced with resulting address
+        logic                       except_raised;
+        except_code_t               except_code;
+        logic [XLEN-1:0]            value;
+    } sb_data_t;
+
+    /* Store instruction command */
+    typedef enum logic [2:0] {
+        STORE_OP_NONE,
+        STORE_OP_PUSH,
+        STORE_OP_SAVE_RS12,
+        STORE_OP_SAVE_RS1,
+        STORE_OP_SAVE_RS2,
+        STORE_OP_SAVE_ADDR,
+        STORE_OP_SAVE_MEM
+    } sb_op_t;
 
     // Address adder interface
     // -----------------------

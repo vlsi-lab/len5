@@ -31,9 +31,6 @@ module issue_stage
     input   logic                       rst_n_i,
     input   logic                       flush_i,
 
-    // Issue CU control
-    output  logic                       main_cu_stall_o,
-
     // Fetch unit handshaking
     input   logic                       fetch_valid_i,
     output  logic                       fetch_ready_o,
@@ -52,11 +49,11 @@ module issue_stage
 
     // Integer register status register data
     input   logic                       int_regstat_rs1_busy_i,     // rs1 value is in the ROB or has to be computed
-    input   rob_idx_t     int_regstat_rs1_rob_idx_i,  // the index of the ROB where the result is found
+    input   rob_idx_t                   int_regstat_rs1_rob_idx_i,  // the index of the ROB where the result is found
     input   logic                       int_regstat_rs2_busy_i,     // rs1 value is in the ROB or has to be computed
-    input   rob_idx_t     int_regstat_rs2_rob_idx_i,  // the index of the ROB where the result is found
+    input   rob_idx_t                   int_regstat_rs2_rob_idx_i,  // the index of the ROB where the result is found
     output  logic [REG_IDX_LEN-1:0]     int_regstat_rd_idx_o,       // destination register of the issuing instruction
-    output  rob_idx_tint_regstat_rob_idx_o,//ROB index where the instruction is being allocated(tail pointer of the ROB)
+    output  rob_idx_t                   int_regstat_rob_idx_o,//ROB index where the instruction is being allocated(tail pointer of the ROB)
     output  logic [REG_IDX_LEN-1:0]     int_regstat_rs1_idx_o,      // first source register index
     output  logic [REG_IDX_LEN-1:0]     int_regstat_rs2_idx_o,      // second source register index
 
@@ -73,11 +70,11 @@ module issue_stage
 
 	// Floating-point register status register data
     input   logic                       fp_regstat_rs1_busy_i,     // rs1 value is in the ROB or has to be computed
-    input   rob_idx_t     fp_regstat_rs1_rob_idx_i,  // the index of the ROB where the result is found
+    input   rob_idx_t                   fp_regstat_rs1_rob_idx_i,  // the index of the ROB where the result is found
     input   logic                       fp_regstat_rs2_busy_i,     // rs1 value is in the ROB or has to be computed
-    input   rob_idx_t     fp_regstat_rs2_rob_idx_i,  // the index of the ROB where the result is found
+    input   rob_idx_t                   fp_regstat_rs2_rob_idx_i,  // the index of the ROB where the result is found
     output  logic [REG_IDX_LEN-1:0]     fp_regstat_rd_idx_o,       // destination register of the issuing instruction
-    output  rob_idx_t fp_regstat_rob_idx_o,//ROB index where the instruction is being allocated(tail pointer of the ROB)
+    output  rob_idx_t                   fp_regstat_rob_idx_o,//ROB index where the instruction is being allocated(tail pointer of the ROB)
     output  logic [REG_IDX_LEN-1:0]     fp_regstat_rs1_idx_o,      // first source register index
     output  logic [REG_IDX_LEN-1:0]     fp_regstat_rs2_idx_o,      // second source register index
 
@@ -90,7 +87,7 @@ module issue_stage
 
 `ifdef LEN5_PRIVILEGED_EN
     // CSR data
-    input                                   mstatus_tsr_i,    // the TSR bit from the mstatus CSR
+    input                               mstatus_tsr_i,    // the TSR bit from the mstatus CSR
 `endif /* LEN5_PRIVILEGED_EN */
 
 	// Execution pipeline handhsaking
@@ -100,50 +97,47 @@ module issue_stage
     // Execution pipeline data
     output  logic [MAX_EU_CTL_LEN-1:0]  ex_eu_ctl_o,            // controls for the associated EU
     output  logic                       ex_rs1_ready_o,         // first operand is ready at issue time (from the RF or the ROB)
-    output  rob_idx_t     ex_rs1_idx_o,    // the index of the ROB where the first operand can be found (if not ready
+    output  rob_idx_t                   ex_rs1_idx_o,    // the index of the ROB where the first operand can be found (if not ready
     output  logic [XLEN-1:0]            ex_rs1_value_o,         // the value of the first operand (if ready)
     output  logic                       ex_rs2_ready_o,         // second operand is ready at issue time (from the RF or the ROB)
-    output  rob_idx_t     ex_rs2_idx_o,    // the index of the ROB where the first operand can be found (if not ready)
+    output  rob_idx_t                   ex_rs2_idx_o,    // the index of the ROB where the first operand can be found (if not ready)
     output  logic [XLEN-1:0]            ex_rs2_value_o,         // the value of the first operand (if ready)
     output  logic [XLEN-1:0]            ex_imm_value_o, // the value of the immediate field (for st and branches)                   
-    output  rob_idx_t     ex_rob_idx_o,           // the location of the ROB assigned to the instruction
+    output  rob_idx_t                   ex_rob_idx_o,           // the location of the ROB assigned to the instruction
     output  logic [XLEN-1:0]            ex_curr_pc_o,              // the PC of the current issuing instr (branches only)
     output  logic [XLEN-1:0]            ex_pred_target_o,  // the predicted target of the current issuing instr (branches only)
     output  logic                       ex_pred_taken_o,   // the predicted taken bit of the current issuing instr (branches only)
 
-    // CDB handshaking
+    // CDB 
 	input   logic                       cdb_valid_i,
-
-	// CDB data
 	input   logic                       cdb_except_raised_i,
 	input   logic [XLEN-1:0]            cdb_value_i,
-	input   rob_idx_t		cdb_rob_idx_i,
+	input   rob_idx_t		            cdb_rob_idx_i,
 
-    // ROB handshaking
+    // ROB 
     input   logic                       rob_ready_i,            // the ROB has an empty entry available
     output  logic                       rob_valid_o,            // a new instruction can be issued
-
-    // ROB data
     input   logic                       rob_rs1_ready_i,        // the first operand is ready in the ROB
     input   logic [XLEN-1:0]            rob_rs1_value_i,        // the value of the first operand
     input   logic                       rob_rs2_ready_i,        // the second operand is ready in the ROB
     input   logic [XLEN-1:0]            rob_rs2_value_i,        // the value of the second operand
-    input   rob_idx_t     rob_tail_idx_i,         // the entry of the ROB where the instr is being allocated
+    input   rob_idx_t                   rob_tail_idx_i,         // the entry of the ROB where the instr is being allocated
     
-    output  rob_idx_t     rob_rs1_idx_o,          // ROB entry containing rs1 value
-    output  rob_idx_t     rob_rs2_idx_o,          // ROB entry containing rs2 value
+    output  rob_idx_t                   rob_rs1_idx_o,          // ROB entry containing rs1 value
+    output  rob_idx_t                   rob_rs2_idx_o,          // ROB entry containing rs2 value
     output  rob_entry_t                 rob_data_o,             // data to the ROB
 
     // Commit logic data
+    input   logic                       cl_resume_i,
     input   logic                       cl_reg0_valid_i,
     input   logic [XLEN-1:0]            cl_reg0_value_i,
-    input   rob_idx_t     cl_reg0_idx_i,
+    input   rob_idx_t                   cl_reg0_idx_i,
     input   logic                       cl_reg1_valid_i,
     input   logic [XLEN-1:0]            cl_reg1_value_i,
-    input   rob_idx_t     cl_reg1_idx_i,
+    input   rob_idx_t                   cl_reg1_idx_i,
     input   logic                       cl_comm_reg_valid_i,
     input   logic [XLEN-1:0]            cl_comm_reg_value_i,
-    input   rob_idx_t     cl_comm_reg_idx_i
+    input   rob_idx_t                   cl_comm_reg_idx_i
 );
 
     // INTERNAL SIGNALS
@@ -162,6 +156,17 @@ module issue_stage
     logic               iq_il_pred_taken;
     logic               iq_il_except_raised;
     except_code_t       iq_il_except_code;
+
+    // Issue queue <--> CU
+    logic               iq_cu_ready;
+
+    // Issue logic <--> CU
+    logic               il_cu_stall;
+
+    // -------
+    // MODULES
+    // -------
+    // fetch stage > ISSUE QUEUE > ISSUE LOGIC > execution stage
 
     // -----------
     // ISSUE QUEUE
@@ -186,9 +191,23 @@ module issue_stage
         .valid_i (fetch_valid_i ),
         .ready_i (il_iq_ready   ),
         .valid_o (iq_il_valid   ),
-        .ready_o (fetch_ready_o ),
+        .ready_o (iq_cu_ready   ),
         .data_i  (new_instr     ),
         .data_o  (issued_instr  )
+    );
+
+    // ------------------
+    // ISSUE CONTROL UNIT
+    // ------------------
+
+    issue_cu u_issue_cu(
+    	.clk_i               (clk_i               ),
+        .rst_n_i             (rst_n_i             ),
+        .flush_i             (flush_i             ),
+        .issue_stall_i       (il_cu_stall         ),
+        .issue_queue_ready_i (iq_cu_ready         ),
+        .comm_resume_i       (cl_resume_i         ),
+        .fetch_ready_o       (fetch_ready_o       )
     );
 
     // -----------
@@ -199,7 +218,7 @@ module issue_stage
     issue_logic u_issue_logic
     (
         // To the main control 
-        .main_cu_stall_o                (main_cu_stall_o),
+        .cu_stall_o                     (il_cu_stall),
 
         // Issue queue handshaking
         .iq_valid_i                     (iq_il_valid),

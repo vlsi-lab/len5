@@ -20,8 +20,7 @@ module div_unit
     RS_DEPTH = 4, // must be a power of 2,
     
     // EU-specific parameters
-    EU_CTL_LEN = 4,
-    EXCEPT_LEN = 2
+    EU_CTL_LEN = 4
 )
 (
     input   logic                   clk_i,
@@ -49,7 +48,7 @@ module div_unit
     output  logic                   cdb_valid_o,
 
     // Data from/to the CDB
-    input   rob_idx_t cdb_idx_i,
+    input   rob_idx_t               cdb_idx_i,
     input   logic [XLEN-1:0]        cdb_res_value_i,
     input   logic                   cdb_except_raised_i,
     output  cdb_data_t              cdb_data_o
@@ -65,13 +64,13 @@ module div_unit
     logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i;
     logic [XLEN-1:0]        eu_result_i;
     logic                   eu_except_raised_i;
-    logic [EXCEPT_LEN-1:0]  eu_except_code_i;
+    except_code_t           eu_except_code_i;
     logic [EU_CTL_LEN-1:0]  eu_ctl_o;
     logic [XLEN-1:0]        eu_rs1_o;
     logic [XLEN-1:0]        eu_rs2_o;
     logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_o;
 
-generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_div_generic_rs
+generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH)) u_div_generic_rs
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),
@@ -108,7 +107,7 @@ generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_d
     .cdb_data_o (cdb_data_o)
 );
 
-div #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_div
+div #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH)) u_div
 (
     .clk_i (clk_i),
     .rst_n_i (rst_n_i),

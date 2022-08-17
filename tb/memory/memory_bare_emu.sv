@@ -20,11 +20,14 @@ import memory_pkg::*;
 import len5_pkg::*;
 
 module memory_bare_emu #(
-    parameter   MEM_FILE    = "memory.txt",
-    parameter   DUMP_FILE   = "memory_dump.txt"
+    parameter   DUMP_PERIOD = 1 // cycles
 ) (
     input   logic           clk_i,
     input   logic           rst_n_i,
+    input   logic           flush_i,
+
+    input   string          mem_file_i,
+    input   string          mem_dump_file_i,
 
     input   logic           valid_i,
     input   logic           ready_i,
@@ -43,15 +46,16 @@ module memory_bare_emu #(
     // Memory initialization
     // ---------------------
     initial begin
-        mem = new(MEM_FILE);
+        #1;
+        mem = new(mem_file_i);
         if (mem.LoadMem() < 0) begin
             `uvm_fatal("MEM EMU", "Unable to load instruction memory")
         end
 
         // Dump the memory content in each cycle 
         while (1) begin
-            @(posedge clk_i);
-            if (mem.PrintMem(DUMP_FILE)) begin
+            repeat (DUMP_PERIOD) @(posedge clk_i);
+            if (mem.PrintMem(mem_dump_file_i)) begin
                 `uvm_error("MEM EMU", "Unable to dump memory content to file");
             end
         end
@@ -143,11 +147,12 @@ module memory_bare_emu #(
 
     // Output register
     // ---------------
-    spill_cell #(
+    spill_cell_flush #(
         .DATA_T (mem_ans_t )
-    ) u_spill_cell (
+    ) u_out_reg (
     	.clk_i   (clk_i    ),
         .rst_n_i (rst_n_i  ),
+        .flush_i (flush_i  ),
         .valid_i (valid_i  ),
         .ready_i (ready_i  ),
         .valid_o (valid_o  ),

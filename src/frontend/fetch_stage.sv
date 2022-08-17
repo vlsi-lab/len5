@@ -27,6 +27,7 @@ module fetch_stage
     input   logic               clk_i,
     input   logic               rst_n_i,
     input   logic               flush_i,
+    input   logic               flush_bpu_i,
 
     // From/to memory
     input   logic               mem_valid_i,
@@ -39,46 +40,70 @@ module fetch_stage
     // From/to instruction decode
     input   logic               issue_ready_i,
     output  logic               issue_valid_o,
-    output  instr_t             instruction_o,
-    output  logic [XLEN-1:0]    curr_pc_o,
-    output  prediction_t        pred_o,
+    output  instr_t             issue_instr_o,
+    output  prediction_t        issue_pred_o,
+    output  logic               issue_except_raised_o,
+    output  except_code_t       issue_except_code_o,
 
-    // To backend
-    output  logic               except_raised_o,
-    output  except_code_t       except_code_o,
 
     // From commit unit
-    input   logic               except_raised_i,
-    input   logic [XLEN-1:0]    except_pc_i,
-    input   logic               res_valid_i,
-    input   resolution_t        res_i  
+    input   logic               comm_except_raised_i,
+    input   logic [XLEN-1:0]    comm_except_pc_i,
+    input   logic               comm_res_valid_i,
+    input   resolution_t        comm_res_i  
 );
 
     // INTERNAL SIGNALS
     // ----------------
 
+    // Current program counter
+    logic [XLEN-1:0]        curr_pc;
+    prediction_t            curr_pred;
+
+    // Memory Interface <--> PC generator
+    logic       memif_pcgen_ready;
+    logic       pcgen_memif_valid;
+
     // -------
     // MODULES
     // -------
 
+    // BPU      \
+    //           }  MEMORY INTERFACE > ISSUE STAGE
+    // PC GEN   /
+
     // BRANCH PREDICTION UNIT
     // ----------------------
+    // NOTE: the prediction is provided in the same cycle as the PC, so no
+    //       synchronization is required.
+    bpu #(
+        .HLEN     (HLEN     ),
+        .BTB_BITS (BTB_BITS )
+    ) u_bpu (
+    	.clk_i            (clk_i            ),
+        .rst_n_i          (rst_n_i          ),
+        .flush_i          (flush_bpu_i      ),
+        .curr_pc_i        (curr_pc          ),
+        .comm_res_valid_i (comm_res_valid_i ),
+        .comm_res_i       (comm_res_i       ),
+        .pred_o           (curr_pred        )
+    );
 
     // PC GENERATOR
     // ------------
     pc_gen #(
         .BOOT_PC (BOOT_PC )
     ) u_pc_gen(
-    	.clk_i           (clk_i           ),
-        .rst_n_i         (rst_n_i         ),
-        .except_raised_i (except_raised_i ),
-        .except_pc_i     (except_pc_i     ),
-        .res_valid_i     (res_valid_i     ),
-        .res_i           (res_i           ),
-        .pred_valid_i    (pred_valid_i    ),
-        .pred_i          (pred_i          ),
-        .fetch_ready_i   (fetch_ready_i   ),
-        .pc_o            (pc_o            )
+    	.clk_i                (clk_i                ),
+        .rst_n_i              (rst_n_i              ),
+        .comm_except_raised_i (comm_except_raised_i ),
+        .comm_except_pc_i     (comm_except_pc_i     ),
+        .comm_res_valid_i     (comm_res_valid_i     ),
+        .comm_res_i           (comm_res_i           ),
+        .pred_i               (curr_pred            ),
+        .mem_ready_i          (memif_pcgen_ready    ),
+        .valid_o              (pcgen_memif_valid    ),
+        .pc_o                 (curr_pc              )
     );
 
     // MEMORY INTERFACE
@@ -86,15 +111,16 @@ module fetch_stage
     fetch_mem_if u_mem_if (	
         .clk_i                 (clk_i                 ),
         .rst_n_i               (rst_n_i               ),
-        .fetch_valid_i         (fetch_valid_i         ),
-        .fetch_ready_i         (fetch_ready_i         ),
-        .fetch_valid_o         (fetch_valid_o         ),
-        .fetch_ready_o         (fetch_ready_o         ),
-        .fetch_pc_i            (fetch_pc_i            ),
-        .fetch_instr_o         (fetch_instr_o         ),
-        .fetch_pc_o            (fetch_pc_o            ),
-        .fetch_except_raised_o (fetch_except_raised_o ),
-        .fetch_except_code_o   (fetch_except_code_o   ),
+        .flush_i               (flush_i               ),
+        .fetch_valid_i         (pcgen_memif_valid     ),
+        .fetch_ready_o         (memif_pcgen_ready     ),
+        .fetch_pred_i          (curr_pred             ),
+        .issue_valid_o         (issue_valid_o         ),
+        .issue_ready_i         (issue_ready_i         ),
+        .issue_instr_o         (issue_instr_o         ),
+        .issue_pred_o          (issue_pred_o          ),
+        .issue_except_raised_o (issue_except_raised_o ),
+        .issue_except_code_o   (issue_except_code_o   ),
         .mem_valid_i           (mem_valid_i           ),
         .mem_ready_i           (mem_ready_i           ),
         .mem_valid_o           (mem_valid_o           ),

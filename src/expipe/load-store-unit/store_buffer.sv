@@ -83,47 +83,6 @@ module store_buffer #(
     // output  logic [XLEN-1:0]            lb_value_o,         // store value
 );
 
-    // Load buffer data type
-    // ---------------------
-    
-    /* Load instruction status */
-    typedef enum logic [3:0] {
-        STORE_S_EMPTY,
-        STORE_S_RS12_PENDING,
-        STORE_S_RS1_PENDING,
-        STORE_S_RS2_PENDING,
-        STORE_S_ADDR_PENDING,
-        STORE_S_WAIT_ROB,
-        STORE_S_MEM_PENDING,
-        STORE_S_COMPLETED,
-        STORE_S_HALT    // for debug
-    } sb_state_t;
-
-    /* Load instruction data */
-    typedef struct packed {
-        ldst_width_t                 store_type;
-        rob_idx_t                   rs1_rob_idx;
-        logic [XLEN-1:0]            rs1_value;
-        rob_idx_t                   rs2_rob_idx;
-        logic [XLEN-1:0]            rs2_value;
-        rob_idx_t                   dest_rob_idx;
-        logic [XLEN-1:0]            imm_addr_value; // immediate offset, then replaced with resulting address
-        logic                       except_raised;
-        except_code_t               except_code;
-        logic [XLEN-1:0]            value;
-    } sb_data_t;
-
-    /* Load instruction command */
-    typedef enum logic [2:0] {
-        STORE_OP_NONE,
-        STORE_OP_PUSH,
-        STORE_OP_SAVE_RS12,
-        STORE_OP_SAVE_RS1,
-        STORE_OP_SAVE_RS2,
-        STORE_OP_SAVE_ADDR,
-        STORE_OP_SAVE_MEM
-    } sb_op_t;
-
     // INTERNAL SIGNALS
     // ----------------
 
@@ -287,14 +246,14 @@ module store_buffer #(
                         data[i].except_raised   <= 1'b0;
                     end
                     STORE_OP_SAVE_RS12: begin
-                        data[i].rs1_value       <= cdb_data_i.value;
-                        data[i].rs2_value       <= cdb_data_i.value;
+                        data[i].rs1_value       <= cdb_data_i.res_value;
+                        data[i].rs2_value       <= cdb_data_i.res_value;
                     end
                     STORE_OP_SAVE_RS1: begin
-                        data[i].rs1_value       <= cdb_data_i.value;
+                        data[i].rs1_value       <= cdb_data_i.res_value;
                     end
                     STORE_OP_SAVE_RS2: begin
-                        data[i].rs2_value       <= cdb_data_i.value;
+                        data[i].rs2_value       <= cdb_data_i.res_value;
                     end
                     STORE_OP_SAVE_ADDR: begin
                         data[i].imm_addr_value  <= adder_ans_i.result;
@@ -324,7 +283,7 @@ module store_buffer #(
     
     /* CDB */
     assign cdb_valid_o              = curr_state[head_idx] == STORE_S_COMPLETED;
-    assign cdb_data_o.rob_idx       = data[head_idx].dest_idx;
+    assign cdb_data_o.rob_idx       = data[head_idx].dest_rob_idx;
     assign cdb_data_o.res_value     = '0;
     assign cdb_data_o.res_aux       = data[head_idx].rs2_value;
     assign cdb_data_o.except_raised = data[head_idx].except_raised;

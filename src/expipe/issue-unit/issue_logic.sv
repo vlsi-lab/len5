@@ -20,7 +20,7 @@ import expipe_pkg::*;
 
 module issue_logic (
     // To the main control 
-    output  logic                       main_cu_stall_o,
+    output  logic                       cu_stall_o,
 
     // Handshake from/to the issue queue
     input   logic                       iq_valid_i,
@@ -577,7 +577,7 @@ module issue_logic (
     // OUTPUT EVALUATION
     // -----------------
     // To the main control 
-    assign  main_cu_stall_o             = id_stall_possible || eh_stall_possible;
+    assign  cu_stall_o                  = id_stall_possible || eh_stall_possible;
 
     // To the integer register status register
     assign  int_regstat_rs1_idx_o       = instr_rs1_idx;

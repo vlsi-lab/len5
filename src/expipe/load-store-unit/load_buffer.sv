@@ -76,40 +76,6 @@ module load_buffer #(
     // output  ldst_width_t                 sb_type_o,          // load type
     // output  logic [STBUFF_IDX_LEN:0]    sb_older_cnt_o,     // nummber of older store instructions
 );
-    // Load buffer data type
-    // ---------------------
-    
-    /* Load instruction status */
-    typedef enum logic [2:0] {
-        LOAD_S_EMPTY,
-        LOAD_S_RS1_PENDING,
-        LOAD_S_ADDR_PENDING,
-        LOAD_S_MEM_PENDING,
-        LOAD_S_COMPLETED,
-        LOAD_S_HALT     // for debug
-    } lb_state_t;
-
-    /* Load instruction data */
-    typedef struct packed {
-        ldst_width_t                 load_type;
-        // logic [STBUFF_IDX_LEN-1:0]  older_stores;
-        rob_idx_t                   rs1_rob_idx;
-        logic [XLEN-1:0]            rs1_value;
-        rob_idx_t                   dest_rob_idx;
-        logic [XLEN-1:0]            imm_addr_value; // immediate offset, then replaced with resulting address
-        logic                       except_raised;
-        except_code_t               except_code;
-        logic [XLEN-1:0]            value;
-    } lb_data_t;
-
-    /* Load instruction command */
-    typedef enum logic [2:0] {
-        LOAD_OP_NONE,
-        LOAD_OP_PUSH,
-        LOAD_OP_SAVE_RS1,
-        LOAD_OP_SAVE_ADDR,
-        LOAD_OP_SAVE_MEM
-    } lb_op_t;
 
     // INTERNAL SIGNALS
     // ----------------
@@ -240,7 +206,7 @@ module load_buffer #(
                         data[i].except_raised   <= 1'b0;
                     end
                     LOAD_OP_SAVE_RS1: begin
-                        data[i].rs1_value       <= cdb_data_i.value;
+                        data[i].rs1_value       <= cdb_data_i.res_value;
                     end
                     LOAD_OP_SAVE_ADDR: begin
                         data[i].imm_addr_value  <= adder_ans_i.result;
@@ -268,7 +234,7 @@ module load_buffer #(
     /* CDB */
     assign cdb_valid_o              = curr_state[head_idx] == LOAD_S_COMPLETED;
     assign cdb_data_o.rob_idx       = data[head_idx].dest_rob_idx;
-    assign cdb_data_o.res_value     = data[head_idx].ld_value;
+    assign cdb_data_o.res_value     = data[head_idx].value;
     assign cdb_data_o.res_aux       = '0;
     assign cdb_data_o.except_raised = data[head_idx].except_raised;
     assign cdb_data_o.except_code   = data[head_idx].except_code;

@@ -54,8 +54,11 @@ module branch_rs
     output  logic                           bu_ready_o,
 
     // Data from/to the execution unit
+    input   logic [$clog2(RS_DEPTH)-1:0]    bu_entry_idx_i,
     input   logic                           bu_res_mis_i,   // mispredcition result
     input   logic                           bu_res_taken_i, // branch outcome
+    input   logic [XLEN-1:0]                bu_res_target_i, // computed branch target address
+    output  logic [$clog2(RS_DEPTH)-1:0]    bu_entry_idx_o,
     output  logic [XLEN-1:0]                bu_rs1_o,
     output  logic [XLEN-1:0]                bu_rs2_o,
     output  logic [XLEN-1:0]                bu_imm_o,
@@ -79,20 +82,21 @@ module branch_rs
     localparam RS_IDX_LEN = $clog2(RS_DEPTH); //3 reservation station address width
 
     // Reservation station pointers
-    logic [RS_IDX_LEN-1:0]      tail_idx, ex_idx, head_idx, wr_res_idx; 
-
-    // Head, ex and tail counters
-    logic                       head_cnt_en, head_cnt_clr, ex_cnt_en, ex_cnt_clr, tail_cnt_en, tail_cnt_clr,wr_res_cnt_en, wr_res_cnt_clr;
-
-    // The actual reservation station data structure
-    bu_rs_entry_t  rs_data[0:RS_DEPTH-1];
+    logic [RS_IDX_LEN-1:0]      new_idx, ex_idx, cdb_idx;// next free entry, entry chosen for execution and entry chosen for CDB access
+    logic                       new_idx_valid, ex_idx_valid, cdb_idx_valid;
     
+    // The actual reservation station data structure
+    bu_rs_entry_t               rs_data[0:RS_DEPTH-1];
+
     // Status signals
-    logic           valid_a[0:RS_DEPTH-1], busy_a[0:RS_DEPTH-1]; // valid entries, empty entries
-    logic           ex_ready_a[0:RS_DEPTH-1], res_ready_a[0:RS_DEPTH-1]; // Ready operands / ready result entries 
+    logic   [RS_DEPTH-1:0]      valid_a, busy_a; // valid entries, empty entries
+    logic   [RS_DEPTH-1:0]      ex_ready_a, res_ready_a; // Ready operands / ready result entries 
+    `ifdef ENABLE_AGE_BASED_SELECTOR
+    rob_idx_t                   entry_age_a [0:RS_DEPTH-1];
+    `endif /* ENABLE_AGE_BASED_SELECTOR */
 
     // RS control signals
-    logic          rs_push, rs_ex, rs_pop, rs_wr_res;
+    logic                       rs_insert, rs_ex, rs_pop, rs_wr_res;
 
     // --------------
     // STATUS SIGNALS
@@ -105,9 +109,14 @@ module branch_rs
             
             // Busy array
             busy_a[i]       = rs_data[i].busy;
+
+            `ifdef ENABLE_AGE_BASED_SELECTOR
+            // Entry age
+            entry_age_a[i]  = rs_data[i].entry_age;
+            `endif
             
-            // Execution ready entries: an entry is a valid candidate for ex. (ready) when both its operands are available, is valid and not busy
-            ex_ready_a[i]   = rs_data[i].rs1_ready & rs_data[i].rs2_ready & rs_data[i].valid & !rs_data[i].busy;
+// Execution ready entries: an entry is a valid candidate for ex. (ready) when both its operands are available and the entry is valid
+            ex_ready_a[i]   = rs_data[i].rs1_ready & rs_data[i].rs2_ready & rs_data[i].valid;
             
             // Result ready entries
             res_ready_a[i]  = rs_data[i].res_ready & rs_data[i].valid;
@@ -118,213 +127,194 @@ module branch_rs
     // RS CONTROL LOGIC
     // ----------------
     always_comb begin: rs_control_logic
-        // DEFAULT VALUES:
+        // Default values
+        rs_ex           = 'b0;
+        rs_insert       = 'b0;
+        rs_pop          = 'b0;
+        rs_wr_res       = 'b0;
+        bu_valid_o      = 'b0;
+        issue_ready_o   = 'b0;
+        cdb_valid_o     = 'b0;
+        bu_ready_o      = 'b1;  // Always true since the entry has already been allocated during issue 
 
-        // Head/tail pointers control
-        head_cnt_en         = 1'b0;
-        head_cnt_clr        = flush_i;
-        ex_cnt_en           = 1'b0;
-        ex_cnt_clr          = flush_i;
-        tail_cnt_en         = 1'b0;
-        tail_cnt_clr        = flush_i;
-        wr_res_cnt_en       = 1'b0;
-        wr_res_cnt_clr      = flush_i;
-
-        // Operation control
-        rs_push             = 1'b0;
-        rs_ex               = 1'b0;
-        rs_pop              = 1'b0;
-        rs_wr_res           = 1'b0;
-
-        // Handshake control 
-        issue_ready_o       = 1'b0;
-        bu_ready_o          = 1'b1; // Always ready for the branch unit
-        bu_valid_o          = 1'b0;
-        cdb_valid_o         = 1'b0;
-
-        // OPERATION CONTROL
-
-        // PUSH NEW INSTRUCTION
-        if (!rs_data[tail_idx].valid) begin
-            issue_ready_o        = 1'b1;
-            if (issue_valid_i) begin
-                rs_push            = 1'b1; // if a new instruction is available, push it
-                tail_cnt_en        = 1'b1; // increment tail pointer
-            end
+        // Send selected instr. to EU
+        if (ex_ready_a[ex_idx] && ex_idx_valid) begin
+            bu_valid_o  = 'b1;  // If the selected entry is valid, notice the EU a new instr is ready for execution 
+            if (bu_ready_i) rs_ex = 'b1; 
         end
 
-        // EXECUTE INSTRUCTION
-        if (ex_ready_a[ex_idx]) begin
-            bu_valid_o             = 1'b1;
-            if (bu_ready_i) begin
-                rs_ex              = 1'b1; // the branch unit can accept the instruction
-                ex_cnt_en          = 1'b1; // increment the execution pointer
-            end
+        // Insert new instruction
+        if (!rs_data[new_idx].valid && new_idx_valid) begin
+            issue_ready_o = 'b1; // the RS can accept a new instruction being issued if the entry pointed by the new entry selector is free (i.e. valid = 0).
+            if (issue_valid_i) rs_insert = 'b1;
         end
 
-        // WRITE HEAD RESULT ON THE CDB AND POP THE INSTRUCTION
-        if (res_ready_a[head_idx]) begin
-            cdb_valid_o            = 1'b1;
-            if (cdb_ready_i) begin
-                rs_pop             = 1'b1; // if the CDB can accept outcoming data, 
-                head_cnt_en        = 1'b1;
-            end
+        // Send selected instruction to CDB
+        if (res_ready_a[cdb_idx] && cdb_idx_valid) begin
+            cdb_valid_o = 'b1; // If the selected entry has a valid result, notice the CDB
+            if (cdb_ready_i) rs_pop = 'b1;
         end
 
-        // WRITE RESULT FROM THE BRANCH UNIT 
-        if (bu_valid_i && busy_a[wr_res_idx]) begin
-            rs_wr_res              = 1'b1;
-            wr_res_cnt_en          = 1'b1;
+        // Save result from EU
+        if (bu_valid_i) begin
+            rs_wr_res   = 'b1;
         end
     end
 
     // -------------------------------
-    // RESERVATION STATION FIFO UPDATE
+    // RESERVATION STATION DATA UPDATE
     // -------------------------------
-    always_ff @(posedge clk_i or negedge rst_n_i) begin: rs_fifo_update
+    always_ff @(posedge clk_i or negedge rst_n_i) begin: rs_data_update
         if (!rst_n_i) begin // Asynchronous reset
             foreach (rs_data[i]) begin
                 rs_data[i]                  <= 0;
             end
-        end else if (flush_i) begin // Synchronous flush: clearing status info is enough
+        end else if (flush_i) begin // Synchronous flush: clearing valid is enough
             foreach (rs_data[i]) begin
-                rs_data[i].valid            <= 'b0;
-                rs_data[i].busy             <= 'b0;
-                rs_data[i].rs1_ready        <= 'b0;
-                rs_data[i].rs2_ready        <= 'b0;
-                rs_data[i].res_ready        <= 'b0;
+                rs_data[i].valid            <= 1'b0;
             end
-		
         end else begin // Normal update
+            
+            // Send entry selected for execution to EU
+            if (rs_ex) rs_data[ex_idx].busy <= 'b1; // Mark the current instr. as busy so it is not choosen again
+            
+            // Insert new instruction 
+            if (rs_insert) begin // WRITE PORT 1
+                rs_data[new_idx].valid          <= issue_valid_i;
+                rs_data[new_idx].busy           <= 'b0;
+                `ifdef ENABLE_AGE_BASED_SELECTOR
+                rs_data[new_idx].entry_age      <= 0;
+                `endif
+                rs_data[new_idx].branch_type    <= branch_type_i;
+                rs_data[new_idx].rs1_ready      <= rs1_ready_i;
+                rs_data[new_idx].rs1_idx        <= rs1_idx_i;
+                rs_data[new_idx].rs1_value      <= rs1_value_i;
+                rs_data[new_idx].rs2_ready      <= rs2_ready_i;
+                rs_data[new_idx].rs2_idx        <= rs2_idx_i;
+                rs_data[new_idx].rs2_value      <= rs2_value_i;
+                rs_data[new_idx].imm_value      <= imm_value_i;
+                rs_data[new_idx].curr_pc        <= curr_pc_i;
+                rs_data[new_idx].res_ready      <= 'b0;
+                rs_data[new_idx].res_idx        <= dest_idx_i;
+                rs_data[new_idx].target         <= pred_target_i;
+                rs_data[new_idx].taken          <= pred_taken_i;
 
-            // -------------------
-            // PARALLEL OPERATIONS
-            // -------------------
+                `ifdef ENABLE_AGE_BASED_SELECTOR
+                // Update the age of all the entries
+                foreach (rs_data[i]) begin
+                    if (new_idx != i[RS_IDX_LEN-1:0] && rs_data[i].valid) rs_data[i].entry_age <= rs_data[i].entry_age + 1;
+                end
+                `endif
+            end
+            
+            // Pop the entry sent to the CDB
+            if (rs_pop) rs_data[cdb_idx].valid      <= 'b0;
+            
+            // Save result from EU (WRITE PORT 2)
+            if (rs_wr_res) begin
+                rs_data[bu_entry_idx_i].res_ready      <= 'b1;
+                rs_data[bu_entry_idx_i].mispredicted   <= bu_res_mis_i;
+                rs_data[bu_entry_idx_i].taken          <= bu_res_taken_i;
+                rs_data[bu_entry_idx_i].target         <= bu_res_target_i;
+            end
+
             // Retrieve operands from CDB (PARALLEL WRITE PORT 1)
             foreach (rs_data[i]) begin
                 if (rs_data[i].valid && !ex_ready_a[i]) begin // Following logic is masked if the entry is not valid
                     if (!rs_data[i].rs1_ready) begin
                         if (cdb_valid_i && !cdb_data_i.except_raised && (rs_data[i].rs1_idx == cdb_data_i.rob_idx)) begin
                             rs_data[i].rs1_ready    <= 'b1;
-                            rs_data[i].rs1_value    <= cdb_data_i.value;
+                            rs_data[i].rs1_value    <= cdb_data_i.res_value;
                         end
                     end
                     if (!rs_data[i].rs2_ready) begin
                         if (cdb_valid_i && !cdb_data_i.except_raised && (rs_data[i].rs2_idx == cdb_data_i.rob_idx)) begin
                             rs_data[i].rs2_ready    <= 'b1;
-                            rs_data[i].rs2_value    <= cdb_data_i.value;
+                            rs_data[i].rs2_value    <= cdb_data_i.res_value;
                         end
                     end
                 end
             end
-
-            // ---------------------
-            // CONTROLLED OPERATIONS
-            // ---------------------
-            
-            // Push a new instruction into the reservation station
-            if (rs_push) begin
-                rs_data[tail_idx].valid             <= issue_valid_i;
-                rs_data[tail_idx].busy              <= 1'b0;
-                rs_data[tail_idx].branch_type       <= branch_type_i;
-                rs_data[tail_idx].rs1_ready         <= rs1_ready_i;
-                rs_data[tail_idx].rs1_idx           <= rs1_idx_i;
-                rs_data[tail_idx].rs1_value         <= rs1_value_i;
-                rs_data[tail_idx].rs2_ready         <= rs2_ready_i;
-                rs_data[tail_idx].rs2_idx           <= rs2_idx_i;
-                rs_data[tail_idx].rs2_value         <= rs2_value_i;
-                rs_data[tail_idx].imm_value         <= imm_value_i;
-                rs_data[tail_idx].curr_pc           <= curr_pc_i;
-                rs_data[tail_idx].target            <= pred_target_i;
-                rs_data[tail_idx].taken             <= pred_taken_i;
-                rs_data[tail_idx].res_idx           <= dest_idx_i;
-                rs_data[tail_idx].res_ready         <= 1'b0;
-            end
-
-            // Send an instruction to the branch unit
-            if (rs_ex) begin
-                rs_data[ex_idx].busy                <= 1'b1; // mark the entry as busy so it's not selected again
-            end
-
-            // Save the result from the branch unit
-            if (rs_wr_res) begin
-                rs_data[wr_res_idx].busy            <= 1'b0; // clear the busy bit
-                rs_data[wr_res_idx].res_ready       <= 1'b1; // mark the entry as completed
-                rs_data[wr_res_idx].mispredicted    <= bu_res_mis_i;
-                rs_data[wr_res_idx].taken           <= bu_res_taken_i;
-            end
-
-            // Send a result to the CDB
-            if (rs_pop) begin
-                rs_data[head_idx].valid             <= 1'b0; // clear valid bit, so the entry can be used fot new instructions
-            end
-
-        end 
+        end
     end
 
-    // --------------------------
-    // HEAD, EX AND TAIL POINTERS
-    // --------------------------
-    modn_counter #(.N(RS_DEPTH)) head_counter
+    // ------------------
+    // NEW ENTRY SELECTOR
+    // ------------------
+    // The entry where the next instruction will be allocated is the first free one (i.e. not valid) in the structure, so the selector is a priority encoder
+    prio_enc #(.N(RS_DEPTH)) new_entry_prio_enc
     (
-        .clk_i      (clk_i),
-        .rst_n_i    (rst_n_i),
-        .en_i       (head_cnt_en),
-        .clr_i      (head_cnt_clr),
-        .count_o    (head_idx),
-        .tc_o       ()              // Not needed
+        .lines_i    (~valid_a),
+        .enc_o      (new_idx),
+        .valid_o    (new_idx_valid)
+    );
+    
+    // ------------------
+    // EXECUTION SELECTOR
+    // ------------------
+    `ifdef ENABLE_AGE_BASED_SELECTOR
+    age_based_sel #(.N(RS_DEPTH), .AGE_LEN(ROB_IDX_LEN)) ex_selector
+    (
+        .lines_i    (valid_a & ~busy_a & ~res_ready_a),
+        .ages_i     (entry_age_a),
+        .enc_o      (ex_idx),
+        .valid_o    (ex_idx_valid)
     );
 
-    modn_counter #(.N(RS_DEPTH)) ex_counter
+    `else
+    // Simple priority encoder
+    prio_enc #(.N(RS_DEPTH)) ex_sel_prio_enc
     (
-        .clk_i      (clk_i),
-        .rst_n_i    (rst_n_i),
-        .en_i       (ex_cnt_en),
-        .clr_i      (ex_cnt_clr),
-        .count_o    (ex_idx),
-        .tc_o       ()              // Not needed
+        .lines_i    (valid_a & ~busy_a & ~res_ready_a),
+        .enc_o      (ex_idx),
+        .valid_o    (ex_idx_valid)
     );
+    `endif
 
-    modn_counter #(.N(RS_DEPTH)) tail_counter
+    // ------------
+    // CDB SELECTOR
+    // ------------
+    `ifdef ENABLE_AGE_BASED_SELECTOR
+    // The selector is mostly equal to the execution selector. The only difference is that here the candidates are choosen among the entries whose result is ready (i.e. it has already been written back by the EU)
+    age_based_sel #(.N(RS_DEPTH), .AGE_LEN(ROB_IDX_LEN)) cdb_selector
     (
-        .clk_i      (clk_i),
-        .rst_n_i    (rst_n_i),
-        .en_i       (tail_cnt_en),
-        .clr_i      (tail_cnt_clr),
-        .count_o    (tail_idx),
-        .tc_o       ()              // Not needed
+        .lines_i    (res_ready_a),
+        .ages_i     (entry_age_a),
+        .enc_o      (cdb_idx),
+        .valid_o    (cdb_idx_valid)
     );
-
-    modn_counter #(.N(RS_DEPTH)) wr_res_counter
+    
+    `else
+    // Simple priority encoder
+    prio_enc #(.N(RS_DEPTH)) cdb_sel_prio_enc
     (
-        .clk_i      (clk_i),
-        .rst_n_i    (rst_n_i),
-        .en_i       (wr_res_cnt_en),
-        .clr_i      (wr_res_cnt_clr),
-        .count_o    (wr_res_idx),
-        .tc_o       ()              // Not needed
+        .lines_i    (res_ready_a),
+        .enc_o      (cdb_idx),
+        .valid_o    (cdb_idx_valid)
     );
+    `endif
 
     // -----------------
-    // OUTPUT GENERATION
+    // OUTPUT EVALUATION
     // -----------------
     
-    // To the branch unit
-    assign bu_rs1_o                 = rs_data[ex_idx].rs1_value;
-    assign bu_rs2_o                 = rs_data[ex_idx].rs2_value;
-    assign bu_imm_o                 = rs_data[ex_idx].imm_value;
-    assign bu_curr_pc_o             = rs_data[ex_idx].curr_pc;
-    assign bu_pred_target_o         = rs_data[ex_idx].target;
-    assign bu_pred_taken_o          = rs_data[ex_idx].taken;
-    assign bu_branch_type_o         = rs_data[ex_idx].branch_type;
+    // To branch logic (READ PORT 1)
+    assign bu_rs1_o                = rs_data[ex_idx].rs1_value;
+    assign bu_rs2_o                = rs_data[ex_idx].rs2_value;
+    assign bu_imm_o                = rs_data[ex_idx].imm_value;
+    assign bu_curr_pc_o            = rs_data[ex_idx].curr_pc;
+    assign bu_pred_target_o        = rs_data[ex_idx].target;
+    assign bu_pred_taken_o         = rs_data[ex_idx].taken;
+    assign bu_branch_type_o        = rs_data[ex_idx].branch_type;
+    assign bu_entry_idx_o          = ex_idx;
 
-    // To the CDB
-    assign cdb_data_o.rob_idx                   = rs_data[head_idx].res_idx;
-    assign cdb_data_o.res_value                 = rs_data[head_idx].target;
-    assign cdb_data_o.res_aux.jb.mispredicted   = rs_data[head_idx].mispredicted;
-    assign cdb_data_o.res_aux.jb.taken          = rs_data[head_idx].taken;
-    assign cdb_data_o.except_raised             = 1'b0; // no exception can be raised  (Wrong, First check the Missp if ok then check address misaglined)
-    assign cdb_data_o.except_code               = E_UNKNOWN;
+    // To CDB (READ PORT 2: reads different fields from READ PORT 1)
+    assign cdb_data_o.rob_idx                 = rs_data[cdb_idx].res_idx;
+    assign cdb_data_o.res_value               = rs_data[cdb_idx].target;
+    assign cdb_data_o.res_aux.jb.mispredicted = rs_data[cdb_idx].mispredicted;
+    assign cdb_data_o.res_aux.jb.taken        = rs_data[cdb_idx].taken;
+    assign cdb_data_o.except_raised           = 1'b0;
+    assign cdb_data_o.except_code             = E_UNKNOWN;
 
     // ----------
     // ASSERTIONS
@@ -332,10 +322,13 @@ module branch_rs
     `ifndef SYNTHESIS
     always @(negedge clk_i) begin
         // Notice when the reservation station is full
-        //assert (valid_a == ((1 << RS_DEPTH) - 1)) else $warning("Generic RS full: you might want to increase its depth");
+        assert (valid_a !== '1) else `uvm_info("BUFFSIZE", $sformatf("Generic RS full (%0d entries): you might want to increase its depth", RS_DEPTH), UVM_HIGH)
         foreach (rs_data[i]) begin
             // Check if the correct order of operations is respected
             assert (!(res_ready_a[i] && !ex_ready_a[i])) else `uvm_error("HAZARD", $sformatf("RS entry %4d has ready result before having ready operands. This should be impossible", i))
+             `ifdef ENABLE_AGE_BASED_SELECTOR
+            assert (rs_data[i].entry_age < 1<<ROB_IDX_LEN) else `uvm_error("OTHER", "RS entry %4d is reaching head overflow. This should be impossible.", i)
+            `endif
         end
     end
     `endif

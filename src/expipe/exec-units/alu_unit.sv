@@ -20,8 +20,7 @@ module alu_unit
     RS_DEPTH = 4, // must be a power of 2,
     
     // EU-specific parameters
-    EU_CTL_LEN = 4,
-    EXCEPT_LEN = 2
+    EU_CTL_LEN = 4
 ) (
     // Clock, reset, and flush
     input   logic                   clk_i,
@@ -70,7 +69,7 @@ module alu_unit
     logic                   alu_rs_except_raised;
     except_code_t           alu_rs_except_code;
 
-generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_alu_generic_rs
+generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH)) u_alu_generic_rs
 (
     .clk_i                  (clk_i),
     .rst_n_i                (rst_n_i),
@@ -106,7 +105,7 @@ generic_rs #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_a
     .cdb_data_o             (cdb_data_o)
 );
 
-alu #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH), .EXCEPT_LEN(2)) u_alu
+alu #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH)) u_alu
 (
     .clk_i              (clk_i),
     .rst_n_i            (rst_n_i),

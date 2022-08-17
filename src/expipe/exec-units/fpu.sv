@@ -12,8 +12,7 @@
 // Author: Michele Caon
 // Date: 21/10/2019
 
-import len5_pkg::XLEN;
-import len5_pkg::ILEN;
+import len5_pkg::*;
 import expipe_pkg::*;
 import csr_pkg::FCSR_FRM_LEN;
 
@@ -22,8 +21,7 @@ module fpu
     RS_DEPTH = 4, // must be a power of 2,
     
     // EU-specific parameters
-    EU_CTL_LEN = 4,
-    EXCEPT_LEN = 2
+    EU_CTL_LEN = 4
 )
 (
     input   logic                   clk_i,
@@ -40,7 +38,7 @@ module fpu
     output   logic [$clog2(RS_DEPTH)-1:0] eu_entry_idx_i,
     output   logic [XLEN-1:0]        eu_result_i,
     output   logic                   eu_except_raised_i,
-    output   logic [EXCEPT_LEN-1:0]  eu_except_code_i,
+    output   except_code_t          eu_except_code_i,
     input  logic [EU_CTL_LEN-1:0]  eu_ctl_o,
     input  logic [XLEN-1:0]        eu_rs1_o,
     input  logic [XLEN-1:0]        eu_rs2_o,
@@ -57,7 +55,7 @@ always_ff @ (posedge clk_i or negedge rst_n_i) begin
 		eu_entry_idx_i = 'b000;
 		eu_result_i <= 'h0000000000000000;
 		eu_except_raised_i <= 0;
-		eu_except_code_i <= 'd0;
+		eu_except_code_i <= E_UNKNOWN;
     end
     else if (flush_i) begin
         eu_ready_i <= 0; // Synchronous clear when requested or when reaching the threshold
@@ -65,7 +63,7 @@ always_ff @ (posedge clk_i or negedge rst_n_i) begin
 		eu_entry_idx_i = 'b000;
 		eu_result_i <= 'h0000000000000000;
 		eu_except_raised_i <= 0;
-		eu_except_code_i <= 'd0;
+		eu_except_code_i <= E_UNKNOWN;
     end
       /* else if (eu_valid_o) begin
 		//case () begin
@@ -90,7 +88,7 @@ always_ff @ (posedge clk_i or negedge rst_n_i) begin
 		eu_valid_i <= 0;
 		eu_result_i <= 'h0000000000000000;
 		eu_except_raised_i <= 0;
-		eu_except_code_i <= 'd0;
+		eu_except_code_i <= E_UNKNOWN;
 end
 end
 

@@ -62,14 +62,29 @@ module branch_unit
     logic [BU_CTL_LEN-1:0]  rs_bu_branch_type;
     logic                   bu_rs_res_mispredict;
 
-    // Beanch logic <--> CU
-    logic                   bu_rs_res_taken;
+    // Beanch logic <--> Reservation Station
+    logic                           bu_rs_ready;
+    logic                           bu_rs_valid;
+    logic                           rs_bu_valid;
+    logic                           rs_bu_ready;
+    logic [$clog2(RS_DEPTH)-1:0]    rs_bu_entry_idx;
+
+    // Branch logic
+    logic                   res_taken;
     logic                   wrong_taken;
     logic                   wrong_target;
-    logic                   bu_rs_mispredicted;
-
-    // Target address adder
+    logic                   res_mispredicted;
     logic [XLEN-1:0]        res_target; 
+
+    // Branch logic output register
+        // Branch logic output register data type
+    typedef struct packed {
+        logic [$clog2(RS_DEPTH)-1:0]    entry_idx;
+        logic                           res_mispredicted;
+        logic                           res_taken;
+        logic [XLEN-1:0]                res_target;
+    } bu_out_reg_t;
+    bu_out_reg_t            bu_outreg_in, bu_outreg_out;
 
     // ------------
     // BRANCH LOGIC
@@ -78,14 +93,14 @@ module branch_unit
     // Branch taken detection logic
     always_comb begin
         case (rs_bu_branch_type)
-        BEQ:      bu_rs_res_taken = (rs_bu_rs1 == rs_bu_rs2);
-        BNE:      bu_rs_res_taken = (rs_bu_rs1 != rs_bu_rs2);
-        BLT:      bu_rs_res_taken = ($signed(rs_bu_rs1) < $signed(rs_bu_rs2));
-        BGE:      bu_rs_res_taken = ($signed(rs_bu_rs1) >= $signed(rs_bu_rs2));
-        BLTU:     bu_rs_res_taken = (rs_bu_rs1 < rs_bu_rs2);
-        BGEU:     bu_rs_res_taken = (rs_bu_rs1 >= rs_bu_rs2);
-        JUMP:     bu_rs_res_taken = 1'b1;
-        default:  bu_rs_res_taken = 1'b0;
+        BEQ:      res_taken = (rs_bu_rs1 == rs_bu_rs2);
+        BNE:      res_taken = (rs_bu_rs1 != rs_bu_rs2);
+        BLT:      res_taken = ($signed(rs_bu_rs1) < $signed(rs_bu_rs2));
+        BGE:      res_taken = ($signed(rs_bu_rs1) >= $signed(rs_bu_rs2));
+        BLTU:     res_taken = (rs_bu_rs1 < rs_bu_rs2);
+        BGEU:     res_taken = (rs_bu_rs1 >= rs_bu_rs2);
+        JUMP:     res_taken = 1'b1;
+        default:  res_taken = 1'b0;
         endcase
     end
     
@@ -94,8 +109,28 @@ module branch_unit
 
     // Misprediction logic
     assign  wrong_target        = rs_bu_pred_target != res_target;
-    assign  wrong_taken         = rs_bu_pred_taken != bu_rs_res_taken;
-    assign  bu_rs_mispredicted  = wrong_taken | wrong_target;
+    assign  wrong_taken         = rs_bu_pred_taken != res_taken;
+    assign  res_mispredicted    = wrong_taken | wrong_target;
+
+    // Branch logic output register
+    // NOTE: skipped by default, since it's likely not on the critical path
+    assign  bu_outreg_in.entry_idx          = rs_bu_entry_idx;
+    assign  bu_outreg_in.res_mispredicted   = res_mispredicted;
+    assign  bu_outreg_in.res_taken          = res_taken;
+    assign  bu_outreg_in.res_target         = res_target;
+    spill_cell #(
+        .DATA_T (bu_out_reg_t),
+        .SKIP   (1           )
+    ) u_bu_out_reg (
+    	.clk_i   (clk_i         ),
+        .rst_n_i (rst_n_i       ),
+        .valid_i (rs_bu_valid   ),
+        .ready_i (rs_bu_ready   ),
+        .valid_o (bu_rs_valid   ),
+        .ready_o (bu_rs_ready   ),
+        .data_i  (bu_outreg_in  ),
+        .data_o  (bu_outreg_out )
+    );
 
     // -------------------------------
     // BRANCH UNIT RESERVATION STATION
@@ -103,40 +138,44 @@ module branch_unit
     branch_rs #(
         .RS_DEPTH   (RS_DEPTH   )
     ) u_branch_rs(
-    	.clk_i              (clk_i              ),
-        .rst_n_i            (rst_n_i            ),
-        .flush_i            (flush_i            ),
-
-        .issue_valid_i      (issue_valid_i      ),
-        .issue_ready_o      (issue_ready_o      ),
-        .branch_type_i      (branch_type_i      ),
-        .rs1_ready_i        (rs1_ready_i        ),
-        .rs1_idx_i          (rs1_idx_i          ),
-        .rs1_value_i        (rs1_value_i        ),
-        .rs2_ready_i        (rs2_ready_i        ),
-        .rs2_idx_i          (rs2_idx_i          ),
-        .rs2_value_i        (rs2_value_i        ),
-        .imm_value_i        (imm_value_i        ),
-        .dest_idx_i         (dest_idx_i         ),
-        .curr_pc_i          (curr_pc_i          ),
-        .pred_target_i      (pred_target_i      ),
-        .pred_taken_i       (pred_taken_i       ),
-
-        .bu_res_mis_i       (bu_rs_mispredicted ),
-        .bu_res_taken_i     (bu_rs_res_taken    ),
-        .bu_rs1_o           (rs_bu_rs1          ),
-        .bu_rs2_o           (rs_bu_rs2          ),
-        .bu_imm_o           (rs_bu_imm          ),
-        .bu_curr_pc_o       (rs_bu_curr_pc      ),
-        .bu_pred_target_o   (rs_bu_pred_target  ),
-        .bu_pred_taken_o    (rs_bu_pred_taken   ),
-        .bu_branch_type_o   (rs_bu_branch_type  ),
-
-        .cdb_ready_i        (cdb_ready_i        ),
-        .cdb_valid_i        (cdb_valid_i        ),
-        .cdb_valid_o        (cdb_valid_o        ),
-        .cdb_data_i         (cdb_data_i         ),
-        .cdb_data_o         (cdb_data_o         )
+    	.clk_i              (clk_i                          ),
+        .rst_n_i            (rst_n_i                        ),
+        .flush_i            (flush_i                        ),
+        .issue_valid_i      (issue_valid_i                  ),
+        .issue_ready_o      (issue_ready_o                  ),
+        .branch_type_i      (branch_type_i                  ),
+        .rs1_ready_i        (rs1_ready_i                    ),
+        .rs1_idx_i          (rs1_idx_i                      ),
+        .rs1_value_i        (rs1_value_i                    ),
+        .rs2_ready_i        (rs2_ready_i                    ),
+        .rs2_idx_i          (rs2_idx_i                      ),
+        .rs2_value_i        (rs2_value_i                    ),
+        .imm_value_i        (imm_value_i                    ),
+        .dest_idx_i         (dest_idx_i                     ),
+        .curr_pc_i          (curr_pc_i                      ),
+        .pred_target_i      (pred_target_i                  ),
+        .pred_taken_i       (pred_taken_i                   ),
+        .bu_ready_i         (bu_rs_ready                    ),
+        .bu_valid_i         (bu_rs_valid                    ),
+        .bu_valid_o         (rs_bu_valid                    ),
+        .bu_ready_o         (rs_bu_ready                    ),
+        .bu_entry_idx_i     (bu_outreg_out.entry_idx        ),
+        .bu_res_mis_i       (bu_outreg_out.res_mispredicted ),
+        .bu_res_taken_i     (bu_outreg_out.res_taken        ),
+        .bu_res_target_i    (bu_outreg_out.res_target       ),
+        .bu_entry_idx_o     (rs_bu_entry_idx                ),
+        .bu_rs1_o           (rs_bu_rs1                      ),
+        .bu_rs2_o           (rs_bu_rs2                      ),
+        .bu_imm_o           (rs_bu_imm                      ),
+        .bu_curr_pc_o       (rs_bu_curr_pc                  ),
+        .bu_pred_target_o   (rs_bu_pred_target              ),
+        .bu_pred_taken_o    (rs_bu_pred_taken               ),
+        .bu_branch_type_o   (rs_bu_branch_type              ),
+        .cdb_ready_i        (cdb_ready_i                    ),
+        .cdb_valid_i        (cdb_valid_i                    ),
+        .cdb_valid_o        (cdb_valid_o                    ),
+        .cdb_data_i         (cdb_data_i                     ),
+        .cdb_data_o         (cdb_data_o                     )
     );
 
 endmodule

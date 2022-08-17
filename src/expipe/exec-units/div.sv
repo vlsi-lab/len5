@@ -14,6 +14,7 @@
 
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
+import len5_pkg::*;
 import expipe_pkg::*;
 
 module div 
@@ -21,8 +22,7 @@ module div
     RS_DEPTH = 4, // must be a power of 2,
     
     // EU-specific parameters
-    EU_CTL_LEN = 4,
-    EXCEPT_LEN = 2
+    EU_CTL_LEN = 4
 )
 (
     input   logic                   clk_i,
@@ -43,7 +43,7 @@ module div
     output  logic [$clog2(RS_DEPTH)-1:0] entry_idx_o,
     output  logic [XLEN-1:0]        result_o,
     output  logic                   except_raised_o,
-    output  logic [EXCEPT_LEN-1:0]  except_code_o
+    output  except_code_t           except_code_o
 );
 
 	// Main counting process. The counter clears when reaching the threshold
@@ -54,7 +54,7 @@ always_ff @ (posedge clk_i or negedge rst_n_i) begin
 		entry_idx_o <= 'b000;
 		result_o <= 'h0000000000000000;
 		except_raised_o <= 0;
-		except_code_o <= 'd0;
+		except_code_o <= E_UNKNOWN;
     end
     else if (flush_i) begin
         ready_o <= 0; // Synchronous clear when requested or when reaching the threshold
@@ -62,7 +62,7 @@ always_ff @ (posedge clk_i or negedge rst_n_i) begin
 		entry_idx_o <= 'b000;
 		result_o <= 'h0000000000000000;
 		except_raised_o <= 0;
-		except_code_o <= 'd0;
+		except_code_o <= E_UNKNOWN;
     end
 	else if (ready_i) begin
 		//case () begin
@@ -81,7 +81,7 @@ always_ff @ (posedge clk_i or negedge rst_n_i) begin
 		valid_o <= 0;
 		result_o <= 'h0000000000000000;
 		except_raised_o <= 0;
-		except_code_o <= 'd0;
+		except_code_o <= E_UNKNOWN;
 end
 end
 

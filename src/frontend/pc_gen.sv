@@ -21,14 +21,14 @@ module pc_gen
 ) (
     input   logic             clk_i,
     input   logic             rst_n_i,
-    input   logic             except_raised_i,
-    input   logic [XLEN-1:0]  except_pc_i,
-    input   logic             res_valid_i,
-    input   resolution_t      res_i,
-    input   logic             pred_valid_i,
+    input   logic             comm_except_raised_i,
+    input   logic [XLEN-1:0]  comm_except_pc_i,
+    input   logic             comm_res_valid_i,
+    input   resolution_t      comm_res_i,
     input   prediction_t      pred_i,
-    input   logic             fetch_ready_i,
+    input   logic             mem_ready_i,
 
+    output  logic             valid_o,
     output  logic [XLEN-1:0]  pc_o
 );
     
@@ -41,7 +41,7 @@ module pc_gen
     // -------------------
 
     // Mux + adder
-    assign add_pc = (res_valid_i && res_i.mispredict) ? res_i.pc : pc_o;
+    assign add_pc = (comm_res_valid_i && comm_res_i.mispredict) ? comm_res_i.pc : pc_o;
     assign adder_out = add_pc + ILEN >> 3;
 
     // Priority list for choosing the next PC value:
@@ -50,15 +50,15 @@ module pc_gen
     // 3) Branch prediction
     // 4) Default PC+4
     always_comb begin: pc_priority_enc
-        if (except_raised_i) begin
-            next_pc = except_pc_i;
-        end else if (res_valid_i && res_i.mispredict) begin
-            if (res_i.taken) begin
-                next_pc = res_i.target;
+        if (comm_except_raised_i) begin
+            next_pc = comm_except_pc_i;
+        end else if (comm_res_valid_i && comm_res_i.mispredict) begin
+            if (comm_res_i.taken) begin
+                next_pc = comm_res_i.target;
             end else begin
                 next_pc = adder_out;
             end
-        end else if (pred_valid_i && pred_i.taken) begin
+        end else if (pred_i.taken) begin
             next_pc = pred_i.target;
         end else begin
             next_pc = adder_out;
@@ -69,8 +69,11 @@ module pc_gen
     always_ff @ (posedge clk_i or negedge rst_n_i) begin: pc_reg  
         if (!rst_n_i) begin
             pc_o <= BOOT_PC;
-        end else if (fetch_ready_i) begin
+        end else if (mem_ready_i) begin
             pc_o <= next_pc;
         end
     end: pc_reg
+
+    // Output valid
+    assign  valid_o = rst_n_i;
 endmodule
