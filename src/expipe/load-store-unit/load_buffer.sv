@@ -173,7 +173,7 @@ module load_buffer #(
                     if (save_mem && mem_ans_i.tag == i) begin
                         lb_op[i]        = LOAD_OP_SAVE_MEM;
                         next_state[i]   = LOAD_S_COMPLETED;
-                    end else if (mem_accepted) begin
+                    end else if (mem_accepted && mem_idx == i) begin
                         next_state[i]   = LOAD_S_MEM_WAIT;
                     end else
                         next_state[i]   = LOAD_S_MEM_REQ;

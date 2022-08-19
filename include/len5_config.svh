@@ -34,6 +34,11 @@
 // COMPILATION SWITCHES
 // --------------------
 
+// Enable C extension
+// ------------------
+// NOTE: CURRENTLY UNSUPPORTED
+//`define LEN5_C_EN
+
 // Enable M extension support
 // --------------------------
 //`define LEN5_M_EN

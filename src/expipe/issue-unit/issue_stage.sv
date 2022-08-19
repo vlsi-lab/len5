@@ -86,12 +86,8 @@ module issue_stage
     input   logic                   ex_ready_i [0:EU_N-1],  // ready signal from each reservation station
     output  logic                   ex_valid_o [0:EU_N-1],  // valid signal to each reservation station
     output  eu_ctl_t                ex_eu_ctl_o,            // controls for the associated EU
-    output  logic                   ex_rs1_ready_o,         // first operand is ready at issue time (from the RF or the ROB)
-    output  rob_idx_t               ex_rs1_idx_o,    // the index of the ROB where the first operand can be found (if not ready
-    output  logic [XLEN-1:0]        ex_rs1_value_o,         // the value of the first operand (if ready)
-    output  logic                   ex_rs2_ready_o,         // second operand is ready at issue time (from the RF or the ROB)
-    output  rob_idx_t               ex_rs2_idx_o,    // the index of the ROB where the first operand can be found (if not ready)
-    output  logic [XLEN-1:0]        ex_rs2_value_o,         // the value of the first operand (if ready)
+    output  op_data_t               ex_rs1_o,
+    output  op_data_t               ex_rs2_o,
     output  logic [XLEN-1:0]        ex_imm_value_o, // the value of the immediate field (for st and branches)                   
     output  rob_idx_t               ex_rob_idx_o,           // the location of the ROB assigned to the instruction
     output  logic [XLEN-1:0]        ex_curr_pc_o,              // the PC of the current issuing instr (branches only)
@@ -242,12 +238,8 @@ module issue_stage
         .ex_ready_i                     (ex_ready_i                 ),
         .ex_valid_o                     (ex_valid_o                 ),
         .ex_eu_ctl_o                    (ex_eu_ctl_o                ),
-        .ex_rs1_ready_o                 (ex_rs1_ready_o             ),
-        .ex_rs1_idx_o                   (ex_rs1_idx_o               ),
-        .ex_rs1_value_o                 (ex_rs1_value_o             ),
-        .ex_rs2_ready_o                 (ex_rs2_ready_o             ),
-        .ex_rs2_idx_o                   (ex_rs2_idx_o               ),
-        .ex_rs2_value_o                 (ex_rs2_value_o             ),
+        .ex_rs1_o                       (ex_rs1_o                   ),
+        .ex_rs2_o                       (ex_rs2_o                   ),
         .ex_imm_value_o                 (ex_imm_value_o             ),
         .ex_rob_idx_o                   (ex_rob_idx_o               ),
         .ex_curr_pc_o                   (ex_curr_pc_o               ),

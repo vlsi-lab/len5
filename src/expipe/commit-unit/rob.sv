@@ -39,8 +39,10 @@ module rob #(
     input   rob_idx_t               issue_rs2_rob_idx_i,
 
     /* Operands forwarding logic */
+    output  logic                   opfwd_rs1_valid_o,
     output  logic                   opfwd_rs1_ready_o,
     output  logic [XLEN-1:0]        opfwd_rs1_value_o,
+    output  logic                   opfwd_rs2_valid_o,
     output  logic                   opfwd_rs2_ready_o,
     output  logic [XLEN-1:0]        opfwd_rs2_value_o,
     
@@ -159,16 +161,18 @@ module rob #(
     /* Issue stage */
     assign  issue_ready_o       = !data_valid[tail_idx];
     assign  issue_tail_idx_o    = tail_idx;
-    assign  opfwd_rs1_ready_o   = data[issue_rs1_rob_idx_i].res_ready;
-    assign  opfwd_rs1_value_o   = data[issue_rs1_rob_idx_i].res_value;
-    assign  opfwd_rs2_ready_o   = data[issue_rs2_rob_idx_i].res_ready;
-    assign  opfwd_rs2_value_o   = data[issue_rs2_rob_idx_i].res_value;
-    
+
     /* Commit stage */
     assign  comm_valid_o    = data_valid[head_idx] & data[head_idx].res_ready;
     assign  comm_data_o     = data[head_idx];
     assign  comm_head_idx_o = head_idx;
-
+    assign  opfwd_rs1_valid_o   = data_valid[issue_rs1_rob_idx_i];
+    assign  opfwd_rs1_ready_o   = data[issue_rs1_rob_idx_i].res_ready;
+    assign  opfwd_rs1_value_o   = data[issue_rs1_rob_idx_i].res_value;
+    assign  opfwd_rs2_valid_o   = data_valid[issue_rs2_rob_idx_i];
+    assign  opfwd_rs2_ready_o   = data[issue_rs2_rob_idx_i].res_ready;
+    assign  opfwd_rs2_value_o   = data[issue_rs2_rob_idx_i].res_value;
+    
     // ----------
     // ASSERTIONS
     // ----------

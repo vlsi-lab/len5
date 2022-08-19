@@ -8,7 +8,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: generic_rs.sv
+// File: div.sv
 // Author: Michele Caon
 // Date: 21/10/2019
 

@@ -29,6 +29,7 @@ module pc_gen
     input   logic             mem_ready_i,
 
     output  logic             valid_o,
+    output  logic             comm_ready_o,
     output  logic [XLEN-1:0]  pc_o
 );
     
@@ -65,7 +66,7 @@ module pc_gen
         end
     end: pc_priority_enc
 
-    // PC update
+    // PC register
     always_ff @ (posedge clk_i or negedge rst_n_i) begin: pc_reg  
         if (!rst_n_i) begin
             pc_o <= BOOT_PC;
@@ -74,6 +75,7 @@ module pc_gen
         end
     end: pc_reg
 
-    // Output valid
-    assign  valid_o = rst_n_i;
+    // Output valid and ready
+    assign  valid_o         = rst_n_i & !comm_res_valid_i & !comm_except_raised_i;
+    assign  comm_ready_o    = mem_ready_i;
 endmodule

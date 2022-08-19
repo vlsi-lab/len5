@@ -35,13 +35,13 @@ module commit_cu (
     // Commit logic <--> CU
     input   comm_type_t             comm_type_i,    // from commit decoder
     input   logic                   mispredict_i,   // branch misprediction
-    output  logic                   comm_reg_en_o,  // commit enable
+    output  logic                   comm_reg_en_o,  // commit register enable
+    output  logic                   comm_reg_clr_o, // commit register clear
     output  logic                   jb_instr_o,     // the committing instruction is a jump/branch 
 
     // ROB <--> CU
     input   logic                   valid_i,
     output  logic                   ready_o,
-
     input   instr_t                 instr_i,
     input   logic                   res_ready_i,
     input   logic                   except_raised_i,
@@ -65,6 +65,7 @@ module commit_cu (
     output  csr_instr_t             csr_type_o,
 
     // CU <--> others
+    input   logic                   fe_ready_i,
     output  logic                   fe_res_valid_o,
     output  logic                   fe_bpu_flush_o,
     output  logic                   mis_flush_o,    // flush after misprediction
@@ -82,10 +83,11 @@ module commit_cu (
         COMMIT_FP_RF,       // commit to the floating-point RF
         COMMIT_STORE,       // commit store instructions
         COMMIT_JUMP,        // commit jump-and-link instructions
-        COMMIT_JUMP_MIS,    // commit jumps and restart
+        COMMIT_JUMP_MIS,    // flush the pipeline after misprediction
         COMMIT_BRANCH,      // commit correctly predicted branch instructions
-        COMMIT_BRANCH_MIS,          // handle branch misprediction
+        COMMIT_BRANCH_MIS,  // handle branch misprediction
         MIS_LOAD_PC,        // load correct PC after misprediction
+        CLEAR_COMM_REG,     // clear the commit register
         COMMIT_CSR,         // commit to CSRs
         COMMIT_FENCE,       // commit fence instructions
         COMMIT_ECALL,       // commit ECALL instructions
@@ -186,9 +188,12 @@ module commit_cu (
             end
 
             // Commit jump with mispredition
-            COMMIT_JUMP_MIS:
-                if (valid_i)    next_state  = v_next_state;
-                else            next_state  = IDLE;
+            // NOTE: go to idle since no instructions are committing in the
+            // next cycle.
+            COMMIT_JUMP_MIS: begin
+                if (fe_ready_i) next_state  = CLEAR_COMM_REG;
+                else            next_state  = MIS_LOAD_PC;
+            end
 
             // Correctly predicted branch: just commit
             COMMIT_BRANCH: begin
@@ -197,10 +202,19 @@ module commit_cu (
             end
 
             // Flush the in-flight instructions
-            COMMIT_BRANCH_MIS:      next_state  = MIS_LOAD_PC;
+            COMMIT_BRANCH_MIS: begin
+                if (fe_ready_i) next_state  = CLEAR_COMM_REG;
+                else            next_state  = MIS_LOAD_PC;
+            end
 
             // Load the correct PC and restart execution
-            MIS_LOAD_PC:    next_state  = IDLE;
+            MIS_LOAD_PC: begin
+                if (fe_ready_i) next_state  = CLEAR_COMM_REG;
+                else            next_state  = MIS_LOAD_PC;
+            end
+
+            // Clear the commit register and return to IDLE
+            CLEAR_COMM_REG:     next_state  = IDLE;
 
             // Atomically read and write CSRs
             COMMIT_CSR: begin
@@ -229,7 +243,8 @@ module commit_cu (
         // Default values
         ready_o             = 1'b0;
         comm_reg_en_o       = 1'b0;
-        jb_instr_o           = 1'b0;
+        comm_reg_clr_o      = 1'b0;
+        jb_instr_o          = 1'b0;
         int_rs_valid_o      = 1'b0;
         int_rf_valid_o      = 1'b0;
     `ifdef LEN5_FP_EN
@@ -284,8 +299,7 @@ module commit_cu (
 
             COMMIT_JUMP_MIS: begin
                 int_rf_valid_o  = 1'b1;
-                int_rs_valid_o  = 1'b1;
-                jb_instr_o       = 1'b1;
+                jb_instr_o      = 1'b1;
                 fe_res_valid_o  = 1'b1;
                 mis_flush_o     = 1'b1;
             end
@@ -299,14 +313,17 @@ module commit_cu (
             // TODO: redundant with jumps?
             COMMIT_BRANCH_MIS: begin
                 int_rf_valid_o  = 1'b1;
-                int_rs_valid_o  = 1'b1;
-                jb_instr_o       = 1'b1;
+                jb_instr_o      = 1'b1;
                 fe_res_valid_o  = 1'b1;
                 mis_flush_o     = 1'b1;
             end
 
             MIS_LOAD_PC: begin
-                issue_resume_o  = 1'b1;
+                fe_res_valid_o  = 1'b1;
+            end
+
+            CLEAR_COMM_REG: begin
+                comm_reg_clr_o  = 1'b1;
             end
 
             COMMIT_CSR: begin

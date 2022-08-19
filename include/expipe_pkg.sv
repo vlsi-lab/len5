@@ -208,6 +208,18 @@ package expipe_pkg;
         MULT_MULHSU
     } mult_ctl_t;
 
+    // Div opcodes
+    typedef enum logic [MAX_EU_CTL_LEN-1:0] {
+        DIV_DIV,
+        DIV_DIVU,
+        DIV_DIVW,
+        DIV_DIVUW,
+        DIV_REM,
+        DIV_REMU,
+        DIV_REMW,
+        DIV_REMUW
+    } div_ctl_t;
+
     // Branch unit control
     typedef enum logic [MAX_EU_CTL_LEN-1:0] {
         BEQ   = 'h0,
@@ -216,7 +228,8 @@ package expipe_pkg;
         BGE   = 'h3,
         BLTU  = 'h4,
         BGEU  = 'h5,
-        JUMP  = 'h6
+        JAL   = 'h6,
+        JALR  = 'h7
     } branch_type_t;
 
     // Load-store unit control
@@ -234,6 +247,7 @@ package expipe_pkg;
     typedef union packed {
         alu_ctl_t                   alu;
         mult_ctl_t                  mult;
+        div_ctl_t                   div;
         branch_type_t               bu;
         ldst_width_t                lsu;
         logic [MAX_EU_CTL_LEN-1:0]  raw;
@@ -256,32 +270,74 @@ package expipe_pkg;
         EU_NONE             //the instruction is directly sent to the ROB (csr, special instructions, etc.)
     } issue_eu_t;
 
+    // ARITHMETIC RESERVATION STATION
+    // ------------------------------
+    
+    /* Arithmetic unit state */
+    typedef enum logic [2:0] {
+        ARITH_S_EMPTY,         // empty
+        ARITH_S_RS1_PENDING,   // waiting for rs1 forwarding
+        ARITH_S_RS2_PENDING,   // waiting for rs2 forwarding
+        ARITH_S_RS12_PENDING,  // waiting for rs1 and rs2 forwarding
+        ARITH_S_EX_REQ,        // requesting execution to execution unit
+        ARITH_S_EX_WAIT,       // waiting for the BU result
+        ARITH_S_COMPLETED,     // ready to write the result on the CDB
+        ARITH_S_HALT           // for debug
+    } arith_state_t;
+
+    /* Branch unit operations */
+    typedef enum logic [2:0] {
+        ARITH_OP_NONE,
+        ARITH_OP_INSERT,
+        ARITH_OP_SAVE_RS12,
+        ARITH_OP_SAVE_RS1,
+        ARITH_OP_SAVE_RS2,
+        ARITH_OP_SAVE_RES
+    } arith_op_t;
+
     // -----------
     // BRANCH UNIT
     // -----------
 
-    // Reservation station entry 
+    /* Branch unit status */
+    typedef enum logic [2:0] {
+        BU_S_EMPTY,         // empty
+        BU_S_RS1_PENDING,   // waiting for rs1 forwarding
+        BU_S_RS2_PENDING,   // waiting for rs2 forwarding
+        BU_S_RS12_PENDING,  // waiting for rs1 and rs2 forwarding
+        BU_S_EX_REQ,        // requesting execution to BU logic
+        BU_S_EX_WAIT,       // waiting for the BU result
+        BU_S_COMPLETED,     // ready to write the result on the CDB
+        BU_S_HALT           // for debug
+    } bu_state_t;
+
+    /* Branch unit reservation station data */ 
     typedef struct packed {
-        logic                   valid;      // The entry contains a valid instruction
-        logic                   busy;       // The instruction is being executed in the assigned EU
-        `ifdef ENABLE_AGE_BASED_SELECTOR
-        rob_idx_t               entry_age; // The age of the entry, used for scheduling
-        `endif
-        branch_type_t           branch_type;// Branch type for the branch unit
-        logic                   rs1_ready;  // The first operand value is available in 'rs1_value'
-        rob_idx_t               rs1_idx;    // The entry of the rob that will contain the required operand
-        logic [XLEN-1:0]        rs1_value;  // The value of the first operand
-        logic                   rs2_ready;  // The second operand value is available in 'rs2_value'
-        rob_idx_t               rs2_idx;    // The entry of the rob that will contain the required operand
-        logic [XLEN-1:0]        rs2_value;  // The value of the second operand
-        logic [XLEN-1:0]        imm_value;  // Immediate value
-        logic [XLEN-1:0]        curr_pc;    // Program counter of the current instruction
-        logic                   res_ready;  // the computed target address and branch outcome are available
-        rob_idx_t               res_idx;    // The entry of the ROB where the result will be stored
-        logic                   taken;      // Branch outcome prediction, then replaced by computed outcome
-        logic [XLEN-1:0]        target;     // Predicted target PC, later replaced by computed target PC
-        logic                   mispredicted;// the branch was mispredicted
-    } bu_rs_entry_t;
+        branch_type_t           branch_type;        // Branch type for the branch unit
+        logic [XLEN-1:0]        curr_pc;
+        rob_idx_t               rs1_rob_idx;        // The entry of the rob that will contain the required operand
+        logic [XLEN-1:0]        rs1_value;          // The value of the first operand
+        rob_idx_t               rs2_rob_idx;        // The entry of the rob that will contain the required operand
+        logic [XLEN-1:0]        rs2_value;          // The value of the second operand
+        logic [XLEN-1:0]        imm_value;          // Immediate value
+        rob_idx_t               dest_rob_idx;       // The entry of the ROB where the result will be stored
+        logic [XLEN-1:0]        target;
+        logic                   taken;
+        logic                   mispredicted;
+    `ifndef LEN5_C_EN
+        logic                   except_raised;
+    `endif /* LEN5_C_EN */
+    } bu_data_t;
+
+    /* Branch unit operations */
+    typedef enum logic [2:0] {
+        BU_OP_NONE,
+        BU_OP_INSERT,
+        BU_OP_SAVE_RS12,
+        BU_OP_SAVE_RS1,
+        BU_OP_SAVE_RS2,
+        BU_OP_SAVE_RES
+    } bu_op_t;
 
     // ---------------
     // LOAD-STORE UNIT
@@ -301,7 +357,7 @@ package expipe_pkg;
 
     /* Load instruction data */
     typedef struct packed {
-        ldst_width_t                 load_type;
+        ldst_width_t                load_type;
         // logic [STBUFF_IDX_LEN-1:0]  older_stores;
         rob_idx_t                   rs1_rob_idx;
         logic [XLEN-1:0]            rs1_value;

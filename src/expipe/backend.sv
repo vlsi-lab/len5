@@ -29,6 +29,7 @@ module backend (
 
     // Frontend
     input   logic                   fetch_valid_i,
+    input   logic                   fetch_ready_i,
     output  logic                   fetch_ready_o,
     input   logic [ILEN-1:0]        fetch_instr_i,
     input   prediction_t            fetch_pred_i,
@@ -133,12 +134,8 @@ module backend (
     logic                       ex_issue_ready [0:EU_N-1];
     logic                       il_ex_valid [0:EU_N-1];
     logic [MAX_EU_CTL_LEN-1:0]  issue_ex_eu_ctl;
-    logic                       issue_ex_rs1_ready;
-    rob_idx_t                   issue_ex_rs1_idx;
-    logic [XLEN-1:0]            issue_ex_rs1_value;
-    logic                       issue_ex_rs2_ready;
-    rob_idx_t                   issue_ex_rs2_idx;
-    logic [XLEN-1:0]            issue_ex_rs2_value;
+    op_data_t                   issue_ex_rs1;
+    op_data_t                   issue_ex_rs2;
     logic [XLEN-1:0]            issue_ex_imm_value;
     rob_idx_t                   issue_ex_rob_idx;
     logic [XLEN-1:0]            issue_ex_curr_pc;
@@ -266,12 +263,8 @@ module backend (
         .ex_ready_i                     (ex_issue_ready             ),
         .ex_valid_o                     (il_ex_valid                ),
         .ex_eu_ctl_o                    (issue_ex_eu_ctl            ),
-        .ex_rs1_ready_o                 (issue_ex_rs1_ready         ),
-        .ex_rs1_idx_o                   (issue_ex_rs1_idx           ),
-        .ex_rs1_value_o                 (issue_ex_rs1_value         ),
-        .ex_rs2_ready_o                 (issue_ex_rs2_ready         ),
-        .ex_rs2_idx_o                   (issue_ex_rs2_idx           ),
-        .ex_rs2_value_o                 (issue_ex_rs2_value         ),
+        .ex_rs1_o                       (issue_ex_rs1               ),
+        .ex_rs2_o                       (issue_ex_rs2               ),
         .ex_imm_value_o                 (issue_ex_imm_value         ),
         .ex_rob_idx_o                   (issue_ex_rob_idx           ),
         .ex_curr_pc_o                   (issue_ex_curr_pc           ),
@@ -302,6 +295,7 @@ module backend (
     (
         .clk_i                  (clk_i                      ),
         .rst_n_i                (rst_n_i                    ),
+        .flush_i                (mis_flush                  ),
         .issue_valid_i          (il_int_regstat_valid       ),
         .issue_rd_idx_i         (il_int_regstat_rd_idx      ),
         .issue_rob_idx_i        (il_int_regstat_rob_idx     ),
@@ -387,12 +381,8 @@ module backend (
         .issue_valid_i              (il_ex_valid            ),
         .issue_ready_o              (ex_issue_ready         ),
         .issue_eu_ctl_i             (issue_ex_eu_ctl        ),
-        .issue_rs1_ready_i          (issue_ex_rs1_ready     ),
-        .issue_rs1_idx_i            (issue_ex_rs1_idx       ),
-        .issue_rs1_value_i          (issue_ex_rs1_value     ),
-        .issue_rs2_ready_i          (issue_ex_rs2_ready     ),
-        .issue_rs2_idx_i            (issue_ex_rs2_idx       ),
-        .issue_rs2_value_i          (issue_ex_rs2_value     ),
+        .issue_rs1_i                (issue_ex_rs1           ),
+        .issue_rs2_i                (issue_ex_rs2           ),
         .issue_imm_value_i          (issue_ex_imm_value     ),
         .issue_rob_idx_i            (issue_ex_rob_idx       ),
         .issue_curr_pc_i            (issue_ex_curr_pc       ),
@@ -450,6 +440,7 @@ module backend (
         
         .mis_flush_o            (mis_flush                  ),
         
+        .fe_ready_i             (fetch_ready_i              ),
         .fe_bpu_flush_o         (fetch_bpu_flush_o          ),
         .fe_res_valid_o         (fetch_res_valid_o          ),
         .fe_res_o               (fetch_res_o                ),

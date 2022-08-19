@@ -114,7 +114,6 @@ module issue_decoder (
             (instruction_i.i.imm11 == '0)) begin
             assigned_eu                 = EU_NONE;
             res_ready                   = 1'b1;
-            stall_possible              = 1'b1;
         end
         
         // RV64I
@@ -141,10 +140,8 @@ module issue_decoder (
         // JAL
         else if (instruction_i.j.opcode == `OPCODE_JAL) begin
             assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl.bu                   = JUMP;
+            eu_ctl.bu                   = JAL;
             imm_format                  = IMM_TYPE_J;
-            rs1_is_pc                   = 1'b1;         // first operand is pc
-            rs2_is_imm                  = 1'b1;         // second operand is J-immediate
             regstat_upd                 = 1'b1;
             jb_instr_o                  = 1'b1;
         end 
@@ -152,10 +149,9 @@ module issue_decoder (
         // JALR
         else if ((instruction_i.i.opcode == `OPCODE_JALR) && 
                 (instruction_i.i.funct3 == `FUNCT3_JALR)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                   = ALU_ADD;
+            assigned_eu                 = EU_BRANCH_UNIT;
+            eu_ctl.bu                   = JALR;
             rs1_req                     = 1'b1;
-            rs2_is_imm                  = 1'b1;         // second operand is I-immediate
             imm_format                  = IMM_TYPE_I;
             regstat_upd                 = 1'b1;
             jb_instr_o                  = 1'b1;

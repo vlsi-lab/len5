@@ -40,6 +40,7 @@ module commit_stage (
     output  logic                       mis_flush_o, // flush after misprediction
 
     // Data to frontend
+    input   logic                       fe_ready_i,
     output  logic                       fe_bpu_flush_o, // flush the Branch Prediction Unit internal structures
     output  logic                       fe_res_valid_o,
     output  resolution_t                fe_res_o,
@@ -117,8 +118,10 @@ module commit_stage (
     rob_idx_t                   rob_reg_head_idx;
 
     // ROB <--> Operands forwarding logic
+    logic                       rob_opfwd_rs1_valid;
     logic                       rob_opfwd_rs1_ready;
     logic [XLEN-1:0]            rob_opfwd_rs1_value;
+    logic                       rob_opfwd_rs2_valid;
     logic                       rob_opfwd_rs2_ready;
     logic [XLEN-1:0]            rob_opfwd_rs2_value;
 
@@ -132,7 +135,7 @@ module commit_stage (
     inreg_data_t                inreg_buff_data;
 
     // Committing instruction register
-    logic                       comm_reg_en;
+    logic                       comm_reg_en, comm_reg_clr;
     rob_entry_t                 comm_reg_data;
     logic                       comm_reg_valid;
 
@@ -172,8 +175,10 @@ module commit_stage (
         .issue_tail_idx_o    (issue_tail_idx_o    ),
         .issue_rs1_rob_idx_i (issue_rs1_rob_idx_i ),
         .issue_rs2_rob_idx_i (issue_rs2_rob_idx_i ),
+        .opfwd_rs1_valid_o   (rob_opfwd_rs1_valid ),
         .opfwd_rs1_ready_o   (rob_opfwd_rs1_ready ),
         .opfwd_rs1_value_o   (rob_opfwd_rs1_value ),
+        .opfwd_rs2_valid_o   (rob_opfwd_rs2_valid ),
         .opfwd_rs2_ready_o   (rob_opfwd_rs2_ready ),
         .opfwd_rs2_value_o   (rob_opfwd_rs2_value ),
         .comm_valid_o        (rob_reg_valid       ),
@@ -217,11 +222,11 @@ module commit_stage (
     // 4) Commit stage committing instruction buffer -- oldest
     always_comb begin : op_fwd_logic
         // RS1
-        if (cdb_valid_i && !cdb_data_i.except_raised && cdb_data_i.rob_idx == issue_rs1_rob_idx_i) begin
-            issue_rs1_ready_o   = 1'b1;
+        if (cdb_valid_i && cdb_data_i.rob_idx == issue_rs1_rob_idx_i) begin
             issue_rs1_value_o   = cdb_data_i.res_value;
-        end else if (rob_opfwd_rs1_ready) begin
             issue_rs1_ready_o   = 1'b1;
+        end else if (rob_opfwd_rs1_valid) begin
+            issue_rs1_ready_o   = rob_opfwd_rs1_ready;
             issue_rs1_value_o   = rob_opfwd_rs1_value;
         end else if (inreg_buff_full && inreg_buff_data.rob_idx == issue_rs1_rob_idx_i) begin
             issue_rs1_ready_o   = 1'b1;
@@ -237,11 +242,11 @@ module commit_stage (
             issue_rs1_value_o   = '0;
         end
         // RS2
-        if (cdb_valid_i && !cdb_data_i.except_raised && cdb_data_i.rob_idx == issue_rs2_rob_idx_i) begin
-            issue_rs2_ready_o   = 1'b1;
+        if (cdb_valid_i && cdb_data_i.rob_idx == issue_rs2_rob_idx_i) begin
             issue_rs2_value_o   = cdb_data_i.res_value;
-        end else if (rob_opfwd_rs2_ready) begin
             issue_rs2_ready_o   = 1'b1;
+        end else if (rob_opfwd_rs2_valid) begin
+            issue_rs2_ready_o   = rob_opfwd_rs2_ready;
             issue_rs2_value_o   = rob_opfwd_rs2_value;
         end else if (inreg_buff_full && inreg_buff_data.rob_idx == issue_rs2_rob_idx_i) begin
             issue_rs2_ready_o   = 1'b1;
@@ -262,12 +267,16 @@ module commit_stage (
     // -------------------------------
     always_ff @( posedge clk_i or negedge rst_n_i ) begin : comm_reg
         if (!rst_n_i) begin
-            comm_reg_data   = 'h0;
-            comm_reg_valid  = 1'b0;
+            comm_reg_data   <= 'h0;
+            comm_reg_valid  <= 1'b0;
+        end
+        else if (comm_reg_clr) begin
+            comm_reg_data   <= 'h0;
+            comm_reg_valid  <= 1'b0;
         end
         else if (comm_reg_en) begin
-            comm_reg_data   = inreg_data_out.data;
-            comm_reg_valid  = inreg_cu_valid;
+            comm_reg_data   <= inreg_data_out.data;
+            comm_reg_valid  <= inreg_cu_valid;
         end
     end
 
@@ -293,6 +302,7 @@ module commit_stage (
         .comm_type_i        (cd_comm_type           ),
         .mispredict_i       (inreg_cu_mispredicted  ),
         .comm_reg_en_o      (comm_reg_en            ),
+        .comm_reg_clr_o     (comm_reg_clr           ),
         .jb_instr_o         (cu_jb_instr            ),
         .valid_i            (inreg_cu_valid         ),
         .ready_o            (cu_inreg_ready         ),
@@ -309,6 +319,7 @@ module commit_stage (
         .sb_exec_store_o    (sb_exec_store_o        ),
         .csr_valid_o        (csr_valid_o            ),
         .csr_type_o         (csr_instr_type_o       ),
+        .fe_ready_i         (fe_ready_i             ),
         .fe_res_valid_o     (fe_res_valid_o         ),
         .fe_bpu_flush_o     (fe_bpu_flush_o         ),
         .mis_flush_o        (cu_mis_flush           ),

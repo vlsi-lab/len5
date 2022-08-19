@@ -62,6 +62,7 @@ module datapath #(
     resolution_t        be_fe_res;
     logic               be_fe_except_raised;
     logic [XLEN-1:0]    be_fe_except_pc;
+    logic               fe_be_comm_ready;
 
     // ---------
     // FRONT-END
@@ -91,7 +92,8 @@ module datapath #(
         .comm_except_raised_i  (be_fe_except_raised   ),
         .comm_except_pc_i      (be_fe_except_pc       ),
         .comm_res_valid_i      (be_fe_res_valid       ),
-        .comm_res_i            (be_fe_res             )
+        .comm_res_i            (be_fe_res             ),
+        .comm_ready_o          (fe_be_comm_ready      )
     );
 
     // --------
@@ -102,6 +104,7 @@ module datapath #(
     	.clk_i                 (clk_i                 ),
         .rst_n_i               (rst_n_i               ),
         .fetch_valid_i         (fe_be_valid           ),
+        .fetch_ready_i         (fe_be_comm_ready      ),
         .fetch_ready_o         (be_fe_ready           ),
         .fetch_instr_i         (fe_be_instr           ),
         .fetch_pred_i          (fe_be_pred            ),

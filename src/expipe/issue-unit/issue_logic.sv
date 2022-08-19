@@ -72,12 +72,8 @@ module issue_logic (
     input   logic                   ex_ready_i [0:EU_N-1],  // valid signal from each reservation station
     output  logic                   ex_valid_o [0:EU_N-1],  // ready signal to each reservation station
     output  eu_ctl_t                ex_eu_ctl_o,        // controls for the associated EU
-    output  logic                   ex_rs1_ready_o,     // first operand is ready at issue time (from the RF or the ROB)
-    output  rob_idx_t               ex_rs1_idx_o,       // the index of the ROB where the first operand can be found (if not ready)
-    output  logic [XLEN-1:0]        ex_rs1_value_o,     // the value of the first operand (if ready)
-    output  logic                   ex_rs2_ready_o,     // second operand is ready at issue time (from the RF or the ROB)
-    output  rob_idx_t               ex_rs2_idx_o,       // the index of the ROB where the first operand can be found (if not ready)
-    output  logic [XLEN-1:0]        ex_rs2_value_o,     // the value of the first operand (if ready)
+    output  op_data_t               ex_rs1_o,
+    output  op_data_t               ex_rs2_o,
     output  logic [XLEN-1:0]        ex_imm_value_o,     // the value of the immediate field
     output  rob_idx_t               ex_rob_idx_o,       // the location of the ROB assigned to the instruction
     output  logic [XLEN-1:0]        ex_curr_pc_o,       // the PC of the current issuing instr (branches only)
@@ -250,26 +246,6 @@ module issue_logic (
         end
     end
 
-    // ----------------------
-    // REGISTER STATUS UPDATE
-    // ----------------------
-    always_comb begin: regstat_upd_logic
-        // default values
-    `ifdef LEN5_FP_EN
-        fp_regstat_valid_o      = 1'b0;
-    `endif /* LEN5_FP_EN */
-        int_regstat_valid_o      = 1'b0;
-        
-        if (iq_valid_i && id_regstat_upd) begin
-        `ifdef LEN5_FP_EN
-            if (id_fp_rs)   fp_regstat_valid_o      = 1'b1;
-            else            int_regstat_valid_o     = 1'b1;
-        `else
-            int_regstat_valid_o     = 1'b1;
-        `endif /* LEN5_FP_EN */
-        end
-    end
-
     // --------------
     // OPERANDS FETCH
     // --------------
@@ -320,7 +296,7 @@ module issue_logic (
                     rs1_ready           = 1'b1;
                     rs1_value           = intrf_rs1_value_i;
                 end
-            end
+            end else rs1_ready = !id_rs1_req;
 
             // Fetch rs2
             if (id_rs2_is_imm) begin
@@ -339,7 +315,7 @@ module issue_logic (
                     rs2_ready           = 1'b1;
                     rs2_value           = intrf_rs2_value_i;
                 end
-            end
+            end else rs2_ready = !id_rs2_req;
 
         /* FLOATING-POINT OPERANDS */
         `ifdef LEN5_FP_EN
@@ -359,7 +335,7 @@ module issue_logic (
                     rs1_ready           = 1'b1;
                     rs1_value           = fprf_rs1_value_i;
                 end
-            end
+            end else rs1_ready = !id_rs1_req;
 
             // Fetch rs2
             if (id_rs2_req) begin               // rs2 value is required
@@ -375,7 +351,7 @@ module issue_logic (
                     rs2_ready           = 1'b1;
                     rs2_value           = fprf_rs2_value_i;
                 end
-            end
+            end else rs2_ready = !id_rs2_req;
 
             // Fetch rs3
             // ADD RS3 TO FP RF AND RS
@@ -459,13 +435,12 @@ module issue_logic (
     assign  ex_eu_ctl_o                 = id_eu_ctl;
 
     // Source operands info
-    assign  ex_rs1_ready_o              = rs1_ready;
-    assign  ex_rs2_ready_o              = rs2_ready;
-    assign  ex_rs1_idx_o                = rob_rs1_idx;
-    assign  ex_rs2_idx_o                = rob_rs2_idx;
-
-    assign  ex_rs1_value_o              = rs1_value;
-    assign  ex_rs2_value_o              = rs2_value;
+    assign  ex_rs1_o.ready              = rs1_ready;
+    assign  ex_rs2_o.ready              = rs2_ready;
+    assign  ex_rs1_o.rob_idx            = rob_rs1_idx;
+    assign  ex_rs2_o.rob_idx            = rob_rs2_idx;
+    assign  ex_rs1_o.value              = rs1_value;
+    assign  ex_rs2_o.value              = rs2_value;
     assign  ex_imm_value_o              = imm_value;
 
     // Destination ROB entry
@@ -483,6 +458,7 @@ module issue_logic (
     assign  cu_stall_o                  = id_stall_possible || eh_stall_possible;
 
     // To the integer register status register
+    assign  int_regstat_valid_o         = comm_valid_o && comm_ready_i && id_regstat_upd;
     assign  int_regstat_rs1_idx_o       = instr_rs1_idx;
     assign  int_regstat_rs2_idx_o       = instr_rs2_idx; 
     assign  int_regstat_rd_idx_o        = instr_rd_idx;
@@ -490,6 +466,7 @@ module issue_logic (
 
     `ifdef LEN5_FP_EN
     // To the floating point register status register
+    assign  fp_regstat_valid_o          = comm_valid_o && comm_ready_i && id_regstat_upd;
     assign  fp_regstat_rs1_idx_o        = instr_rs1_idx;
     assign  fp_regstat_rs2_idx_o        = instr_rs2_idx; 
     assign  fp_regstat_rd_idx_o         = instr_rd_idx;

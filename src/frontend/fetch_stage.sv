@@ -47,10 +47,11 @@ module fetch_stage
 
 
     // From commit unit
+    input   logic               comm_res_valid_i,
+    input   resolution_t        comm_res_i,
     input   logic               comm_except_raised_i,
     input   logic [XLEN-1:0]    comm_except_pc_i,
-    input   logic               comm_res_valid_i,
-    input   resolution_t        comm_res_i  
+    output  logic               comm_ready_o
 );
 
     // INTERNAL SIGNALS
@@ -71,6 +72,9 @@ module fetch_stage
     // BPU      \
     //           }  MEMORY INTERFACE > ISSUE STAGE
     // PC GEN   /
+
+    // TODO: add return-address stack for jumps/branches according to specs
+    // Section 2.5.
 
     // BRANCH PREDICTION UNIT
     // ----------------------
@@ -103,6 +107,7 @@ module fetch_stage
         .pred_i               (curr_pred            ),
         .mem_ready_i          (memif_pcgen_ready    ),
         .valid_o              (pcgen_memif_valid    ),
+        .comm_ready_o         (comm_ready_o         ),
         .pc_o                 (curr_pc              )
     );
 
