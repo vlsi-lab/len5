@@ -42,7 +42,7 @@ module pc_gen
 
     // Mux + adder
     assign add_pc = (comm_res_valid_i && comm_res_i.mispredict) ? comm_res_i.pc : pc_o;
-    assign adder_out = add_pc + ILEN >> 3;
+    assign adder_out = add_pc + (ILEN >> 3);
 
     // Priority list for choosing the next PC value:
     // 1) Exception

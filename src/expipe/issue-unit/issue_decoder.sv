@@ -28,31 +28,32 @@ import memory_pkg::*;
 
 module issue_decoder (
     // Instruction from the issue logic
-    input   instr_t                         instruction_i,    // the issuing instruction
+    input   instr_t         instruction_i,    // the issuing instruction
     
 `ifdef LEN5_PRIVILEGED_EN
     // CSR data
-    input                                   mstatus_tsr_i,    // the TSR bit from the mstatus CSR
+    input                   mstatus_tsr_i,    // the TSR bit from the mstatus CSR
 `endif /* LEN5_PRIVILEGED_EN */
 
     // Information to the issue logic
-    output  logic                           except_raised_o,  // an exception occurred during decoding
-    output  except_code_t                   except_code_o,    // exception code to send to the ROB
-    output  logic                           res_ready_o,      // force ready to commit in the ROB
-    output  logic                           stall_possible_o, // the instruction issue can be stall to save power
+    output  logic           except_raised_o,  // an exception occurred during decoding
+    output  except_code_t   except_code_o,    // exception code to send to the ROB
+    output  logic           res_ready_o,      // force ready to commit in the ROB
+    output  logic           stall_possible_o, // the instruction issue can be stall to save power
 
-    output  issue_eu_t                      eu_o,             // assigned EU
-    output  logic [MAX_EU_CTL_LEN-1:0]      eu_ctl_o,         // controls for the assigned EU
-    output  logic                           fp_rs_o,          // source operands are from FP register file
-    output  logic                           rs1_req_o,        // rs1 fetch is required
-    output  logic                           rs1_is_pc_o,      // rs1 is the current PC (for AUIPC)
-    output  logic                           rs2_req_o,        // rs2 fetch is required
-    output  logic                           rs2_is_imm_o,     // replace rs2 value with imm. (for i-type ALU instr.)
+    output  issue_eu_t      eu_o,             // assigned EU
+    output  eu_ctl_t        eu_ctl_o,         // controls for the assigned EU
+    output  logic           fp_rs_o,          // source operands are from FP register file
+    output  logic           rs1_req_o,        // rs1 fetch is required
+    output  logic           rs1_is_pc_o,      // rs1 is the current PC (for AUIPC)
+    output  logic           rs2_req_o,        // rs2 fetch is required
+    output  logic           rs2_is_imm_o,     // replace rs2 value with imm. (for i-type ALU instr.)
 `ifdef LEN5_FP_EN
-    output  logic                           rs3_req_o,        // rs3 (S, D only) fetch is required
+    output  logic           rs3_req_o,        // rs3 (S, D only) fetch is required
 `endif /* LEN5_FP_EN */
-    output  imm_format_t                    imm_format_o,     // immediate format    
-    output  logic                           regstat_upd_o     // the register status must be updated
+    output  imm_format_t    imm_format_o,     // immediate format
+    output  logic           regstat_upd_o,    // the register status must be updated
+    output  logic           jb_instr_o        // the isntruction is a jump or a branch (i.e. causes speculation)
 );
 
     // DEFINITIONS
@@ -62,7 +63,7 @@ module issue_decoder (
     logic                           res_ready;
     logic                           stall_possible;
     issue_eu_t                      assigned_eu;
-    logic [MAX_EU_CTL_LEN-1:0]      eu_ctl;
+    eu_ctl_t                        eu_ctl;
     logic                           rs_fp;
     logic                           rs1_req; 
     logic                           rs1_is_pc;      // for AUIPC
@@ -88,7 +89,7 @@ module issue_decoder (
         res_ready                   = 1'b0;
         stall_possible              = 1'b0;
         assigned_eu                 = EU_NONE;       // whatever: ignored if except_raised is asserted
-        eu_ctl                      = 0;
+        eu_ctl.raw                  = '0;
         rs_fp                       = 1'b0;         // normally from the integer register file
         rs1_req                     = 1'b0;
         rs1_is_pc                   = 1'b0;
@@ -99,6 +100,7 @@ module issue_decoder (
     `endif /* LEN5_FP_EN */
         imm_format                  = IMM_TYPE_I;
         regstat_upd                 = 1'b0;
+        jb_instr_o                  = 1'b0;
 
         // ----------------
         // UNPRIVILEGED ISA
@@ -128,10 +130,8 @@ module issue_decoder (
 
         // AUIPC
         else if ((instruction_i.u.opcode == `OPCODE_AUIPC)) begin
-            // depending on how it's implemented, stalling the fetch and issue could be convenient or not
-            // stall_possible              = 1'b1;
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl                      = ALU_ADD;
+            eu_ctl.alu                  = ALU_ADD;
             imm_format                  = IMM_TYPE_U;
             rs1_is_pc                   = 1'b1;         // first operand is PC
             rs2_is_imm                  = 1'b1;         // second operand is U-immediate
@@ -141,91 +141,97 @@ module issue_decoder (
         // JAL
         else if (instruction_i.j.opcode == `OPCODE_JAL) begin
             assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl                      = JUMP;
+            eu_ctl.bu                   = JUMP;
             imm_format                  = IMM_TYPE_J;
             rs1_is_pc                   = 1'b1;         // first operand is pc
             rs2_is_imm                  = 1'b1;         // second operand is J-immediate
             regstat_upd                 = 1'b1;
-            stall_possible              = 1'b1;
+            jb_instr_o                  = 1'b1;
         end 
 
         // JALR
         else if ((instruction_i.i.opcode == `OPCODE_JALR) && 
                 (instruction_i.i.funct3 == `FUNCT3_JALR)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl                      = ALU_ADD;
+            eu_ctl.alu                   = ALU_ADD;
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;         // second operand is I-immediate
             imm_format                  = IMM_TYPE_I;
             regstat_upd                 = 1'b1;
-            stall_possible              = 1'b1;
+            jb_instr_o                  = 1'b1;
         end
 
         // BEQ
         else if ((instruction_i.b.opcode == `OPCODE_BEQ) && 
                 (instruction_i.b.funct3 == `FUNCT3_BEQ)) begin
             assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl[BU_CTL_LEN-1:0]      = BEQ;
+            eu_ctl.bu                   = BEQ;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_B;
+            jb_instr_o                  = 1'b1;
         end
 
         // BNE
         else if ((instruction_i.b.opcode == `OPCODE_BNE) && 
                 (instruction_i.b.funct3 == `FUNCT3_BNE)) begin
             assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl[BU_CTL_LEN-1:0]      = BNE;
+            eu_ctl.bu                   = BNE;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_B;
+            jb_instr_o                  = 1'b1;
         end
 
         // BLT
         else if ((instruction_i.b.opcode == `OPCODE_BLT) && 
                 (instruction_i.b.funct3 == `FUNCT3_BLT)) begin
             assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl[BU_CTL_LEN-1:0]      = BLT;
+            eu_ctl.bu                   = BLT;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_B;
+            jb_instr_o                  = 1'b1;
         end
 
         // BGE
         else if ((instruction_i.b.opcode == `OPCODE_BGE) && 
                 (instruction_i.b.funct3 == `FUNCT3_BGE)) begin
             assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl[BU_CTL_LEN-1:0]      = BGE;
+            eu_ctl.bu                   = BGE;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_B;
+            jb_instr_o                  = 1'b1;
         end
 
         // BLTU
         else if ((instruction_i.b.opcode == `OPCODE_BLTU) && 
                 (instruction_i.b.funct3 == `FUNCT3_BLTU)) begin
             assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl[BU_CTL_LEN-1:0]      = BLTU;
+            eu_ctl.bu                   = BLTU;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_B;
+            jb_instr_o                  = 1'b1;
         end
 
         // BGEU
         else if ((instruction_i.b.opcode == `OPCODE_BGEU) && 
                 (instruction_i.b.funct3 == `FUNCT3_BGEU)) begin
             assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl[BU_CTL_LEN-1:0]      = BGEU;
+            eu_ctl.bu                   = BGEU;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_B;
+            jb_instr_o                  = 1'b1;
         end
 
         // LB
         else if ((instruction_i.i.opcode == `OPCODE_LB) && 
                 (instruction_i.i.funct3 == `FUNCT3_LB)) begin
             assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl                      = LS_BYTE;
+            eu_ctl.lsu                  = LS_BYTE;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
             regstat_upd                 = 1'b1;
@@ -235,7 +241,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_LH) && 
                 (instruction_i.i.funct3 == `FUNCT3_LH)) begin
             assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl                      = LS_HALFWORD;
+            eu_ctl.lsu                  = LS_HALFWORD;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
             regstat_upd                 = 1'b1;
@@ -245,7 +251,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_LW) && 
                 (instruction_i.i.funct3 == `FUNCT3_LW)) begin
             assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl                      = LS_WORD;
+            eu_ctl.lsu                  = LS_WORD;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
             regstat_upd                 = 1'b1;
@@ -255,7 +261,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_LD) && 
                 (instruction_i.i.funct3 == `FUNCT3_LD)) begin
             assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl                      = LS_DOUBLEWORD;
+            eu_ctl.lsu                  = LS_DOUBLEWORD;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
             regstat_upd                 = 1'b1;
@@ -265,7 +271,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_LBU) && 
                 (instruction_i.i.funct3 == `FUNCT3_LBU)) begin
             assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl                      = LS_BYTE_U;
+            eu_ctl.lsu                  = LS_BYTE_U;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
             regstat_upd                 = 1'b1;
@@ -275,7 +281,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_LHU) && 
                 (instruction_i.i.funct3 == `FUNCT3_LHU)) begin
             assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl                      = LS_HALFWORD_U;
+            eu_ctl.lsu                  = LS_HALFWORD_U;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
             regstat_upd                 = 1'b1;
@@ -285,7 +291,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_LWU) && 
                 (instruction_i.i.funct3 == `FUNCT3_LWU)) begin
             assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl                      = LS_WORD_U;
+            eu_ctl.lsu                  = LS_WORD_U;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
             regstat_upd                 = 1'b1;
@@ -295,7 +301,7 @@ module issue_decoder (
         else if ((instruction_i.s.opcode == `OPCODE_SB) && 
                 (instruction_i.s.funct3 == `FUNCT3_SB)) begin
             assigned_eu                 = EU_STORE_BUFFER;
-            eu_ctl                      = LS_BYTE;
+            eu_ctl.lsu                  = LS_BYTE;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_S;
@@ -305,7 +311,7 @@ module issue_decoder (
         else if ((instruction_i.s.opcode == `OPCODE_SH) && 
                 (instruction_i.s.funct3 == `FUNCT3_SH)) begin
             assigned_eu                 = EU_STORE_BUFFER;
-            eu_ctl                      = LS_HALFWORD;
+            eu_ctl.lsu                  = LS_HALFWORD;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_S;
@@ -315,7 +321,7 @@ module issue_decoder (
         else if ((instruction_i.s.opcode == `OPCODE_SW) && 
                 (instruction_i.s.funct3 == `FUNCT3_SW)) begin
             assigned_eu                 = EU_STORE_BUFFER;
-            eu_ctl                      = LS_WORD;
+            eu_ctl.lsu                  = LS_WORD;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_S;
@@ -325,7 +331,7 @@ module issue_decoder (
         else if ((instruction_i.s.opcode == `OPCODE_SD) && 
                 (instruction_i.s.funct3 == `FUNCT3_SD)) begin
             assigned_eu                 = EU_STORE_BUFFER;
-            eu_ctl                      = LS_DOUBLEWORD;
+            eu_ctl.lsu                  = LS_DOUBLEWORD;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_S;
@@ -335,7 +341,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_ADDI) && 
                 (instruction_i.i.funct3 == `FUNCT3_ADDI)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_ADD;
+            eu_ctl.alu                  = ALU_ADD;
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
@@ -346,7 +352,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_ADDIW) && 
                 (instruction_i.i.funct3 == `FUNCT3_ADDIW)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_ADDW;
+            eu_ctl.alu                  = ALU_ADDW;
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
@@ -357,7 +363,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_SLTI) && 
                 (instruction_i.i.funct3 == `FUNCT3_SLTI)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SLT;
+            eu_ctl.alu                  = ALU_SLT;
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
@@ -368,7 +374,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_SLTIU) && 
                 (instruction_i.i.funct3 == `FUNCT3_SLTIU)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SLTU;
+            eu_ctl.alu                  = ALU_SLTU;
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
@@ -379,7 +385,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_XORI) && 
                 (instruction_i.i.funct3 == `FUNCT3_XORI)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_XOR;
+            eu_ctl.alu                  = ALU_XOR;
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
@@ -390,7 +396,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_ORI) && 
                 (instruction_i.i.funct3 == `FUNCT3_ORI)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_OR;
+            eu_ctl.alu                  = ALU_OR;
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
@@ -401,7 +407,7 @@ module issue_decoder (
         else if ((instruction_i.i.opcode == `OPCODE_ANDI) && 
                 (instruction_i.i.funct3 == `FUNCT3_ANDI)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_AND;
+            eu_ctl.alu                  = ALU_AND;
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
@@ -413,7 +419,7 @@ module issue_decoder (
                 (instruction_i.i.funct3 == `FUNCT3_SLLIW) &&
                 (instruction_i.i.imm11[31:25] == 7'b0000000)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SLLW;
+            eu_ctl.alu                  = ALU_SLLW;
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
@@ -425,7 +431,7 @@ module issue_decoder (
                 (instruction_i.i.funct3 == `FUNCT3_SLLI) &&
                 (instruction_i.i.imm11[31:26] == 6'b000000)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SLL;
+            eu_ctl.alu                  = ALU_SLL;
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
@@ -437,7 +443,7 @@ module issue_decoder (
                 (instruction_i.i.funct3 == `FUNCT3_SRLIW) &&
                 (instruction_i.i.imm11[31:25] == 7'b0000000)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SRLW;
+            eu_ctl.alu                  = ALU_SRLW;
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
@@ -449,7 +455,7 @@ module issue_decoder (
                 (instruction_i.i.funct3 == `FUNCT3_SRLI) &&
                 (instruction_i.i.imm11[31:26] == 6'b000000)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SRL;
+            eu_ctl.alu                  = ALU_SRL;
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
@@ -461,7 +467,7 @@ module issue_decoder (
                 (instruction_i.i.funct3 == `FUNCT3_SRAIW) &&
                 (instruction_i.i.imm11[31:25] == 7'b0100000)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SRAW;
+            eu_ctl.alu                  = ALU_SRAW;
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
@@ -473,7 +479,7 @@ module issue_decoder (
                 (instruction_i.i.funct3 == `FUNCT3_SRAI) &&
                 (instruction_i.i.imm11[31:26] == 6'b010000)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SRA;
+            eu_ctl.alu                  = ALU_SRA;
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
@@ -485,7 +491,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_ADDW) && 
                 (instruction_i.r.funct7 == `FUNCT7_ADDW)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_ADDW;
+            eu_ctl.alu                  = ALU_ADDW;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -496,7 +502,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_SUBW) && 
                 (instruction_i.r.funct7 == `FUNCT7_SUBW)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SUBW;
+            eu_ctl.alu                  = ALU_SUBW;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -507,7 +513,7 @@ module issue_decoder (
             (instruction_i.r.funct3 == `FUNCT3_ADD) && 
             (instruction_i.r.funct7 == `FUNCT7_ADD)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_ADD;
+            eu_ctl.alu                  = ALU_ADD;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -518,7 +524,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_SUB) && 
                 (instruction_i.r.funct7 == `FUNCT7_SUB)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SUB;
+            eu_ctl.alu                  = ALU_SUB;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -529,7 +535,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_SLLW) && 
                 (instruction_i.r.funct7 == `FUNCT7_SLLW)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SLLW;
+            eu_ctl.alu                  = ALU_SLLW;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -540,7 +546,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_SLL) && 
                 (instruction_i.r.funct7 == `FUNCT7_SLL)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SLL;
+            eu_ctl.alu                  = ALU_SLL;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -551,7 +557,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_SLT) && 
                 (instruction_i.r.funct7 == `FUNCT7_SLT)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SLT;
+            eu_ctl.alu                  = ALU_SLT;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -562,7 +568,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_SLTU) && 
                 (instruction_i.r.funct7 == `FUNCT7_SLTU)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SLTU;
+            eu_ctl.alu                  = ALU_SLTU;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -573,7 +579,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_XOR) && 
                 (instruction_i.r.funct7 == `FUNCT7_XOR)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_XOR;
+            eu_ctl.alu                  = ALU_XOR;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -584,7 +590,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_SRLW) && 
                 (instruction_i.r.funct7 == `FUNCT7_SRLW)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SRLW;
+            eu_ctl.alu                  = ALU_SRLW;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -595,7 +601,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_SRL) && 
                 (instruction_i.r.funct7 == `FUNCT7_SRL)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SRL;
+            eu_ctl.alu                  = ALU_SRL;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -606,7 +612,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_SRAW) && 
                 (instruction_i.r.funct7 == `FUNCT7_SRAW)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SRAW;
+            eu_ctl.alu                  = ALU_SRAW;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -617,7 +623,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_SRA) && 
                 (instruction_i.r.funct7 == `FUNCT7_SRA)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_SRA;
+            eu_ctl.alu                  = ALU_SRA;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -628,7 +634,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_OR) && 
                 (instruction_i.r.funct7 == `FUNCT7_OR)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_OR;
+            eu_ctl.alu                  = ALU_OR;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -639,7 +645,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_AND) && 
                 (instruction_i.r.funct7 == `FUNCT7_AND)) begin
             assigned_eu                 = EU_INT_ALU;
-            eu_ctl[ALU_CTL_LEN-1:0]     = ALU_AND;
+            eu_ctl.alu                  = ALU_AND;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -765,7 +771,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_MUL) &&
                 (instruction_i.r.funct7 == `FUNCT7_MUL)) begin
             assigned_eu                 = EU_INT_MULT;
-            eu_ctl[MULT_CTL_LEN-1:0]    = MULT_MUL;
+            eu_ctl.mult                 = MULT_MUL;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -776,7 +782,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_MULW) &&
                 (instruction_i.r.funct7 == `FUNCT7_MULW)) begin
             assigned_eu                 = EU_INT_MULT;
-            eu_ctl[MULT_CTL_LEN-1:0]    = MULT_MULW;
+            eu_ctl.mult                 = MULT_MULW;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -787,7 +793,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_MULH) &&
                 (instruction_i.r.funct7 == `FUNCT7_MULH)) begin
             assigned_eu                 = EU_INT_MULT;
-            eu_ctl[MULT_CTL_LEN-1:0]    = MULT_MULH;
+            eu_ctl.mult                 = MULT_MULH;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -798,7 +804,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_MULHSU) &&
                 (instruction_i.r.funct7 == `FUNCT7_MULHSU)) begin
             assigned_eu                 = EU_INT_MULT;
-            eu_ctl[MULT_CTL_LEN-1:0]    = MULT_MULHSU;
+            eu_ctl.mult                 = MULT_MULHSU;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -809,7 +815,7 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_MULHU) &&
                 (instruction_i.r.funct7 == `FUNCT7_MULHU)) begin
             assigned_eu                 = EU_INT_MULT;
-            eu_ctl[MULT_CTL_LEN-1:0]    = MULT_MULHU;
+            eu_ctl.mult                 = MULT_MULHU;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             regstat_upd                 = 1'b1;

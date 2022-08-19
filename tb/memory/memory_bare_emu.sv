@@ -18,6 +18,7 @@
 import uvm_pkg::*;
 import memory_pkg::*;
 import len5_pkg::*;
+import expipe_pkg::*;
 
 module memory_bare_emu #(
     parameter   DUMP_PERIOD = 1 // cycles
@@ -29,136 +30,209 @@ module memory_bare_emu #(
     input   string          mem_file_i,
     input   string          mem_dump_file_i,
 
-    input   logic           valid_i,
-    input   logic           ready_i,
-    output  logic           valid_o,
-    output  logic           ready_o,
-    input   mem_req_t       req_i,
-    output  mem_ans_t       ans_o
+    // Instruction port (read-only)
+    input   logic           ins_valid_i,
+    input   logic           ins_ready_i,
+    output  logic           ins_valid_o,
+    output  logic           ins_ready_o,
+    input   mem_req_t       ins_req_i,
+    output  mem_ans_t       ins_ans_o,
+
+    // Data port
+    input   logic           data_valid_i,
+    input   logic           data_ready_i,
+    output  logic           data_valid_o,
+    output  logic           data_ready_o,
+    input   mem_req_t       data_req_i,
+    output  mem_ans_t       data_ans_o
 );
 
     // INTERNAL SIGNALS
     // ----------------
-    mem_ans_t       ans;    // answer to the core
-    memory_class    mem;    // memory object
-    int             ret;    // memory emulator return value
+    mem_ans_t       ins_ans, data_ans;  // answer to the core
+    memory_class    i_mem, d_mem;       // memory objects (the memory array itself is a static member)
+    int             i_ret, d_ret;       // memory emulator return value
 
     // Memory initialization
     // ---------------------
     initial begin
         #1;
-        mem = new(mem_file_i);
-        if (mem.LoadMem() < 0) begin
+        i_mem = new(mem_file_i);
+        d_mem = new(mem_file_i);
+        if (i_mem.LoadMem() < 0) begin
             `uvm_fatal("MEM EMU", "Unable to load instruction memory")
         end
 
         // Dump the memory content in each cycle 
         while (1) begin
             repeat (DUMP_PERIOD) @(posedge clk_i);
-            if (mem.PrintMem(mem_dump_file_i)) begin
+            if (i_mem.PrintMem(mem_dump_file_i)) begin
                 `uvm_error("MEM EMU", "Unable to dump memory content to file");
             end
         end
     end
 
-    // Process a memory request
-    // ------------------------
-    always_comb begin : p_mem_req
-        ans.tag             = req_i.tag;
-        ans.acc_type        = req_i.acc_type;
-        ans.addr            = req_i.addr;
-        ans.value           = 'h0;
-        ans.except_raised   = 1'b0;
-        ans.except_code     = E_UNKNOWN;
+    // INSTRUCTION REQUEST
+    // -------------------
+    always_comb begin : p_ins_mem_req
+        ins_ans.tag             = ins_req_i.tag;
+        ins_ans.acc_type        = ins_req_i.acc_type;
+        ins_ans.addr            = ins_req_i.addr;
+        ins_ans.value           = 'h0;
+        ins_ans.except_raised   = 1'b0;
+        ins_ans.except_code     = E_UNKNOWN;
 
-        if (valid_i) begin
-            
-            case (req_i.acc_type)
+        if (ins_valid_i) begin
+            case (ins_req_i.acc_type)
                 MEM_ACC_INSTR: begin: read_instruction
-                    ret         = mem.ReadW(req_i.addr);
-                    ans.value   = {'0, mem.read_word};
+                    i_ret             = i_mem.ReadW(ins_req_i.addr);
+                    ins_ans.value   = {'0, i_mem.read_word};
                 end
-                MEM_ACC_ST: begin
-                    case (req_i.ls_type)
-                        LS_BYTE, LS_BYTE_U: begin
-                            ret = mem.WriteB(req_i.addr, req_i.value[7:0]);
-                        end
-                        LS_HALFWORD, LS_HALFWORD_U: begin
-                            ret = mem.WriteHW(req_i.addr, req_i.value[15:0]);
-                        end
-                        LS_WORD, LS_WORD_U: begin
-                            ret = mem.WriteW(req_i.addr, req_i.value[31:0]);
-                        end
-                        default: begin
-                            ret = mem.WriteDW(req_i.addr, req_i.value[63:0]);
-                        end
-                    endcase
-                end
-                default: begin: load_data
-                    case (req_i.ls_type)
-                        LS_BYTE, LS_BYTE_U: begin
-                            ret         = mem.ReadB(req_i.addr);
-                            ans.value   = {'0, mem.read_byte};
-                        end
-                        LS_HALFWORD, LS_HALFWORD_U: begin
-                            ret         = mem.ReadHW(req_i.addr);
-                            ans.value   = {'0, mem.read_halfword};
-                        end
-                        LS_WORD, LS_WORD_U: begin
-                            ret         = mem.ReadW(req_i.addr);
-                            ans.value   = {'0, mem.read_word};
-                        end
-                        default: begin
-                            ret         = mem.ReadDW(req_i.addr);
-                            ans.value   = mem.read_doubleword;
-                        end
-                    endcase
+                default: begin
+                    `uvm_error("MEM EMU", "Unsupported instruction request");
                 end
             endcase
 
             // Exception handling
-            case (ret)
-                0: ans.except_raised = 1'b0;
+            case (i_ret)
+                0: ins_ans.except_raised = 1'b0;
                 1: begin: address_misaligned
-                    ans.except_raised   = 1'b1;
-                    case (req_i.acc_type)
-                        MEM_ACC_INSTR:  ans.except_code = E_I_ADDR_MISALIGNED;
-                        MEM_ACC_LD:     ans.except_code = E_LD_ADDR_MISALIGNED;
-                        MEM_ACC_ST:     ans.except_code = E_ST_ADDR_MISALIGNED;
-                        default:        ans.except_code = E_UNKNOWN;
+                    ins_ans.except_raised   = 1'b1;
+                    case (ins_req_i.acc_type)
+                        MEM_ACC_INSTR:  ins_ans.except_code = E_I_ADDR_MISALIGNED;
+                        default:        ins_ans.except_code = E_UNKNOWN;
                     endcase
                 end
                 2: begin: access_fault
-                    ans.except_raised   = 1'b1;
-                    case (req_i.acc_type)
-                        MEM_ACC_INSTR:  ans.except_code = E_I_ACCESS_FAULT;
-                        MEM_ACC_LD:     ans.except_code = E_LD_ACCESS_FAULT;
-                        MEM_ACC_ST:     ans.except_code = E_ST_ACCESS_FAULT;
-                        default:        ans.except_code = E_UNKNOWN;
+                    ins_ans.except_raised   = 1'b1;
+                    case (ins_req_i.acc_type)
+                        MEM_ACC_INSTR:  ins_ans.except_code = E_I_ACCESS_FAULT;
+                        default:        ins_ans.except_code = E_UNKNOWN;
                     endcase
                 end
                 default: begin
-                    ans.except_raised   = 1'b1;
-                    ans.except_code = E_UNKNOWN;
+                    ins_ans.except_raised   = 1'b1;
+                    ins_ans.except_code = E_UNKNOWN;
                 end
             endcase
         end
     end
 
-    // Output register
-    // ---------------
+    // DATA REQUEST
+    // ------------
+    always_comb begin : p_data_mem_req
+        data_ans.tag             = data_req_i.tag;
+        data_ans.acc_type        = data_req_i.acc_type;
+        data_ans.addr            = data_req_i.addr;
+        data_ans.value           = 'h0;
+        data_ans.except_raised   = 1'b0;
+        data_ans.except_code     = E_UNKNOWN;
+
+        if (data_valid_i) begin
+            
+            case (data_req_i.acc_type)
+                MEM_ACC_INSTR: begin: read_instruction
+                    d_ret         = d_mem.ReadW(data_req_i.addr);
+                    data_ans.value   = {'0, d_mem.read_word};
+                end
+                MEM_ACC_ST: begin: store_data
+                    case (data_req_i.ls_type)
+                        LS_BYTE, LS_BYTE_U: begin
+                            d_ret = d_mem.WriteB(data_req_i.addr, data_req_i.value[7:0]);
+                        end
+                        LS_HALFWORD, LS_HALFWORD_U: begin
+                            d_ret = d_mem.WriteHW(data_req_i.addr, data_req_i.value[15:0]);
+                        end
+                        LS_WORD, LS_WORD_U: begin
+                            d_ret = d_mem.WriteW(data_req_i.addr, data_req_i.value[31:0]);
+                        end
+                        default: begin
+                            d_ret = d_mem.WriteDW(data_req_i.addr, data_req_i.value[63:0]);
+                        end
+                    endcase
+                end
+                MEM_ACC_LD: begin: load_data
+                    case (data_req_i.ls_type)
+                        LS_BYTE, LS_BYTE_U: begin
+                            d_ret         = d_mem.ReadB(data_req_i.addr);
+                            data_ans.value   = {'0, d_mem.read_byte};
+                        end
+                        LS_HALFWORD, LS_HALFWORD_U: begin
+                            d_ret         = d_mem.ReadHW(data_req_i.addr);
+                            data_ans.value   = {'0, d_mem.read_halfword};
+                        end
+                        LS_WORD, LS_WORD_U: begin
+                            d_ret         = d_mem.ReadW(data_req_i.addr);
+                            data_ans.value   = {'0, d_mem.read_word};
+                        end
+                        default: begin
+                            d_ret         = d_mem.ReadDW(data_req_i.addr);
+                            data_ans.value   = d_mem.read_doubleword;
+                        end
+                    endcase
+                end
+                default: begin
+                    `uvm_error("MEM EMU", "Unsupported data request");
+                end
+            endcase
+
+            // Exception handling
+            case (d_ret)
+                0: data_ans.except_raised = 1'b0;
+                1: begin: address_misaligned
+                    data_ans.except_raised   = 1'b1;
+                    case (data_req_i.acc_type)
+                        MEM_ACC_INSTR:  data_ans.except_code = E_I_ADDR_MISALIGNED;
+                        MEM_ACC_LD:     data_ans.except_code = E_LD_ADDR_MISALIGNED;
+                        MEM_ACC_ST:     data_ans.except_code = E_ST_ADDR_MISALIGNED;
+                        default:        data_ans.except_code = E_UNKNOWN;
+                    endcase
+                end
+                2: begin: access_fault
+                    data_ans.except_raised   = 1'b1;
+                    case (data_req_i.acc_type)
+                        MEM_ACC_INSTR:  data_ans.except_code = E_I_ACCESS_FAULT;
+                        MEM_ACC_LD:     data_ans.except_code = E_LD_ACCESS_FAULT;
+                        MEM_ACC_ST:     data_ans.except_code = E_ST_ACCESS_FAULT;
+                        default:        data_ans.except_code = E_UNKNOWN;
+                    endcase
+                end
+                default: begin
+                    data_ans.except_raised   = 1'b1;
+                    data_ans.except_code = E_UNKNOWN;
+                end
+            endcase
+        end
+    end
+
+    // Output registers
+    // ----------------
     spill_cell_flush #(
         .DATA_T (mem_ans_t )
-    ) u_out_reg (
+    ) u_ins_out_reg (
     	.clk_i   (clk_i    ),
         .rst_n_i (rst_n_i  ),
         .flush_i (flush_i  ),
-        .valid_i (valid_i  ),
-        .ready_i (ready_i  ),
-        .valid_o (valid_o  ),
-        .ready_o (ready_o  ),
-        .data_i  (ans      ),
-        .data_o  (ans_o    )
+        .valid_i (ins_valid_i  ),
+        .ready_i (ins_ready_i  ),
+        .valid_o (ins_valid_o  ),
+        .ready_o (ins_ready_o  ),
+        .data_i  (ins_ans      ),
+        .data_o  (ins_ans_o    )
+    );
+
+    spill_cell_flush #(
+        .DATA_T (mem_ans_t )
+    ) u_data_out_reg (
+    	.clk_i   (clk_i    ),
+        .rst_n_i (rst_n_i  ),
+        .flush_i (flush_i  ),
+        .valid_i (data_valid_i  ),
+        .ready_i (data_ready_i  ),
+        .valid_o (data_valid_o  ),
+        .ready_o (data_ready_o  ),
+        .data_i  (data_ans      ),
+        .data_o  (data_ans_o    )
     );
     
 endmodule

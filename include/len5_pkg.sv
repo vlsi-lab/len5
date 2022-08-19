@@ -162,21 +162,6 @@ package len5_pkg;
         logic [ICACHE_INSTR-1:0][ILEN-1:0]  line;
     } icache_out_t;
 
-    // -----------
-    // Branch unit
-    // -----------
-
-    localparam BRANCH_TYPE_LEN = 3;
-    typedef enum logic [BRANCH_TYPE_LEN-1:0] {
-        BEQ   = 'h0,
-        BNE   = 'h1,
-        BLT   = 'h2,
-        BGE   = 'h3,
-        BLTU  = 'h4,
-        BGEU  = 'h5,
-        JUMP  = 'h6
-    } branch_type_t;
-
     // ------------------
     // EXECUTION PIPELINE
     // ------------------

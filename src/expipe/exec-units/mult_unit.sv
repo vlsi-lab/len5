@@ -33,7 +33,7 @@ module mult_unit
     output  logic                   issue_ready_o,
 
     // Data from the issue stage
-    input   logic [EU_CTL_LEN-1:0]  eu_ctl_i,
+    input   mult_ctl_t              eu_ctl_i,
     input   logic                   rs1_ready_i,
     input   rob_idx_t rs1_idx_i,
     input   logic [XLEN-1:0]        rs1_value_i,

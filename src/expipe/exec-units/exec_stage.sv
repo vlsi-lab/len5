@@ -28,23 +28,10 @@ module exec_stage
     input   logic                       rst_n_i,
     input   logic                       flush_i,
 
-    // FETCH UNIT
-    // ----------
-    output  logic [XLEN-1:0]            fetch_res_pc_o,
-    output  logic [XLEN-1:0]            fetch_res_target_o,
-    output  logic                       fetch_res_taken_o,
-    output  logic                       fetch_res_valid_o,
-    output  logic                       fetch_res_mispredict_o,
-
     // ISSUE STAGE
-    // -----------
-
-    // Issue stage handshaking
     input   logic                       issue_valid_i [0:EU_N-1], // valid to each RS
     output  logic                       issue_ready_o [0:EU_N-1], // ready from each RS
-
-    // Issue stage data
-    input   logic [MAX_EU_CTL_LEN-1:0]  issue_eu_ctl_i,     // controls for the associated EU
+    input   eu_ctl_t                    issue_eu_ctl_i,     // controls for the associated EU
     input   logic                       issue_rs1_ready_i,  // first operand is ready at issue time (from the RF or the ROB)
     input   rob_idx_t                   issue_rs1_idx_i,    // the index of the ROB where the first operand can be found (if not ready
     input   logic [XLEN-1:0]            issue_rs1_value_i,  // the value of the first operand (if ready)
@@ -58,27 +45,15 @@ module exec_stage
     input   logic                       issue_pred_taken_i, // the predicted taken bit of the current issuing instr (branches only)
 
     // COMMON DATA BUS (CDB)
-    // ---------------------
-
-    // CDB handshaking
     input   logic [0:EU_N-1]            cdb_ready_i, // from the CDB arbiter
     input   logic                       cdb_valid_i,            // CDB data is valid
     output  logic [0:EU_N-1]            cdb_valid_o, // to the CDB arbiter
-
-    // CDB data
     input   cdb_data_t                  cdb_data_i,
     output  cdb_data_t [0:EU_N-1]       cdb_data_o,
 
     // ROB AND CSRs
-    // ------------
-
-    // Commit logic data
-    input   logic                       cl_sb_pop_store_i,
-    output  logic                       cl_sb_sb_head_completed_o,
-    output  rob_idx_t                   cl_sb_sb_head_rob_idx_o,
-
-    // CSRs data
-    input   logic [SATP_MODE_LEN-1:0]   vm_mode_i,      // virtual memory mode
+    input   logic                       comm_sb_spec_instr_i,
+    input   rob_idx_t                   comm_sb_rob_head_idx_i,
 `ifdef LEN5_FP_EN
     input   logic [FCSR_FRM_LEN-1:0]    csr_frm_i,      // global rounding mode for the FPU
 `endif /* LEN5_FP_EN */
@@ -112,35 +87,34 @@ module exec_stage
         .LB_DEPTH (LDBUFF_DEPTH ),
         .SB_DEPTH (STBUFF_DEPTH )
     ) u_load_store_unit (
-    	.clk_i                          (clk_i                            ),
-        .rst_n_i                        (rst_n_i                          ),
-        .flush_i                        (flush_i                          ),
-        .issue_lb_valid_i               (issue_valid_i[EU_LOAD_BUFFER]    ),
-        .issue_sb_valid_i               (issue_valid_i[EU_STORE_BUFFER]   ),
-        .issue_lb_ready_o               (issue_ready_o[EU_LOAD_BUFFER]    ),
-        .issue_sb_ready_o               (issue_ready_o[EU_STORE_BUFFER]   ),
-        .issue_type_i                   (issue_eu_ctl_i[2:0]),
-        .issue_rs1_i                    (issue_rs1_data                   ),
-        .issue_rs2_i                    (issue_rs2_data                   ),
-        .issue_imm_i                    (issue_imm_value_i                ),
-        .issue_dest_rob_idx_i           (issue_rob_idx_i                  ),
-        .commit_pop_store_i             (cl_sb_pop_store_i                ),
-        .commit_sb_head_completed_o     (cl_sb_sb_head_completed_o        ),
-        .commit_sb_head_rob_idx_o       (cl_sb_sb_head_rob_idx_o          ),
-        .cdb_valid_i                    (cdb_valid_i                      ),
-        .cdb_lb_ready_i                 (cdb_ready_i[EU_LOAD_BUFFER]      ),
-        .cdb_sb_ready_i                 (cdb_ready_i[EU_STORE_BUFFER]     ),
-        .cdb_lb_valid_o                 (cdb_valid_o[EU_LOAD_BUFFER]      ),
-        .cdb_sb_valid_o                 (cdb_valid_o[EU_STORE_BUFFER]     ),
-        .cdb_data_i                     (cdb_data_i                       ),
-        .cdb_lb_data_o                  (cdb_data_o[EU_LOAD_BUFFER]       ),
-        .cdb_sb_data_o                  (cdb_data_o[EU_STORE_BUFFER]      ),
-        .mem_valid_i                    (mem_valid_i                      ),
-        .mem_ready_i                    (mem_ready_i                      ),
-        .mem_valid_o                    (mem_valid_o                      ),
-        .mem_ready_o                    (mem_ready_o                      ),
-        .mem_req_o                      (mem_req_o                        ),
-        .mem_ans_i                      (mem_ans_i                        )
+    	.clk_i                          (clk_i                          ),
+        .rst_n_i                        (rst_n_i                        ),
+        .flush_i                        (flush_i                        ),
+        .issue_lb_valid_i               (issue_valid_i[EU_LOAD_BUFFER]  ),
+        .issue_sb_valid_i               (issue_valid_i[EU_STORE_BUFFER] ),
+        .issue_lb_ready_o               (issue_ready_o[EU_LOAD_BUFFER]  ),
+        .issue_sb_ready_o               (issue_ready_o[EU_STORE_BUFFER] ),
+        .issue_type_i                   (issue_eu_ctl_i.lsu             ),
+        .issue_rs1_i                    (issue_rs1_data                 ),
+        .issue_rs2_i                    (issue_rs2_data                 ),
+        .issue_imm_i                    (issue_imm_value_i              ),
+        .issue_dest_rob_idx_i           (issue_rob_idx_i                ),
+        .comm_spec_instr_i              (comm_sb_spec_instr_i           ),
+        .comm_rob_head_idx_i            (comm_sb_rob_head_idx_i         ),
+        .cdb_valid_i                    (cdb_valid_i                    ),
+        .cdb_lb_ready_i                 (cdb_ready_i[EU_LOAD_BUFFER]    ),
+        .cdb_sb_ready_i                 (cdb_ready_i[EU_STORE_BUFFER]   ),
+        .cdb_lb_valid_o                 (cdb_valid_o[EU_LOAD_BUFFER]    ),
+        .cdb_sb_valid_o                 (cdb_valid_o[EU_STORE_BUFFER]   ),
+        .cdb_data_i                     (cdb_data_i                     ),
+        .cdb_lb_data_o                  (cdb_data_o[EU_LOAD_BUFFER]     ),
+        .cdb_sb_data_o                  (cdb_data_o[EU_STORE_BUFFER]    ),
+        .mem_valid_i                    (mem_valid_i                    ),
+        .mem_ready_i                    (mem_ready_i                    ),
+        .mem_valid_o                    (mem_valid_o                    ),
+        .mem_ready_o                    (mem_ready_o                    ),
+        .mem_req_o                      (mem_req_o                      ),
+        .mem_ans_i                      (mem_ans_i                      )
     );
 
     // -----------
@@ -154,7 +128,7 @@ module exec_stage
         .flush_i                    (flush_i),
         .issue_valid_i              (issue_valid_i[EU_BRANCH_UNIT]),
         .issue_ready_o              (issue_ready_o[EU_BRANCH_UNIT]),
-        .branch_type_i              (issue_eu_ctl_i[BU_CTL_LEN-1:0]),
+        .branch_type_i              (issue_eu_ctl_i.bu),
         .rs1_ready_i                (issue_rs1_ready_i),
         .rs1_idx_i                  (issue_rs1_idx_i),
         .rs1_value_i                (issue_rs1_value_i),
@@ -186,7 +160,7 @@ module exec_stage
         .flush_i                (flush_i),
         .issue_valid_i          (issue_valid_i[EU_INT_ALU]),
         .issue_ready_o          (issue_ready_o[EU_INT_ALU]),
-        .eu_ctl_i               (issue_eu_ctl_i[ALU_CTL_LEN-1:0]),
+        .eu_ctl_i               (issue_eu_ctl_i.alu),
         .rs1_ready_i            (issue_rs1_ready_i),
         .rs1_idx_i              (issue_rs1_idx_i),
         .rs1_value_i            (issue_rs1_value_i),
@@ -213,7 +187,7 @@ module exec_stage
         .flush_i                (flush_i),
         .issue_valid_i          (issue_valid_i[EU_INT_MULT]),
         .issue_ready_o          (issue_ready_o[EU_INT_MULT]),
-        .eu_ctl_i               (issue_eu_ctl_i[MULT_CTL_LEN-1:0]),
+        .eu_ctl_i               (issue_eu_ctl_i.mult),
         .rs1_ready_i            (issue_rs1_ready_i),
         .rs1_idx_i              (issue_rs1_idx_i),
         .rs1_value_i            (issue_rs1_value_i),

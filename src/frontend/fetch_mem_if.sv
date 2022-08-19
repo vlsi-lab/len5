@@ -17,6 +17,7 @@ import len5_pkg::ILEN;
 import len5_pkg::except_code_t;
 import len5_pkg::instr_t;
 import memory_pkg::*;
+import expipe_pkg::*;
 import fetch_pkg::mem_if_ans_reg_t;
 import fetch_pkg::prediction_t;
 

@@ -72,14 +72,12 @@ module cdb
 
         // Handshake from/to the ROB
         .rob_ready_i        (rob_ready_i),
-        .rob_valid_o        (rob_valid_k),
+        .rob_valid_o        (valid_o),
 
         // Served unit
         .served_max_prio_o  (served_max_prio),
         .served_o           (served)
     );
-
-	assign valid_o = rob_valid_k;
 
     // --------------
     // CDB OUTPUT MUX

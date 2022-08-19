@@ -17,6 +17,7 @@
 package memory_pkg;
     import len5_pkg::*;
     import csr_pkg::csr_priv_t;
+    import expipe_pkg::ldst_width_t;
 
     // TO BE DEFINED IN ANOTHER PLACE
     localparam ASID_LEN = 8;
@@ -59,17 +60,6 @@ package memory_pkg;
         PageFault,
         AccessException
     } exception_e;
-
-    // Load/store width
-    typedef enum logic [2:0] { 
-        LS_BYTE,
-        LS_BYTE_U,
-        LS_HALFWORD,
-        LS_HALFWORD_U,
-        LS_WORD,
-        LS_WORD_U,
-        LS_DOUBLEWORD
-    } ldst_width_t;
 
     // Memory access type
     typedef enum logic [1:0] {

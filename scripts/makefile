@@ -25,9 +25,9 @@ AWK_FORMAT 		:= $(ROOT)/scripts/awk-mem-format.txt
 # LEN5 HDL files
 PKG_SRCS 		:= 	$(ROOT)/include/len5_pkg.sv \
 					$(ROOT)/include/csr_pkg.sv \
-					$(ROOT)/include/memory_pkg.sv \
 					$(ROOT)/include/fetch_pkg.sv \
-					$(ROOT)/include/expipe_pkg.sv
+					$(ROOT)/include/expipe_pkg.sv \
+					$(ROOT)/include/memory_pkg.sv
 # NOTE: currently compile non virtual memory source only
 MODULES_SRCS 	:= 	$(shell find $(ROOT)/src/ -type f -name '*.sv' -not -path "$(ROOT)/src/**-vm/*" -not -path "$(ROOT)/src/**_vm.sv")
 TB_SRCS 		:= 	$(ROOT)/tb/tb_with_l2cemu.sv \

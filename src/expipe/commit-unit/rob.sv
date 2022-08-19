@@ -34,23 +34,26 @@ module rob #(
     input   logic                   issue_valid_i,      // from upstream hardware
     output  logic                   issue_ready_o,      // to upstream hardware
     input   rob_entry_t             issue_data_i,
-    output  rob_idx_t issue_tail_idx_o,   // the ROB entry where the new instruction is being allocated
-    input   rob_idx_t issue_rs1_rob_idx_i,
-    output  logic                   issue_rs1_ready_o,
-    output  logic [XLEN-1:0]        issue_rs1_value_o,
-    input   rob_idx_t issue_rs2_rob_idx_i,
-    output  logic                   issue_rs2_ready_o,
-    output  logic [XLEN-1:0]        issue_rs2_value_o,
+    output  rob_idx_t               issue_tail_idx_o,   // the ROB entry where the new instruction is being allocated
+    input   rob_idx_t               issue_rs1_rob_idx_i,
+    input   rob_idx_t               issue_rs2_rob_idx_i,
+
+    /* Operands forwarding logic */
+    output  logic                   opfwd_rs1_ready_o,
+    output  logic [XLEN-1:0]        opfwd_rs1_value_o,
+    output  logic                   opfwd_rs2_ready_o,
+    output  logic [XLEN-1:0]        opfwd_rs2_value_o,
     
     /* Commit stage */
     output  logic                   comm_valid_o,       // to downstream hardware
     input   logic                   comm_ready_i,       // from downstream hardware
     output  rob_entry_t             comm_data_o,
-    output  rob_idx_t comm_head_idx_o,    // ROB head idx to update register status
+    output  rob_idx_t               comm_head_idx_o,    // ROB head idx to update register status
 
     /* Common data bus (CDB) */
     input   logic                   cdb_valid_i,
-    input   cdb_data_t              cdb_data_i
+    input   cdb_data_t              cdb_data_i,
+    output  logic                   cdb_ready_o
 );
 
     // INTERNAL SIGNALS
@@ -148,16 +151,21 @@ module rob #(
     // OUTPUT CONTROL
     // --------------
 
+    /* CDB */
+    // NOTE: since the ROB entries are allocated at issue time, the ROB is
+    // always ready to get the results from the CDB.
+    assign  cdb_ready_o         = 1'b1; 
+
     /* Issue stage */
     assign  issue_ready_o       = !data_valid[tail_idx];
     assign  issue_tail_idx_o    = tail_idx;
-    assign  issue_rs1_ready_o   = data[issue_rs1_rob_idx_i].res_ready;
-    assign  issue_rs1_value_o   = data[issue_rs1_rob_idx_i].res_value;
-    assign  issue_rs2_ready_o   = data[issue_rs2_rob_idx_i].res_ready;
-    assign  issue_rs2_value_o   = data[issue_rs2_rob_idx_i].res_value;
+    assign  opfwd_rs1_ready_o   = data[issue_rs1_rob_idx_i].res_ready;
+    assign  opfwd_rs1_value_o   = data[issue_rs1_rob_idx_i].res_value;
+    assign  opfwd_rs2_ready_o   = data[issue_rs2_rob_idx_i].res_ready;
+    assign  opfwd_rs2_value_o   = data[issue_rs2_rob_idx_i].res_value;
     
     /* Commit stage */
-    assign  comm_valid_o    = data_valid[head_idx];
+    assign  comm_valid_o    = data_valid[head_idx] & data[head_idx].res_ready;
     assign  comm_data_o     = data[head_idx];
     assign  comm_head_idx_o = head_idx;
 

@@ -43,6 +43,7 @@ module bpu
     .rst_n_i        (rst_n_i),
     .flush_i        (flush_i),
     .curr_pc_i      (curr_pc_i),
+    .res_valid_i    (comm_res_valid_i),
     .res_i          (comm_res_i),
 
     .taken_o        (gshare_taken)

@@ -34,6 +34,7 @@ module backend (
     input   prediction_t            fetch_pred_i,
     input   logic                   fetch_except_raised_i,
     input   except_code_t           fetch_except_code_i,
+    output  logic                   fetch_mis_flush_o,
     output  logic                   fetch_bpu_flush_o,
     output  logic                   fetch_res_valid_o,
     output  resolution_t            fetch_res_o,
@@ -55,21 +56,19 @@ module backend (
 
     // Issue logic <--> integer register status register
     // -------------------------------------------------
-    logic                       int_regstat_il_ready;
     logic                       il_int_regstat_valid;
     logic                       int_regstat_il_rs1_busy;
-    rob_idx_t     int_regstat_il_rs1_rob_idx;
+    rob_idx_t                   int_regstat_il_rs1_rob_idx;
     logic                       int_regstat_il_rs2_busy;
-    rob_idx_t     int_regstat_il_rs2_rob_idx;
+    rob_idx_t                   int_regstat_il_rs2_rob_idx;
     logic [REG_IDX_LEN-1:0]     il_int_regstat_rd_idx;
-    rob_idx_t     il_int_regstat_rob_idx;
+    rob_idx_t                   il_int_regstat_rob_idx;
     logic [REG_IDX_LEN-1:0]     il_int_regstat_rs1_idx;
     logic [REG_IDX_LEN-1:0]     il_int_regstat_rs2_idx;
 
     // Integer register status register <--> commit logic
     // --------------------------------------------------
     logic                       comm_intrs_valid;
-    logic                       int_regstat_comm_ready;
 
     // Issue logic <--> integer register file
     // --------------------------------------
@@ -81,7 +80,6 @@ module backend (
     // Integer register file <--> commit logic
     // ---------------------------------------
     logic                       comm_intrf_valid;
-    logic                       intrf_comm_ready;
 
 `ifdef LEN5_FP_EN
     // Issue logic <--> floating-point register status register
@@ -89,11 +87,11 @@ module backend (
     logic                       fp_regstat_il_ready;
     logic                       il_fp_regstat_valid;
     logic                       fp_regstat_il_rs1_busy;
-    rob_idx_t     fp_regstat_il_rs1_rob_idx;
+    rob_idx_t                   fp_regstat_il_rs1_rob_idx;
     logic                       fp_regstat_il_rs2_busy;
-    rob_idx_t     fp_regstat_il_rs2_rob_idx;
+    rob_idx_t                   fp_regstat_il_rs2_rob_idx;
     logic [REG_IDX_LEN-1:0]     il_fp_regstat_rd_idx;
-    rob_idx_t     il_fp_regstat_rob_idx;
+    rob_idx_t                   il_fp_regstat_rob_idx;
     logic [REG_IDX_LEN-1:0]     il_fp_regstat_rs1_idx;
     logic [REG_IDX_LEN-1:0]     il_fp_regstat_rs2_idx;
 
@@ -115,6 +113,21 @@ module backend (
     logic                       fprf_comm_ready;
 `endif /* LEN5_FP_EN */
 
+    // Issue Stage <--> Commit Stage
+    // -----------------------------
+    logic                       comm_issue_ready;
+    logic                       issue_comm_valid;
+    logic                       comm_issue_resume;
+    rob_idx_t                   comm_issue_rob_tail_idx;
+    rob_entry_t                 issue_comm_rob_data;
+    logic                       issue_comm_jb_instr;
+    rob_idx_t                   issue_comm_rs1_rob_idx;
+    logic                       comm_issue_rs1_ready;
+    logic [XLEN-1:0]            comm_issue_rs1_value;
+    rob_idx_t                   issue_comm_rs2_rob_idx;
+    logic                       comm_issue_rs2_ready;
+    logic [XLEN-1:0]            comm_issue_rs2_value;
+
     // Issue stage <--> execution units
     // --------------------------------
     logic                       ex_issue_ready [0:EU_N-1];
@@ -132,19 +145,6 @@ module backend (
     logic [XLEN-1:0]            issue_ex_pred_target;
     logic                       issue_ex_pred_taken;
 
-    // Issue stage <--> ROB
-    // --------------------
-    logic                       rob_il_ready;
-    logic                       il_rob_valid;
-    logic                       rob_il_rs1_ready;
-    logic [XLEN-1:0]            rob_il_rs1_value;
-    logic                       rob_il_rs2_ready;
-    logic [XLEN-1:0]            rob_il_rs2_value;
-    rob_idx_t                   rob_il_tail_idx;
-    rob_idx_t                   il_rob_rs1_idx;
-    rob_idx_t                   il_rob_rs2_idx;
-    rob_entry_t                 il_rob_data;
-
     // Issue stage <--> CSRs
     // ---------------------
     logic                       csr_il_mstatus_tsr;
@@ -155,32 +155,24 @@ module backend (
     logic [0:EU_N-1]            ex_cdb_valid;
     cdb_data_t [0:EU_N-1]       ex_cdb_data;
 
-    // Execution stage <--> commit logic
+    // Execution stage <--> commit stage
     // ---------------------------------
-    logic                       cl_sb_pop_store;
-    logic                       sb_comm_store_head_completed;
-    rob_idx_t                   sb_comm_store_head_rob_idx;
+    logic                       comm_sb_spec_instr;
+    rob_idx_t                   comm_sb_rob_head_idx;
 
     // Execution stage <--> CSRs
     // -------------------------
     logic [FCSR_FRM_LEN-1:0]    csr_ex_frm;
     logic [SATP_MODE_LEN-1:0]   csr_ex_vm_mode;
 
-    // CDB <--> ROB
-    // ------------
-    logic                       rob_cdb_ready;
+    // CDB <--> commit stage
+    // ---------------------
+    logic                       comm_cdb_ready;
 
-    // CDB --> multiple units
-    // ----------------------
+    // CDB <--> others
+    // ---------------
     logic                       cdb_others_valid;
     cdb_data_t                  cdb_others_data;
-
-    // ROB <--> commit logic
-    // ---------------------
-    logic                       comm_rob_ready;
-    logic                       rob_comm_valid;
-    rob_entry_t                 rob_comm_head_entry;
-    rob_idx_t                   rob_comm_head_idx;
 
     // Commit logic --> (both) register status registers
     // -------------------------------------------------
@@ -190,19 +182,6 @@ module backend (
     // --------------------------------------
     logic [REG_IDX_LEN-1:0]     comm_rf_rd_idx;
     logic [XLEN-1:0]            comm_rf_rd_value;
-
-    // Commit logic --> issue logic
-    // ----------------------------
-    logic                       comm_issue_resume;
-    logic                       comm_issue_reg0_valid;
-    logic [XLEN-1:0]            comm_issue_reg0_value;
-    rob_idx_t                   comm_issue_reg0_idx;
-    logic                       comm_issue_reg1_valid;
-    logic [XLEN-1:0]            comm_issue_reg1_value;
-    rob_idx_t                   comm_issue_reg1_idx;
-    logic                       comm_issue_commreg_valid;
-    logic [XLEN-1:0]            comm_issue_commreg_value;
-    rob_idx_t                   comm_issue_commreg_idx;
 
     // Commit logic <--> CSRs
     // ----------------------
@@ -222,6 +201,12 @@ module backend (
     // ------------------------
     logic                       mis_flush; // flush on misprediction
 
+    // -------
+    // MODULES
+    // -------
+    //                                                 / memory
+    // front-end > ISSUE STAGE > EXECUTION STAGE > CDB - COMMIT STAGE > REGISTER FILE(S)
+
     // -----------
     // ISSUE STAGE
     // -----------
@@ -229,98 +214,82 @@ module backend (
 
     issue_stage u_issue_stage
     (
-        .clk_i                          (clk_i),
-        .rst_n_i                        (rst_n_i),
-        .flush_i                        (mis_flush),
+        .clk_i                          (clk_i                      ),
+        .rst_n_i                        (rst_n_i                    ),
+        .flush_i                        (mis_flush                  ),
 
-        .fetch_valid_i                  (fetch_valid_i),
-        .fetch_ready_o                  (fetch_ready_o),
-        .fetch_curr_pc_i                (fetch_pred_i.pc),
-        .fetch_instr_i                  (fetch_instr_i),
-        .fetch_pred_target_i            (fetch_pred_i.target),
-        .fetch_pred_taken_i             (fetch_pred_i.taken),
-        .fetch_except_raised_i          (fetch_except_raised_i),
-        .fetch_except_code_i            (fetch_except_code_i),
+        .fetch_valid_i                  (fetch_valid_i              ),
+        .fetch_ready_o                  (fetch_ready_o              ),
+        .fetch_curr_pc_i                (fetch_pred_i.pc            ),
+        .fetch_instr_i                  (fetch_instr_i              ),
+        .fetch_pred_target_i            (fetch_pred_i.target        ),
+        .fetch_pred_taken_i             (fetch_pred_i.taken         ),
+        .fetch_except_raised_i          (fetch_except_raised_i      ),
+        .fetch_except_code_i            (fetch_except_code_i        ),
 
-        .int_regstat_ready_i            (int_regstat_il_ready),
-        .int_regstat_valid_o            (il_int_regstat_valid),
-        .int_regstat_rs1_busy_i         (int_regstat_il_rs1_busy),
-        .int_regstat_rs1_rob_idx_i      (int_regstat_il_rs1_rob_idx),
-        .int_regstat_rs2_busy_i         (int_regstat_il_rs2_busy),
-        .int_regstat_rs2_rob_idx_i      (int_regstat_il_rs2_rob_idx),
-        .int_regstat_rd_idx_o           (il_int_regstat_rd_idx),
-        .int_regstat_rob_idx_o          (il_int_regstat_rob_idx),
-        .int_regstat_rs1_idx_o          (il_int_regstat_rs1_idx),
-        .int_regstat_rs2_idx_o          (il_int_regstat_rs2_idx),
+        .int_regstat_valid_o            (il_int_regstat_valid       ),
+        .int_regstat_rs1_busy_i         (int_regstat_il_rs1_busy    ),
+        .int_regstat_rs1_rob_idx_i      (int_regstat_il_rs1_rob_idx ),
+        .int_regstat_rs2_busy_i         (int_regstat_il_rs2_busy    ),
+        .int_regstat_rs2_rob_idx_i      (int_regstat_il_rs2_rob_idx ),
+        .int_regstat_rd_idx_o           (il_int_regstat_rd_idx      ),
+        .int_regstat_rob_idx_o          (il_int_regstat_rob_idx     ),
+        .int_regstat_rs1_idx_o          (il_int_regstat_rs1_idx     ),
+        .int_regstat_rs2_idx_o          (il_int_regstat_rs2_idx     ),
 
-        .intrf_rs1_value_i              (intrf_il_rs1_value),
-        .intrf_rs2_value_i              (intrf_il_rs2_value),
-        .intrf_rs1_idx_o                (il_intrf_rs1_idx),
-        .intrf_rs2_idx_o                (il_intrf_rs2_idx),
+        .intrf_rs1_value_i              (intrf_il_rs1_value         ),
+        .intrf_rs2_value_i              (intrf_il_rs2_value         ),
+        .intrf_rs1_idx_o                (il_intrf_rs1_idx           ),
+        .intrf_rs2_idx_o                (il_intrf_rs2_idx           ),
 
     `ifdef LEN5_FP_EN
-        .fp_regstat_ready_i             (fp_regstat_il_ready),
-        .fp_regstat_valid_o             (il_fp_regstat_valid),
-        .fp_regstat_rs1_busy_i          (fp_regstat_il_rs1_busy),
-        .fp_regstat_rs1_rob_idx_i       (fp_regstat_il_rs1_rob_idx),
-        .fp_regstat_rs2_busy_i          (fp_regstat_il_rs2_busy),
-        .fp_regstat_rs2_rob_idx_i       (fp_regstat_il_rs2_rob_idx),
-        .fp_regstat_rd_idx_o            (il_fp_regstat_rd_idx),
-        .fp_regstat_rob_idx_o           (il_fp_regstat_rob_idx),
-        .fp_regstat_rs1_idx_o           (il_fp_regstat_rs1_idx),
-        .fp_regstat_rs2_idx_o           (il_fp_regstat_rs2_idx),
+        .fp_regstat_valid_o             (il_fp_regstat_valid        ),
+        .fp_regstat_rs1_busy_i          (fp_regstat_il_rs1_busy     ),
+        .fp_regstat_rs1_rob_idx_i       (fp_regstat_il_rs1_rob_idx  ),
+        .fp_regstat_rs2_busy_i          (fp_regstat_il_rs2_busy     ),
+        .fp_regstat_rs2_rob_idx_i       (fp_regstat_il_rs2_rob_idx  ),
+        .fp_regstat_rd_idx_o            (il_fp_regstat_rd_idx       ),
+        .fp_regstat_rob_idx_o           (il_fp_regstat_rob_idx      ),
+        .fp_regstat_rs1_idx_o           (il_fp_regstat_rs1_idx      ),
+        .fp_regstat_rs2_idx_o           (il_fp_regstat_rs2_idx      ),
 
-        .fprf_rs1_value_i               (fprf_il_rs1_value),
-        .fprf_rs2_value_i               (fprf_il_rs2_value),
-        .fprf_rs1_idx_o                 (il_fprf_rs1_idx),
-        .fprf_rs2_idx_o                 (il_fprf_rs2_idx),
+        .fprf_rs1_value_i               (fprf_il_rs1_value          ),
+        .fprf_rs2_value_i               (fprf_il_rs2_value          ),
+        .fprf_rs1_idx_o                 (il_fprf_rs1_idx            ),
+        .fprf_rs2_idx_o                 (il_fprf_rs2_idx            ),
     `endif /* LEN5_FP_EN */
 
     `ifdef LEN5_PRIVILEGED_EN
-        .mstatus_tsr_i                  (csr_il_mstatus_tsr),
+        .mstatus_tsr_i                  (csr_il_mstatus_tsr         ),
     `endif /* LEN5_PRIVILEGED_EN */
 
-        .ex_ready_i                     (ex_issue_ready),
-        .ex_valid_o                     (il_ex_valid),
-        .ex_eu_ctl_o                    (issue_ex_eu_ctl),
-        .ex_rs1_ready_o                 (issue_ex_rs1_ready),
-        .ex_rs1_idx_o                   (issue_ex_rs1_idx),
-        .ex_rs1_value_o                 (issue_ex_rs1_value),
-        .ex_rs2_ready_o                 (issue_ex_rs2_ready),
-        .ex_rs2_idx_o                   (issue_ex_rs2_idx),
-        .ex_rs2_value_o                 (issue_ex_rs2_value),
-        .ex_imm_value_o                 (issue_ex_imm_value),
-        .ex_rob_idx_o                   (issue_ex_rob_idx),
-        .ex_curr_pc_o                   (issue_ex_curr_pc),
-        .ex_pred_target_o               (issue_ex_pred_target),
-        .ex_pred_taken_o                (issue_ex_pred_taken),
+        .ex_ready_i                     (ex_issue_ready             ),
+        .ex_valid_o                     (il_ex_valid                ),
+        .ex_eu_ctl_o                    (issue_ex_eu_ctl            ),
+        .ex_rs1_ready_o                 (issue_ex_rs1_ready         ),
+        .ex_rs1_idx_o                   (issue_ex_rs1_idx           ),
+        .ex_rs1_value_o                 (issue_ex_rs1_value         ),
+        .ex_rs2_ready_o                 (issue_ex_rs2_ready         ),
+        .ex_rs2_idx_o                   (issue_ex_rs2_idx           ),
+        .ex_rs2_value_o                 (issue_ex_rs2_value         ),
+        .ex_imm_value_o                 (issue_ex_imm_value         ),
+        .ex_rob_idx_o                   (issue_ex_rob_idx           ),
+        .ex_curr_pc_o                   (issue_ex_curr_pc           ),
+        .ex_pred_target_o               (issue_ex_pred_target       ),
+        .ex_pred_taken_o                (issue_ex_pred_taken        ),
 
-        .cdb_valid_i                    (cdb_others_valid),
-        .cdb_except_raised_i            (cdb_others_data.except_raised),
-        .cdb_value_i                    (cdb_others_data.res_value),
-        .cdb_rob_idx_i                  (cdb_others_data.rob_idx),
-
-        .rob_ready_i                    (rob_il_ready),
-        .rob_valid_o                    (il_rob_valid),
-        .rob_rs1_ready_i                (rob_il_rs1_ready),
-        .rob_rs1_value_i                (rob_il_rs1_value),
-        .rob_rs2_ready_i                (rob_il_rs2_ready),
-        .rob_rs2_value_i                (rob_il_rs2_value),
-        .rob_tail_idx_i                 (rob_il_tail_idx),
-        .rob_rs1_idx_o                  (il_rob_rs1_idx),
-        .rob_rs2_idx_o                  (il_rob_rs2_idx),
-        .rob_data_o                     (il_rob_data),
-
-        .cl_resume_i                    (comm_issue_resume),
-        .cl_reg0_valid_i                (comm_issue_reg0_valid),
-        .cl_reg0_value_i                (comm_issue_reg0_value),
-        .cl_reg0_idx_i                  (comm_issue_reg0_idx),
-        .cl_reg1_valid_i                (comm_issue_reg1_valid),
-        .cl_reg1_value_i                (comm_issue_reg1_value),
-        .cl_reg1_idx_i                  (comm_issue_reg1_idx),
-        .cl_comm_reg_valid_i            (comm_issue_commreg_valid),
-        .cl_comm_reg_value_i            (comm_issue_commreg_value),
-        .cl_comm_reg_idx_i              (comm_issue_commreg_idx)
+        .comm_ready_i                   (comm_issue_ready           ),
+        .comm_valid_o                   (issue_comm_valid           ),
+        .comm_resume_i                  (comm_issue_resume          ),
+        .comm_tail_idx_i                (comm_issue_rob_tail_idx    ),
+        .comm_data_o                    (issue_comm_rob_data        ),
+        .comm_jb_instr_o                (issue_comm_jb_instr        ),
+        .comm_rs1_rob_idx_o             (issue_comm_rs1_rob_idx     ),
+        .comm_rs1_ready_i               (comm_issue_rs1_ready       ),
+        .comm_rs1_value_i               (comm_issue_rs1_value       ),
+        .comm_rs2_rob_idx_o             (issue_comm_rs2_rob_idx     ),
+        .comm_rs2_ready_i               (comm_issue_rs2_ready       ),
+        .comm_rs2_value_i               (comm_issue_rs2_value       )
     );
 
     // --------------------------------------------
@@ -382,7 +351,6 @@ module backend (
         .issue_rs2_busy_o       (fp_regstat_il_rs2_busy     ),
         .issue_rs2_rob_idx_o    (fp_regstat_il_rs2_rob_idx  ),
         .comm_valid_i           (comm_fprs_valid            ),
-        .comm_ready_o           (fp_regstat_comm_ready      ),
         .comm_rd_idx_i          (comm_rf_rd_idx             ),
         .comm_head_idx_i        (comm_rs_head_idx           )
     );
@@ -416,12 +384,6 @@ module backend (
         .rst_n_i                    (rst_n_i                ),
         .flush_i                    (mis_flush              ),
 
-        .fetch_res_pc_o             (fetch_res_pc_o         ),
-        .fetch_res_target_o         (fetch_res_target_o     ),
-        .fetch_res_taken_o          (fetch_res_taken_o      ),
-        .fetch_res_valid_o          (fetch_res_valid_o      ),
-        .fetch_res_mispredict_o     (fetch_res_mispredict_o ),
-
         .issue_valid_i              (il_ex_valid            ),
         .issue_ready_o              (ex_issue_ready         ),
         .issue_eu_ctl_i             (issue_ex_eu_ctl        ),
@@ -443,11 +405,8 @@ module backend (
         .cdb_data_i                 (cdb_others_data        ),
         .cdb_data_o                 (ex_cdb_data            ),
 
-        .cl_sb_pop_store_i          (cl_sb_pop_store        ),
-        .cl_sb_sb_head_completed_o  (sb_comm_store_head_completed),
-        .cl_sb_sb_head_rob_idx_o    (sb_comm_store_head_rob_idx),
-
-        .vm_mode_i                  (csr_ex_vm_mode         ),
+        .comm_sb_spec_instr_i       (comm_sb_spec_instr     ),
+        .comm_sb_rob_head_idx_i     (comm_sb_rob_head_idx   ),
     `ifdef LEN5_FP_EN
         .csr_frm_i                  (csr_ex_frm             ),
     `endif /* LEN5_FP_EN */
@@ -473,35 +432,9 @@ module backend (
         .rs_valid_i             (ex_cdb_valid[1:EU_N-1] ), 
         .rs_ready_o             (cdb_ex_ready[1:EU_N-1] ),
         .rs_data_i              (ex_cdb_data[1:EU_N-1]  ),
-        .rob_ready_i            (rob_cdb_ready          ),
+        .rob_ready_i            (comm_cdb_ready         ),
         .valid_o                (cdb_others_valid       ),
         .data_o                 (cdb_others_data        )
-    );
-
-    // Reorder Buffer (ROB)
-    // --------------------
-    rob #(
-        .DEPTH (ROB_DEPTH   )
-    ) u_rob(
-    	.clk_i               (clk_i               ),
-        .rst_n_i             (rst_n_i             ),
-        .flush_i             (mis_flush           ),
-        .issue_valid_i       (il_rob_valid        ),
-        .issue_ready_o       (rob_il_ready        ),
-        .issue_data_i        (il_rob_data         ),
-        .issue_tail_idx_o    (rob_il_tail_idx     ),
-        .issue_rs1_rob_idx_i (il_rob_rs1_idx      ),
-        .issue_rs1_ready_o   (rob_il_rs1_ready    ),
-        .issue_rs1_value_o   (rob_il_rs1_value    ),
-        .issue_rs2_rob_idx_i (il_rob_rs2_idx      ),
-        .issue_rs2_ready_o   (rob_il_rs2_ready    ),
-        .issue_rs2_value_o   (rob_il_rs2_value    ),
-        .comm_valid_o        (rob_comm_valid      ),
-        .comm_ready_i        (comm_rob_ready      ),
-        .comm_data_o         (rob_comm_head_entry ),
-        .comm_head_idx_o     (rob_comm_head_idx   ),
-        .cdb_valid_i         (cdb_others_valid    ),
-        .cdb_data_i          (cdb_others_data     )
     );
 
     // ------------
@@ -512,78 +445,86 @@ module backend (
     // ------------
     commit_stage u_commit_stage
     (
-        .clk_i                  (clk_i),
-        .rst_n_i                (rst_n_i),
-        .mis_flush_o            (mis_flush),
-        .fe_bpu_flush_o         (fetch_bpu_flush_o),
-        .fe_res_valid_o         (fetch_res_valid_o),
-        .fe_res_o               (fetch_res_o),
-        .fe_except_raised_o     (fetch_except_raised_o),
-        .fe_except_pc_o         (fetch_except_pc_o),
-        .il_resume_o            (comm_issue_resume),
-        .il_reg0_valid_o        (comm_issue_reg0_valid),
-        .il_reg0_value_o        (comm_issue_reg0_value),
-        .il_reg0_idx_o          (comm_issue_reg0_idx),
-        .il_reg1_valid_o        (comm_issue_reg1_valid),
-        .il_reg1_value_o        (comm_issue_reg1_value),
-        .il_reg1_idx_o          (comm_issue_reg1_idx),
-        .il_comm_reg_valid_o    (comm_issue_commreg_valid),
-        .il_comm_reg_value_o    (comm_issue_commreg_value),
-        .il_comm_reg_idx_o      (comm_issue_commreg_idx),
-        .rob_valid_i            (rob_comm_valid),
-        .rob_ready_o            (comm_rob_ready), 
-        .rob_head_entry_i       (rob_comm_head_entry),
-        .rob_head_idx_i         (rob_comm_head_idx),
-        .sb_head_completed_i    (sb_comm_store_head_completed),
-        .sb_head_rob_idx_i      (sb_comm_store_head_rob_idx),
-        .sb_pop_store_o         (comm_sb_pop_store),
-        .int_rs_valid_o         (comm_intrs_valid),
-        .int_rf_valid_o         (comm_intrf_valid),
+        .clk_i                  (clk_i                      ),
+        .rst_n_i                (rst_n_i                    ),
+        
+        .mis_flush_o            (mis_flush                  ),
+        
+        .fe_bpu_flush_o         (fetch_bpu_flush_o          ),
+        .fe_res_valid_o         (fetch_res_valid_o          ),
+        .fe_res_o               (fetch_res_o                ),
+        .fe_except_raised_o     (fetch_except_raised_o      ),
+        .fe_except_pc_o         (fetch_except_pc_o          ),
+        
+        .issue_valid_i          (issue_comm_valid           ),
+        .issue_ready_o          (comm_issue_ready           ),
+        .issue_data_i           (issue_comm_rob_data        ),
+        .issue_jb_instr_i       (issue_comm_jb_instr        ),
+        .issue_tail_idx_o       (comm_issue_rob_tail_idx    ),
+        .issue_rs1_rob_idx_i    (issue_comm_rs1_rob_idx     ),
+        .issue_rs1_ready_o      (comm_issue_rs1_ready       ),
+        .issue_rs1_value_o      (comm_issue_rs1_value       ),
+        .issue_rs2_rob_idx_i    (issue_comm_rs2_rob_idx     ),
+        .issue_rs2_ready_o      (comm_issue_rs2_ready       ),
+        .issue_rs2_value_o      (comm_issue_rs2_value       ),
+        .issue_resume_o         (comm_issue_resume          ),
+
+        .cdb_valid_i            (cdb_others_valid           ),
+        .cdb_data_i             (cdb_others_data            ),
+        .cdb_ready_o            (comm_cdb_ready             ),
+
+        .sb_spec_instr_o        (comm_sb_spec_instr         ),
+        .sb_rob_head_idx_o      (comm_sb_rob_head_idx       ),
+
+        .int_rs_valid_o         (comm_intrs_valid           ),
+        .int_rf_valid_o         (comm_intrf_valid           ),
+
     `ifdef LEN5_FP_EN
-        .fp_rs_valid_o          (comm_fprs_valid),
-        .fp_rf_valid_o          (comm_fprf_valid),
+        .fp_rs_valid_o          (comm_fprs_valid            ),
+        .fp_rf_valid_o          (comm_fprf_valid            ),
     `endif /* LEN5_FP_EN */
-        .rs_head_idx_o          (comm_rs_head_idx),
-        .rd_idx_o               (comm_rf_rd_idx),
-        .rd_value_o             (comm_rf_rd_value),
-        .csr_valid_o            (comm_csr_valid),
-        .csr_ready_i            (csr_comm_ready),
-        .csr_data_i             (csr_comm_data),
-        .csr_acc_exc_i          (csr_comm_acc_exc),
-        .csr_instr_type_o       (comm_csr_instr_type),
-        .csr_funct3_o           (comm_csr_funct3),
-        .csr_addr_o             (comm_csr_addr),
-        .csr_rs1_idx_o          (comm_csr_rs1_idx),
-        .csr_rs1_value_o        (comm_csr_rs1_value),
-        .csr_except_code_o      (comm_csr_except_code),
-        .csr_rd_idx_o           (comm_csr_rd_idx)
+
+        .rs_head_idx_o          (comm_rs_head_idx           ),
+
+        .rd_idx_o               (comm_rf_rd_idx             ),
+        .rd_value_o             (comm_rf_rd_value           ),
+
+        .csr_valid_o            (comm_csr_valid             ),
+        .csr_ready_i            (csr_comm_ready             ),
+        .csr_data_i             (csr_comm_data              ),
+        .csr_acc_exc_i          (csr_comm_acc_exc           ),
+        .csr_instr_type_o       (comm_csr_instr_type        ),
+        .csr_funct3_o           (comm_csr_funct3            ),
+        .csr_addr_o             (comm_csr_addr              ),
+        .csr_rs1_idx_o          (comm_csr_rs1_idx           ),
+        .csr_rs1_value_o        (comm_csr_rs1_value         ),
+        .csr_except_code_o      (comm_csr_except_code       ),
+        .csr_rd_idx_o           (comm_csr_rd_idx            )
     );
 
     // ----
     // CSRS
     // ----
-
-    csrs u_csrs
-    (
-        .clk_i              (clk_i),
-        .rst_n_i            (rst_n_i),
-        .valid_i            (comm_csr_valid),
-        .ready_o            (csr_comm_ready),
-        .instr_type_i       (comm_csr_instr_type),
-        .funct3_i           (comm_csr_funct3),
-        .addr_i             (comm_csr_addr),
-        .rs1_idx_i          (comm_csr_rs1_idx),
-        .rs1_value_i        (comm_csr_rs1_value),
-        .exc_data_i         (comm_csr_except_code),
-        .rd_idx_i           (comm_csr_rd_idx),
-        .data_o             (csr_comm_data),
-        .acc_exc_o          (csr_comm_acc_exc),
+    csrs u_csrs(
+    	.clk_i              (clk_i                ),
+        .rst_n_i            (rst_n_i              ),
+        .valid_i            (comm_csr_valid       ),
+        .ready_o            (csr_comm_ready       ),
+        .instr_type_i       (comm_csr_instr_type  ),
+        .funct3_i           (comm_csr_funct3      ),
+        .addr_i             (comm_csr_addr        ),
+        .rs1_idx_i          (comm_csr_rs1_idx     ),
+        .rs1_value_i        (comm_csr_rs1_value   ),
+        .exc_data_i         (comm_csr_except_code ),
+        .rd_idx_i           (comm_csr_rd_idx      ),
+        .data_o             (csr_comm_data        ),
+        .acc_exc_o          (csr_comm_acc_exc     ),
     `ifdef LEN5_FP_EN
-        .fpu_frm_o          (csr_ex_frm),
+        .fpu_frm_o          (csr_ex_frm           ),
     `endif /* LEN5_FP_EN */
-        .vm_mode_o          (csr_ex_vm_mode),
+        .vm_mode_o          (csr_ex_vm_mode       ),
     `ifdef LEN5_PRIVILEGED_EN
-        .mstatus_tsr_o      (csr_il_mstatus_tsr),
+        .mstatus_tsr_o      (csr_il_mstatus_tsr   ),
     `endif /* LEN5_PRIVILEGED_EN */
         .mem_vmem_on_o      (),
         .mem_sum_bit_o      (),
@@ -593,5 +534,13 @@ module backend (
         .mem_base_asid_o    (),
         .mem_csr_root_ppn_o ()
     );
+    
+
+    // -----------------
+    // OUTPUT EVALUATION
+    // -----------------
+    
+    // Fetch stage and memory flush on misprediction
+    assign  fetch_mis_flush_o   = mis_flush;
 
 endmodule

@@ -39,7 +39,7 @@ module load_buffer #(
     /* Issue stage */
     input   logic                       issue_valid_i,
     output  logic                       issue_ready_o,
-    input   ldst_width_t                 issue_type_i,   // byte, halfword, ...
+    input   ldst_width_t                issue_type_i,   // byte, halfword, ...
     input   op_data_t                   issue_rs1_i,    // base address
     input   logic [XLEN-1:0]            issue_imm_i,    // offset
     input   rob_idx_t                   issue_dest_rob_idx_i,
@@ -90,23 +90,27 @@ module load_buffer #(
     lb_state_t      curr_state[DEPTH], next_state[DEPTH];
 
     // Load buffer control
-    logic           push, pop, save_rs1, save_addr, save_mem;
+    logic           push, pop, save_rs1, addr_accepted, save_addr, mem_accepted, save_mem;
     lb_op_t         lb_op[DEPTH];
 
-    // Byte selector
-    logic [(XLEN>>3)-1:0]   byte_offs;
-    logic [XLEN-1:0]        read_data;
+    // Byte selector/sign extender
+`ifdef ONLY_DOUBLEWORD_MEM_ACCESSES
+    logic [$clog2(XLEN>>3)-1:0] byte_offs;
+`endif /* ONLY_DOUBLEWORD_MEM_ACCESSES */
+    logic [XLEN-1:0]            read_data;
 
     // -----------------
     // FIFO CONTROL UNIT
     // -----------------
 
     // Push, pop, save controls
-    assign  push        = issue_valid_i && issue_ready_o;
-    assign  pop         = cdb_valid_o && cdb_ready_i;
-    assign  save_rs1    = cdb_valid_i;
-    assign  save_addr   = adder_valid_i && adder_ready_o;  
-    assign  save_mem    = mem_valid_i && mem_ready_o;
+    assign  push            = issue_valid_i & issue_ready_o;
+    assign  pop             = cdb_valid_o & cdb_ready_i;
+    assign  save_rs1        = cdb_valid_i;
+    assign  addr_accepted   = adder_valid_o & adder_ready_i;
+    assign  save_addr       = adder_valid_i & adder_ready_o;  
+    assign  mem_accepted    = mem_valid_o & mem_ready_i;
+    assign  save_mem        = mem_valid_i & mem_ready_o;
   
     // Counters control
     assign  head_cnt_clr    = flush_i;
@@ -115,8 +119,8 @@ module load_buffer #(
     assign  mem_cnt_clr     = flush_i;
     assign  head_cnt_en     = pop;
     assign  tail_cnt_en     = push;
-    assign  addr_cnt_en     = save_addr;
-    assign  mem_cnt_en      = save_mem;
+    assign  addr_cnt_en     = addr_accepted;
+    assign  mem_cnt_en      = mem_accepted;
 
     // State progression
     // NOTE: Mealy to avoid sampling useless data
@@ -130,7 +134,7 @@ module load_buffer #(
                     if (push && tail_idx == i) begin
                         lb_op[i]        = LOAD_OP_PUSH;
                         if (issue_rs1_i.ready)
-                            next_state[i]   = LOAD_S_ADDR_PENDING;
+                            next_state[i]   = LOAD_S_ADDR_REQ;
                         else                    
                             next_state[i]   = LOAD_S_RS1_PENDING;
                     end else 
@@ -139,26 +143,47 @@ module load_buffer #(
                 LOAD_S_RS1_PENDING: begin // save rs1 value from CDB
                     if (save_rs1 && cdb_data_i.rob_idx == data[i].rs1_rob_idx) begin 
                         lb_op[i]        = LOAD_OP_SAVE_RS1;
-                        next_state[i]   = LOAD_S_ADDR_PENDING;
+                        next_state[i]   = LOAD_S_ADDR_REQ;
                     end else
                         next_state[i]   = LOAD_S_RS1_PENDING;
                 end
-                LOAD_S_ADDR_PENDING: begin // save address (from adder)
+                LOAD_S_ADDR_REQ: begin // save address (from adder)
                     if (save_addr && adder_ans_i.tag == i) begin
                         lb_op[i]        = LOAD_OP_SAVE_ADDR;
                         if (adder_ans_i.except_raised)
                             next_state[i]   = LOAD_S_COMPLETED;
                         else
-                            next_state[i]   = LOAD_S_MEM_PENDING;
-                    end else
-                        next_state[i]   = LOAD_S_ADDR_PENDING;
+                            next_state[i]   = LOAD_S_MEM_REQ;
+                    end else if (addr_idx == i && addr_accepted)
+                        next_state[i]   = LOAD_S_ADDR_WAIT;
+                    else
+                        next_state[i]   = LOAD_S_ADDR_REQ;
                 end
-                LOAD_S_MEM_PENDING: begin // save memory value (from memory)
+                LOAD_S_ADDR_WAIT: begin
+                    if (save_addr && adder_ans_i.tag == i) begin
+                        lb_op[i]        = LOAD_OP_SAVE_ADDR;
+                        if (adder_ans_i.except_raised)
+                            next_state[i]   = LOAD_S_COMPLETED;
+                        else
+                            next_state[i]   = LOAD_S_MEM_REQ;
+                    end else
+                        next_state[i]   = LOAD_S_ADDR_WAIT;
+                end
+                LOAD_S_MEM_REQ: begin // save memory value (from memory)
+                    if (save_mem && mem_ans_i.tag == i) begin
+                        lb_op[i]        = LOAD_OP_SAVE_MEM;
+                        next_state[i]   = LOAD_S_COMPLETED;
+                    end else if (mem_accepted) begin
+                        next_state[i]   = LOAD_S_MEM_WAIT;
+                    end else
+                        next_state[i]   = LOAD_S_MEM_REQ;
+                end
+                LOAD_S_MEM_WAIT: begin
                     if (save_mem && mem_ans_i.tag == i) begin
                         lb_op[i]        = LOAD_OP_SAVE_MEM;
                         next_state[i]   = LOAD_S_COMPLETED;
                     end else
-                        next_state[i]   = LOAD_S_MEM_PENDING;
+                        next_state[i]   = LOAD_S_MEM_WAIT;
                 end
                 LOAD_S_COMPLETED: begin
                     if (pop && head_idx == i)
@@ -240,7 +265,7 @@ module load_buffer #(
     assign cdb_data_o.except_code   = data[head_idx].except_code;
 
     /* Address adder */
-    assign adder_valid_o           = curr_state[addr_idx] == LOAD_S_ADDR_PENDING;
+    assign adder_valid_o           = curr_state[addr_idx] == LOAD_S_ADDR_REQ;
     assign adder_ready_o           = 1'b1; // always ready to accept data from the adder
     assign adder_req_o.tag         = addr_idx;
     assign adder_req_o.is_store    = 1'b0;
@@ -249,12 +274,17 @@ module load_buffer #(
     assign adder_req_o.offs        = data[addr_idx].imm_addr_value;
 
     /* Memory system */
-    assign mem_valid_o         = curr_state[mem_idx] == LOAD_S_MEM_PENDING;
+    assign mem_valid_o         = curr_state[mem_idx] == LOAD_S_MEM_REQ;
     assign mem_ready_o         = 1'b1;
     assign mem_req_o.tag       = mem_idx;
     assign mem_req_o.acc_type  = MEM_ACC_LD;
     assign mem_req_o.ls_type   = data[mem_idx].load_type;
+`ifdef ONLY_DOUBLEWORD_MEM_ACCESSES
+    assign mem_req_o.addr      = {data[mem_idx].imm_addr_value[XLEN-1:3], 3'b000};
+`else
     assign mem_req_o.addr      = data[mem_idx].imm_addr_value;
+`endif /* ONLY_DOUBLEWORD_MEM_ACCESSES */
+    assign mem_req_o.value     = '0;
 
     // -------------
     // BYTE SELECTOR
@@ -262,6 +292,7 @@ module load_buffer #(
     // NOTE: the memory is expected to provide a doubleword regardless of
     //       the load width. This module extracts and sign-extends only the
     //       requested data from the fetched doubleword. 
+`ifdef ONLY_DOUBLEWORD_MEM_ACCESSES
     assign  byte_offs   = data[mem_ans_i.tag].imm_addr_value[2:0];
     byte_selector u_byte_selector (
     	.type_i   (data[mem_ans_i.tag].load_type ),
@@ -269,6 +300,13 @@ module load_buffer #(
         .data_i   (mem_ans_i.value               ),
         .data_o   (read_data                     )
     );
+`else
+    sign_extender u_sign_extender(
+    	.type_i (data[mem_ans_i.tag].load_type ),
+        .data_i (mem_ans_i.value               ),
+        .data_o (read_data                     )
+    );
+`endif /* ONLY_DOUBLEWORD_MEM_ACCESSES */
 
     // --------
     // COUNTERS
@@ -324,8 +362,7 @@ module load_buffer #(
     `ifndef SYNTHESIS
     always @(posedge clk_i) begin
         foreach (curr_state[i]) begin
-            a_error: assert (curr_state[i] != LOAD_S_HALT)
-                else `uvm_error("LOAD BUFFER", "CU in HALT state");
+            assert property (@(posedge clk_i) disable iff (!rst_n_i) curr_state[i] == LOAD_S_HALT |-> ##1 curr_state[i] != LOAD_S_HALT);
         end
     end
     `endif /* SYNTHESIS */

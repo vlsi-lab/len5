@@ -38,7 +38,6 @@ module load_store_unit #(
     input   logic                       issue_sb_valid_i,
     output  logic                       issue_lb_ready_o,
     output  logic                       issue_sb_ready_o,
-
     input   ldst_width_t                issue_type_i,   // byte, halfword, ...
     input   op_data_t                   issue_rs1_i,    // base address
     input   op_data_t                   issue_rs2_i,    // data to store
@@ -46,9 +45,8 @@ module load_store_unit #(
     input   rob_idx_t                   issue_dest_rob_idx_i,
 
     /* Commit stage */
-    input   logic                       commit_pop_store_i,
-    output  logic                       commit_sb_head_completed_o,
-    output  rob_idx_t                   commit_sb_head_rob_idx_o,
+    input   logic                       comm_spec_instr_i,
+    input   rob_idx_t                   comm_rob_head_idx_i,
 
     /* Common data bus (CDB) */
     input   logic                       cdb_valid_i,
@@ -90,7 +88,7 @@ module load_store_unit #(
     // Load/store buffer <--> memory arbiter
     logic                       lb_memarb_valid, sb_memarb_valid;
     logic                       lb_memarb_ready, sb_memarb_ready;
-    adder_req_t                 lb_memarb_req, sb_memarb_req;
+    mem_req_t                   lb_memarb_req, sb_memarb_req;
     logic                       memarb_lb_valid, memarb_sb_valid;
     logic                       memarb_lb_ready, memarb_sb_ready;
 
@@ -134,36 +132,35 @@ module load_store_unit #(
     store_buffer #(
         .DEPTH (SB_DEPTH )
     ) u_store_buffer(
-    	.clk_i                      (clk_i                      ),
-        .rst_n_i                    (rst_n_i                    ),
-        .flush_i                    (flush_i                    ),
-        .issue_valid_i              (issue_sb_valid_i           ),
-        .issue_ready_o              (issue_sb_ready_o           ),
-        .issue_type_i               (issue_type_i               ),
-        .issue_rs1_i                (issue_rs1_i                ),
-        .issue_rs2_i                (issue_rs2_i                ),
-        .issue_imm_i                (issue_imm_i                ),
-        .issue_dest_rob_idx_i       (issue_dest_rob_idx_i       ),
-        .commit_pop_store_i         (commit_pop_store_i         ),
-        .commit_sb_head_completed_o (commit_sb_head_completed_o ),
-        .commit_sb_head_rob_idx_o   (commit_sb_head_rob_idx_o   ),
-        .cdb_valid_i                (cdb_valid_i                ),
-        .cdb_ready_i                (cdb_sb_ready_i             ),
-        .cdb_valid_o                (cdb_sb_valid_o             ),
-        .cdb_data_i                 (cdb_data_i                 ),
-        .cdb_data_o                 (cdb_sb_data_o              ),
-        .adder_valid_i              (adderarb_sb_valid          ),
-        .adder_ready_i              (adderarb_sb_ready          ),
-        .adder_valid_o              (sb_adderarb_valid          ),
-        .adder_ready_o              (sb_adderarb_ready          ),
-        .adder_ans_i                (adder_lsb_ans              ),
-        .adder_req_o                (sb_adderarb_req            ),
-        .mem_valid_i                (memarb_sb_valid            ),
-        .mem_ready_i                (memarb_sb_ready            ),
-        .mem_valid_o                (sb_memarb_valid            ),
-        .mem_ready_o                (sb_memarb_ready            ),
-        .mem_req_o                  (sb_memarb_req              ),
-        .mem_ans_i                  (mem_ans_i                  )
+    	.clk_i                (clk_i                ),
+        .rst_n_i              (rst_n_i              ),
+        .flush_i              (flush_i              ),
+        .issue_valid_i        (issue_sb_valid_i     ),
+        .issue_ready_o        (issue_sb_ready_o     ),
+        .issue_type_i         (issue_type_i         ),
+        .issue_rs1_i          (issue_rs1_i          ),
+        .issue_rs2_i          (issue_rs2_i          ),
+        .issue_imm_i          (issue_imm_i          ),
+        .issue_dest_rob_idx_i (issue_dest_rob_idx_i ),
+        .comm_spec_instr_i    (comm_spec_instr_i    ),
+        .comm_rob_head_idx_i  (comm_rob_head_idx_i  ),
+        .cdb_valid_i          (cdb_valid_i          ),
+        .cdb_ready_i          (cdb_sb_ready_i       ),
+        .cdb_valid_o          (cdb_sb_valid_o       ),
+        .cdb_data_i           (cdb_data_i           ),
+        .cdb_data_o           (cdb_sb_data_o        ),
+        .adder_valid_i        (adderarb_sb_valid    ),
+        .adder_ready_i        (adderarb_sb_ready    ),
+        .adder_valid_o        (sb_adderarb_valid    ),
+        .adder_ready_o        (sb_adderarb_ready    ),
+        .adder_ans_i          (adder_lsb_ans        ),
+        .adder_req_o          (sb_adderarb_req      ),
+        .mem_valid_i          (memarb_sb_valid      ),
+        .mem_ready_i          (memarb_sb_ready      ),
+        .mem_valid_o          (sb_memarb_valid      ),
+        .mem_ready_o          (sb_memarb_ready      ),
+        .mem_req_o            (sb_memarb_req        ),
+        .mem_ans_i            (mem_ans_i            )
     );
     
     // -------------

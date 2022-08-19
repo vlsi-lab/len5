@@ -63,15 +63,11 @@ module int_rf (
     // Asynchronous read
     always_comb begin: operands_read_ports
         // READ PORT 1 (rs1)
-        issue_rs1_value_o                   = rf_data[issue_rs1_idx_i];
+        if (issue_rs1_idx_i == '0)  issue_rs1_value_o   = 0;
+        else                        issue_rs1_value_o   = rf_data[issue_rs1_idx_i];
         // READ PORT 2 (rs2)
-        issue_rs2_value_o                   = rf_data[issue_rs2_idx_i];
+        if (issue_rs2_idx_i == '0)  issue_rs2_value_o   = 0;
+        else                        issue_rs2_value_o   = rf_data[issue_rs2_idx_i];
     end
-
-    // ---------
-    // READY OUT
-    // ---------
-    // Always ready to accept data
-    // assign comm_ready_o                     = 1'b1;
     
 endmodule

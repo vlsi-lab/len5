@@ -26,19 +26,13 @@ package expipe_pkg;
     // Import global constants
     import len5_pkg::*;
 
-    /* Add memory definitions */
-    import memory_pkg::PPN_LEN;
-    import memory_pkg::PADDR_LEN;
-    import memory_pkg::PAGE_OFFSET_LEN;
-    import memory_pkg::ldst_width_t;
-
     // ----------
     // PARAMETERS
     // ----------
 
     // ROB
     // ---
-    localparam ROB_IDX_LEN = $clog2(ROB_DEPTH);//3 // ROB index width
+    localparam ROB_IDX_LEN = $clog2(ROB_DEPTH); // ROB index width
     localparam ROB_EXCEPT_LEN = EXCEPT_TYPE_LEN;
 
     // ISSUE QUEUE
@@ -68,6 +62,7 @@ package expipe_pkg;
     // --------------------
 
     // BRANCH UNIT
+    localparam  BRANCH_TYPE_LEN = 3;
     localparam  BU_CTL_LEN      = BRANCH_TYPE_LEN; // size of 'branch_type_t' from len5_pkg
 
     // ALU
@@ -85,6 +80,9 @@ package expipe_pkg;
 
     // OPERANDS ONLY
     localparam  OP_ONLY_CTL_LEN = 2;
+
+    // LOAD-STORE UNIT
+    localparam  LSU_CTL_LEN     = 3;
 
     // MAXIMUM DIMENSION OF EU_CONTROL FIELDS
     localparam MAX_EU_CTL_LEN   = ALU_CTL_LEN;  // this must be set to the maximum of the previous parameters
@@ -183,7 +181,7 @@ package expipe_pkg;
     // --------------------
 
     // ALU opcodes
-    typedef enum logic [ALU_CTL_LEN-1:0] {
+    typedef enum logic [MAX_EU_CTL_LEN-1:0] {
         ALU_ADD,
         ALU_ADDW,
         ALU_SUB,
@@ -202,13 +200,44 @@ package expipe_pkg;
     } alu_ctl_t;
 
     // Mult opcodes
-    typedef enum logic [MULT_CTL_LEN-1:0] {
+    typedef enum logic [MAX_EU_CTL_LEN-1:0] {
         MULT_MUL,
         MULT_MULW,
         MULT_MULH,
         MULT_MULHU,
         MULT_MULHSU
     } mult_ctl_t;
+
+    // Branch unit control
+    typedef enum logic [MAX_EU_CTL_LEN-1:0] {
+        BEQ   = 'h0,
+        BNE   = 'h1,
+        BLT   = 'h2,
+        BGE   = 'h3,
+        BLTU  = 'h4,
+        BGEU  = 'h5,
+        JUMP  = 'h6
+    } branch_type_t;
+
+    // Load-store unit control
+    typedef enum logic [MAX_EU_CTL_LEN-1:0] { 
+        LS_BYTE,
+        LS_BYTE_U,
+        LS_HALFWORD,
+        LS_HALFWORD_U,
+        LS_WORD,
+        LS_WORD_U,
+        LS_DOUBLEWORD
+    } ldst_width_t;
+
+    // EU control union
+    typedef union packed {
+        alu_ctl_t                   alu;
+        mult_ctl_t                  mult;
+        branch_type_t               bu;
+        ldst_width_t                lsu;
+        logic [MAX_EU_CTL_LEN-1:0]  raw;
+    } eu_ctl_t;
     
     // ASSIGNED EU
     typedef enum logic [$clog2(EU_N)-1:0] {
@@ -238,7 +267,7 @@ package expipe_pkg;
         `ifdef ENABLE_AGE_BASED_SELECTOR
         rob_idx_t               entry_age; // The age of the entry, used for scheduling
         `endif
-        logic [BU_CTL_LEN-1:0]  branch_type;// Branch type for the branch unit
+        branch_type_t           branch_type;// Branch type for the branch unit
         logic                   rs1_ready;  // The first operand value is available in 'rs1_value'
         rob_idx_t               rs1_idx;    // The entry of the rob that will contain the required operand
         logic [XLEN-1:0]        rs1_value;  // The value of the first operand
@@ -259,11 +288,13 @@ package expipe_pkg;
     // ---------------
     
     /* Load instruction status */
-    typedef enum logic [2:0] {
+    typedef enum logic [LSU_CTL_LEN-1:0] {
         LOAD_S_EMPTY,
         LOAD_S_RS1_PENDING,
-        LOAD_S_ADDR_PENDING,
-        LOAD_S_MEM_PENDING,
+        LOAD_S_ADDR_REQ,
+        LOAD_S_ADDR_WAIT,
+        LOAD_S_MEM_REQ,
+        LOAD_S_MEM_WAIT,
         LOAD_S_COMPLETED,
         LOAD_S_HALT     // for debug
     } lb_state_t;
@@ -299,9 +330,11 @@ package expipe_pkg;
         STORE_S_RS12_PENDING,
         STORE_S_RS1_PENDING,
         STORE_S_RS2_PENDING,
-        STORE_S_ADDR_PENDING,
+        STORE_S_ADDR_REQ,
+        STORE_S_ADDR_WAIT,
         STORE_S_WAIT_ROB,
-        STORE_S_MEM_PENDING,
+        STORE_S_MEM_REQ,
+        STORE_S_MEM_WAIT,
         STORE_S_COMPLETED,
         STORE_S_HALT    // for debug
     } sb_state_t;
@@ -309,6 +342,7 @@ package expipe_pkg;
     /* Store instruction data */
     typedef struct packed {
         ldst_width_t                store_type;
+        logic                       speculative;    // the store instruction is speculative
         rob_idx_t                   rs1_rob_idx;
         logic [XLEN-1:0]            rs1_value;
         rob_idx_t                   rs2_rob_idx;

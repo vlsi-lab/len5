@@ -55,4 +55,9 @@
 // If defined, the arbiters of the shared virtual address adder, the DTLB and the DCACHE will give the highest priority to the store buffer in case of conflict. This might slightly increase the forwarding hit ration from the store buffer to the load buffer, while decreasing the latency of loads execution. 
 `define ENABLE_STORE_PRIO_2WAY_ARBITER
 
+// If defined, instantiate a byte selector in the load buffer. All memory
+// accesses are aligned on 64 bits, and the selector picks the correct
+// word/halfword/byte from it the fetched doubleword.
+//`define ONLY_DOUBLEWORD_MEM_ACCESSES
+
 `endif /* LEN5_CONFIG_ */

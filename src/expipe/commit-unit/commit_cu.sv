@@ -34,10 +34,9 @@ module commit_cu (
 
     // Commit logic <--> CU
     input   comm_type_t             comm_type_i,    // from commit decoder
-    input   logic                   store_comm_i,   // a store instruction is ready to commit
     input   logic                   mispredict_i,   // branch misprediction
     output  logic                   comm_reg_en_o,  // commit enable
-    output  logic                   is_jump_o,      // the committing is a jump
+    output  logic                   jb_instr_o,     // the committing instruction is a jump/branch 
 
     // ROB <--> CU
     input   logic                   valid_i,
@@ -59,7 +58,7 @@ module commit_cu (
 `endif /* LEN5_FP_EN */
 
     // CU <--> store buffer
-    output  logic                   sb_pop_store_o, // pop the store instruction from the store buffer
+    output  logic                   sb_exec_store_o, // pop the store instruction from the store buffer
 
     // CU <--> CSRs
     output  logic                   csr_valid_o,
@@ -82,7 +81,6 @@ module commit_cu (
         COMMIT_INT_RF,      // commit to the integer RF
         COMMIT_FP_RF,       // commit to the floating-point RF
         COMMIT_STORE,       // commit store instructions
-        WAIT_STORE,         // wait for a store instruction to commit from the store buffer
         COMMIT_JUMP,        // commit jump-and-link instructions
         COMMIT_JUMP_MIS,    // commit jumps and restart
         COMMIT_BRANCH,      // commit correctly predicted branch instructions
@@ -124,8 +122,11 @@ module commit_cu (
             end
         `endif /* LEN5_FP_EN */
             COMM_TYPE_STORE: begin
-                if (!store_comm_i)  v_next_state  = WAIT_STORE;
-                else                v_next_state  = COMMIT_STORE;
+                // NOTE: the memory access is performed before commit if
+                // the store is not speculative (i.e., all previous jumps
+                // or branches have been resolved and committed).
+                if (res_ready_i)    v_next_state  = COMMIT_STORE;
+                else                v_next_state  = HALT;
             end
             COMM_TYPE_JUMP: begin
                 if (mispredict_i)   v_next_state  = COMMIT_JUMP_MIS;
@@ -159,7 +160,6 @@ module commit_cu (
             end
 
             // Commit to the integer register file
-            // NOTE: do not wait for ready, the RFs are always ready
             COMMIT_INT_RF: begin
                 if (valid_i)    next_state  = v_next_state;
                 else            next_state  = IDLE;
@@ -167,7 +167,6 @@ module commit_cu (
 
         `ifdef LEN5_FP_EN
             // Commit to the floating-point register file
-            // NOTE: do not wait for ready, the RFs are always ready
             COMMIT_FP_RF: begin
                 if (valid_i)    next_state  = v_next_state;
                 else            next_state  = IDLE;
@@ -178,12 +177,6 @@ module commit_cu (
             COMMIT_STORE: begin
                 if (valid_i)    next_state  = v_next_state;
                 else            next_state  = IDLE;
-            end
-
-            // Wait for store committing
-            WAIT_STORE: begin
-                if (!store_comm_i)  next_state  = WAIT_STORE;
-                else                next_state  = COMMIT_STORE;
             end
 
             // Commit jump instructions
@@ -236,14 +229,14 @@ module commit_cu (
         // Default values
         ready_o             = 1'b0;
         comm_reg_en_o       = 1'b0;
-        is_jump_o           = 1'b0;
+        jb_instr_o           = 1'b0;
         int_rs_valid_o      = 1'b0;
         int_rf_valid_o      = 1'b0;
     `ifdef LEN5_FP_EN
         fp_rs_valid_o       = 1'b0;
         fp_rf_valid_o       = 1'b0;
     `endif /* LEN5_FP_EN */
-        sb_pop_store_o      = 1'b0;
+        sb_exec_store_o     = 1'b0;
         csr_valid_o         = 1'b0;
         csr_type_o          = CSR_INSTR;
         fe_res_valid_o      = 1'b0;
@@ -277,25 +270,22 @@ module commit_cu (
 
             COMMIT_STORE: begin
                 ready_o         = 1'b1;
-                sb_pop_store_o  = 1'b1;
                 comm_reg_en_o   = 1'b1;
             end
-
-            WAIT_STORE:; // use default values
 
             COMMIT_JUMP: begin
                 ready_o         = 1'b1;
                 int_rf_valid_o  = 1'b1;
                 int_rs_valid_o  = 1'b1;
                 comm_reg_en_o   = 1'b1;
-                is_jump_o       = 1'b1;
+                jb_instr_o       = 1'b1;
                 fe_res_valid_o  = 1'b1;
             end
 
             COMMIT_JUMP_MIS: begin
                 int_rf_valid_o  = 1'b1;
                 int_rs_valid_o  = 1'b1;
-                is_jump_o       = 1'b1;
+                jb_instr_o       = 1'b1;
                 fe_res_valid_o  = 1'b1;
                 mis_flush_o     = 1'b1;
             end
@@ -303,13 +293,14 @@ module commit_cu (
             COMMIT_BRANCH: begin
                 ready_o         = 1'b1;
                 comm_reg_en_o   = 1'b1;
+                jb_instr_o       = 1'b1;
             end
             
             // TODO: redundant with jumps?
             COMMIT_BRANCH_MIS: begin
                 int_rf_valid_o  = 1'b1;
                 int_rs_valid_o  = 1'b1;
-                is_jump_o       = 1'b1;
+                jb_instr_o       = 1'b1;
                 fe_res_valid_o  = 1'b1;
                 mis_flush_o     = 1'b1;
             end
@@ -359,7 +350,7 @@ module commit_cu (
     // ----------
     `ifndef SYNTHESIS
     always @(posedge clk_i) begin
-        `uvm_info("COMMIT CU", $sformatf("valid_i: %b | instr: %h | type: %s | state: %s", valid_i, instr_i, comm_type_i.name(), curr_state), UVM_INFO)
+        `uvm_info("COMMIT CU", $sformatf("valid_i: %b | instr: %h | type: %s | state: %s", valid_i, instr_i, comm_type_i.name(), curr_state.name()), UVM_INFO)
     end
     `endif /* SYNTHESIS */
 

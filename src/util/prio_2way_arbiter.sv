@@ -32,6 +32,10 @@ module prio_2way_arbiter #(
     // ----------------
     logic   sel_high_prio;
 
+    // Valid generation
+    // ----------------
+    assign  valid_o     = high_prio_valid_i | low_prio_valid_i;
+
     // Ready generation
     // ----------------
     always_comb begin: ready_gen
