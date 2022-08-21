@@ -51,7 +51,7 @@ module int_rf (
                 rf_data[i]                  <= 0;
             end
         end else begin
-            if (comm_valid_i && (comm_rd_idx_i != 0)) begin // if the data from the commit stage is valid, update the RF
+            if (comm_valid_i && |comm_rd_idx_i) begin // if the data from the commit stage is valid, update the RF
                 rf_data[comm_rd_idx_i]      <= comm_rd_value_i;
             end
         end
@@ -63,11 +63,11 @@ module int_rf (
     // Asynchronous read
     always_comb begin: operands_read_ports
         // READ PORT 1 (rs1)
-        if (issue_rs1_idx_i == '0)  issue_rs1_value_o   = 0;
-        else                        issue_rs1_value_o   = rf_data[issue_rs1_idx_i];
+        if (|issue_rs1_idx_i)  issue_rs1_value_o   = rf_data[issue_rs1_idx_i];
+        else                   issue_rs1_value_o   = '0;
         // READ PORT 2 (rs2)
-        if (issue_rs2_idx_i == '0)  issue_rs2_value_o   = 0;
-        else                        issue_rs2_value_o   = rf_data[issue_rs2_idx_i];
+        if (|issue_rs2_idx_i)  issue_rs2_value_o   = rf_data[issue_rs2_idx_i];
+        else                   issue_rs2_value_o   = '0;
     end
     
 endmodule

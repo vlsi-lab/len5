@@ -42,10 +42,10 @@ module int_regstat #(
     // INTERNAL SIGNALS
     // ----------------
     logic               busy_rob_idx_upd;
-    rob_idx_t           busy_rob_idx [0:REG_NUM-1]; // newest ROB entry that is going to write rd
-    logic               busy_cnt_en [0:REG_NUM-1], busy_cnt_up[0:REG_NUM-1]; 
+    rob_idx_t           busy_rob_idx [1:REG_NUM-1]; // newest ROB entry that is going to write rd
+    logic               busy_cnt_en [1:REG_NUM-1], busy_cnt_up[1:REG_NUM-1]; 
     logic               busy_cnt_clr;
-    rob_idx_t           busy_cnt[0:REG_NUM-1];      // number of in-flight instructions writing rd
+    rob_idx_t           busy_cnt[1:REG_NUM-1];      // number of in-flight instructions writing rd
 
     // -----------------------------
     // REGISTER STATUS CONTROL LOGIC
@@ -81,14 +81,14 @@ module int_regstat #(
                 busy_rob_idx[i] <= 0;
             end
         end else if (busy_rob_idx_upd) begin
-            busy_rob_idx[issue_rd_idx_i] <= issue_rob_idx_i;
+            if (|issue_rd_idx_i) busy_rob_idx[issue_rd_idx_i] <= issue_rob_idx_i;
         end
     end
 
     // BUSY COUNTERS
     // -------------
     generate
-        for (genvar i = 0; i<REG_NUM-1; i++) begin: l_busy_counters
+        for (genvar i = 1; i<REG_NUM-1; i++) begin: l_busy_counters
             updown_counter #(
                 .W (ROB_IDX_LEN )
             ) u_rob_cnt (
@@ -106,11 +106,23 @@ module int_regstat #(
     // --------------------------
     // REGISTER STATUS READ PORTS
     // --------------------------
-    // rs1 status (READ PORT 1)
-    assign  issue_rs1_busy_o    = |busy_cnt[issue_rs1_idx_i];
-    assign  issue_rs1_rob_idx_o = busy_rob_idx[issue_rs1_idx_i];
+    always_comb begin : int_rs_out
+        // rs1 status (READ PORT 1)
+        if (|issue_rs1_idx_i) begin
+            issue_rs1_busy_o    = |busy_cnt[issue_rs1_idx_i];
+            issue_rs1_rob_idx_o = busy_rob_idx[issue_rs1_idx_i];
+        end else begin
+            issue_rs1_busy_o    = 1'b0;
+            issue_rs1_rob_idx_o = '0;
+        end
 
-    // rs2 status (READ PORT 2)
-    assign  issue_rs2_busy_o    = |busy_cnt[issue_rs2_idx_i];
-    assign  issue_rs2_rob_idx_o = busy_rob_idx[issue_rs2_idx_i];
+        // rs2 status (READ PORT 2)
+        if (|issue_rs2_idx_i) begin
+            issue_rs2_busy_o    = |busy_cnt[issue_rs2_idx_i];
+            issue_rs2_rob_idx_o = busy_rob_idx[issue_rs2_idx_i];
+        end else begin
+            issue_rs2_busy_o    = 1'b0;
+            issue_rs2_rob_idx_o = '0;
+        end
+    end
 endmodule
