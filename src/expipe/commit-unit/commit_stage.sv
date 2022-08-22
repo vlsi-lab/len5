@@ -12,18 +12,13 @@
 // Author: Michele Caon 
 // Date: 20/11/2019
 
-// THIS FILE IS ONYL A TEMPLATE, THE COMMIT LOGIC IS NOT IMPLEMENTED YET, SINCE IT REQUIRES ALL THE PROCESSOR PARTS TO BE FUNCTIONAL
+/* Include UVM macros */
+`include "uvm_macros.svh"
+import uvm_pkg::*;
 
 // LEN5 compilation switches
 `include "len5_config.svh"
-
 `include "instr_macros.svh"
-
-/* Include UVM macros */
-`include "uvm_macros.svh"
-
-/* Import UVM package */
-import uvm_pkg::*;
 
 import expipe_pkg::*;
 import len5_pkg::*;
@@ -136,7 +131,7 @@ module commit_stage (
 
     // Committing instruction register
     logic                       comm_reg_en, comm_reg_clr;
-    rob_entry_t                 comm_reg_data;
+    inreg_data_t                comm_reg_data;
     logic                       comm_reg_valid;
 
     // Jump adder and MUX
@@ -198,7 +193,10 @@ module commit_stage (
     assign  inreg_data_in.rob_idx   = rob_reg_head_idx;
 
     // Input spill cell
-    spill_cell_ext #(.DATA_T(inreg_data_t)) u_input_reg (
+    spill_cell_ext #(
+        .DATA_T (inreg_data_t       ),
+        .SKIP   (COMMIT_SPILL_SKIP  )
+    ) u_input_reg (
         .clk_i          (clk_i           ),
         .rst_n_i        (rst_n_i         ),
         .flush_i        (cu_mis_flush    ),
@@ -234,9 +232,9 @@ module commit_stage (
         end else if (inreg_cu_valid && inreg_data_out.rob_idx == issue_rs1_rob_idx_i) begin
             issue_rs1_ready_o   = 1'b1;
             issue_rs1_value_o   = inreg_data_out.data.res_value;
-        end else if (comm_reg_valid && comm_reg_data.rd_idx == issue_rs1_rob_idx_i) begin
+        end else if (comm_reg_valid && comm_reg_data.rob_idx == issue_rs1_rob_idx_i) begin
             issue_rs1_ready_o   = 1'b1;
-            issue_rs1_value_o   = comm_reg_data.res_value;
+            issue_rs1_value_o   = comm_reg_data.data.res_value;
         end else begin
             issue_rs1_ready_o   = 1'b0;
             issue_rs1_value_o   = '0;
@@ -254,9 +252,9 @@ module commit_stage (
         end else if (inreg_cu_valid && inreg_data_out.rob_idx == issue_rs2_rob_idx_i) begin
             issue_rs2_ready_o   = 1'b1;
             issue_rs2_value_o   = inreg_data_out.data.res_value;
-        end else if (comm_reg_valid && comm_reg_data.rd_idx == issue_rs2_rob_idx_i) begin
+        end else if (comm_reg_valid && comm_reg_data.rob_idx == issue_rs2_rob_idx_i) begin
             issue_rs2_ready_o   = 1'b1;
-            issue_rs2_value_o   = comm_reg_data.res_value;
+            issue_rs2_value_o   = comm_reg_data.data.res_value;
         end else begin
             issue_rs2_ready_o   = 1'b0;
             issue_rs2_value_o   = '0;
@@ -275,7 +273,7 @@ module commit_stage (
             comm_reg_valid  <= 1'b0;
         end
         else if (comm_reg_en) begin
-            comm_reg_data   <= inreg_data_out.data;
+            comm_reg_data   <= inreg_data_out;
             comm_reg_valid  <= inreg_cu_valid;
         end
     end
@@ -328,8 +326,8 @@ module commit_stage (
 
     // Jump commit adder and MUX
     // -------------------------
-    assign  link_addr       = comm_reg_data.instr_pc + (ILEN >> 3);
-    assign  rd_value        = (cu_jb_instr) ? link_addr : comm_reg_data.res_value;
+    assign  link_addr       = comm_reg_data.data.instr_pc + (ILEN >> 3);
+    assign  rd_value        = (cu_jb_instr) ? link_addr : comm_reg_data.data.res_value;
 
     // Jump/branch in-flight instructions counter
     // ------------------------------------------
@@ -353,11 +351,11 @@ module commit_stage (
     // -----------------
 
     // Data to front-end
-    assign  fe_res_o.pc         = comm_reg_data.instr_pc;
-    assign  fe_res_o.target     = comm_reg_data.res_value;  // computed target address
-    assign  fe_res_o.taken      = comm_reg_data.res_aux.jb.taken;
-    assign  fe_res_o.mispredict = comm_reg_data.res_aux.jb.mispredicted;
-    assign  fe_except_raised_o  = comm_reg_data.except_raised;
+    assign  fe_res_o.pc         = comm_reg_data.data.instr_pc;
+    assign  fe_res_o.target     = comm_reg_data.data.res_value;  // computed target address
+    assign  fe_res_o.taken      = comm_reg_data.data.res_aux.jb.taken;
+    assign  fe_res_o.mispredict = comm_reg_data.data.res_aux.jb.mispredicted;
+    assign  fe_except_raised_o  = comm_reg_data.data.except_raised;
     assign  fe_except_pc_o      = 64'hffffffffffffffff; // TODO: add proper exception handling
 
     assign  rs_head_idx_o       = rob_reg_head_idx;
@@ -369,16 +367,16 @@ module commit_stage (
     assign  sb_rob_head_idx_o   = rob_reg_head_idx;
 
     // Data to the register file(s)
-    assign  rd_idx_o            = comm_reg_data.rd_idx;
+    assign  rd_idx_o            = comm_reg_data.data.rd_idx;
     assign  rd_value_o          = rd_value;
 
     // Data to CSRs
-    assign  csr_funct3_o        = comm_reg_data.instruction.i.funct3;
-    assign  csr_addr_o          = comm_reg_data.instruction.i.imm11;
-    assign  csr_rs1_idx_o       = comm_reg_data.instruction.r.rs1;
-    assign  csr_rs1_value_o     = comm_reg_data.res_value;
-    assign  csr_except_code_o   = comm_reg_data.except_code;
-    assign  csr_rd_idx_o        = comm_reg_data.rd_idx;
+    assign  csr_funct3_o        = comm_reg_data.data.instruction.i.funct3;
+    assign  csr_addr_o          = comm_reg_data.data.instruction.i.imm11;
+    assign  csr_rs1_idx_o       = comm_reg_data.data.instruction.r.rs1;
+    assign  csr_rs1_value_o     = comm_reg_data.data.res_value;
+    assign  csr_except_code_o   = comm_reg_data.data.except_code;
+    assign  csr_rd_idx_o        = comm_reg_data.data.rd_idx;
 
     // Data to others
     assign  mis_flush_o         = cu_mis_flush;

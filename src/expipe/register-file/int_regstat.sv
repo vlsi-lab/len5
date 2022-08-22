@@ -12,6 +12,10 @@
 // Author: Michele Caon
 // Date: 12/11/2019
 
+/* Include UVM macros */
+`include "uvm_macros.svh"
+import uvm_pkg::*;
+
 import expipe_pkg::*;
 
 module int_regstat #( 
@@ -41,17 +45,19 @@ module int_regstat #(
 
     // INTERNAL SIGNALS
     // ----------------
-    logic               busy_rob_idx_upd;
-    rob_idx_t           busy_rob_idx [1:REG_NUM-1]; // newest ROB entry that is going to write rd
-    logic               busy_cnt_en [1:REG_NUM-1], busy_cnt_up[1:REG_NUM-1]; 
-    logic               busy_cnt_clr;
-    rob_idx_t           busy_cnt[1:REG_NUM-1];      // number of in-flight instructions writing rd
+    logic                       busy_rob_idx_upd;
+    rob_idx_t                   busy_rob_idx[1:REG_NUM-1]; // newest ROB entry that is going to write rd
+    logic                       busy_cnt_en[1:REG_NUM-1], busy_cnt_up[1:REG_NUM-1]; 
+    logic                       busy_cnt_clr;
+    logic [REGSTAT_CNT_W-1:0]   busy_cnt[1:REG_NUM-1];      // number of in-flight instructions writing rd
+    logic                       skip_cnt_upd;
 
     // -----------------------------
     // REGISTER STATUS CONTROL LOGIC
     // -----------------------------
     assign  busy_rob_idx_upd    = issue_valid_i;
     assign  busy_cnt_clr        = flush_i;
+    assign  skip_cnt_upd        = issue_valid_i && comm_valid_i && issue_rd_idx_i == comm_rd_idx_i;
 
     always_comb begin : busy_cnt_control
         foreach (busy_cnt[i]) begin
@@ -61,10 +67,14 @@ module int_regstat #(
 
         // Only update the counters pointed by issue_rob_idx_i and 
         // comm_head_idx_i, and only if those signals differ
-        if (issue_rd_idx_i != comm_rd_idx_i) begin
-            busy_cnt_en[issue_rd_idx_i] = issue_valid_i;
-            busy_cnt_up[issue_rd_idx_i] = 1'b1;
-            busy_cnt_en[comm_rd_idx_i]  = comm_valid_i;
+        if (!skip_cnt_upd) begin
+            if (issue_valid_i) begin
+                busy_cnt_en[issue_rd_idx_i] = 1'b1;
+                busy_cnt_up[issue_rd_idx_i] = issue_valid_i;
+            end 
+            if (comm_valid_i) begin
+                busy_cnt_en[comm_rd_idx_i]  = comm_valid_i;
+            end
         end
     end
 
@@ -88,9 +98,9 @@ module int_regstat #(
     // BUSY COUNTERS
     // -------------
     generate
-        for (genvar i = 1; i<REG_NUM-1; i++) begin: l_busy_counters
+        for (genvar i = 1; i < REG_NUM; i++) begin: l_busy_counters
             updown_counter #(
-                .W (ROB_IDX_LEN )
+                .W (REGSTAT_CNT_W )
             ) u_rob_cnt (
             	.clk_i   (clk_i          ),
                 .rst_n_i (rst_n_i        ),
@@ -125,4 +135,22 @@ module int_regstat #(
             issue_rs2_rob_idx_o = '0;
         end
     end
+
+    // ----------
+    // ASSERTIONS
+    // ----------
+    `ifndef SYNTHESIS
+    // The counter should never overflow
+    property p_busy_cnt_overflow(i, en, cnt);
+        @(posedge clk_i) disable iff (!rst_n_i)
+        en && &cnt |-> ##1
+        |cnt;
+    endproperty
+    generate
+        for (genvar i=1; i < REG_NUM-1; i++) begin: l_assertion_gen
+            a_busy_cnt_overflow: assert property (p_busy_cnt_overflow(i, busy_cnt_en[i], busy_cnt[i]))
+            else `uvm_error("INT REGSTAT", $sformatf("busy count %0d overflow", i));
+        end
+    endgenerate
+    `endif /* SYNTHESIS */
 endmodule

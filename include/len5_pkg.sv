@@ -179,9 +179,9 @@ package len5_pkg;
     // LOAD/STORE UNIT
     localparam LDBUFF_DEPTH = 4; // number of entries in the load buffer
     localparam STBUFF_DEPTH = 4; // number of entries in the store buffer
-    localparam LDBUFF_IDX_LEN = $clog2(LDBUFF_DEPTH); // load buffer address width
-    localparam STBUFF_IDX_LEN = $clog2(STBUFF_DEPTH); // store buffer address width
-    localparam BUFF_IDX_LEN = (LDBUFF_IDX_LEN > STBUFF_IDX_LEN) ? (LDBUFF_IDX_LEN) : (STBUFF_IDX_LEN); // the largest of the two. Useful when comparing indexes from both
+    localparam LDBUFF_TAG_W = $clog2(LDBUFF_DEPTH); // load buffer address width
+    localparam STBUFF_TAG_W = $clog2(STBUFF_DEPTH); // store buffer address width
+    localparam BUFF_IDX_LEN = (LDBUFF_TAG_W > STBUFF_TAG_W) ? (LDBUFF_TAG_W) : (STBUFF_TAG_W); // the largest of the two. Useful when comparing indexes from both
 
     // ROB
     localparam ROB_DEPTH = 4; // Number of entries in the ROB. This also tells the number of instruction that coexist in the execution pipeline at the same time

@@ -12,6 +12,8 @@
 // Author: Michele Caon
 // Date: 17/11/2021
 
+`include "len5_config.svh"
+
 import len5_pkg::*;
 import expipe_pkg::*;
 
@@ -135,8 +137,8 @@ module branch_unit
 `endif /* LEN5_C_EN */
 
     spill_cell #(
-        .DATA_T (bu_out_reg_t),
-        .SKIP   (1           )
+        .DATA_T (bu_out_reg_t   ),
+        .SKIP   (BU_SPILL_SKIP  )
     ) u_bu_out_reg (
     	.clk_i   (clk_i         ),
         .rst_n_i (rst_n_i       ),

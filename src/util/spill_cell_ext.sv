@@ -20,7 +20,8 @@
 // and lower the output ready for the upstream hardware in the next cycle.
 
 module spill_cell_ext #(
-    parameter type  DATA_T  = logic
+    parameter type  DATA_T  = logic,
+    parameter       SKIP    = 0
 ) (
     // Clock, reset, and flush
     input   logic       clk_i,
@@ -39,60 +40,69 @@ module spill_cell_ext #(
     output  logic       buff_full_o,    // also the spill cell buffer is full
     output  DATA_T      buff_data_o     // spill cell buffer data
 );
+    // Bypass internal logic
+    generate
+        if (SKIP) begin: l_skip_cell_gen
+            assign  valid_o     = valid_i;
+            assign  ready_o     = ready_i;
+            assign  data_o      = data_i;
+            assign  buff_full_o = 1'b0;
+            assign  buff_data_o = '0;
+        end else begin: l_spill_cell_gen
+            // ----------------
+            // INTERNAL SIGNALS
+            // ----------------
 
-    // ----------------
-    // INTERNAL SIGNALS
-    // ----------------
+            // Control signals
+            logic       a_en;
+            logic       b_en;
+            logic       b_sel;
 
-    // Control signals
-    logic       a_en;
-    logic       b_en;
-    logic       b_sel;
+            // Register data
+            logic       buff_full;
+            DATA_T      a_data_q;
+            DATA_T      b_data_q;
 
-    // Register data
-    logic       buff_full;
-    DATA_T      a_data_q;
-    DATA_T      b_data_q;
+            // ------------
+            // CONTROL UNIT
+            // ------------
 
-    // ------------
-    // CONTROL UNIT
-    // ------------
+            spill_cell_ext_cu u_spill_cell_cu (
+                .clk_i          (clk_i),
+                .rst_n_i        (rst_n_i),
+                .flush_i        (flush_i),
+                .valid_i        (valid_i),
+                .ready_i        (ready_i),
+                .valid_o        (valid_o),
+                .ready_o        (ready_o),
+                .a_en_o         (a_en),
+                .b_en_o         (b_en),
+                .b_sel_o        (b_sel),
+                .buff_full_o    (buff_full)
+            );
 
-    spill_cell_ext_cu u_spill_cell_cu (
-        .clk_i          (clk_i),
-        .rst_n_i        (rst_n_i),
-        .flush_i        (flush_i),
-        .valid_i        (valid_i),
-        .ready_i        (ready_i),
-        .valid_o        (valid_o),
-        .ready_o        (ready_o),
-        .a_en_o         (a_en),
-        .b_en_o         (b_en),
-        .b_sel_o        (b_sel),
-        .buff_full_o    (buff_full)
-    );
+            // --------
+            // DATAPATH
+            // --------
 
-    // --------
-    // DATAPATH
-    // --------
+            // Register A
+            always_ff @( posedge clk_i or negedge rst_n_i ) begin : reg_a
+                if (!rst_n_i)       a_data_q    <= '0;
+                else if (a_en)      a_data_q    <= data_i;
+            end
 
-    // Register A
-    always_ff @( posedge clk_i or negedge rst_n_i ) begin : reg_a
-        if (!rst_n_i)       a_data_q    <= '0;
-        else if (a_en)      a_data_q    <= data_i;
-    end
+            // Register B
+            always_ff @( posedge clk_i or negedge rst_n_i ) begin : reg_b
+                if (!rst_n_i)       b_data_q    <= '0;
+                else if (b_en)      b_data_q    <= data_i;
+            end
 
-    // Register B
-    always_ff @( posedge clk_i or negedge rst_n_i ) begin : reg_b
-        if (!rst_n_i)       b_data_q    <= '0;
-        else if (b_en)      b_data_q    <= data_i;
-    end
+            // Output MUX
+            assign  data_o = (b_sel) ? b_data_q : a_data_q;
 
-    // Output MUX
-    assign  data_o = (b_sel) ? b_data_q : a_data_q;
-
-    // Output data
-    assign  buff_full_o = buff_full;
-    assign  buff_data_o = (b_sel) ? a_data_q : b_data_q;
-
+            // Output data
+            assign  buff_full_o = buff_full;
+            assign  buff_data_o = (b_sel) ? a_data_q : b_data_q;
+        end
+    endgenerate
 endmodule

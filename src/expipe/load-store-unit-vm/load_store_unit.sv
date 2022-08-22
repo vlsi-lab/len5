@@ -90,9 +90,9 @@ module load_store_unit (
     logic [XLEN-1:0]            pfwd_paddr;
     logic [LDST_TYPE_LEN-1:0]   vfwd_ldtype;
     logic [LDST_TYPE_LEN-1:0]   pfwd_ldtype;    
-    logic [STBUFF_IDX_LEN:0]    vfwd_older_stores;
-    logic [STBUFF_IDX_LEN:0]    pfwd_older_stores;
-    logic [STBUFF_IDX_LEN:0]    inflight_store_cnt; 
+    logic [STBUFF_TAG_W:0]    vfwd_older_stores;
+    logic [STBUFF_TAG_W:0]    pfwd_older_stores;
+    logic [STBUFF_TAG_W:0]    inflight_store_cnt; 
     logic                       lb_store_committing; 
     logic                       vfwd_hit;
     logic                       vfwd_depfree;
@@ -118,13 +118,13 @@ module load_store_unit (
     logic                       lb_vaddermux_isstore;
     logic [XLEN-1:0]            lb_vaddermux_rs1_value;
     logic [XLEN-1:0]            lb_vaddermux_imm_value;
-    logic [LDBUFF_IDX_LEN-1:0]  lb_vaddermux_idx;
+    logic [LDBUFF_TAG_W-1:0]  lb_vaddermux_idx;
     logic [LDST_TYPE_LEN-1:0]   lb_vaddermux_ldtype;
     // Store buffer --> MUX
     logic                       sb_vaddermux_isstore;
     logic [XLEN-1:0]            sb_vaddermux_rs1_value;
     logic [XLEN-1:0]            sb_vaddermux_imm_value;
-    logic [STBUFF_IDX_LEN-1:0]  sb_vaddermux_idx;
+    logic [STBUFF_TAG_W-1:0]  sb_vaddermux_idx;
     logic [LDST_TYPE_LEN-1:0]   sb_vaddermux_sttype;
     // MUX --> Virtual address adder
     logic                       vaddermux_vadder_is_store;
@@ -167,11 +167,11 @@ module load_store_unit (
     // Load buffer --> MUX
     logic                       lb_dtlbmux_isstore;
     logic [VPN_LEN-1:0]         lb_dtlbmux_vaddr;
-    logic [LDBUFF_IDX_LEN-1:0]  lb_dtlbmux_idx;
+    logic [LDBUFF_TAG_W-1:0]  lb_dtlbmux_idx;
     // Store buffer --> MUX
     logic                       sb_dtlbmux_isstore;
     logic [VPN_LEN-1:0]         sb_dtlbmux_vaddr;
-    logic [STBUFF_IDX_LEN-1:0]  sb_dtlbmux_idx;
+    logic [STBUFF_TAG_W-1:0]  sb_dtlbmux_idx;
     // MUX --> DTLB
     logic                       dtlbmux_dtlb_isstore;
     logic [VPN_LEN-1:0]         dtlbmux_dtlb_vaddr;
@@ -213,12 +213,12 @@ module load_store_unit (
     // Load buffer --> MUX
     logic                       lb_dcachemux_isstore;
     logic [XLEN-1:0]            lb_dcachemux_paddr;
-    logic [LDBUFF_IDX_LEN-1:0]  lb_dcachemux_idx;
+    logic [LDBUFF_TAG_W-1:0]  lb_dcachemux_idx;
     // Store buffer --> MUX
     logic                       sb_dcachemux_isstore;
     logic [XLEN-1:0]            sb_dcachemux_paddr;
     logic [XLEN-1:0]            sb_dcachemux_value;
-    logic [STBUFF_IDX_LEN-1:0]  sb_dcachemux_idx;
+    logic [STBUFF_TAG_W-1:0]  sb_dcachemux_idx;
     logic [LDST_TYPE_LEN-1:0]   sb_dcachemux_sttype;
     // MUX --> D$
     logic                       dcachemux_dcache_isstore;
@@ -281,7 +281,7 @@ module load_store_unit (
 
         // Data from/to the virtual address adder
         .vadder_vaddr_i         (vadder_lsb_vaddr),
-        .vadder_idx_i           (vadder_lsb_idx[LDBUFF_IDX_LEN-1:0]),
+        .vadder_idx_i           (vadder_lsb_idx[LDBUFF_TAG_W-1:0]),
         .vadder_except_i        (vadder_lsb_except),
         .vadder_isstore_o       (lb_vaddermux_isstore),
         .rs1_value_o            (lb_vaddermux_rs1_value),
@@ -300,7 +300,7 @@ module load_store_unit (
         .dtlb_vaddr_i           (dtlb_lsb_vaddr),
         .dtlb_ppn_i             (dtlb_lsb_ppn),
         .dtlb_except_i          (dtlb_lsb_except),
-        .dtlb_idx_i             (dtlb_lsb_idx[LDBUFF_IDX_LEN-1:0]),
+        .dtlb_idx_i             (dtlb_lsb_idx[LDBUFF_TAG_W-1:0]),
         .dtlb_isstore_o         (lb_dtlbmux_isstore),
         .dtlb_vaddr_o           (lb_dtlbmux_vaddr),
         .dtlb_idx_o             (lb_dtlbmux_idx),
@@ -315,7 +315,7 @@ module load_store_unit (
         // Data from/to the D$
         .dcache_lineaddr_i         (dcache_lsb_paddr),
         .dcache_value_i         (dcache_lsb_value),
-        .dcache_idx_i           (dcache_lsb_idx[LDBUFF_IDX_LEN-1:0]),
+        .dcache_idx_i           (dcache_lsb_idx[LDBUFF_TAG_W-1:0]),
         .dcache_isstore_o       (lb_dcachemux_isstore),
         .dcache_paddr_o         (lb_dcachemux_paddr),
         .dcache_idx_o           (lb_dcachemux_idx),
@@ -385,7 +385,7 @@ module load_store_unit (
 
         // Data from/to the virtual address adder
         .vadder_vaddr_i         (vadder_lsb_vaddr),
-        .vadder_idx_i           (vadder_lsb_idx[STBUFF_IDX_LEN-1:0]),
+        .vadder_idx_i           (vadder_lsb_idx[STBUFF_TAG_W-1:0]),
         .vadder_except_i        (vadder_lsb_except),
         .vadder_isstore_o       (sb_vaddermux_isstore),
         .rs1_value_o            (sb_vaddermux_rs1_value),
@@ -404,7 +404,7 @@ module load_store_unit (
         .dtlb_vaddr_i           (dtlb_lsb_vaddr),
         .dtlb_ppn_i             (dtlb_lsb_ppn),
         .dtlb_except_i          (dtlb_lsb_except),
-        .dtlb_idx_i             (dtlb_lsb_idx[STBUFF_IDX_LEN-1:0]),
+        .dtlb_idx_i             (dtlb_lsb_idx[STBUFF_TAG_W-1:0]),
         .dtlb_isstore_o         (sb_dtlbmux_isstore),
         .dtlb_vaddr_o           (sb_dtlbmux_vaddr),
         .dtlb_idx_o             (sb_dtlbmux_idx),
@@ -418,7 +418,7 @@ module load_store_unit (
 
         // Data from/to the D$
         .dcache_lineaddr_i         (dcache_lsb_paddr),
-        .dcache_idx_i           (dcache_lsb_idx[STBUFF_IDX_LEN-1:0]),
+        .dcache_idx_i           (dcache_lsb_idx[STBUFF_TAG_W-1:0]),
         .dcache_isstore_o       (sb_dcachemux_isstore),
         .dcache_paddr_o         (sb_dcachemux_paddr),
         .dcache_value_o         (sb_dcachemux_value),
@@ -524,13 +524,13 @@ module load_store_unit (
             vaddermux_vadder_is_store   = lb_vaddermux_isstore;
             vaddermux_vadder_rs1_value  = lb_vaddermux_rs1_value;
             vaddermux_vadder_imm_value  = lb_vaddermux_imm_value;
-            vaddermux_vadder_lsb_idx    = { {(BUFF_IDX_LEN-LDBUFF_IDX_LEN){1'b0}}, lb_vaddermux_idx }; // padd with zeroes if the load buffer is smaller than the store buffer
+            vaddermux_vadder_lsb_idx    = { {(BUFF_IDX_LEN-LDBUFF_TAG_W){1'b0}}, lb_vaddermux_idx }; // padd with zeroes if the load buffer is smaller than the store buffer
             vaddermux_vadder_ldst_type  = lb_vaddermux_ldtype;
         end else begin
             vaddermux_vadder_is_store   = sb_vaddermux_isstore;
             vaddermux_vadder_rs1_value  = sb_vaddermux_rs1_value;
             vaddermux_vadder_imm_value  = sb_vaddermux_imm_value;
-            vaddermux_vadder_lsb_idx    = { {(BUFF_IDX_LEN-STBUFF_IDX_LEN){1'b0}}, sb_vaddermux_idx }; // padd with zeroes if the store buffer is smaller than the load buffer
+            vaddermux_vadder_lsb_idx    = { {(BUFF_IDX_LEN-STBUFF_TAG_W){1'b0}}, sb_vaddermux_idx }; // padd with zeroes if the store buffer is smaller than the load buffer
             vaddermux_vadder_ldst_type  = sb_vaddermux_sttype;
         end
     end
@@ -611,11 +611,11 @@ module load_store_unit (
         if (dtlbmux_sel) begin
             dtlbmux_dtlb_isstore    = lb_dtlbmux_isstore;
             dtlbmux_dtlb_vaddr      = lb_dtlbmux_vaddr;
-            dtlbmux_dtlb_idx        = { {(BUFF_IDX_LEN-LDBUFF_IDX_LEN){1'b0}}, lb_dtlbmux_idx }; // padd with zeroes if the load buffer is smaller than the store buffer
+            dtlbmux_dtlb_idx        = { {(BUFF_IDX_LEN-LDBUFF_TAG_W){1'b0}}, lb_dtlbmux_idx }; // padd with zeroes if the load buffer is smaller than the store buffer
         end else begin
             dtlbmux_dtlb_isstore    = sb_dtlbmux_isstore;
             dtlbmux_dtlb_vaddr      = sb_dtlbmux_vaddr;
-            dtlbmux_dtlb_idx        = { {(BUFF_IDX_LEN-STBUFF_IDX_LEN){1'b0}}, sb_dtlbmux_idx }; // padd with zeroes if the load buffer is smaller than the store buffer
+            dtlbmux_dtlb_idx        = { {(BUFF_IDX_LEN-STBUFF_TAG_W){1'b0}}, sb_dtlbmux_idx }; // padd with zeroes if the load buffer is smaller than the store buffer
         end
     end
 
@@ -707,13 +707,13 @@ module load_store_unit (
             dcachemux_dcache_isstore    = lb_dcachemux_isstore;
             dcachemux_dcache_paddr      = lb_dcachemux_paddr;
             dcachemux_dcache_value      = 0;                    // only needed for type conversion
-            dcachemux_dcache_idx        = { {(BUFF_IDX_LEN-LDBUFF_IDX_LEN){1'b0}}, lb_dcachemux_idx }; // padd with zeroes if the load buffer is smaller than the store buffer
+            dcachemux_dcache_idx        = { {(BUFF_IDX_LEN-LDBUFF_TAG_W){1'b0}}, lb_dcachemux_idx }; // padd with zeroes if the load buffer is smaller than the store buffer
             dcachemux_dcache_sttype     = LS_DOUBLEWORD;
         end else begin
             dcachemux_dcache_isstore    = sb_dcachemux_isstore;
             dcachemux_dcache_paddr      = sb_dcachemux_paddr;
             dcachemux_dcache_value      = sb_dcachemux_value;
-            dcachemux_dcache_idx        = { {(BUFF_IDX_LEN-STBUFF_IDX_LEN){1'b0}}, sb_dcachemux_idx }; // padd with zeroes if the load buffer is smaller than the store buffer
+            dcachemux_dcache_idx        = { {(BUFF_IDX_LEN-STBUFF_TAG_W){1'b0}}, sb_dcachemux_idx }; // padd with zeroes if the load buffer is smaller than the store buffer
             dcachemux_dcache_sttype     = sb_dcachemux_sttype;
         end
     end

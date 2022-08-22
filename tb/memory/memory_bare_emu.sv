@@ -21,7 +21,8 @@ import len5_pkg::*;
 import expipe_pkg::*;
 
 module memory_bare_emu #(
-    parameter   DUMP_PERIOD = 1 // cycles
+    parameter   DUMP_PERIOD = 1, // cycles
+    parameter   PIPE_NUM    = 0  // number of pipeline registers 
 ) (
     input   logic           clk_i,
     input   logic           rst_n_i,
@@ -49,9 +50,15 @@ module memory_bare_emu #(
 
     // INTERNAL SIGNALS
     // ----------------
+    // Instruction and data memory
     mem_ans_t       ins_ans, data_ans;  // answer to the core
     memory_class    i_mem, d_mem;       // memory objects (the memory array itself is a static member)
     int             i_ret, d_ret;       // memory emulator return value
+
+    // Pipeline registers
+    logic           ins_pipe_en, data_pipe_en;
+    logic           ins_pipe_valid[PIPE_NUM+1], data_pipe_valid[PIPE_NUM+1];
+    mem_ans_t       ins_pipe_reg[PIPE_NUM+1], data_pipe_reg[PIPE_NUM+1];
 
     // Memory initialization
     // ---------------------
@@ -205,34 +212,74 @@ module memory_bare_emu #(
         end
     end
 
+    // Memory pipeline registers
+    // -------------------------
+    // NOTE: Theese emulate high-latency memory accesses
+    assign  ins_pipe_en         = ins_ready_o;
+    assign  ins_pipe_valid[0]   = ins_valid_i;
+    assign  ins_pipe_reg[0]     = ins_ans;
+    assign  data_pipe_en        = data_ready_o;
+    assign  data_pipe_valid[0]  = data_valid_i;
+    assign  data_pipe_reg[0]    = data_ans;
+    generate
+        for (genvar i = 1; i < PIPE_NUM; i++) begin
+            always_ff @( posedge clk_i ) begin : mem_pipe_reg
+                if (!rst_n_i) begin
+                    foreach (ins_pipe_valid[i]) begin
+                        ins_pipe_valid[i]   <= 1'b0;
+                        ins_pipe_reg[i]     <= '0;
+                        data_pipe_valid[i]  <= 1'b0;
+                        data_pipe_reg[i]    <= '0;
+                    end 
+                end else if (flush_i) begin
+                    foreach (ins_pipe_valid[i]) begin
+                        ins_pipe_valid[i]   <= 1'b0;
+                        ins_pipe_reg[i]     <= '0;
+                        data_pipe_valid[i]  <= 1'b0;
+                        data_pipe_reg[i]    <= '0;
+                    end 
+                end else begin
+                    if (ins_pipe_en) begin
+                        ins_pipe_valid[i]   <= ins_pipe_valid[i-1];
+                        ins_pipe_reg[i]     <= ins_pipe_reg[i-1];
+                        data_pipe_valid[i]  <= data_pipe_valid[i-1];
+                        data_pipe_reg[i]    <= data_pipe_reg[i-1];
+                    end
+                end
+            end
+        end
+    endgenerate
+
     // Output registers
     // ----------------
     spill_cell_flush #(
-        .DATA_T (mem_ans_t )
+        .DATA_T (mem_ans_t ),
+        .SKIP   (0         )
     ) u_ins_out_reg (
-    	.clk_i   (clk_i    ),
-        .rst_n_i (rst_n_i  ),
-        .flush_i (flush_i  ),
-        .valid_i (ins_valid_i  ),
-        .ready_i (ins_ready_i  ),
-        .valid_o (ins_valid_o  ),
-        .ready_o (ins_ready_o  ),
-        .data_i  (ins_ans      ),
-        .data_o  (ins_ans_o    )
+    	.clk_i   (clk_i                    ),
+        .rst_n_i (rst_n_i                  ),
+        .flush_i (flush_i                  ),
+        .valid_i (ins_pipe_valid[PIPE_NUM] ),
+        .ready_i (ins_ready_i              ),
+        .valid_o (ins_valid_o              ),
+        .ready_o (ins_ready_o              ),
+        .data_i  (ins_pipe_reg[PIPE_NUM]   ),
+        .data_o  (ins_ans_o                )
     );
 
     spill_cell_flush #(
-        .DATA_T (mem_ans_t )
+        .DATA_T (mem_ans_t ),
+        .SKIP   (1         )
     ) u_data_out_reg (
-    	.clk_i   (clk_i    ),
-        .rst_n_i (rst_n_i  ),
-        .flush_i (flush_i  ),
-        .valid_i (data_valid_i  ),
-        .ready_i (data_ready_i  ),
-        .valid_o (data_valid_o  ),
-        .ready_o (data_ready_o  ),
-        .data_i  (data_ans      ),
-        .data_o  (data_ans_o    )
+    	.clk_i   (clk_i                     ),
+        .rst_n_i (rst_n_i                   ),
+        .flush_i (flush_i                   ),
+        .valid_i (data_pipe_valid[PIPE_NUM] ),
+        .ready_i (data_ready_i              ),
+        .valid_o (data_valid_o              ),
+        .ready_o (data_ready_o              ),
+        .data_i  (data_pipe_reg[PIPE_NUM]   ),
+        .data_o  (data_ans_o                )
     );
     
 endmodule

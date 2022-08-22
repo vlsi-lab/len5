@@ -12,6 +12,8 @@
 // Author: Michele Caon
 // Date: 04/08/2022
 
+`include "len5_config.svh"
+
 import len5_pkg::XLEN;
 import len5_pkg::ILEN;
 import len5_pkg::except_code_t;
@@ -77,8 +79,8 @@ module fetch_mem_if #(
     // REQUEST REGISTER
     // ----------------
     spill_cell_flush #(
-        .DATA_T (prediction_t   ),
-        .SKIP   (0              )
+        .DATA_T (prediction_t         ),
+        .SKIP   (FETCH_REQ_SPILL_SKIP )
     ) u_req_reg (
     	.clk_i   (clk_i         ),
         .rst_n_i (rst_n_i       ),
@@ -123,8 +125,8 @@ module fetch_mem_if #(
     assign  ans_reg_in.except_code      = mem_ans_i.except_code;
     
     spill_cell_flush #(
-        .DATA_T (mem_if_ans_reg_t ),
-        .SKIP   (0                )
+        .DATA_T (mem_if_ans_reg_t     ),
+        .SKIP   (FETCH_ANS_SPILL_SKIP )
     ) u_ans_reg (
     	.clk_i   (clk_i         ),
         .rst_n_i (rst_n_i       ),

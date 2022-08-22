@@ -12,9 +12,10 @@
 // Author: Michele Caon
 // Date: 15/07/2022
 
+`include "len5_config.svh"
+
 import len5_pkg::*;
 import expipe_pkg::*;
-import memory_pkg::*;
 
 /**
  * @brief	Address adder.
@@ -66,8 +67,8 @@ module address_adder (
     // Output spill cell
     // -----------------
     spill_cell #(
-        .DATA_T (adder_ans_t),
-        .SKIP   (0)
+        .DATA_T (adder_ans_t    ),
+        .SKIP   (LSU_SPILL_SKIP )
     ) u_out_reg (
         .clk_i   (clk_i   ),
         .rst_n_i (rst_n_i ),

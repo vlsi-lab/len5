@@ -19,6 +19,7 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 import len5_pkg::XLEN;
+import len5_pkg::STBUFF_TAG_W;
 import len5_pkg::except_code_t;
 import expipe_pkg::*;
 import memory_pkg::*;;
@@ -59,6 +60,12 @@ module load_buffer #(
     input   adder_ans_t                 adder_ans_i,
     output  adder_req_t                 adder_req_o,
 
+    /* Store buffer */
+    input   logic                       sb_latest_valid_i,
+    input   logic [STBUFF_TAG_W-1:0]    sb_latest_tag_i,
+    input   logic                       sb_oldest_completed_i,
+    input   logic [STBUFF_TAG_W-1:0]    sb_oldest_tag_i,
+
     /* Memory system */
     input   logic                       mem_valid_i,
     input   logic                       mem_ready_i,
@@ -68,13 +75,13 @@ module load_buffer #(
     input   mem_ans_t                   mem_ans_i
 
     /* Store buffer (store-to-load forwarding) */ /* TODO */
-    // input   logic [STBUFF_IDX_LEN-1:0]  sb_pending_cnt_i,   // number of uncommitted store instructions
+    // input   logic [STBUFF_TAG_W-1:0]  sb_pending_cnt_i,   // number of uncommitted store instructions
     // input   logic                       sb_committing_i,    // a store is committing
     // input   logic                       sb_hit_i,           // store data can be forwarded
     // input   logic [XLEN-1:0]            sb_value_i,         // store value
     // output  logic [XLEN-1:0]            sb_addr_o,          // load address
     // output  ldst_width_t                 sb_type_o,          // load type
-    // output  logic [STBUFF_IDX_LEN:0]    sb_older_cnt_o,     // nummber of older store instructions
+    // output  logic [STBUFF_TAG_W:0]    sb_older_cnt_o,     // nummber of older store instructions
 );
 
     // INTERNAL SIGNALS
@@ -92,6 +99,11 @@ module load_buffer #(
     // Load buffer control
     logic           push, pop, save_rs1, addr_accepted, save_addr, mem_accepted, save_mem;
     lb_op_t         lb_op[DEPTH];
+
+    // Load-after-store tracking
+    logic                       store_dep_set[DEPTH], store_dep_clr[DEPTH];
+    logic                       store_dep[DEPTH];
+    logic [STBUFF_TAG_W-1:0]    store_dep_tag[DEPTH];
 
     // Byte selector/sign extender
 `ifdef ONLY_DOUBLEWORD_MEM_ACCESSES
@@ -164,10 +176,18 @@ module load_buffer #(
                         lb_op[i]        = LOAD_OP_SAVE_ADDR;
                         if (adder_ans_i.except_raised)
                             next_state[i]   = LOAD_S_COMPLETED;
-                        else
+                        else if (store_dep[i]) begin
+                            next_state[i]   = LOAD_S_DEP_WAIT;
+                        end else
                             next_state[i]   = LOAD_S_MEM_REQ;
                     end else
                         next_state[i]   = LOAD_S_ADDR_WAIT;
+                end
+                LOAD_S_DEP_WAIT: begin
+                    if (!store_dep[i]) begin
+                        next_state[i]   = LOAD_S_MEM_REQ;
+                    end else
+                        next_state[i]   = LOAD_S_DEP_WAIT;
                 end
                 LOAD_S_MEM_REQ: begin // save memory value (from memory)
                     if (save_mem && mem_ans_i.tag == i) begin
@@ -203,6 +223,19 @@ module load_buffer #(
         else curr_state <= next_state;
     end
 
+    // Load-after-store control logic
+    // ------------------------------
+    // When a new load is inserted, it is marked with the tag of the latest
+    // store inside the store buffer. The load can be executed only after
+    // such store instruction has completed the memory access. When this
+    // happens, the dependency information is cleared.
+    always_comb begin : store_dep_ctl
+        foreach (store_dep[i]) begin
+            store_dep_set[i]    = push & (tail_idx == i) & sb_latest_valid_i;
+            store_dep_clr[i]    = sb_oldest_completed_i & (sb_oldest_tag_i == store_dep_tag[i]);
+        end
+    end
+
     // ------------------
     // LOAD BUFFER UPDATE
     // ------------------
@@ -223,28 +256,47 @@ module load_buffer #(
             foreach (lb_op[i]) begin
                 case (lb_op[i])
                     LOAD_OP_PUSH: begin
-                        data[i].load_type       <= issue_type_i;
-                        data[i].rs1_rob_idx     <= issue_rs1_i.rob_idx;
-                        data[i].rs1_value       <= issue_rs1_i.value;
-                        data[i].dest_rob_idx    <= issue_dest_rob_idx_i;
-                        data[i].imm_addr_value  <= issue_imm_i;
-                        data[i].except_raised   <= 1'b0;
+                        data[i].load_type           <= issue_type_i;
+                        data[i].rs1_rob_idx         <= issue_rs1_i.rob_idx;
+                        data[i].rs1_value           <= issue_rs1_i.value;
+                        data[i].dest_rob_idx        <= issue_dest_rob_idx_i;
+                        data[i].imm_addr_value      <= issue_imm_i;
+                        data[i].except_raised       <= 1'b0;
                     end
                     LOAD_OP_SAVE_RS1: begin
-                        data[i].rs1_value       <= cdb_data_i.res_value;
+                        data[i].rs1_value           <= cdb_data_i.res_value;
                     end
                     LOAD_OP_SAVE_ADDR: begin
-                        data[i].imm_addr_value  <= adder_ans_i.result;
-                        data[i].except_raised   <= adder_ans_i.except_raised;
-                        data[i].except_code     <= adder_ans_i.except_code;
+                        data[i].imm_addr_value      <= adder_ans_i.result;
+                        data[i].except_raised       <= adder_ans_i.except_raised;
+                        data[i].except_code         <= adder_ans_i.except_code;
                     end
                     LOAD_OP_SAVE_MEM: begin
-                        data[i].value           <= read_data;
-                        data[i].except_raised   <= mem_ans_i.except_raised;
-                        data[i].except_code     <= mem_ans_i.except_code;
+                        data[i].value               <= read_data;
+                        data[i].except_raised       <= mem_ans_i.except_raised;
+                        data[i].except_code         <= mem_ans_i.except_code;
                     end
                     default:;
                 endcase
+            end
+        end
+    end
+
+    // Store dependency register
+    always_ff @( posedge clk_i or negedge rst_n_i ) begin : store_dep_reg
+        foreach (store_dep[i]) begin
+            if (!rst_n_i) begin
+                store_dep[i]        <= 1'b0;
+                store_dep_tag[i]    <= '0;
+            end else if (flush_i) begin 
+                store_dep[i]        <= 1'b0;
+            end else begin
+                if (store_dep_set[i]) begin
+                    store_dep[i]        <= 1'b1;
+                    store_dep_tag[i]    <= sb_latest_tag_i;
+                end else if (store_dep_clr[i]) begin
+                    store_dep[i]        <= 1'b0;
+                end
             end
         end
     end

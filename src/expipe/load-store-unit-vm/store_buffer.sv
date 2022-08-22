@@ -63,12 +63,12 @@ module store_buffer
 
     // Data from/to the virtual address adder
     input   logic [XLEN-1:0]            vadder_vaddr_i,
-    input   logic [STBUFF_IDX_LEN-1:0]  vadder_idx_i,
+    input   logic [STBUFF_TAG_W-1:0]  vadder_idx_i,
     input   vadder_except_t             vadder_except_i,    // LD_ADDR_MISALIGNED or LD_PAGE_FAULT exceptions
     output  logic                       vadder_isstore_o,
     output  logic [XLEN-1:0]            rs1_value_o,
     output  logic [XLEN-1:0]            imm_value_o,
-    output  logic [STBUFF_IDX_LEN-1:0]  vadder_idx_o,
+    output  logic [STBUFF_TAG_W-1:0]  vadder_idx_o,
     output  logic [LDST_TYPE_LEN-1:0]   vadder_sttype_o,
 
     // Handshake from/to the TLB
@@ -82,10 +82,10 @@ module store_buffer
     input   logic [VPN_LEN-1:0]         dtlb_vaddr_i,
     input   logic [PPN_LEN-1:0]         dtlb_ppn_i,
     input   exception_e                 dtlb_except_i,
-    input   logic [STBUFF_IDX_LEN-1:0]  dtlb_idx_i,
+    input   logic [STBUFF_TAG_W-1:0]  dtlb_idx_i,
     output  logic                       dtlb_isstore_o,
     output  logic [VPN_LEN-1:0]         dtlb_vaddr_o,
-    output  logic [STBUFF_IDX_LEN-1:0]  dtlb_idx_o,
+    output  logic [STBUFF_TAG_W-1:0]  dtlb_idx_o,
 
     // Handshake from/to the D$
     input   logic                       dcache_wu_valid_i,
@@ -96,11 +96,11 @@ module store_buffer
 
     // Data from/to the D$
     input   logic [DCACHE_L1_LINE_A_LEN-1:0] dcache_lineaddr_i,
-    input   logic [STBUFF_IDX_LEN-1:0]  dcache_idx_i,
+    input   logic [STBUFF_TAG_W-1:0]  dcache_idx_i,
     output  logic                       dcache_isstore_o,
     output  logic [XLEN-1:0]            dcache_paddr_o,
     output  logic [XLEN-1:0]            dcache_value_o,
-    output  logic [STBUFF_IDX_LEN-1:0]  dcache_idx_o,
+    output  logic [STBUFF_TAG_W-1:0]  dcache_idx_o,
     output  logic [LDST_TYPE_LEN-1:0]   dcache_sttype_o,
 
     // Data from/to the load buffer
@@ -108,9 +108,9 @@ module store_buffer
     input   logic [XLEN-1:0]            pfwd_paddr_i,
     input   logic [LDST_TYPE_LEN-1:0]   vfwd_ldtype_i,
     input   logic [LDST_TYPE_LEN-1:0]   pfwd_ldtype_i,
-    input   logic [STBUFF_IDX_LEN:0]    vfwd_older_stores_i,
-    input   logic [STBUFF_IDX_LEN:0]    pfwd_older_stores_i,
-    output  logic [STBUFF_IDX_LEN:0]    inflight_store_cnt_o, // number of uncommitted store instructions in the store buffer
+    input   logic [STBUFF_TAG_W:0]    vfwd_older_stores_i,
+    input   logic [STBUFF_TAG_W:0]    pfwd_older_stores_i,
+    output  logic [STBUFF_TAG_W:0]    inflight_store_cnt_o, // number of uncommitted store instructions in the store buffer
     output  logic                       lb_store_committing_o, // A store is committing in the store buffer
     output  logic                       vfwd_hit_o,
     output  logic                       vfwd_depfree_o,
@@ -139,15 +139,15 @@ module store_buffer
     // DEFINITIONS
 
     // Store buffer pointers
-    logic [STBUFF_IDX_LEN-1:0]      sb_head_idx, sb_tail_idx; // head and tail pointers
-    logic [STBUFF_IDX_LEN-1:0]      vadder_req_idx, dtlb_req_idx, cdb_req_idx; // request indexes
+    logic [STBUFF_TAG_W-1:0]      sb_head_idx, sb_tail_idx; // head and tail pointers
+    logic [STBUFF_TAG_W-1:0]      vadder_req_idx, dtlb_req_idx, cdb_req_idx; // request indexes
     logic                           vadder_idx_valid, dtlb_idx_valid, cdb_idx_valid;
 
     // head and tail counters control
     logic                           head_cnt_en, head_cnt_clr, tail_cnt_en, tail_cnt_clr;
 
     // In-flight stores counter
-    logic [STBUFF_IDX_LEN:0]        inflight_count; 
+    logic [STBUFF_TAG_W:0]        inflight_count; 
 
     // Operation control
     logic                           sb_push, sb_pop, sb_vadder_req, sb_vadder_ans, sb_dtlb_req, sb_dtlb_wu, sb_dtlb_ans, sb_dcache_req, sb_dcache_wu, sb_dcache_ans, sb_cdb_req;
@@ -416,7 +416,7 @@ module store_buffer
                 `ifdef ENABLE_AGE_BASED_SELECTOR
                 // Update the age of all valid entries
                 foreach(sb_data[i]) begin
-                    if (sb_tail_idx != i[STBUFF_IDX_LEN-1:0] && sb_data[i].valid) sb_data[i].entry_age <= sb_data[i].entry_age + 1;
+                    if (sb_tail_idx != i[STBUFF_TAG_W-1:0] && sb_data[i].valid) sb_data[i].entry_age <= sb_data[i].entry_age + 1;
                 end
                 `endif
             end
@@ -542,7 +542,7 @@ module store_buffer
 
     // VIRTUAL ADDRESS FORWARDING (PARALLEL ACCES 1: very complex due to RAW hazard check)
     logic vfwd_allowed, vfwd_hit, vfwd_depfree;
-    logic [STBUFF_IDX_LEN-1:0] vfwd_idx;
+    logic [STBUFF_TAG_W-1:0] vfwd_idx;
 
     always_comb begin: virtual_fwd_logic
         
@@ -552,15 +552,15 @@ module store_buffer
         vfwd_idx        = 0;
 
         for (int i = 0; i < STBUFF_DEPTH; i++) begin
-            if ((i[STBUFF_IDX_LEN-1:0] - sb_tail_idx) < (sb_head_idx + vfwd_older_stores_i - sb_tail_idx)) begin
+            if ((i[STBUFF_TAG_W-1:0] - sb_tail_idx) < (sb_head_idx + vfwd_older_stores_i - sb_tail_idx)) begin
                 if (!sb_data[i].vaddr_ready) vfwd_allowed = 1'b0;
-                else if ((i[STBUFF_IDX_LEN-1:0] - sb_tail_idx) >= vfwd_idx - sb_tail_idx) begin
+                else if ((i[STBUFF_TAG_W-1:0] - sb_tail_idx) >= vfwd_idx - sb_tail_idx) begin
                     case(sb_data[i].store_type)
 
                         LS_DOUBLEWORD: begin
                             if (vfwd_vaddr_i[XLEN-1 : 3] == sb_data[i].vaddr[XLEN-1 : 3]) begin
                                 vfwd_depfree    = 1'b0;
-                                vfwd_idx        = i[STBUFF_IDX_LEN-1:0];
+                                vfwd_idx        = i[STBUFF_TAG_W-1:0];
                             end
                         end
 
@@ -573,7 +573,7 @@ module store_buffer
                                 LS_WORD, LS_WORD_U, LS_HALFWORD, LS_HALFWORD_U, LS_BYTE, LS_BYTE_U: begin
                                    if (vfwd_vaddr_i[XLEN-1 : 2] == sb_data[i].vaddr[XLEN-1 : 2]) begin
                                         vfwd_depfree    = 1'b0;
-                                        vfwd_idx        = i[STBUFF_IDX_LEN-1:0];
+                                        vfwd_idx        = i[STBUFF_TAG_W-1:0];
                                     end else begin
                                         vfwd_allowed = 1'b0; // can't load the other word
                                         vfwd_depfree = 1'b0;
@@ -592,7 +592,7 @@ module store_buffer
                                 LS_HALFWORD, LS_HALFWORD_U, LS_BYTE, LS_BYTE_U: begin
                                    if (vfwd_vaddr_i[XLEN-1 : 1] == sb_data[i].vaddr[XLEN-1 : 1]) begin
                                         vfwd_depfree    = 1'b0;
-                                        vfwd_idx        = i[STBUFF_IDX_LEN-1:0];
+                                        vfwd_idx        = i[STBUFF_TAG_W-1:0];
                                     end else begin
                                         vfwd_allowed = 1'b0; // can't load the other halfwords
                                         vfwd_depfree = 1'b0;
@@ -611,7 +611,7 @@ module store_buffer
                                 LS_BYTE, LS_BYTE_U: begin
                                    if (vfwd_vaddr_i == sb_data[i].vaddr) begin
                                         vfwd_depfree    = 1'b0;
-                                        vfwd_idx        = i[STBUFF_IDX_LEN-1:0];
+                                        vfwd_idx        = i[STBUFF_TAG_W-1:0];
                                     end else begin
                                         vfwd_allowed = 1'b0; // can't load the other bytes
                                         vfwd_depfree = 1'b0;
@@ -633,7 +633,7 @@ module store_buffer
 
     // PHYSICAL ADDRESS FORWARDING (PARALLEL ACCES 2: very complex due to RAW hazard check)
     logic pfwd_allowed, pfwd_hit, pfwd_depfree;
-    logic [STBUFF_IDX_LEN-1:0] pfwd_idx;
+    logic [STBUFF_TAG_W-1:0] pfwd_idx;
 
     always_comb begin: physical_fwd_logic
         
@@ -643,15 +643,15 @@ module store_buffer
         pfwd_idx        = 0;
 
         for (int i = 0; i < STBUFF_DEPTH; i++) begin
-            if ((i[STBUFF_IDX_LEN-1:0] - sb_tail_idx) < (sb_head_idx + pfwd_older_stores_i - sb_tail_idx)) begin
+            if ((i[STBUFF_TAG_W-1:0] - sb_tail_idx) < (sb_head_idx + pfwd_older_stores_i - sb_tail_idx)) begin
                 if (!sb_data[i].paddr_ready) pfwd_allowed = 1'b0;
-                else if ((i[STBUFF_IDX_LEN-1:0] - sb_tail_idx) >= pfwd_idx - sb_tail_idx) begin
+                else if ((i[STBUFF_TAG_W-1:0] - sb_tail_idx) >= pfwd_idx - sb_tail_idx) begin
                     case(sb_data[i].store_type)
 
                         LS_DOUBLEWORD: begin
                             if (pfwd_paddr_i[XLEN-1 : 3] == paddr_a[i][XLEN-1 : 3]) begin
                                 pfwd_depfree    = 1'b0;
-                                pfwd_idx        = i[STBUFF_IDX_LEN-1:0];
+                                pfwd_idx        = i[STBUFF_TAG_W-1:0];
                             end
                         end
 
@@ -664,7 +664,7 @@ module store_buffer
                                 LS_WORD, LS_WORD_U, LS_HALFWORD, LS_HALFWORD_U, LS_BYTE, LS_BYTE_U: begin
                                    if (pfwd_paddr_i[XLEN-1 : 2] == paddr_a[i][XLEN-1 : 2]) begin
                                         pfwd_depfree    = 1'b0;
-                                        pfwd_idx        = i[STBUFF_IDX_LEN-1:0];
+                                        pfwd_idx        = i[STBUFF_TAG_W-1:0];
                                     end else begin
                                         pfwd_allowed = 1'b0; // can't load the other word
                                         pfwd_depfree = 1'b0;
@@ -683,7 +683,7 @@ module store_buffer
                                 LS_HALFWORD, LS_HALFWORD_U, LS_BYTE, LS_BYTE_U: begin
                                    if (pfwd_paddr_i[XLEN-1 : 1] == paddr_a[i][XLEN-1 : 1]) begin
                                         pfwd_depfree    = 1'b0;
-                                        pfwd_idx        = i[STBUFF_IDX_LEN-1:0];
+                                        pfwd_idx        = i[STBUFF_TAG_W-1:0];
                                     end else begin
                                         pfwd_allowed = 1'b0; // can't load the other halfwords
                                         pfwd_depfree = 1'b0;
@@ -702,7 +702,7 @@ module store_buffer
                                 LS_BYTE, LS_BYTE_U: begin
                                    if (pfwd_paddr_i == paddr_a[i]) begin
                                         pfwd_depfree    = 1'b0;
-                                        pfwd_idx        = i[STBUFF_IDX_LEN-1:0];
+                                        pfwd_idx        = i[STBUFF_TAG_W-1:0];
                                     end else begin
                                         pfwd_allowed = 1'b0; // can't load the other bytes
                                         pfwd_depfree = 1'b0;
@@ -727,8 +727,8 @@ module store_buffer
     // IN-FLIGHT STORES COUNTER
     // ------------------------
     // It is the difference between the tail and head pointers. However, when the store buffer is full of uncommitted stores, this difference is 0, like when the buffer is empty. So, the MSB is set accordingly.
-    assign inflight_count[STBUFF_IDX_LEN]       = &valid_a; // MSB is 1 if all are valid
-    assign inflight_count[STBUFF_IDX_LEN-1:0]   = sb_tail_idx - sb_head_idx;
+    assign inflight_count[STBUFF_TAG_W]       = &valid_a; // MSB is 1 if all are valid
+    assign inflight_count[STBUFF_TAG_W-1:0]   = sb_tail_idx - sb_head_idx;
     
     // ----------------------
     // HEAD AND TAIL COUNTERS

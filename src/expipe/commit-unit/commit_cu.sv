@@ -290,31 +290,34 @@ module commit_cu (
 
             COMMIT_JUMP: begin
                 ready_o         = 1'b1;
-                int_rf_valid_o  = 1'b1;
                 int_rs_valid_o  = 1'b1;
+                int_rf_valid_o  = 1'b1;
                 comm_reg_en_o   = 1'b1;
-                jb_instr_o       = 1'b1;
+                jb_instr_o      = 1'b1;
                 fe_res_valid_o  = 1'b1;
             end
 
             COMMIT_JUMP_MIS: begin
+                int_rs_valid_o  = 1'b1;
                 int_rf_valid_o  = 1'b1;
                 jb_instr_o      = 1'b1;
-                fe_res_valid_o  = 1'b1;
                 mis_flush_o     = 1'b1;
             end
 
             COMMIT_BRANCH: begin
                 ready_o         = 1'b1;
+                int_rs_valid_o  = 1'b1;
+                int_rf_valid_o  = 1'b1;
                 comm_reg_en_o   = 1'b1;
-                jb_instr_o       = 1'b1;
+                jb_instr_o      = 1'b1;
+                fe_res_valid_o  = 1'b1;
             end
             
             // TODO: redundant with jumps?
             COMMIT_BRANCH_MIS: begin
+                int_rs_valid_o  = 1'b1;
                 int_rf_valid_o  = 1'b1;
                 jb_instr_o      = 1'b1;
-                fe_res_valid_o  = 1'b1;
                 mis_flush_o     = 1'b1;
             end
 
@@ -367,7 +370,7 @@ module commit_cu (
     // ----------
     `ifndef SYNTHESIS
     always @(posedge clk_i) begin
-        `uvm_info("COMMIT CU", $sformatf("valid_i: %b | instr: %h | type: %s | state: %s", valid_i, instr_i, comm_type_i.name(), curr_state.name()), UVM_INFO)
+        `uvm_info("COMMIT CU", $sformatf("valid_i: %b | instr: %h | type: %s | state: %s", valid_i, instr_i, comm_type_i.name(), curr_state.name()), UVM_HIGH)
     end
     `endif /* SYNTHESIS */
 

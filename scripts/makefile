@@ -33,6 +33,7 @@ MODULES_SRCS 	:= 	$(shell find $(ROOT)/src/ -type f -name '*.sv' -not -path "$(R
 TB_SRCS 		:= 	$(ROOT)/tb/tb_with_l2cemu.sv \
 					$(ROOT)/tb/tb_bare.sv \
 					$(ROOT)/tb/memory/cache_L2_system_emulator.sv \
+					$(ROOT)/tb/memory/memory_if.sv \
 					$(ROOT)/tb/memory/memory_bare_emu.sv
 
 # vlog options

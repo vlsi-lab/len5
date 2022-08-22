@@ -59,12 +59,12 @@ module load_buffer
 
     // Data from/to the virtual address adder
     input   logic [XLEN-1:0]            vadder_vaddr_i,
-    input   logic [LDBUFF_IDX_LEN-1:0]  vadder_idx_i,
+    input   logic [LDBUFF_TAG_W-1:0]  vadder_idx_i,
     input   vadder_except_t             vadder_except_i, // LD_ADDR_MISALIGNED or LD_PAGE_FAULT exceptions
     output  logic                       vadder_isstore_o,
     output  logic [XLEN-1:0]            rs1_value_o,
     output  logic [XLEN-1:0]            imm_value_o,
-    output  logic [LDBUFF_IDX_LEN-1:0]  vadder_idx_o,
+    output  logic [LDBUFF_TAG_W-1:0]  vadder_idx_o,
     output  logic [LDST_TYPE_LEN-1:0]   vadder_ldtype_o,
 
     // Handshake from/to the TLB
@@ -78,10 +78,10 @@ module load_buffer
     input   logic [VPN_LEN-1:0]         dtlb_vaddr_i,
     input   logic [PPN_LEN-1:0]         dtlb_ppn_i,
     input   exception_e                 dtlb_except_i,
-    input   logic [LDBUFF_IDX_LEN-1:0]  dtlb_idx_i,
+    input   logic [LDBUFF_TAG_W-1:0]  dtlb_idx_i,
     output  logic                       dtlb_isstore_o,
     output  logic [VPN_LEN-1:0]         dtlb_vaddr_o,
-    output  logic [LDBUFF_IDX_LEN-1:0]  dtlb_idx_o,
+    output  logic [LDBUFF_TAG_W-1:0]  dtlb_idx_o,
 
     // Handshake from/to the D$
     input   logic                       dcache_wu_valid_i,
@@ -93,13 +93,13 @@ module load_buffer
     // Data from/to the D$
     input   logic [DCACHE_L1_LINE_A_LEN-1:0] dcache_lineaddr_i,
     input   logic [XLEN-1:0]            dcache_value_i,
-    input   logic [LDBUFF_IDX_LEN-1:0]  dcache_idx_i,
+    input   logic [LDBUFF_TAG_W-1:0]  dcache_idx_i,
     output  logic                       dcache_isstore_o,
     output  logic [XLEN-1:0]            dcache_paddr_o,
-    output  logic [LDBUFF_IDX_LEN-1:0]  dcache_idx_o,
+    output  logic [LDBUFF_TAG_W-1:0]  dcache_idx_o,
 
     // Data from/to the store buffer
-    input   logic [STBUFF_IDX_LEN:0]    inflight_store_cnt_i, // number of uncommitted store instructions in the store buffer
+    input   logic [STBUFF_TAG_W:0]    inflight_store_cnt_i, // number of uncommitted store instructions in the store buffer
     input   logic                       store_committing_i, // A store is committing in the store buffer
     input   logic                       vfwd_hit_i,
     input   logic                       vfwd_depfree_i,
@@ -111,8 +111,8 @@ module load_buffer
     output  logic [XLEN-1:0]            pfwd_paddr_o,
     output  logic [LDST_TYPE_LEN-1:0]   vfwd_ldtype_o,
     output  logic [LDST_TYPE_LEN-1:0]   pfwd_ldtype_o,
-    output  logic [STBUFF_IDX_LEN:0]    vfwd_older_stores_o,
-    output  logic [STBUFF_IDX_LEN:0]    pfwd_older_stores_o,
+    output  logic [STBUFF_TAG_W:0]    vfwd_older_stores_o,
+    output  logic [STBUFF_TAG_W:0]    pfwd_older_stores_o,
 
     // Hanshake from/to the CDB 
     input   logic                       cdb_ready_i,
@@ -129,12 +129,12 @@ module load_buffer
     // DEFINITIONS
 
     // Load buffer pointers
-    logic [LDBUFF_IDX_LEN-1:0]      new_idx, vadder_req_idx, dtlb_req_idx, dcache_req_idx, cdb_req_idx; // next free entry, entry selected for virtual address computation, for TLB access and for D$ access
+    logic [LDBUFF_TAG_W-1:0]      new_idx, vadder_req_idx, dtlb_req_idx, dcache_req_idx, cdb_req_idx; // next free entry, entry selected for virtual address computation, for TLB access and for D$ access
     logic                           new_idx_valid, vadder_idx_valid, dtlb_idx_valid, dcache_idx_valid, cdb_idx_valid; // the selector encoded output is valid
 
     // Forwarding indexes
     logic vfwd_idx_reg_en;
-    logic [LDBUFF_IDX_LEN-1:0]      vfwd_idx, pfwd_idx;
+    logic [LDBUFF_TAG_W-1:0]      vfwd_idx, pfwd_idx;
     logic                           pfwd_idx_valid;
 
     // Operation control
@@ -409,7 +409,7 @@ module load_buffer
                 `ifdef ENABLE_AGE_BASED_SELECTOR
                 // Update the age of all valid entries
                 foreach(lb_data[i]) begin
-                    if (new_idx != i[LDBUFF_IDX_LEN-1:0] && lb_data[i].valid) lb_data[i].entry_age <= lb_data[i].entry_age + 1;
+                    if (new_idx != i[LDBUFF_TAG_W-1:0] && lb_data[i].valid) lb_data[i].entry_age <= lb_data[i].entry_age + 1;
                 end
                 `endif
             end

@@ -180,12 +180,12 @@ module rob #(
     property p_fifo_push;
         @(posedge clk_i) disable iff (!rst_n_i || flush_i)
         issue_valid_i && issue_ready_o |-> ##1
-        comm_valid_o ##0
+        //tail_idx == $past(tail_idx) + 1 ##0
         data_valid[$past(tail_idx)] == 1'b1 ##0
         data[$past(tail_idx)] == $past(issue_data_i);
     endproperty
     a_fifo_push: assert property (p_fifo_push)
-    else $error("comm_valid_o: %b | past data_valid: %b | past data: %h | past issue_data_i: %h", comm_valid_o, data_valid[$past(tail_idx)], data[$past(tail_idx)], $past(issue_data_i));
+    else $error("%t: issue_valid_i: %b | past data_valid: %b | tail_idx: %h | past tail_idx: %h", $time, issue_valid_i, data_valid[$past(tail_idx)], tail_idx, $past(tail_idx));
 
     property p_fifo_pop;
         @(posedge clk_i) disable iff (!rst_n_i || flush_i)
@@ -197,7 +197,7 @@ module rob #(
 
     property p_ready_n;
         @(posedge clk_i) disable iff (!rst_n_i || flush_i)
-        !comm_ready_i && comm_valid_o |-> ##1
+        !comm_ready_i && comm_valid_o |=>
         comm_valid_o;
     endproperty
     a_ready_n: assert property (p_ready_n);

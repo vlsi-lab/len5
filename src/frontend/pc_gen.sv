@@ -76,6 +76,6 @@ module pc_gen
     end: pc_reg
 
     // Output valid and ready
-    assign  valid_o         = rst_n_i & !comm_res_valid_i & !comm_except_raised_i;
+    assign  valid_o         = rst_n_i & !(comm_res_valid_i & comm_res_i.mispredict) & !comm_except_raised_i;
     assign  comm_ready_o    = mem_ready_i;
 endmodule

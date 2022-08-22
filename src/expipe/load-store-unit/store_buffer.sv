@@ -64,6 +64,12 @@ module store_buffer #(
     input   adder_ans_t                 adder_ans_i,
     output  adder_req_t                 adder_req_o,
 
+    /* Load buffer (for load-after-store dependencies) */
+    output  logic                       lb_latest_valid_o,      // the latest store tag is valid
+    output  logic [$clog2(DEPTH)]       lb_latest_tag_o,        // tag of the latest store
+    output  logic                       lb_oldest_completed_o,  // the oldest store has completed 
+    output  logic [$clog2(DEPTH)]       lb_oldest_tag_o,        // tag of the oldest active store
+
     /* Memory system */
     input   logic                       mem_valid_i,
     input   logic                       mem_ready_i,
@@ -75,8 +81,8 @@ module store_buffer #(
     /* Load buffer (store-to-load forwarding) */ /* TODO */
     // input   logic [XLEN-1:0]            lb_addr_i,          // load address
     // input   ldst_width_t                 lb_type_i,          // load type
-    // input   logic [STBUFF_IDX_LEN:0]    lb_older_cnt_i,     // nummber of older store instructions
-    // output  logic [STBUFF_IDX_LEN-1:0]  lb_pending_cnt_o,   // number of uncommitted store instructions
+    // input   logic [STBUFF_TAG_W:0]    lb_older_cnt_i,     // nummber of older store instructions
+    // output  logic [STBUFF_TAG_W-1:0]  lb_pending_cnt_o,   // number of uncommitted store instructions
     // output  logic                       lb_committing_o,    // a store is committing
     // output  logic                       lb_hit_o,           // store data can be forwarded
     // output  logic [XLEN-1:0]            lb_value_o,         // store value
@@ -89,6 +95,12 @@ module store_buffer #(
     logic [$clog2(DEPTH)-1:0]   head_idx, tail_idx, addr_idx, mem_idx;
     logic                       head_cnt_en, tail_cnt_en, addr_cnt_en, mem_cnt_en;
     logic                       head_cnt_clr, tail_cnt_clr, addr_cnt_clr, mem_cnt_clr;
+
+    // Generic status signals
+    logic           empty;  // the load buffer is empty
+
+    // Latest store tag
+    logic [$clog2(DEPTH)-1:0]   latest_tag;
 
     // Load buffer data
     sb_data_t       data[DEPTH];
@@ -122,6 +134,12 @@ module store_buffer #(
     assign  tail_cnt_en     = push;
     assign  addr_cnt_en     = addr_accepted;
     assign  mem_cnt_en      = mem_accepted;
+
+    // Generic status signals
+    always_comb begin : empty_gen
+        empty   = 1'b0;
+        foreach (curr_state[i]) empty |= curr_state[i] != STORE_S_EMPTY;
+    end
 
     // Speculative store execution
     // NOTE: a speculative store instruction can be executed only when it
@@ -309,38 +327,51 @@ module store_buffer #(
         end
     end
 
+    // Latest store instruction tag update
+    always_ff @( posedge clk_i or rst_n_i ) begin : latest_tag_reg
+        if (!rst_n_i)       latest_tag  <= '0;
+        else if (flush_i)   latest_tag  <= '0;
+        else if (push)      latest_tag  <= tail_idx;
+    end
+
     // -----------------
     // OUTPUT EVALUATION
     // -----------------
 
     /* Issue stage */
-    assign issue_ready_o   = curr_state[tail_idx] == STORE_S_EMPTY;
+    assign  issue_ready_o  = curr_state[tail_idx] == STORE_S_EMPTY;
     
     /* CDB */
-    assign cdb_valid_o              = curr_state[head_idx] == STORE_S_COMPLETED;
-    assign cdb_data_o.rob_idx       = data[head_idx].dest_rob_idx;
-    assign cdb_data_o.res_value     = '0;
-    assign cdb_data_o.res_aux       = data[head_idx].rs2_value;
-    assign cdb_data_o.except_raised = data[head_idx].except_raised;
-    assign cdb_data_o.except_code   = data[head_idx].except_code;
+    assign  cdb_valid_o              = curr_state[head_idx] == STORE_S_COMPLETED;
+    assign  cdb_data_o.rob_idx       = data[head_idx].dest_rob_idx;
+    assign  cdb_data_o.res_value     = '0;
+    assign  cdb_data_o.res_aux       = data[head_idx].rs2_value;
+    assign  cdb_data_o.except_raised = data[head_idx].except_raised;
+    assign  cdb_data_o.except_code   = data[head_idx].except_code;
 
     /* Address adder */
-    assign adder_valid_o           = curr_state[addr_idx] == STORE_S_ADDR_REQ;
-    assign adder_ready_o           = 1'b1; // always ready to accept data from the adder
-    assign adder_req_o.tag         = addr_idx;
-    assign adder_req_o.is_store    = 1'b1;
-    assign adder_req_o.base        = data[addr_idx].rs1_value;
-    assign adder_req_o.offs        = data[addr_idx].imm_addr_value;
-    assign adder_req_o.ls_type     = data[addr_idx].store_type;
+    assign  adder_valid_o          = curr_state[addr_idx] == STORE_S_ADDR_REQ;
+    assign  adder_ready_o          = 1'b1; // always ready to accept data from the adder
+    assign  adder_req_o.tag        = addr_idx;
+    assign  adder_req_o.is_store   = 1'b1;
+    assign  adder_req_o.base       = data[addr_idx].rs1_value;
+    assign  adder_req_o.offs       = data[addr_idx].imm_addr_value;
+    assign  adder_req_o.ls_type    = data[addr_idx].store_type;
+
+    /* Load buffer */
+    assign  lb_latest_valid_o       = !empty;
+    assign  lb_latest_tag_o         = latest_tag;
+    assign  lb_oldest_completed_o   = mem_done;
+    assign  lb_oldest_tag_o         = mem_ans_i.tag;
 
     /* Memory system */
-    assign mem_valid_o          = curr_state[mem_idx] == STORE_S_MEM_REQ;
-    assign mem_ready_o          = 1'b1;
-    assign mem_req_o.tag        = mem_idx;
-    assign mem_req_o.acc_type   = MEM_ACC_ST;
-    assign mem_req_o.ls_type    = data[mem_idx].store_type;
-    assign mem_req_o.addr       = data[mem_idx].imm_addr_value;
-    assign mem_req_o.value      = data[mem_idx].rs2_value;
+    assign  mem_valid_o         = curr_state[mem_idx] == STORE_S_MEM_REQ;
+    assign  mem_ready_o         = 1'b1;
+    assign  mem_req_o.tag       = mem_idx;
+    assign  mem_req_o.acc_type  = MEM_ACC_ST;
+    assign  mem_req_o.ls_type   = data[mem_idx].store_type;
+    assign  mem_req_o.addr      = data[mem_idx].imm_addr_value;
+    assign  mem_req_o.value     = data[mem_idx].rs2_value;
 
     // --------
     // COUNTERS

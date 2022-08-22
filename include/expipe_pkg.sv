@@ -30,10 +30,15 @@ package expipe_pkg;
     // PARAMETERS
     // ----------
 
-    // ROB
-    // ---
+    // COMMIT UNIT
+    // -----------
     localparam ROB_IDX_LEN = $clog2(ROB_DEPTH); // ROB index width
     localparam ROB_EXCEPT_LEN = EXCEPT_TYPE_LEN;
+
+    // Maximum number of in-flight instructions
+    // NOTE: currently, the registers in the commit can hold up to 3 additional
+    // instructions besides those contained of the ROB.
+    localparam COMMIT_UNIT_DEPTH = ROB_DEPTH + 3;
 
     // ISSUE QUEUE
     // -----------
@@ -86,6 +91,10 @@ package expipe_pkg;
 
     // MAXIMUM DIMENSION OF EU_CONTROL FIELDS
     localparam MAX_EU_CTL_LEN   = ALU_CTL_LEN;  // this must be set to the maximum of the previous parameters
+
+    // REGISTER STATUS REGISTER(S)
+    // ---------------------------
+    localparam REGSTAT_CNT_W    = $clog2(COMMIT_UNIT_DEPTH);
 
     // ---
     // ALL
@@ -344,11 +353,12 @@ package expipe_pkg;
     // ---------------
     
     /* Load instruction status */
-    typedef enum logic [LSU_CTL_LEN-1:0] {
+    typedef enum logic [3:0] {
         LOAD_S_EMPTY,
         LOAD_S_RS1_PENDING,
         LOAD_S_ADDR_REQ,
         LOAD_S_ADDR_WAIT,
+        LOAD_S_DEP_WAIT,
         LOAD_S_MEM_REQ,
         LOAD_S_MEM_WAIT,
         LOAD_S_COMPLETED,
@@ -358,7 +368,6 @@ package expipe_pkg;
     /* Load instruction data */
     typedef struct packed {
         ldst_width_t                load_type;
-        // logic [STBUFF_IDX_LEN-1:0]  older_stores;
         rob_idx_t                   rs1_rob_idx;
         logic [XLEN-1:0]            rs1_value;
         rob_idx_t                   dest_rob_idx;

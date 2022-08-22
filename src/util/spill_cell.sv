@@ -37,7 +37,6 @@ module spill_cell #(
     input   DATA_T      data_i,
     output  DATA_T      data_o
 );
-
     // Bypass internal logic
     generate
         if (SKIP) begin: l_skip_cell_gen
@@ -93,7 +92,6 @@ module spill_cell #(
 
             // Output MUX
             assign data_o = (b_sel) ? b_data_q : a_data_q;
-        
         end
     endgenerate
 endmodule

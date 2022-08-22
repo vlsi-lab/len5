@@ -19,20 +19,45 @@
 // GLOBAL CONFIGURATION
 // --------------------
 
-// Set memory file path
-`ifndef MEMORY_FILE
-`define MEMORY_FILE "tb/memory/memory.txt"
-`endif /* MEMORY_FILE */
-
 // Boot program counter
 `define BOOT_PC 'h0
 
 // Boot memory translation mode
 `define BOOT_VM_MODE BARE // BARE|SV39|SV48
 
-// --------------------
-// COMPILATION SWITCHES
-// --------------------
+// -----------------
+// PIPELINE SWITCHES
+// -----------------
+// The following switches enable or disable some of the sequential elements
+// inside some functional units, therefore reducing the latency at the
+// expense of increased delay on the involved lines. The increased delay
+// may impact on the operation frequency if the combinational unit enters
+// the processor critical path. The pipeline of the processor can handle
+// functional units with arbitrary latency, including 0-cycle, so this
+// changes do not require any modification.
+
+// FETCH STAGE
+// -----------
+
+// Fetch memory interface
+`define SKIP_FETCH_MEMIF_REQ_SPILL_CELL // memory requests from the fetch unit are directly passed to the memory
+`define SKIP_FETCH_MEMIF_ANS_SPILL_CELL // fetched instructions are directly passed to the issue stage 
+
+// EXECUTION PIPELINE
+// ------------------
+
+// Branch Unit
+`define SKIP_BU_ADDER_SPILL_CELL    // make the target address adder fully combinational
+
+// Load-store Unit
+`define SKIP_LSU_ADDER_SPILL_CELL   // make address adder fully combinational
+
+// Commit Stage
+`define SKIP_COMMIT_SPILL_CELL      // directly connect the commit CU to the ROB output
+
+// ----------------
+// FEATURE SWITCHES
+// ----------------
 
 // Enable C extension
 // ------------------
@@ -56,7 +81,6 @@
 // Enable age-based selectors in the reservation station. If not defined, simple fixed priority encoders will be used instead. This should lead to worse performance in terms of latency (and possibly throughput with certain code sequences) while reducing area and power consumption
 //`define ENABLE_AGE_BASED_SELECTOR
 
-// LOAD-STORE UNIT
 // If defined, the arbiters of the shared virtual address adder, the DTLB and the DCACHE will give the highest priority to the store buffer in case of conflict. This might slightly increase the forwarding hit ration from the store buffer to the load buffer, while decreasing the latency of loads execution. 
 `define ENABLE_STORE_PRIO_2WAY_ARBITER
 
@@ -64,5 +88,38 @@
 // accesses are aligned on 64 bits, and the selector picks the correct
 // word/halfword/byte from it the fetched doubleword.
 //`define ONLY_DOUBLEWORD_MEM_ACCESSES
+
+//////////////////////////////////////////////////////////////////////////////
+// CONSTRUCT PARAMETERS FROM DEFINES
+
+`ifdef SKIP_FETCH_MEMIF_REQ_SPILL_CELL
+localparam  FETCH_REQ_SPILL_SKIP = 1;
+`else
+localparam  FETCH_REQ_SPILL_SKIP = 0;
+`endif /* SKIP_FETCH_MEMIF_REQ_SPILL_CELL */
+`ifdef SKIP_FETCH_MEMIF_ANS_SPILL_CELL
+
+localparam  FETCH_ANS_SPILL_SKIP = 1;
+`else
+localparam  FETCH_ANS_SPILL_SKIP = 0;
+`endif /* SKIP_FETCH_MEMIF_ANS_SPILL_CELL */
+
+`ifdef SKIP_LSU_ADDER_SPILL_CELL
+localparam LSU_SPILL_SKIP = 1;
+`else
+localparam LSU_SPILL_SKIP = 0;
+`endif /* SKIP_LSU_ADDER_SPILL_CELL */
+
+`ifdef SKIP_BU_ADDER_SPILL_CELL
+localparam BU_SPILL_SKIP = 1;
+`else
+localparam BU_SPILL_SKIP = 0;
+`endif /* SKIP_BU_ADDER_SPILL_CELL */
+
+`ifdef SKIP_COMMIT_SPILL_CELL
+localparam COMMIT_SPILL_SKIP = 1;
+`else
+localparam COMMIT_SPILL_SKIP = 0;
+`endif /* SKIP_COMMIT_SPILL_CELL */
 
 `endif /* LEN5_CONFIG_ */
