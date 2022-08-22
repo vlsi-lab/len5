@@ -12,12 +12,11 @@
 // Author: Michele Caon
 // Date: 17/08/2022
 
-// LEN5 compilation switches
-`include "len5_config.svh"
-
 /* Import UVM macros and package */
 `include "uvm_macros.svh"
 import uvm_pkg::*;
+
+`include "len5_config.svh"
 
 import len5_pkg::*;
 import expipe_pkg::*;
@@ -29,16 +28,19 @@ module tb_bare;
     // TB CONFIGURATION
     // ----------------
 
-    // Initial program counter
-    localparam logic [XLEN-1:0] BOOT_PC = `BOOT_PC;
-    localparam                  BPU_HISTORY_LEN = 4;
-    localparam                  BPU_BTB_BITS    = 4;
+    // Memory emulator configuration
+    localparam string MEM_DUMP_FILE = "mem_dump.txt";
+    localparam  MEM_DUMP_T          = 1; // memory dump period (in cycles)
+    localparam  MEM_PIPE_NUM        = 0; // memory latency
+    localparam  MEM_SKIP_INS_REG    = 1; // skip instruction output register
+    localparam  MEM_SKIP_DATA_REG   = 1; // skip data output register
 
-    // Memory dump period (in clock cycles)
-    localparam          MEM_DUMP_T = 1;
-
-    // Memory file
-    localparam string   MEM_DUMP_FILE = "mem_dump.txt";
+    // Datapath configuration
+    // NOTE: the memory can accept a number of outstanding requests equal to
+    // the number of its pipeline stages, plus the two internal registers of
+    // the output spill cell, if implemented. The fetch stage must buffer the
+    // same number of requests.
+    localparam  FETCH_MEMIF_FIFO_DEPTH  = MEM_PIPE_NUM + ((MEM_SKIP_INS_REG) ? 0 : 2);
 
     // INTERNAL SIGNALS
     // ----------------
@@ -84,7 +86,7 @@ module tb_bare;
         end
 
         /* Print boot program counter */
-        `uvm_info("CONFIG", $sformatf("Boot program counter: 0x%x", BOOT_PC), UVM_MEDIUM);
+        `uvm_info("CONFIG", $sformatf("Boot program counter: 0x%x", `BOOT_PC), UVM_MEDIUM);
 
         /* Print the number of simulation cycles */
         `uvm_info("CONFIG", $sformatf("Number of simulation cycles: %0d", num_cycles), UVM_MEDIUM);
@@ -122,9 +124,7 @@ module tb_bare;
     // LEN5 BAREMETAL DATAPATH
     // -----------------------
     datapath #(
-        .PC_GEN_BOOT_PC  (BOOT_PC         ),
-        .BPU_HISTORY_LEN (BPU_HISTORY_LEN ),
-        .BPU_BTB_BITS    (BPU_BTB_BITS    )
+        .FETCH_MEMIF_FIFO_DEPTH (FETCH_MEMIF_FIFO_DEPTH )
     ) u_datapath (
     	.clk_i            (clk               ),
         .rst_n_i          (rst_n             ),
@@ -146,7 +146,10 @@ module tb_bare;
     // MEMORY EMULATOR
     // ---------------
     memory_bare_emu #(
-        .DUMP_PERIOD    (MEM_DUMP_T )
+        .DUMP_PERIOD        (MEM_DUMP_T        ),
+        .PIPE_NUM           (MEM_PIPE_NUM      ),
+        .SKIP_INS_ANS_REG   (MEM_SKIP_INS_REG  ),
+        .SKIP_DATA_ANS_REG  (MEM_SKIP_DATA_REG )
     ) u_memory_bare_emu (
     	.clk_i           (clk               ),
         .rst_n_i         (rst_n             ),

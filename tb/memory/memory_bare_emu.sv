@@ -21,8 +21,10 @@ import len5_pkg::*;
 import expipe_pkg::*;
 
 module memory_bare_emu #(
-    parameter   DUMP_PERIOD = 1, // cycles
-    parameter   PIPE_NUM    = 0  // number of pipeline registers 
+    parameter   DUMP_PERIOD         = 1, // cycles
+    parameter   PIPE_NUM            = 0, // number of pipeline registers 
+    parameter   SKIP_INS_ANS_REG    = 0, // instruction from memory is directly passed to fetch
+    parameter   SKIP_DATA_ANS_REG   = 0  // data from memory is directly passed to LSU
 ) (
     input   logic           clk_i,
     input   logic           rst_n_i,
@@ -222,26 +224,24 @@ module memory_bare_emu #(
     assign  data_pipe_valid[0]  = data_valid_i;
     assign  data_pipe_reg[0]    = data_ans;
     generate
-        for (genvar i = 1; i < PIPE_NUM; i++) begin
+        for (genvar i = 1; i < PIPE_NUM+1; i++) begin
             always_ff @( posedge clk_i ) begin : mem_pipe_reg
                 if (!rst_n_i) begin
-                    foreach (ins_pipe_valid[i]) begin
-                        ins_pipe_valid[i]   <= 1'b0;
-                        ins_pipe_reg[i]     <= '0;
-                        data_pipe_valid[i]  <= 1'b0;
-                        data_pipe_reg[i]    <= '0;
-                    end 
+                    ins_pipe_valid[i]   <= 1'b0;
+                    ins_pipe_reg[i]     <= '0;
+                    data_pipe_valid[i]  <= 1'b0;
+                    data_pipe_reg[i]    <= '0;
                 end else if (flush_i) begin
-                    foreach (ins_pipe_valid[i]) begin
-                        ins_pipe_valid[i]   <= 1'b0;
-                        ins_pipe_reg[i]     <= '0;
-                        data_pipe_valid[i]  <= 1'b0;
-                        data_pipe_reg[i]    <= '0;
-                    end 
+                    ins_pipe_valid[i]   <= 1'b0;
+                    ins_pipe_reg[i]     <= '0;
+                    data_pipe_valid[i]  <= 1'b0;
+                    data_pipe_reg[i]    <= '0;
                 end else begin
                     if (ins_pipe_en) begin
                         ins_pipe_valid[i]   <= ins_pipe_valid[i-1];
                         ins_pipe_reg[i]     <= ins_pipe_reg[i-1];
+                    end
+                    if (data_pipe_en) begin
                         data_pipe_valid[i]  <= data_pipe_valid[i-1];
                         data_pipe_reg[i]    <= data_pipe_reg[i-1];
                     end
@@ -253,8 +253,8 @@ module memory_bare_emu #(
     // Output registers
     // ----------------
     spill_cell_flush #(
-        .DATA_T (mem_ans_t ),
-        .SKIP   (0         )
+        .DATA_T (mem_ans_t        ),
+        .SKIP   (SKIP_INS_ANS_REG )
     ) u_ins_out_reg (
     	.clk_i   (clk_i                    ),
         .rst_n_i (rst_n_i                  ),
@@ -268,8 +268,8 @@ module memory_bare_emu #(
     );
 
     spill_cell_flush #(
-        .DATA_T (mem_ans_t ),
-        .SKIP   (1         )
+        .DATA_T (mem_ans_t        ),
+        .SKIP   (SKIP_DATA_ANS_REG )
     ) u_data_out_reg (
     	.clk_i   (clk_i                     ),
         .rst_n_i (rst_n_i                   ),

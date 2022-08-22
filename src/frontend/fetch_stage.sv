@@ -17,13 +17,13 @@ import memory_pkg::*;
 import expipe_pkg::*;
 import fetch_pkg::*;
 
-module fetch_stage
-#(
-    parameter HLEN = 4,
-    parameter BTB_BITS = 4,
-    parameter BOOT_PC = 64'h0
-)
-(
+module fetch_stage #(
+    parameter   HLEN             = 4,
+    parameter   BTB_BITS         = 4,
+    parameter   BOOT_PC          = 64'h0,
+    parameter c2b_t INIT_C2B     = WNT,
+    parameter   MEMIF_FIFO_DEPTH = 2 // must be equal to the max number of outstanding requests the memory can accept
+) (
     input   logic               clk_i,
     input   logic               rst_n_i,
     input   logic               flush_i,
@@ -82,7 +82,8 @@ module fetch_stage
     //       synchronization is required.
     bpu #(
         .HLEN     (HLEN     ),
-        .BTB_BITS (BTB_BITS )
+        .BTB_BITS (BTB_BITS ),
+        .INIT_C2B (INIT_C2B )
     ) u_bpu (
     	.clk_i            (clk_i            ),
         .rst_n_i          (rst_n_i          ),
@@ -113,7 +114,9 @@ module fetch_stage
 
     // MEMORY INTERFACE
     // ----------------
-    fetch_mem_if u_mem_if (	
+    fetch_mem_if #(
+        .MAX_MEM_OUTSTANDING_REQUESTS (MEMIF_FIFO_DEPTH)
+    ) u_mem_if (
         .clk_i                 (clk_i                 ),
         .rst_n_i               (rst_n_i               ),
         .flush_i               (flush_i               ),

@@ -19,11 +19,25 @@
 // GLOBAL CONFIGURATION
 // --------------------
 
+// Boot memory translation mode
+`define BOOT_VM_MODE BARE // BARE|SV39|SV48
+
+// FRONTEND PARAMETERS
+// -------------------
+
 // Boot program counter
 `define BOOT_PC 'h0
 
-// Boot memory translation mode
-`define BOOT_VM_MODE BARE // BARE|SV39|SV48
+// BPU g-share predictor global history length
+`define BPU_HLEN 4
+
+// BPU g-share predictor counters initial value
+// NOTE: must one of {SNT, WNT, WT, ST}
+`define BPU_INIT_C2B WNT
+
+// BPU Branch Target Buffer (BTB) addressing bits (the remaining ones are used
+// as tag)
+`define BPU_BTB_BITS 4
 
 // -----------------
 // PIPELINE SWITCHES
@@ -40,8 +54,11 @@
 // -----------
 
 // Fetch memory interface
+// NOTE: if the memory is 0-latency, at least one of the fetch unit registers
+// must be enabled (i.e., not skipped). Therefore, at least one of the 
+// following switches must be commented in this case.
 `define SKIP_FETCH_MEMIF_REQ_SPILL_CELL // memory requests from the fetch unit are directly passed to the memory
-`define SKIP_FETCH_MEMIF_ANS_SPILL_CELL // fetched instructions are directly passed to the issue stage 
+// `define SKIP_FETCH_MEMIF_ANS_SPILL_CELL // fetched instructions are directly passed to the issue stage 
 
 // EXECUTION PIPELINE
 // ------------------

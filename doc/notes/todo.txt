@@ -1,1 +1,3 @@
-[ ] Force load-after-store ordering
+[x] Force load-after-store ordering
+[ ] Test with more comprehensive code (benchmark?)
+[ ] Add support for extensions
