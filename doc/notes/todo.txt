@@ -1,1 +1,2 @@
-[ ] Force load-after-store ordering
+[x] Force load-after-store ordering
+[ ] Fix fetch unit treating all instructions as branches
