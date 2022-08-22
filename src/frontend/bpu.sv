@@ -15,56 +15,59 @@
 import len5_pkg::*;
 import fetch_pkg::*;
 
-module bpu #(
-    parameter       HLEN      = 4,
-    parameter       BTB_BITS  = 4,
-    parameter c2b_t INIT_C2B  = WNT
-) (
-    input   logic             clk_i,
-    input   logic             rst_n_i,
-    input   logic             flush_i,
-    input   logic [XLEN-1:0]  curr_pc_i,
-    input   logic             comm_res_valid_i,
-    input   resolution_t      comm_res_i,
+module bpu
+#(
+  parameter HLEN = 4,
+  parameter BTB_BITS = 4
+)
+(
+  input   logic             clk_i,
+  input   logic             rst_n_i,
+  input   logic             flush_i,
+  input   logic [XLEN-1:0]  curr_pc_i,
+  input   logic             comm_res_valid_i,
+  input   resolution_t      comm_res_i,
 
-    output  prediction_t      pred_o
+  output  prediction_t      pred_o
 );
-    // Signal definitions
-    logic btb_hit, btb_update, btb_del_entry;
-    logic gshare_taken;
-    logic [XLEN-OFFSET-1:0] btb_target;
 
-    // Module instantiations
-    gshare #(
-        .HLEN     (HLEN     ),
-        .INIT_C2B (INIT_C2B )
-    ) u_gshare (
-        .clk_i          (clk_i            ),
-        .rst_n_i        (rst_n_i          ),
-        .flush_i        (flush_i          ),
-        .curr_pc_i      (curr_pc_i        ),
-        .res_valid_i    (comm_res_valid_i ),
-        .res_i          (comm_res_i       ),
-        .taken_o        (gshare_taken     )
+  // Signal definitions
+  logic btb_res_valid, btb_hit, btb_update, btb_del_entry;
+  logic gshare_taken;
+  logic [XLEN-OFFSET-1:0] btb_target;
+
+  // Module instantiations
+  gshare #(.HLEN(HLEN)) u_gshare
+  (
+    .clk_i          (clk_i),
+    .rst_n_i        (rst_n_i),
+    .flush_i        (flush_i),
+    .curr_pc_i      (curr_pc_i),
+    .res_valid_i    (comm_res_valid_i),
+    .res_i          (comm_res_i),
+
+    .taken_o        (gshare_taken)
+  );
+
+  btb #(.BTB_BITS(BTB_BITS)) u_btb
+  (
+    .clk_i            (clk_i),
+    .rst_n_i          (rst_n_i),
+    .flush_i          (flush_i),
+    .curr_pc_i        (curr_pc_i),
+    .valid_i          (btb_update),
+    .del_entry_i      (btb_del_entry),
+    .res_i            (comm_res_i),
+
+    .hit_o            (btb_hit),
+    .target_o         (btb_target)
     );
-
-    btb #(.BTB_BITS(BTB_BITS)) u_btb
-    (
-        .clk_i            (clk_i          ),
-        .rst_n_i          (rst_n_i        ),
-        .flush_i          (flush_i        ),
-        .curr_pc_i        (curr_pc_i      ),
-        .valid_i          (btb_update     ),
-        .del_entry_i      (btb_del_entry  ),
-        .res_i            (comm_res_i     ),
-        .hit_o            (btb_hit        ),
-        .target_o         (btb_target     )
-        );
-    
-    // Assignments
-    assign btb_update     = comm_res_valid_i & comm_res_i.mispredict;
-    assign btb_del_entry  = comm_res_i.mispredict & ~comm_res_i.taken;
-    assign pred_o.pc      = curr_pc_i;
-    assign pred_o.taken   = gshare_taken & btb_hit;
-    assign pred_o.target  = {btb_target, 2'b00};
+  
+  // Assignments
+  assign btb_update     = comm_res_valid_i & comm_res_i.mispredict;
+  assign btb_del_entry  = comm_res_i.mispredict & ~comm_res_i.taken;
+  assign pred_o.pc      = curr_pc_i;
+  assign pred_o.taken   = gshare_taken & btb_hit;
+  assign pred_o.target  = {btb_target, 2'b00};
+  
 endmodule

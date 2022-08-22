@@ -254,8 +254,8 @@ module commit_cu (
         sb_exec_store_o     = 1'b0;
         csr_valid_o         = 1'b0;
         csr_type_o          = CSR_INSTR;
-        fe_res_valid_o      = 1'b0; // must be assedrted for exactly one cycle
-        fe_bpu_flush_o      = 1'b0; // TODO: is this needed on context switch only?
+        fe_res_valid_o      = 1'b0;
+        fe_bpu_flush_o      = 1'b0; // TODO: is this needed without multithreading?
         mis_flush_o         = 1'b0;
         issue_resume_o      = 1'b0;
 

@@ -53,6 +53,32 @@ module fifo #(
     // FIFO control
     logic                       fifo_push, fifo_pop;
 
+    // ----------------------
+    // HEAD AND TAIL COUNTERS
+    // ----------------------
+
+    modn_counter #(
+        .N (DEPTH)
+    ) u_head_counter (
+    	.clk_i   (clk_i         ),
+        .rst_n_i (rst_n_i       ),
+        .en_i    (head_cnt_en   ),
+        .clr_i   (head_cnt_clr  ),
+        .count_o (head_cnt      ),
+        .tc_o    () // not needed
+    );
+
+    modn_counter #(
+        .N (DEPTH)
+    ) u_tail_counter (
+    	.clk_i   (clk_i         ),
+        .rst_n_i (rst_n_i       ),
+        .en_i    (tail_cnt_en   ),
+        .clr_i   (tail_cnt_clr  ),
+        .count_o (tail_cnt      ),
+        .tc_o    () // not needed
+    );
+
     // -----------------
     // FIFO CONTROL UNIT
     // -----------------
@@ -104,32 +130,6 @@ module fifo #(
     assign  valid_o     = data_valid[head_cnt];
     assign  ready_o     = !data_valid[tail_cnt];
     assign  data_o      = data[head_cnt];
-
-    // ----------------------
-    // HEAD AND TAIL COUNTERS
-    // ----------------------
-
-    modn_counter #(
-        .N (DEPTH)
-    ) u_head_counter (
-    	.clk_i   (clk_i         ),
-        .rst_n_i (rst_n_i       ),
-        .en_i    (head_cnt_en   ),
-        .clr_i   (head_cnt_clr  ),
-        .count_o (head_cnt      ),
-        .tc_o    () // not needed
-    );
-
-    modn_counter #(
-        .N (DEPTH)
-    ) u_tail_counter (
-    	.clk_i   (clk_i         ),
-        .rst_n_i (rst_n_i       ),
-        .en_i    (tail_cnt_en   ),
-        .clr_i   (tail_cnt_clr  ),
-        .count_o (tail_cnt      ),
-        .tc_o    () // not needed
-    );
 
     // ----------
     // ASSERTIONS

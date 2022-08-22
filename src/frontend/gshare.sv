@@ -18,8 +18,7 @@ import fetch_pkg::*;
 /* verilator lint_off BLKLOOPINIT */
 module gshare
 #(
-    parameter       HLEN     = 4,
-    parameter c2b_t INIT_C2B = WNT
+    parameter HLEN = 4
 )
 (
     input   logic             clk_i,
@@ -31,13 +30,14 @@ module gshare
 
     output  logic             taken_o
 );
-    // Parameters
+
+    // Definitions
+    typedef enum logic [1:0] {SNT, WNT, WT, ST} c2b_t; // 2-bit counter enum
+    localparam c2b_t INIT_C2B = SNT;
     localparam PHT_ROWS = 1 << HLEN;
+    c2b_t pht_d[PHT_ROWS], pht_q[PHT_ROWS];
     
-    // INTERNAL SIGNALS
-    // ----------------
-    c2b_t pht_d[PHT_ROWS], pht_q[PHT_ROWS];     // 2-bit predictor counters
-    logic [HLEN-1:0] history, index_r, index_w; // global branch history
+    logic [HLEN-1:0] history, index_r, index_w;
 
     // --------------------------
     // Branch History Table (BHT)
@@ -65,22 +65,30 @@ module gshare
         if (res_valid_i) begin: c2b_fsm
         case (pht_q[index_w])
             SNT: begin
-                if (res_i.taken)    pht_d[index_w] = WNT;
-                else                pht_d[index_w] = SNT;
+            if (res_i.taken)
+                pht_d[index_w] = WNT;
+            else pht_d[index_w] = SNT;
             end
+
             WNT: begin
-                if (res_i.taken)    pht_d[index_w] = WT;
-                else                pht_d[index_w] = SNT;
+            if (res_i.taken)
+                pht_d[index_w] = WT;
+            else pht_d[index_w] = SNT;
             end
+
             WT: begin
-                if (res_i.taken)    pht_d[index_w] = ST;
-                else                pht_d[index_w] = WNT;
+            if (res_i.taken)
+                pht_d[index_w] = ST;
+            else pht_d[index_w] = WNT;
             end
+
             ST: begin
-                if (res_i.taken)    pht_d[index_w] = ST;
-                else                pht_d[index_w] = WT;
+            if (res_i.taken)
+                pht_d[index_w] = ST;
+            else pht_d[index_w] = WT;
             end
-            default:                pht_d[index_w] = WNT;
+
+            default: pht_d[index_w] = WNT;
         endcase
         end: c2b_fsm
     end: pht_update

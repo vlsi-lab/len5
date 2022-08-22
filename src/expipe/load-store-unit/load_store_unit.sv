@@ -234,7 +234,7 @@ module load_store_unit #(
     always_comb begin : mem_ans_decoder
         memarb_lb_valid = 1'b0;
         memarb_sb_valid = 1'b0;
-        mem_ready_o     = 1'b1;
+        mem_ready_o     = 1'b0;
 
         if (mem_valid_i) begin
             case (mem_ans_i.acc_type)
