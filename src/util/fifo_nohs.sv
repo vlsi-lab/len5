@@ -22,8 +22,8 @@
  */
 
 module fifo_nohs #(
-    parameter type  DATA_T  = logic[8:0],
-    parameter int   DEPTH   = 4
+    parameter type  DATA_T  = logic[7:0],
+    parameter int   DEPTH   = 2
 ) (
     /* Clock and reset */
     input   logic       clk_i,
@@ -38,99 +38,104 @@ module fifo_nohs #(
     input   DATA_T      data_i,
     output  DATA_T      data_o
 );
+    // Skip if 0-deep
+    generate
+        if (DEPTH == 0) begin: l_skip_fifo
+            assign  data_o  = data_i;
+        end else begin: l_fifo
+            // INTERNAL SIGNALS
+            // ----------------
 
-    // INTERNAL SIGNALS
-    // ----------------
+            // Head and tail counters
+            logic [$clog2(DEPTH)-1:0]   head_cnt, tail_cnt;
+            logic                       head_cnt_en, tail_cnt_en;
+            logic                       head_cnt_clr, tail_cnt_clr;
 
-    // Head and tail counters
-    logic [$clog2(DEPTH)-1:0]   head_cnt, tail_cnt;
-    logic                       head_cnt_en, tail_cnt_en;
-    logic                       head_cnt_clr, tail_cnt_clr;
+            // FIFO data
+            DATA_T                      data[DEPTH];
+            logic                       data_valid[DEPTH];
 
-    // FIFO data
-    DATA_T                      data[DEPTH];
-    logic                       data_valid[DEPTH];
+            // -----------------
+            // FIFO CONTROL UNIT
+            // -----------------
 
-    // ----------------------
-    // HEAD AND TAIL COUNTERS
-    // ----------------------
+            // Counters control
+            assign  head_cnt_clr    = flush_i;
+            assign  tail_cnt_clr    = flush_i;
+            assign  head_cnt_en     = pop_i;
+            assign  tail_cnt_en     = push_i;
 
-    modn_counter #(
-        .N (DEPTH)
-    ) u_head_counter (
-    	.clk_i   (clk_i         ),
-        .rst_n_i (rst_n_i       ),
-        .en_i    (head_cnt_en   ),
-        .clr_i   (head_cnt_clr  ),
-        .count_o (head_cnt      ),
-        .tc_o    () // not needed
-    );
-
-    modn_counter #(
-        .N (DEPTH)
-    ) u_tail_counter (
-    	.clk_i   (clk_i         ),
-        .rst_n_i (rst_n_i       ),
-        .en_i    (tail_cnt_en   ),
-        .clr_i   (tail_cnt_clr  ),
-        .count_o (tail_cnt      ),
-        .tc_o    () // not needed
-    );
-
-    // -----------------
-    // FIFO CONTROL UNIT
-    // -----------------
-
-    // Counters control
-    assign  head_cnt_clr    = flush_i;
-    assign  tail_cnt_clr    = flush_i;
-    assign  head_cnt_en     = pop_i;
-    assign  tail_cnt_en     = push_i;
-
-    // -----------
-    // FIFO UPDATE
-    // -----------
-    // NOTE: operations priority:
-    // 1) push
-    // 2) pop
-    always_ff @( posedge clk_i or negedge rst_n_i ) begin : fifo_update
-        if (!rst_n_i) begin
-            foreach (data[i]) begin
-                data_valid[i]   <= 1'b0;
-                data[i]         <= '0;
-            end
-        end else if (flush_i) begin
-            foreach (data[i]) begin
-                data_valid[i]   <= 1'b0;    // clearing valid is enough
-            end
-        end else begin
-            foreach (data[i]) begin
-                if (push_i && tail_cnt == i) begin
-                    data_valid[i]    <= 1'b1;
-                    data[i]          <= data_i;
-                end else if (pop_i && head_cnt == i) begin
-                    data_valid[i]    <= 1'b0;
+            // -----------
+            // FIFO UPDATE
+            // -----------
+            // NOTE: operations priority:
+            // 1) push
+            // 2) pop
+            always_ff @( posedge clk_i or negedge rst_n_i ) begin : fifo_update
+                if (!rst_n_i) begin
+                    foreach (data[i]) begin
+                        data_valid[i]   <= 1'b0;
+                        data[i]         <= '0;
+                    end
+                end else if (flush_i) begin
+                    foreach (data[i]) begin
+                        data_valid[i]   <= 1'b0;    // clearing valid is enough
+                    end
+                end else begin
+                    foreach (data[i]) begin
+                        if (push_i && tail_cnt == i) begin
+                            data_valid[i]    <= 1'b1;
+                            data[i]          <= data_i;
+                        end else if (pop_i && head_cnt == i) begin
+                            data_valid[i]    <= 1'b0;
+                        end
+                    end
                 end
             end
+
+            // ----------------------
+            // HEAD AND TAIL COUNTERS
+            // ----------------------
+
+            modn_counter #(
+                .N (DEPTH)
+            ) u_head_counter (
+                .clk_i   (clk_i         ),
+                .rst_n_i (rst_n_i       ),
+                .en_i    (head_cnt_en   ),
+                .clr_i   (head_cnt_clr  ),
+                .count_o (head_cnt      ),
+                .tc_o    () // not needed
+            );
+
+            modn_counter #(
+                .N (DEPTH)
+            ) u_tail_counter (
+                .clk_i   (clk_i         ),
+                .rst_n_i (rst_n_i       ),
+                .en_i    (tail_cnt_en   ),
+                .clr_i   (tail_cnt_clr  ),
+                .count_o (tail_cnt      ),
+                .tc_o    () // not needed
+            );
+
+            // --------------
+            // OUTPUT CONTROL
+            // --------------
+
+            assign  data_o      = data[head_cnt];
+
+            // ----------
+            // ASSERTIONS
+            // ----------
+            `ifndef SYNTHESIS
+            property p_fifo_full;
+                @(posedge clk_i) disable iff (!rst_n_i || flush_i)
+                (tail_cnt == head_cnt) && data_valid[head_cnt] |-> 
+                !push_i
+            endproperty
+            a_fifo_full: assert property (p_fifo_full);
+            `endif /* SYNTHESIS */
         end
-    end
-
-    // --------------
-    // OUTPUT CONTROL
-    // --------------
-
-    assign  data_o      = data[head_cnt];
-
-    // ----------
-    // ASSERTIONS
-    // ----------
-    `ifndef SYNTHESIS
-    property p_fifo_full;
-        @(posedge clk_i) disable iff (!rst_n_i || flush_i)
-        (tail_cnt == head_cnt) && data_valid[head_cnt] |-> 
-        !push_i
-    endproperty
-    a_fifo_full: assert property (p_fifo_full);
-    `endif /* SYNTHESIS */
-
+    endgenerate
 endmodule

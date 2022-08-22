@@ -24,21 +24,16 @@ package fetch_pkg;
     import len5_pkg::except_code_t;
 
     // ----------
-    // PARAMETERS
-    // ----------
-
-    // Instruction address offset
-    localparam  OFFSET = $clog2(ILEN/8); // 2 LSB of addresses are always 0, so no use in using them for indexing
-
-    // g-share branch predictor history length
-    localparam  HLEN = 4;
-
-    // Branch target buffer bits 
-    localparam  BTB_BITS = 4;
-
-    // ----------
     // DATA TYPES
     // ----------
+
+    // G-share predictor counter values
+    typedef enum logic [1:0] { // 2-bit counter
+        SNT,    // strong not-taken
+        WNT,    // weak not-taken
+        WT,     // weak taken
+        ST      // strong taken
+    } c2b_t;
 
     // instruction selector enums
     typedef enum logic [1:0] { current_pc = 'h0, prev_pc = 'h1, line_pc = 'h2 } pc_src_t;
@@ -66,6 +61,23 @@ package fetch_pkg;
         logic               except_raised;
         except_code_t       except_code;
     } mem_if_ans_reg_t;
+
+    // ----------
+    // PARAMETERS
+    // ----------
+
+    // Instruction address offset
+    localparam  OFFSET = $clog2(ILEN/8); // 2 LSB of addresses are always 0, so no use in using them for indexing
+
+    // Boot program counter
+    localparam logic [XLEN-1:0] BOOT_PC = `BOOT_PC;
+
+    // g-share branch predictor history length and counters intial value
+    localparam       HLEN     = `BPU_HLEN;
+    localparam c2b_t INIT_C2B = `BPU_INIT_C2B;
+
+    // Branch target buffer bits 
+    localparam  BTB_BITS = `BPU_BTB_BITS;
 
 endpackage
 
