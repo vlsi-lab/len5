@@ -18,7 +18,8 @@ import fetch_pkg::*;
 import csr_pkg::csr_priv_t;
 
 module datapath #(
-    parameter FETCH_MEMIF_FIFO_DEPTH = 2
+    parameter FETCH_MEMIF_FIFO_DEPTH = 2,
+    parameter BOOT_PC = BOOT_PC
 ) (
     // Clock and reset
     input logic clk_i,

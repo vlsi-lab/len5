@@ -28,6 +28,12 @@ module tb_bare;
     // TB CONFIGURATION
     // ----------------
 
+    // Boot program counter
+    localparam  FETCH_BOOT_PC = 64'h0000000000010218;
+
+    // Serial monitor configuration
+    localparam  MON_MEM_ADDR = 64'h0000000000000010;
+
     // Memory emulator configuration
     localparam string MEM_DUMP_FILE = "mem_dump.txt";
     localparam  MEM_DUMP_T          = 1; // memory dump period (in cycles)
@@ -117,6 +123,14 @@ module tb_bare;
     end
     always #5 clk   = ~clk;
 
+    // Serial monitor
+    // --------------
+    always_ff @( posedge clk ) begin : serial_monitor
+        if (dp_data_mem_valid && dp_data_mem_req.addr == MON_MEM_ADDR) begin
+            $display("Detected character: %s", dp_data_mem_req.value[7:0]);
+        end
+    end
+
     // -------
     // MODULES
     // -------
@@ -124,7 +138,8 @@ module tb_bare;
     // LEN5 BAREMETAL DATAPATH
     // -----------------------
     datapath #(
-        .FETCH_MEMIF_FIFO_DEPTH (FETCH_MEMIF_FIFO_DEPTH )
+        .FETCH_MEMIF_FIFO_DEPTH (FETCH_MEMIF_FIFO_DEPTH ),
+        .BOOT_PC                (FETCH_BOOT_PC)
     ) u_datapath (
     	.clk_i            (clk               ),
         .rst_n_i          (rst_n             ),

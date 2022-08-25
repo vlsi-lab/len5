@@ -47,7 +47,7 @@ class memory_class #(
 
     // Memory data
     // NOTE: delared as static so it's shared by all instances
-    static logic [WWIDTH-1:0]   mem [logic [AWIDTH-1:0]];
+    static logic [BWIDTH-1:0]   mem [logic [AWIDTH-1:0]];
 
     // METHODS
     // -------
@@ -90,7 +90,7 @@ class memory_class #(
 
     // Load the memory file
     function int LoadMem(string file = this.memory_file_path);
-        logic [AWIDTH-1:0]  addr;
+        logic [AWIDTH-1:0]  waddr, baddr;
         logic [WWIDTH-1:0]  data;
         int                 data_cnt = 0;
 
@@ -99,8 +99,13 @@ class memory_class #(
 
         // Scan each line and load the data into the memory array
         while (!$feof(this.fd)) begin
-            if (ScanMemLine(addr, data) != 0) return -1;
-            mem[addr] = data;
+            if (ScanMemLine(waddr, data) != 0) return -1;
+            // Store the read bytes
+            for (int i = 0; i<(WWIDTH>>3); i++) begin
+                baddr = waddr + i;
+                mem[baddr] = data[BWIDTH*(i+1)-1-:BWIDTH];
+                $display("Current address: %h | data: %h", baddr, data[BWIDTH*(i+1)-1-:BWIDTH]);
+            end
             data_cnt++;
         end
 
@@ -119,131 +124,142 @@ class memory_class #(
 
     // Read a byte
     function int ReadB(logic [AWIDTH-1:0] addr);
-        logic [AWIDTH-1:0]  waddr; // word address
-        logic [WWIDTH-1:0]  w;
-
-        // Read the word containing the requested byte
-        waddr   = {addr[31:2], 2'b00};
-        if (!this.mem.exists(waddr)) begin
-            `uvm_error("MEMREAD", $sformatf("Cannot find word at address 0x%h", waddr));
+        // Search the byte in memory
+        if (this.mem.exists(addr)) begin
+            `uvm_error("MEMREAD", $sformatf("Cannot find byte at address 0x%h", addr));
             return 2;
         end
-        w  = mem[waddr];
 
-        // Extract the requested byte
-        w = w >> (BWIDTH * addr[1:0]);
-        w &= 'h0ff;
-        this.read_byte  = w[BWIDTH-1:0];
-
+        // Save the accessed byte
+        this.read_byte  = mem[addr];
         return 0;
     endfunction: ReadB
 
     // Read a halfword
     function int ReadHW(logic [AWIDTH-1:0] addr);
-        logic [AWIDTH-1:0]  waddr; // word address
-        logic [WWIDTH-1:0]  w;
+        logic [AWIDTH-1:0]  baddr; // word address
+        logic [HWWIDTH-1:0] hw;
+        int                 ret;
 
         // Check address alignment
         if (addr[0] != 1'b0) begin
-            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 16 bits", addr))
+            `uvm_error("MISALIGNED", $sformatf("Halfword address 0x%h is NOT aligned on 16 bits", addr))
             return 1; // exit
         end
 
-        // Read the word containing the requested byte
-        waddr   = {addr[31:2], 2'b00};
-        if (!this.mem.exists(waddr)) begin
-            `uvm_error("MEMREAD", $sformatf("Cannot find word at address 0x%h", waddr));
-            return 2;
+        // Read bytes from memory
+        for (int i = 0; i < (HWWIDTH>>3); i++) begin
+            baddr   = addr + i;
+
+            // Read current byte
+            ret     = ReadB(baddr);
+            if (ret != 0) begin
+                `uvm_error("MEM ACCESS", $sformatf("Unable to find halfword at %h", addr));
+                return ret;
+            end
+
+            // Save current byte
+            hw [BWIDTH*(i+1)-1-:BWIDTH] = this.read_byte;
         end
-        w  = mem[waddr];
 
-        // Extract the requested halfword
-        w = w >> (HWWIDTH * addr[1]);
-        w &= 'h0ffff;
-        this.read_halfword = w[HWWIDTH-1:0];
-
+        // Save the requested halfword
+        this.read_halfword  = hw;
         return 0;
     endfunction: ReadHW
 
     // Read a word
     function int ReadW(logic [AWIDTH-1:0] addr);
+        logic [AWIDTH-1:0]  baddr; // word address
+        logic [WWIDTH-1:0] w;
+        int                 ret;
+
         // Check address alignment
         if (addr[1:0] != 2'b00) begin
-            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 32 bits", addr))
-            return 1;
+            `uvm_error("MISALIGNED", $sformatf("Word address 0x%h is NOT aligned on 32 bits", addr))
+            return 1; // exit
         end
 
-        // Search word
-        if (!this.mem.exists(addr)) begin
-            `uvm_error("MEMREAD", $sformatf("Cannot find word at address 0x%h", addr));
-            return 2;
+        // Read bytes from memory
+        for (int i = 0; i < (WWIDTH>>3); i++) begin
+            baddr   = addr + i;
+
+            // Read current byte
+            ret     = ReadB(baddr);
+            if (ret != 0) begin
+                `uvm_error("MEM ACCESS", $sformatf("Unable to find word at %h", addr));
+                return ret;
+            end
+
+            // Save current byte
+            w [BWIDTH*(i+1)-1-:BWIDTH] = this.read_byte;
         end
 
-        // Save the accessed word
-        this.read_word = mem[addr];
-
-        // Return
+        // Save the requested word
+        this.read_word  = w;
         return 0;
     endfunction: ReadW
 
     // Read a doubleword
     function int ReadDW(logic [AWIDTH-1:0] addr);
-        logic [DWWIDTH-1:0] dw = 0;    // memory doubleword
-        logic [AWIDTH-1:0]  low_addr    = addr;
-        logic [AWIDTH-1:0]  high_addr   = addr | 'h04;
+        logic [AWIDTH-1:0]  baddr; // word address
+        logic [DWWIDTH-1:0] dw;
+        int                 ret;
 
         // Check address alignment
         if (addr[2:0] != 3'b000) begin
-            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 64 bits", addr))
+            `uvm_error("MISALIGNED", $sformatf("Doubleword address 0x%h is NOT aligned on 64 bits", addr))
             return 1; // exit
         end
 
-        // Read the lower word
-        if (!this.mem.exists(low_addr)) begin
-            `uvm_error("MEMREAD", $sformatf("Cannot find word at address 0x%h", low_addr));
-            return 2;
+        // Read bytes from memory
+        for (int i = 0; i < (DWWIDTH>>3); i++) begin
+            baddr   = addr + i;
+
+            // Read current byte
+            ret     = ReadB(baddr);
+            if (ret != 0) begin
+                `uvm_error("MEM ACCESS", $sformatf("Unable to find doubleword at %h", addr));
+                return ret;
+            end
+
+            // Save current byte
+            dw [BWIDTH*(i+1)-1-:BWIDTH] = this.read_byte;
         end
-        dw[WWIDTH-1:0]  = mem[low_addr];
 
-        // Read the upper word
-        if (!this.mem.exists(high_addr)) begin
-            `uvm_error("MEMREAD", $sformatf("Cannot find word at address 0x%h", high_addr));
-            return 2;
-        end
-        dw[DWWIDTH-1:WWIDTH] = mem[high_addr];
-
-        // Save the accessed doubleword
-        this.read_doubleword    = dw;
-
-        // Return
+        // Save the requested word
+        this.read_doubleword  = dw;
         return 0;
     endfunction: ReadDW
 
     // Read a line
     function int ReadLine(logic [AWIDTH-1:0] addr);
-        logic [LWIDTH-1:0]  line;
-        logic [AWIDTH-1:0]  waddr;
+        logic [AWIDTH-1:0]  baddr; // word address
+        logic [LWIDTH-1:0]  l;
+        int                 ret;
 
         // Check address alignment
         if (addr[5:0] != 9'b000000) begin
-            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 32 bits", addr))
-            return 1;
+            `uvm_error("MISALIGNED", $sformatf("Line address 0x%h is NOT aligned on 512 bits", addr))
+            return 1; // exit
         end
 
-        // Access the requested line
-        for (int i = 0; i < LWIDTH/WWIDTH; i++) begin
-            waddr = addr + (i << 2);
-            if (!this.mem.exists(waddr)) begin
-                `uvm_error("MEMREAD", $sformatf("Cannot find word at address 0x%h", waddr));
-                return 2;
+        // Read bytes from memory
+        for (int i = 0; i < (LWIDTH>>3); i++) begin
+            baddr   = addr + i;
+
+            // Read current byte
+            ret     = ReadB(baddr);
+            if (ret != 0) begin
+                `uvm_error("MEM ACCESS", $sformatf("Unable to find line at %h", addr));
+                return ret;
             end
-            line[WWIDTH*i +: WWIDTH]    = mem[waddr];
+
+            // Save current byte
+            l [BWIDTH*(i+1)-1-:BWIDTH] = this.read_byte;
         end
 
-        // Save the accessed line
-        this.read_line  = line;
-
-        // Return
+        // Save the requested word
+        this.read_line  = l;
         return 0;
     endfunction: ReadLine
 
@@ -254,100 +270,85 @@ class memory_class #(
     // 1 - address misaligned
     // 2 - access fault
 
-    // Write word
-    function int WriteW(logic [AWIDTH-1:0] addr, logic [WWIDTH-1:0] data);
-        // Check address alignment
-        if (addr[1:0] != 2'b00) begin
-            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 32 bits", addr))
-            return 1; // exit
-        end
-
-        // Store the word
-        mem[addr] = data;
-
-        // Return
-        return 0;
-    endfunction: WriteW
-
     // Write a byte
-    function int WriteB(logic [AWIDTH-1:0] addr, logic [BWIDTH-1:0] data);
-        logic [AWIDTH-1:0]  waddr; // word address
-        logic [WWIDTH-1:0]  w = 'h0;
-
-        // Read the word containing the byte
-        waddr = {addr[AWIDTH-1:2], 2'b00};
-        if (this.mem.exists(waddr)) begin
-            if (this.ReadW(waddr)) return 2;
-            w = this.read_word;
-        end
-
-        // Replace the requested byte and store the word
-        w[(addr[1:0] << 3) + BWIDTH - 1 -: BWIDTH] = data;
-        if (this.WriteW(waddr, w)) return 2;
-
-        // Return
-        return 0;
+    function void WriteB(logic [AWIDTH-1:0] addr, logic [BWIDTH-1:0] data);
+        // Replace the requested byte in memory
+        mem[addr]   = data;
     endfunction: WriteB
     
     // Write a halfword
     function int WriteHW(logic [AWIDTH-1:0] addr, logic [HWWIDTH-1:0] data);
-        logic [AWIDTH-1:0]  waddr; // word address
-        logic [WWIDTH-1:0]  w = 'h0;
+        logic [AWIDTH-1:0]  baddr; // word address
+        int                 ret;
 
         // Check address alignment
         if (addr[0] != 1'b0) begin
-            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 16 bits", addr))
+            `uvm_error("MISALIGNED", $sformatf("Halfword address 0x%h is NOT aligned on 16 bits", addr))
             return 1; // exit
         end
 
-        // Read the word containing the halfword
-        waddr = {addr[AWIDTH-1:2], 2'b00};
-        if (this.mem.exists(waddr)) begin
-            if (this.ReadW(waddr)) return 2;
-            w = this.read_word;
+        // Store the bytes
+        for (int i = 0; i < (HWWIDTH>>3); i++) begin
+            baddr   = addr + i;
+            WriteB(baddr, data);
         end
-
-        // Replace the requested byte and store the word
-        w[(addr[1] << 4) + HWWIDTH - 1 -: HWWIDTH] = data;
-        if (this.WriteW(waddr, w)) return 2;
-
-        // Return
         return 0;
     endfunction: WriteHW
 
-    // Write doubleword
-    function int WriteDW(logic [AWIDTH-1:0] addr, logic [DWWIDTH-1:0] data);
+    // Write word
+    function int WriteW(logic [AWIDTH-1:0] addr, logic [WWIDTH-1:0] data);
+        logic [AWIDTH-1:0]  baddr; // word address
+        int                 ret;
+
         // Check address alignment
-        if (addr[2:0] != 3'b000) begin
-            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 64 bits", addr))
+        if (addr[1:0] != 2'b00) begin
+            `uvm_error("MISALIGNED", $sformatf("Word address 0x%h is NOT aligned on 32 bits", addr))
             return 1; // exit
         end
 
-        // Store the doubleword
-        mem[addr]           = data[WWIDTH-1:0];
-        mem[addr | 'h04]    = data[DWWIDTH-1:WWIDTH];
+        // Store the bytes
+        for (int i = 0; i < (WWIDTH>>3); i++) begin
+            baddr   = addr + i;
+            WriteB(baddr, data);
+        end
+        return 0;
+    endfunction: WriteW
 
-        // Return
+    // Write doubleword
+    function int WriteDW(logic [AWIDTH-1:0] addr, logic [DWWIDTH-1:0] data);
+        logic [AWIDTH-1:0]  baddr; // word address
+        int                 ret;
+
+        // Check address alignment
+        if (addr[2:0] != 3'b000) begin
+            `uvm_error("MISALIGNED", $sformatf("Doubleword address 0x%h is NOT aligned on 64 bits", addr))
+            return 1; // exit
+        end
+
+        // Store the bytes
+        for (int i = 0; i < (DWWIDTH>>3); i++) begin
+            baddr   = addr + i;
+            WriteB(baddr, data);
+        end
         return 0;
     endfunction: WriteDW
 
     // Store entire line
     function int WriteLine(logic [AWIDTH-1:0] addr, logic [LWIDTH-1:0] data);
-        logic [AWIDTH-1:0]  waddr;
-        
-        // Ceck address alignment
+        logic [AWIDTH-1:0]  baddr; // word address
+        int                 ret;
+
+        // Check address alignment
         if (addr[5:0] != 9'b000000) begin
-            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 512 bits", addr))
-            return 1;
+            `uvm_error("MISALIGNED", $sformatf("Line address 0x%h is NOT aligned on 512 bits", addr))
+            return 1; // exit
         end
 
-        // Store the line
-        for (int i = 0; i < LWIDTH/WWIDTH; i++) begin
-            waddr   = addr + (i << 2);
-            mem[waddr]  = data[WWIDTH*(i+1)-1 -: WWIDTH];
+        // Store the bytes
+        for (int i = 0; i < (LWIDTH>>3); i++) begin
+            baddr   = addr + i;
+            WriteB(baddr, data);
         end
-
-        // Return
         return 0;
     endfunction: WriteLine
 
@@ -356,24 +357,33 @@ class memory_class #(
 
     // Dump memory content to file
     function bit PrintMem(string out_path = this.memory_file_path);
-        logic [AWIDTH-1:0]  waddr;
+        logic [AWIDTH-1:0]  baddr, waddr;
+        logic [WWIDTH-1:0]  w;
 
         // Open the output file
         OpenMemFile("w", out_path);
 
-        // Print the memory content
-        if (!mem.first(waddr)) begin
+        // Check if the memory is empty
+        if (!mem.first(baddr)) begin
             `uvm_error("MEMWRITE", "Memory is empty");
             return 1;
         end
+
+        // Iterate over the memory
+        w       = 'x;
         do begin
-            $fdisplay(this.fd, "%016h %08h", waddr, mem[waddr]);
-        end while (mem.next(waddr));
+            w[BWIDTH*(baddr[1:0]+1)-1-:BWIDTH] = mem[baddr];
+            // $display("cnt: %0d | buff: %h | baddr: %h | data: %h", baddr[1:0], w, baddr, mem[baddr]);
+            // Print the word and reset the word buffer
+            if (baddr[1:0] == 2'b11) begin
+                waddr = {baddr[AWIDTH:2], 2'b00};
+                $fdisplay(this.fd, "%016h %08h", waddr, w);
+                w = 'x;
+            end
+        end while (mem.next(baddr));
 
         // Close the file
         CloseMemFile();
-
-        // Return
         return 0;
     endfunction: PrintMem
 endclass
