@@ -147,7 +147,7 @@ module memory_bare_emu #(
                 MEM_ACC_ST: begin: store_data
                     case (data_req_i.ls_type)
                         LS_BYTE, LS_BYTE_U: begin
-                            d_ret = d_mem.WriteB(data_req_i.addr, data_req_i.value[7:0]);
+                            d_mem.WriteB(data_req_i.addr, data_req_i.value[7:0]);
                         end
                         LS_HALFWORD, LS_HALFWORD_U: begin
                             d_ret = d_mem.WriteHW(data_req_i.addr, data_req_i.value[15:0]);

@@ -92,7 +92,6 @@ class memory_class #(
     function int LoadMem(string file = this.memory_file_path);
         logic [AWIDTH-1:0]  waddr, baddr;
         logic [WWIDTH-1:0]  data;
-        int                 data_cnt = 0;
 
         // Open the memory file
         OpenMemFile("r", file);
@@ -103,16 +102,16 @@ class memory_class #(
             // Store the read bytes
             for (int i = 0; i<(WWIDTH>>3); i++) begin
                 baddr = waddr + i;
-                mem[baddr] = data[BWIDTH*(i+1)-1-:BWIDTH];
-                $display("Current address: %h | data: %h", baddr, data[BWIDTH*(i+1)-1-:BWIDTH]);
+                this.mem[baddr] = data[BWIDTH*(i+1)-1-:BWIDTH];
             end
-            data_cnt++;
         end
 
         // Close the file
         CloseMemFile();
 
-        return data_cnt;
+        // Return the number of loaded bytes
+        `uvm_info("MEMLOAD", $sformatf("Loaded %0d bytes (%0d words)", this.mem.num(), this.mem.num() >> 2), UVM_HIGH);
+        return this.mem.num();
     endfunction: LoadMem
 
     // READ FUNCTIONS
@@ -125,13 +124,13 @@ class memory_class #(
     // Read a byte
     function int ReadB(logic [AWIDTH-1:0] addr);
         // Search the byte in memory
-        if (this.mem.exists(addr)) begin
+        if (!this.mem.exists(addr)) begin
             `uvm_error("MEMREAD", $sformatf("Cannot find byte at address 0x%h", addr));
             return 2;
         end
 
         // Save the accessed byte
-        this.read_byte  = mem[addr];
+        this.read_byte  = this.mem[addr];
         return 0;
     endfunction: ReadB
 
@@ -152,7 +151,7 @@ class memory_class #(
             baddr   = addr + i;
 
             // Read current byte
-            ret     = ReadB(baddr);
+            ret     = this.ReadB(baddr);
             if (ret != 0) begin
                 `uvm_error("MEM ACCESS", $sformatf("Unable to find halfword at %h", addr));
                 return ret;
@@ -184,7 +183,7 @@ class memory_class #(
             baddr   = addr + i;
 
             // Read current byte
-            ret     = ReadB(baddr);
+            ret     = this.ReadB(baddr);
             if (ret != 0) begin
                 `uvm_error("MEM ACCESS", $sformatf("Unable to find word at %h", addr));
                 return ret;
@@ -216,7 +215,7 @@ class memory_class #(
             baddr   = addr + i;
 
             // Read current byte
-            ret     = ReadB(baddr);
+            ret     = this.ReadB(baddr);
             if (ret != 0) begin
                 `uvm_error("MEM ACCESS", $sformatf("Unable to find doubleword at %h", addr));
                 return ret;
@@ -248,7 +247,7 @@ class memory_class #(
             baddr   = addr + i;
 
             // Read current byte
-            ret     = ReadB(baddr);
+            ret     = this.ReadB(baddr);
             if (ret != 0) begin
                 `uvm_error("MEM ACCESS", $sformatf("Unable to find line at %h", addr));
                 return ret;
@@ -273,7 +272,7 @@ class memory_class #(
     // Write a byte
     function void WriteB(logic [AWIDTH-1:0] addr, logic [BWIDTH-1:0] data);
         // Replace the requested byte in memory
-        mem[addr]   = data;
+        this.mem[addr]   = data;
     endfunction: WriteB
     
     // Write a halfword
@@ -290,7 +289,7 @@ class memory_class #(
         // Store the bytes
         for (int i = 0; i < (HWWIDTH>>3); i++) begin
             baddr   = addr + i;
-            WriteB(baddr, data);
+            WriteB(baddr, data[BWIDTH*(i+1)-1-:BWIDTH]);
         end
         return 0;
     endfunction: WriteHW
@@ -309,7 +308,7 @@ class memory_class #(
         // Store the bytes
         for (int i = 0; i < (WWIDTH>>3); i++) begin
             baddr   = addr + i;
-            WriteB(baddr, data);
+            WriteB(baddr, data[BWIDTH*(i+1)-1-:BWIDTH]);
         end
         return 0;
     endfunction: WriteW
@@ -328,7 +327,7 @@ class memory_class #(
         // Store the bytes
         for (int i = 0; i < (DWWIDTH>>3); i++) begin
             baddr   = addr + i;
-            WriteB(baddr, data);
+            WriteB(baddr, data[BWIDTH*(i+1)-1-:BWIDTH]);
         end
         return 0;
     endfunction: WriteDW
@@ -347,7 +346,7 @@ class memory_class #(
         // Store the bytes
         for (int i = 0; i < (LWIDTH>>3); i++) begin
             baddr   = addr + i;
-            WriteB(baddr, data);
+            WriteB(baddr, data[BWIDTH*(i+1)-1-:BWIDTH]);
         end
         return 0;
     endfunction: WriteLine
@@ -364,7 +363,7 @@ class memory_class #(
         OpenMemFile("w", out_path);
 
         // Check if the memory is empty
-        if (!mem.first(baddr)) begin
+        if (!this.mem.first(baddr)) begin
             `uvm_error("MEMWRITE", "Memory is empty");
             return 1;
         end
@@ -372,15 +371,15 @@ class memory_class #(
         // Iterate over the memory
         w       = 'x;
         do begin
-            w[BWIDTH*(baddr[1:0]+1)-1-:BWIDTH] = mem[baddr];
-            // $display("cnt: %0d | buff: %h | baddr: %h | data: %h", baddr[1:0], w, baddr, mem[baddr]);
+            w[BWIDTH*(baddr[1:0]+1)-1-:BWIDTH] = this.mem[baddr];
+            // $display("cnt: %0d | buff: %h | baddr: %h | data: %h", baddr[1:0], w, baddr, this.mem[baddr]);
             // Print the word and reset the word buffer
             if (baddr[1:0] == 2'b11) begin
                 waddr = {baddr[AWIDTH:2], 2'b00};
                 $fdisplay(this.fd, "%016h %08h", waddr, w);
                 w = 'x;
             end
-        end while (mem.next(baddr));
+        end while (this.mem.next(baddr));
 
         // Close the file
         CloseMemFile();
