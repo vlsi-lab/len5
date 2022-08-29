@@ -4,7 +4,7 @@
 # ----- INFO ----- #
 ####################
 
-# Compile LEN5 source files and optionally simulated the requested file.
+# Compile LEN5 source files and optionally simulate the requested file.
 
 #############################
 # ----- CONFIGURATION ----- #
@@ -15,9 +15,7 @@
 
 # Paths
 LEN5_ROOT_DIR="$(realpath $(dirname $0)/..)"
-SIM_DIR="$LEN5_ROOT_DIR/private/build"
-LOG_FILE="$SIM_DIR/len5-compile.log"
-TB_VLOG_OPT_FILE="$LEN5_ROOT_DIR/config/tb-list"
+BUILD_DIR="$LEN5_ROOT_DIR/build"
 
 # Command line arguments
 PRINT_CMD_LINE=0
@@ -36,14 +34,13 @@ RSYNC_OPT="--relative -rtl --del"
 
 # Compilation options
 COMPILE_ONLY=0
-COMPILE_OPT_FILE=$SIM_DIR/compile.f
+COMPILE_OPT_FILE=$HW_BUILD_DIR/compile.f
 CUSTOM_SRC=0
-BUILD_TARGET=source-files
-VLIB_PATH=$SIM_DIR/work
+BUILD_TARGET=hw
 
 # Simulation options
 TOP_MODULE_FILE=$LEN5_ROOT_DIR/tb/tb_bare.sv
-SIM_MACRO="$SIM_DIR/sim.do"
+SIM_MACRO="$HW_BUILD_DIR/sim.do"
 SIM_WAVE_ZOOM=1000 # ns
 SIM_OPT="-sv_seed random" # default simulator options
 POST_SIM_SCRIPT=""
@@ -74,12 +71,13 @@ print_usage() {
     printf -- "-r STR:  compile [and simulate] on a remote server.\n"
     printf -- "-L:      force local execution (overrides '-r').\n"
     printf -- "-S STR:  set SSH options to 'STR' Default: '%s'.\n" "$SSH_OPT"
+    printf -- "-d:      clean build subdirectories (shortcut for '-cb clean').\n"
+    printf -- "-D:      clean build directory (shortcut for '-cb clean-all').\n"
     printf -- "\n"
     printf -- "Compilation:\n"
     printf -- "-c:      don't start simulation (compile only).\n"
     printf -- "-b TGT:  build target TGT. Default: '%s'.\n" $BUILD_TARGET
     printf -- "-t:      shortcut for '-b tb' (also compile testbench files).\n"
-    printf -- "-d:      clean build directory (shortcut for '-cb clean').\n"
     printf -- "-n:      compile dry run (pass '-n' to make).\n"
     printf -- "-f OPTS: add OPTS to 'vlog' command-line arguments.\n"
     printf -- "-w LIB:  use custom library path LIB.\n"
@@ -95,6 +93,7 @@ print_usage() {
 
 # Log message
 function log() {
+    [ ! -f $LOG_FILE ] && return
     if [ $# -eq 0 ]; then
         printf -- "\n"
     else
@@ -160,7 +159,7 @@ function clean_up() {
 
 # Parse command line options
 # --------------------------
-while getopts ':hls:g:rLS:cb:tdnf:w:im:W:N:xop:' opt; do
+while getopts ':hls:g:rLS:dDcb:tnf:w:im:W:N:xop:' opt; do
     case $opt in
         h) # Print usage message
             print_usage
@@ -169,13 +168,12 @@ while getopts ':hls:g:rLS:cb:tdnf:w:im:W:N:xop:' opt; do
         l) # print command line arguments
             PRINT_CMD_LINE=1
             ;;
-        s) # Change simulation orking directory
-            SIM_DIR="$OPTARG"
+        s) # Change simulation working directory
+            BUILD_DIR="$OPTARG"
             ;;
         g) # auto-generate script
             RUN_SCRIPT="$OPTARG"
             rm -f $RUN_SCRIPT
-            touch $RUN_SCRIPT
             ;;
         r) # compile and run on remote server
             REMOTE_EXEC=1
@@ -186,18 +184,22 @@ while getopts ':hls:g:rLS:cb:tdnf:w:im:W:N:xop:' opt; do
         S) # Set rsync options
             SSH_OPT="$OPTARG"
             ;;
+        d) # Clean build subdirectories
+            BUILD_TARGET=clean
+            COMPILE_ONLY=1
+            ;;
+        D) # Clean build directory
+            BUILD_TARGET=clean-all
+            COMPILE_ONLY=1
+            ;;
         c) # Only compile the source files
             COMPILE_ONLY=1
             ;;
         b) # Select build target
             BUILD_TARGET=$OPTARG
             ;;
-        t) # shortcut for '-b tb' (also compile testbench files)
-            BUILD_TARGET="tb"
-            ;;
-        d) # Clean build directory
-            BUILD_TARGET=clean
-            COMPILE_ONLY=1
+        t) # shortcut for '-b all' (also compile testbench files)
+            BUILD_TARGET="all"
             ;;
         n) # compile dry run (pass '-n' to make)
             MAKE_OPT="$MAKE_OPT -n"
@@ -234,6 +236,12 @@ while getopts ':hls:g:rLS:cb:tdnf:w:im:W:N:xop:' opt; do
 done
 shift $((OPTIND-1))
 
+# Setup paths
+HW_BUILD_DIR="$BUILD_DIR/hw"
+LOG_FILE="$BUILD_DIR/len5.log"
+[ -z ${VLIB_PATH+x} ] && VLIB_PATH=$HW_BUILD_DIR/work
+
+
 ####################################
 # ----- COMPILE AND SIMULATE ----- #
 ####################################
@@ -242,7 +250,10 @@ shift $((OPTIND-1))
 # --------------
 
 # Initialize simulation directory
-mkdir -p $SIM_DIR
+mkdir -p $BUILD_DIR
+if [ -z ${RUN_SCRIPT+x} ]; then
+    > ${RUN_SCRIPT}
+fi
 
 # Initialize compilation log
 > $LOG_FILE
@@ -328,8 +339,7 @@ SIM_ARGS="$@"
 # Create simulation directory
 cd $LEN5_ROOT_DIR
 to_run_script "cd $LEN5_ROOT_DIR"
-mkdir -p "$SIM_DIR"
-to_run_script "mkdir -p $(realpath --relative-to=$LEN5_ROOT_DIR $SIM_DIR)"
+to_run_script "mkdir -p $(realpath --relative-to=$LEN5_ROOT_DIR $BUILD_DIR)"
 
 # Launch initialization script
 log "Initializing QuestaSim..."
@@ -342,7 +352,7 @@ to_run_script "source $INIT_SCRIPT"
 
 # Get a list of additional source files
 if [ $CUSTOM_SRC -ne 0 ]; then
-    REL_PATH=$(realpath --relative-to=$SIM_DIR $INPUT_DIR)
+    REL_PATH=$(realpath --relative-to=$BUILD_DIR $INPUT_DIR)
     SV_PKG_LIST=$(grep --include=\*.sv -rlE "^package \w+;" $INPUT_DIR | sed -e "s|$INPUT_DIR|$REL_PATH/|")
     SV_SRC_LIST=$(find $INPUT_DIR -type f -not -path '*/\.*' -not -name "*_pkg.sv" -and -name "*.sv" -or -name "*.v" | sed -e "s|$INPUT_DIR|$REL_PATH/|")
 
@@ -360,15 +370,15 @@ fi
 export VLOG_ARGS=$VLOG_ARGS
 to_run_script "export VLOG_ARGS=\"$VLOG_ARGS\""
 export VLIB=$VLIB_PATH
-to_run_script "export VLIB=\"$VLIB\""
-export BUILD_DIR=$SIM_DIR
-to_run_script "export BUILD_DIR=\"$BUILD_DIR\""
+to_run_script "export VLIB=$VLIB"
+export BUILD_DIR=$BUILD_DIR
+to_run_script "export BUILD_DIR=$BUILD_DIR"
 
 # Launch make
 log "Compiling source files..."
-run_and_log make $MAKE_OPT -C $LEN5_ROOT_DIR/scripts $BUILD_TARGET
+run_and_log make $MAKE_OPT $BUILD_TARGET
 [ $? -ne 0 ] && err "!!! ERROR while executing 'make'"
-to_run_script "make $MAKE_OPT -C $LEN5_ROOT_DIR/scripts $BUILD_TARGET"
+to_run_script "make $MAKE_OPT $BUILD_TARGET"
 
 # Exit if only compilation was requested
 log "COMPILATION SUCCESSFULLY COMPLETED!"
@@ -398,13 +408,13 @@ else
 fi
 [ $VSIM_DISABLE_OPT -ne 0 ] && SIM_OPT="-voptargs=+acc $SIM_OPT"
 if [ ! "$MEM_FILE" = "" ]; then
-    MEM_FILE=$(realpath --relative-to=$SIM_DIR $MEM_FILE)
+    MEM_FILE=$(realpath --relative-to=$BUILD_DIR $MEM_FILE)
     SIM_OPT="$SIM_OPT +MEM_FILE=$MEM_FILE"
 fi
 SIM_OPT="$SIM_OPT +N=$NUM_CYCLES"
 SIM_OPT="$SIM_OPT $SIM_ARGS"
 if [ ! "$WAVE_FILE" = "" ]; then
-    WAVE_FILE=$(realpath --relative-to=$SIM_DIR $WAVE_FILE)
+    WAVE_FILE=$(realpath --relative-to=$BUILD_DIR $WAVE_FILE)
     SIM_OPT="$SIM_OPT -do $WAVE_FILE"
 fi
 echo "$HEADER_MSG" > $SIM_MACRO
@@ -419,13 +429,13 @@ if [ $VSIM_GUI -eq 0 ]; then
 fi
 
 # Prepare relative path
-VLIB_PATH=$(realpath --relative-to $SIM_DIR $VLIB_PATH)
-SIM_MACRO=$(realpath --relative-to $SIM_DIR $SIM_MACRO)
+VLIB_PATH=$(realpath --relative-to $BUILD_DIR $VLIB_PATH)
+SIM_MACRO=$(realpath --relative-to $BUILD_DIR $SIM_MACRO)
 
 # Launch the simulation
 log "- starting simulation..."
-to_run_script "cd $SIM_DIR"
-cd $SIM_DIR
+to_run_script "cd $BUILD_DIR"
+cd $BUILD_DIR
 run_and_log vsim -work $VLIB_PATH $SIM_OPT -do $SIM_MACRO ${TOP_MODULE}
 if [ $? -ne 0 ]; then 
     err "!!! ERROR while simulating the design"

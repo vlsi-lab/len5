@@ -12,8 +12,8 @@ SHELL			:= /bin/bash
 # Paths
 ROOT 			:= $(realpath .)
 BUILD_DIR 		?= $(ROOT)/build
-HW_BUILD_DIR	?= $(BUILD_DIR)/hw
-SW_BUILD_DIR    ?= $(BUILD_DIR)/sw
+HW_BUILD_DIR	:= $(BUILD_DIR)/hw
+SW_BUILD_DIR    := $(BUILD_DIR)/sw
 VLIB 			?= $(HW_BUILD_DIR)/len5
 
 # LEN5 test files
@@ -60,12 +60,17 @@ SW_DIR			:= $(ROOT)/sw
 # ----- BUILD RULES ----- #
 ###########################
 
-# Files
-# -----
-
+# Aliases
+# -------
 .PHONY: all
-all: tb test-files
+all: hw sw
+.PHONY: hw
+hw: tb
+.PHONY: sw
+sw: test-files
 
+# Hardware
+# --------
 # Packages
 .PHONY: packages
 packages: $(HW_BUILD_DIR)/pkg_list.f
@@ -84,7 +89,7 @@ $(HW_BUILD_DIR)/src_list.f: $(MODULES_SRCS) | $(HW_BUILD_DIR)/pkg_list.f
 
 # Testbench
 .PHONY: tb
-tb: $(HW_BUILD_DIR)/tb_list.f $(TEST_MEM)
+tb: $(HW_BUILD_DIR)/tb_list.f
 $(HW_BUILD_DIR)/tb_list.f: $(TB_SRCS) | $(HW_BUILD_DIR)/src_list.f
 	@echo "## Compiling LEN5 testbench files..."
 	@printf '%s\n' $? > $@
@@ -97,16 +102,16 @@ custom-src: $(HW_BUILD_DIR)/$(CUSTOM_SRC_LIST) | $(HW_BUILD_DIR)/pkg_list.f
 	$(VLOG) $(MODULE_OPT) -F $<
 
 # QuestaSim library
-# -----------------
 $(VLIB):
 	@echo "## Creating library '$@'..."
 	mkdir -p $(@D)
 	vlib $(VLIB)
 
-# Test files
-# ----------
+# Software
+# --------
+# Test programs
 .PHONY: test-files
-test-files:
+test-files: liblen5
 	@echo "## Compiling LEN5 test files"
 	$(MAKE) -C $(TEST_DIR) all
 .PHONY: $(TESTS)
@@ -124,7 +129,6 @@ $(TESTS):
 # 	$(AS) $(ASFLAGS) $(CINC) -c $< -o $@
 
 # Libraries
-# ---------
 # Write dummy library (redefines _write from Newlib)
 .PHONY: liblen5
 liblen5: 
@@ -135,8 +139,8 @@ liblen5:
 $(BUILD_DIR) $(HW_BUILD_DIR):
 	mkdir -p $@
 	
-# Clean rule
-# ----------
+# Clean rules
+# -----------
 .PHONY: clean
 clean:
 	if [ -d $(VLIB) ]; then vdel -lib $(VLIB) -all; fi

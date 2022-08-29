@@ -7,11 +7,12 @@
 # ---------
 # Paths
 ROOT 			:= ..
-BUILD_DIR		?= $(ROOT)/build/sw/tests
+BUILD_DIR		?= $(ROOT)/build/
+SW_BUILD_DIR	:= $(BUILD_DIR)/sw/tests
 TEST_DIR 		:= .
 TEST_SRCS		:= $(shell find $(TEST_DIR)/src/ -name '*.c' -or -name '*.s')
-TEST_OBJS		:= $(patsubst $(TEST_DIR)/src/%.c,$(BUILD_DIR)/obj/%.o,$(TEST_SRCS))
-TEST_BINS		:= $(patsubst $(TEST_DIR)/obj/%.o,$(BUILD_DIR)/bin/%,$(TEST_OBJS))
+TEST_OBJS		:= $(patsubst $(TEST_DIR)/src/%.c,$(SW_BUILD_DIR)/obj/%.o,$(TEST_SRCS))
+TEST_BINS		:= $(patsubst $(TEST_DIR)/obj/%.o,$(SW_BUILD_DIR)/bin/%,$(TEST_OBJS))
 TESTS			:= $(addprefix tests/,$(basename $(notdir $(TEST_SRCS))))
 
 # LEN5 software libraries
@@ -33,7 +34,7 @@ CFLAGS			?= 	-march=$(ISA_STRING) \
 					-Wl,-T,$(LD_SCRIPT)
 LDFLAGS			?= -llen5
 CINC			?= -I$(SW_DIR)/include
-CLIB			?= -L$(BUILD_DIR)/../lib
+CLIB			?= -L$(SW_BUILD_DIR)/../lib
 AS 				:= $(CROSS_COMPILE)as
 ASFLAGS			:= $(CFLAGS)
 AR 				:= $(CROSS_COMPILE)ar
@@ -51,19 +52,19 @@ OBJCOPY			:= $(CROSS_COMPILE)objcopy
 all: $(TESTS)
 
 .PHONY: $(TESTS)
-$(TESTS): tests/%: $(BUILD_DIR)/mem/%.mem $(BUILD_DIR)/objdump/%.objdump
+$(TESTS): tests/%: $(SW_BUILD_DIR)/mem/%.mem $(SW_BUILD_DIR)/objdump/%.objdump
 
 # Implicit rules
-.PRECIOUS: $(BUILD_DIR)/objdump/%.objdump $(BUILD_DIR)/bin/%
-$(BUILD_DIR)/mem/%.mem: $(BUILD_DIR)/bin/% | $(BUILD_DIR)/mem
+.PRECIOUS: $(SW_BUILD_DIR)/objdump/%.objdump $(SW_BUILD_DIR)/bin/%
+$(SW_BUILD_DIR)/mem/%.mem: $(SW_BUILD_DIR)/bin/% | $(SW_BUILD_DIR)/mem
 	$(OBJCOPY) -O binary $< $@
-$(BUILD_DIR)/objdump/%.objdump: $(BUILD_DIR)/bin/% | $(BUILD_DIR)/objdump
+$(SW_BUILD_DIR)/objdump/%.objdump: $(SW_BUILD_DIR)/bin/% | $(SW_BUILD_DIR)/objdump
 	$(OBJDUMP) -D $< > $@
-$(BUILD_DIR)/bin/%: $(BUILD_DIR)/obj/%.o $(LEN5_LIB) | $(BUILD_DIR)/bin
+$(SW_BUILD_DIR)/bin/%: $(SW_BUILD_DIR)/obj/%.o $(LEN5_LIB) | $(SW_BUILD_DIR)/bin
 	$(CC) $(CFLAGS) $(CINC) $(CLIB) $(SW_DIR)/src/crt0.S $< -o $@ $(LDFLAGS)
-$(BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.c | $(BUILD_DIR)/obj
+$(SW_BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.c | $(SW_BUILD_DIR)/obj
 	$(CC) $(CFLAGS) $(CINC) -c $< -o $@
-$(BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.s | $(BUILD_DIR)/obj
+$(SW_BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.s | $(SW_BUILD_DIR)/obj
 	$(CC) $(CFLAGS) $(CINC) -c $< -o $@
 
 # LEN5 library
@@ -72,14 +73,14 @@ $(LEN5_LIB):
 
 # Directories
 # -----------
-$(BUILD_DIR)/obj $(BUILD_DIR)/bin $(BUILD_DIR)/objdump $(BUILD_DIR)/mem:
+$(SW_BUILD_DIR)/obj $(SW_BUILD_DIR)/bin $(SW_BUILD_DIR)/objdump $(SW_BUILD_DIR)/mem:
 	mkdir -p $@
 
 # Clean rules
 # -----------
 .PHONY: clean
 clean:
-	$(RM) -r $(BUILD_DIR)/obj $(BUILD_DIR)/bin $(BUILD_DIR)/objdump $(BUILD_DIR)/mem
+	$(RM) -r $(SW_BUILD_DIR)
 
 .test:
 	@echo $(TEST_SRCS)
