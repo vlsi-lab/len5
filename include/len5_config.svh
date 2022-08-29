@@ -26,7 +26,7 @@
 // -------------------
 
 // Boot program counter
-`define BOOT_PC 'h0
+`define BOOT_PC 'h800f8
 
 // BPU g-share predictor global history length
 `define BPU_HLEN 4

@@ -1,25 +1,32 @@
-GNU ld (GNU Binutils) 2.39
-  Supported emulations:
-   elf64lriscv
-   elf32lriscv
-   elf64briscv
-   elf32briscv
-using internal linker script:
-==================================================
-/* Script for -z combreloc */
+/* Script for LEN5, edited from the default one (for -z combreloc) */
 /* Copyright (C) 2014-2022 Free Software Foundation, Inc.
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
    notice and this notice are preserved.  */
+
+/* Default output name */
+OUTPUT(len5.out)
 OUTPUT_FORMAT("elf64-littleriscv", "elf64-littleriscv",
 	      "elf64-littleriscv")
 OUTPUT_ARCH(riscv)
+/* >>> CUSTOM START <<< */
+/* Simulation memory map */
+MEMORY
+{
+  ROM (rx)  : ORIGIN = 0x0, LENGTH = 128M
+  RAM (!rx) : ORIGIN = 0x8000000, LENGTH = 512M
+}
+/* >>>  CUSTOM END  <<< */
 ENTRY(_start)
 SEARCH_DIR("/opt/riscv/riscv64-unknown-elf/lib");
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
   PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x10000)); . = SEGMENT_START("text-segment", 0x10000) + SIZEOF_HEADERS;
+  /* >>> CUSTOM START <<< */
+  /* Define stack entry point (used by custom crt0.s) */
+  PROVIDE(__stack_top = ORIGIN(RAM) + LENGTH(RAM));
+  /* >>>  CUSTOM END  <<< */
   .interp         : { *(.interp) }
   .note.gnu.build-id  : { *(.note.gnu.build-id) }
   .hash           : { *(.hash) }
@@ -60,6 +67,10 @@ SECTIONS
     KEEP (*(SORT_NONE(.init)))
   }
   .plt            : { *(.plt) *(.iplt) }
+  
+  /* Set the starting point for .text */
+  . = 0x80000;
+  
   .text           :
   {
     *(.text.unlikely .text.*_unlikely .text.unlikely.*)
@@ -254,6 +265,3 @@ SECTIONS
   .gnu.attributes 0 : { KEEP (*(.gnu.attributes)) }
   /DISCARD/ : { *(.note.GNU-stack) *(.gnu_debuglink) *(.gnu.lto_*) }
 }
-
-
-==================================================

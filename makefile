@@ -1,8 +1,7 @@
 ####################
 # ----- INFO ----- #
 ####################
-
-# Compile base LEN5 source files
+# Compile LEN5 RTL source files
 
 # VARIABLES
 # ---------
@@ -11,16 +10,16 @@
 SHELL			:= /bin/bash
 
 # Paths
-ROOT 			:= ..
-BUILD_DIR 		?= $(ROOT)/private/build
-VLIB 			?= $(BUILD_DIR)/len5
+ROOT 			:= $(realpath .)
+BUILD_DIR 		?= $(ROOT)/build
+HW_BUILD_DIR	?= $(BUILD_DIR)/hw
+SW_BUILD_DIR    ?= $(BUILD_DIR)/sw
+VLIB 			?= $(HW_BUILD_DIR)/len5
 
 # LEN5 test files
-TEST_DIR		:= $(ROOT)/test-files
+TEST_DIR 		:= $(ROOT)/test-files
 TEST_SRCS		:= $(shell find $(TEST_DIR)/src/ -name '*.c' -or -name '*.s')
-TESTS			:= $(basename $(notdir $(TEST_SRCS)))
-TEST_MEM		:= $(addprefix $(TEST_DIR)/mem/,$(TESTS:%=%.txt))
-AWK_FORMAT 		:= $(ROOT)/scripts/awk-mem-format.txt
+TESTS			:= $(addprefix tests/,$(basename $(notdir $(TEST_SRCS))))
 
 # LEN5 HDL files
 PKG_SRCS 		:= 	$(ROOT)/include/len5_pkg.sv \
@@ -54,15 +53,8 @@ endif
 VLOG			:= vlog -work $(VLIB) $(GLOBAL_OPT) $(UVM_OPT)
 VLOG 			+= $(VLOG_ARGS) # from environment
 
-# RISC-V C compiler
-CROSS_COMPILE 	?= riscv64-unknown-elf-
-ISA_STRING		:= rv64im
-ABI_STRING		:= lp64
-CC 				:= $(CROSS_COMPILE)gcc
-CFLAGS			:= -march=$(ISA_STRING) -mabi=$(ABI_STRING)
-AS 				:= $(CROSS_COMPILE)as
-ASFLAGS			:= $(CFLAGS)
-OBJDUMP			:= $(CROSS_COMPILE)objdump
+# LEN5 software directory
+SW_DIR			:= $(ROOT)/sw
 
 ###########################
 # ----- BUILD RULES ----- #
@@ -76,48 +68,33 @@ all: tb test-files
 
 # Packages
 .PHONY: packages
-packages: $(BUILD_DIR)/pkg_list.f
-$(BUILD_DIR)/pkg_list.f: $(PKG_SRCS) | $(VLIB)
+packages: $(HW_BUILD_DIR)/pkg_list.f
+$(HW_BUILD_DIR)/pkg_list.f: $(PKG_SRCS) | $(VLIB)
 	@echo "## Compiling LEN5 packages..."
 	@printf '%s\n' $? > $@
 	$(VLOG) $(PKG_OPT) -F $@
 
 # Source files
 .PHONY: source-files
-source-files: $(BUILD_DIR)/src_list.f
-$(BUILD_DIR)/src_list.f: $(MODULES_SRCS) | $(BUILD_DIR)/pkg_list.f
+source-files: $(HW_BUILD_DIR)/src_list.f
+$(HW_BUILD_DIR)/src_list.f: $(MODULES_SRCS) | $(HW_BUILD_DIR)/pkg_list.f
 	@echo "## Compiling LEN5 source files..."
 	@printf '%s\n' $? > $@
 	$(VLOG) $(MODULE_OPT) -F $@
 
 # Testbench
 .PHONY: tb
-tb: $(BUILD_DIR)/tb_list.f $(TEST_MEM)
-$(BUILD_DIR)/tb_list.f: $(TB_SRCS) | $(BUILD_DIR)/src_list.f
+tb: $(HW_BUILD_DIR)/tb_list.f $(TEST_MEM)
+$(HW_BUILD_DIR)/tb_list.f: $(TB_SRCS) | $(HW_BUILD_DIR)/src_list.f
 	@echo "## Compiling LEN5 testbench files..."
 	@printf '%s\n' $? > $@
 	$(VLOG) $(MODULE_OPT) -F $@
 
 # Custom files
 .PHONY: custom-src
-custom-src: $(BUILD_DIR)/$(CUSTOM_SRC_LIST) | $(BUILD_DIR)/pkg_list.f
+custom-src: $(HW_BUILD_DIR)/$(CUSTOM_SRC_LIST) | $(HW_BUILD_DIR)/pkg_list.f
 	@echo "## Compiling custom source files..."
 	$(VLOG) $(MODULE_OPT) -F $<
-
-# Test memory files
-.PHONY: test-files
-test-files: $(TEST_MEM)
-	@echo "## Compiling test files..."
-
-.PRECIOUS: $(TEST_DIR)/dump/%.dump $(TEST_DIR)/obj/%.o
-$(TEST_DIR)/mem/%.txt: $(TEST_DIR)/dump/%.dump | $(TEST_DIR)/mem
-	awk '/[ ]+[0-9a-f]+:\t[0-9a-f]{8}/' $< | awk -f $(AWK_FORMAT) > $@
-$(TEST_DIR)/dump/%.dump: $(TEST_DIR)/obj/%.o | $(TEST_DIR)/dump
-	$(OBJDUMP) -M numeric -M no-aliases -d -j .text $< > $@
-$(TEST_DIR)/obj/%.o: $(TEST_DIR)/src/%.c | $(TEST_DIR)/obj
-	$(CC) $(CFLAGS) -c $< -o $@
-$(TEST_DIR)/obj/%.o: $(TEST_DIR)/src/%.s | $(TEST_DIR)/obj
-	$(AS) $(ASFLAGS) -c $< -o $@
 
 # QuestaSim library
 # -----------------
@@ -126,9 +103,36 @@ $(VLIB):
 	mkdir -p $(@D)
 	vlib $(VLIB)
 
+# Test files
+# ----------
+.PHONY: test-files
+test-files:
+	@echo "## Compiling LEN5 test files"
+	$(MAKE) -C $(TEST_DIR) all
+.PHONY: $(TESTS)
+$(TESTS):
+	$(MAKE) -C $(TEST_DIR) $@
+
+# .PRECIOUS: $(TEST_DIR)/objdump/%.objdump $(TEST_DIR)/obj/%.o
+# $(TEST_DIR)/mem/%.txt: $(TEST_DIR)/objdump/%.objdump | $(TEST_DIR)/mem
+# 	awk '/[ ]+[0-9a-f]+:\t[0-9a-f]{8}/' $< | awk -f $(AWK_FORMAT) > $@
+# $(TEST_DIR)/objdump/%.objdump: $(TEST_DIR)/obj/%.o | $(TEST_DIR)/objdump
+# 	$(OBJDUMP) -M numeric -M no-aliases -d -j .text $< > $@
+# $(TEST_DIR)/obj/%.o: $(TEST_DIR)/src/%.c | $(TEST_DIR)/obj
+# 	$(CC) $(CFLAGS) $(CINC) -c $< -o $@
+# $(TEST_DIR)/obj/%.o: $(TEST_DIR)/src/%.s | $(TEST_DIR)/obj
+# 	$(AS) $(ASFLAGS) $(CINC) -c $< -o $@
+
+# Libraries
+# ---------
+# Write dummy library (redefines _write from Newlib)
+.PHONY: liblen5
+liblen5: 
+	$(MAKE) -C $(SW_DIR) liblen5
+
 # Directories
 # -----------
-$(TEST_DIR)/obj $(TEST_DIR)/dump $(TEST_DIR)/mem:
+$(BUILD_DIR) $(HW_BUILD_DIR):
 	mkdir -p $@
 	
 # Clean rule
@@ -136,8 +140,9 @@ $(TEST_DIR)/obj $(TEST_DIR)/dump $(TEST_DIR)/mem:
 .PHONY: clean
 clean:
 	if [ -d $(VLIB) ]; then vdel -lib $(VLIB) -all; fi
-	$(RM) -r $(TEST_DIR)/obj $(TEST_DIR)/dump $(TEST_DIR)/mem
-	$(RM) $(BUILD_DIR)/*.f
+	$(RM) $(HW_BUILD_DIR)/*.f
+	$(MAKE) -C $(SW_DIR) clean
+	$(MAKE) -C $(TEST_DIR) clean
 
 .PHONY: clean-all
 clean-all: | clean

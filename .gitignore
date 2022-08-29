@@ -16,10 +16,17 @@
 
 ## private folders ##
 private/
+build/
+
+# Library folders
+sw/lib
+sw/obj
 
 # Test objects and test files
 test-files/*
 !test-files/src
+!test-files/include
+!test-files/makefile
 
 ## Visual Studio Code settings
 .vscode/
