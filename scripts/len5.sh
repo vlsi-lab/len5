@@ -369,8 +369,8 @@ fi
 # Export variables for make
 export VLOG_ARGS=$VLOG_ARGS
 to_run_script "export VLOG_ARGS=\"$VLOG_ARGS\""
-export VLIB=$VLIB_PATH
-to_run_script "export VLIB=$VLIB"
+export VWORK=$VLIB_PATH
+to_run_script "export VWORK=$VLIB_PATH"
 export BUILD_DIR=$BUILD_DIR
 to_run_script "export BUILD_DIR=$BUILD_DIR"
 

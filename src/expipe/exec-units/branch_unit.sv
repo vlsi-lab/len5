@@ -47,13 +47,13 @@ module branch_unit
 );
 
     // Data from/to the execution unit
-    logic [XLEN-1:0]        rs_bu_rs1;
-    logic [XLEN-1:0]        rs_bu_rs2;
-    logic [XLEN-1:0]        rs_bu_imm;
-    logic [XLEN-1:0]        rs_bu_curr_pc;
-    logic [XLEN-1:0]        rs_bu_pred_target;
-    logic                   rs_bu_pred_taken;
-    logic [BU_CTL_LEN-1:0]  rs_bu_branch_type;
+    logic [XLEN-1:0]    rs_bu_rs1;
+    logic [XLEN-1:0]    rs_bu_rs2;
+    logic [XLEN-1:0]    rs_bu_imm;
+    logic [XLEN-1:0]    rs_bu_curr_pc;
+    logic [XLEN-1:0]    rs_bu_pred_target;
+    logic               rs_bu_pred_taken;
+    branch_type_t       rs_bu_branch_type;
 
     // Beanch logic <--> Reservation Station
     logic                           bu_rs_ready;

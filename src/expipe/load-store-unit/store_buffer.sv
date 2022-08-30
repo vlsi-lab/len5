@@ -20,6 +20,7 @@
 import uvm_pkg::*;
 import len5_pkg::XLEN;
 import len5_pkg::except_code_t;
+import len5_pkg::STBUFF_TAG_W;
 import expipe_pkg::*;
 import memory_pkg::*;
 
@@ -66,9 +67,9 @@ module store_buffer #(
 
     /* Load buffer (for load-after-store dependencies) */
     output  logic                       lb_latest_valid_o,      // the latest store tag is valid
-    output  logic [$clog2(DEPTH)]       lb_latest_tag_o,        // tag of the latest store
+    output  logic [STBUFF_TAG_W-1:0]    lb_latest_tag_o,        // tag of the latest store
     output  logic                       lb_oldest_completed_o,  // the oldest store has completed 
-    output  logic [$clog2(DEPTH)]       lb_oldest_tag_o,        // tag of the oldest active store
+    output  logic [STBUFF_TAG_W-1:0]    lb_oldest_tag_o,        // tag of the oldest active store
 
     /* Memory system */
     input   logic                       mem_valid_i,

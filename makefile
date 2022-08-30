@@ -14,12 +14,7 @@ ROOT 			:= $(realpath .)
 BUILD_DIR 		?= $(ROOT)/build
 HW_BUILD_DIR	:= $(BUILD_DIR)/hw
 SW_BUILD_DIR    := $(BUILD_DIR)/sw
-VLIB 			?= $(HW_BUILD_DIR)/len5
-
-# LEN5 test files
-TEST_DIR 		:= $(ROOT)/test-files
-TEST_SRCS		:= $(shell find $(TEST_DIR)/src/ -name '*.c' -or -name '*.s')
-TESTS			:= $(addprefix tests/,$(basename $(notdir $(TEST_SRCS))))
+VWORK 			?= $(HW_BUILD_DIR)/len5
 
 # LEN5 HDL files
 PKG_SRCS 		:= 	$(ROOT)/include/len5_pkg.sv \
@@ -28,12 +23,17 @@ PKG_SRCS 		:= 	$(ROOT)/include/len5_pkg.sv \
 					$(ROOT)/include/expipe_pkg.sv \
 					$(ROOT)/include/memory_pkg.sv
 # NOTE: currently compile non virtual memory source only
-MODULES_SRCS 	:= 	$(shell find $(ROOT)/src/ -type f -name '*.sv' -not -path "$(ROOT)/src/**-vm/*" -not -path "$(ROOT)/src/**_vm.sv")
+MODULES_SRCS 	:= 	$(shell find $(ROOT)/src/ -type f -name '*.sv' -not -path "$(ROOT)/src/**-vm/*" -not -path "$(ROOT)/src/**_vm.sv" -not -path "$(ROOT)/src/memory/*")
 TB_SRCS 		:= 	$(ROOT)/tb/tb_with_l2cemu.sv \
 					$(ROOT)/tb/tb_bare.sv \
 					$(ROOT)/tb/memory/cache_L2_system_emulator.sv \
 					$(ROOT)/tb/memory/memory_if.sv \
 					$(ROOT)/tb/memory/memory_bare_emu.sv
+
+# LEN5 test files
+TEST_DIR 		:= $(ROOT)/test-files
+TEST_SRCS		:= $(shell find $(TEST_DIR)/src/ -name '*.c' -or -name '*.s')
+TESTS			:= $(addprefix tests/,$(basename $(notdir $(TEST_SRCS))))
 
 # vlog options
 GLOBAL_OPT		:= 	-svinputport=compat \
@@ -47,10 +47,7 @@ MODULE_OPT		:=
 TB_OPT			:=
 
 # SystemVerilog compiler
-ifeq (, $(shell which vlog))
-$(error 'vlog' is not in PATH. Did you run the initialization script?)
-endif
-VLOG			:= vlog -work $(VLIB) $(GLOBAL_OPT) $(UVM_OPT)
+VLOG			:= vlog -pedanticerrors -work $(VWORK) $(GLOBAL_OPT) $(UVM_OPT)
 VLOG 			+= $(VLOG_ARGS) # from environment
 
 # LEN5 software directory
@@ -72,15 +69,15 @@ sw: test-files
 # Hardware
 # --------
 # Packages
-.PHONY: packages
+.PHONY: packages .check-vlog
 packages: $(HW_BUILD_DIR)/pkg_list.f
-$(HW_BUILD_DIR)/pkg_list.f: $(PKG_SRCS) | $(VLIB)
+$(HW_BUILD_DIR)/pkg_list.f: $(PKG_SRCS) | $(VWORK)
 	@echo "## Compiling LEN5 packages..."
 	@printf '%s\n' $? > $@
 	$(VLOG) $(PKG_OPT) -F $@
 
 # Source files
-.PHONY: source-files
+.PHONY: source-files .check-vlog
 source-files: $(HW_BUILD_DIR)/src_list.f
 $(HW_BUILD_DIR)/src_list.f: $(MODULES_SRCS) | $(HW_BUILD_DIR)/pkg_list.f
 	@echo "## Compiling LEN5 source files..."
@@ -88,7 +85,7 @@ $(HW_BUILD_DIR)/src_list.f: $(MODULES_SRCS) | $(HW_BUILD_DIR)/pkg_list.f
 	$(VLOG) $(MODULE_OPT) -F $@
 
 # Testbench
-.PHONY: tb
+.PHONY: tb .check-vlog
 tb: $(HW_BUILD_DIR)/tb_list.f
 $(HW_BUILD_DIR)/tb_list.f: $(TB_SRCS) | $(HW_BUILD_DIR)/src_list.f
 	@echo "## Compiling LEN5 testbench files..."
@@ -96,16 +93,23 @@ $(HW_BUILD_DIR)/tb_list.f: $(TB_SRCS) | $(HW_BUILD_DIR)/src_list.f
 	$(VLOG) $(MODULE_OPT) -F $@
 
 # Custom files
-.PHONY: custom-src
+.PHONY: custom-src .check-vlog
 custom-src: $(HW_BUILD_DIR)/$(CUSTOM_SRC_LIST) | $(HW_BUILD_DIR)/pkg_list.f
 	@echo "## Compiling custom source files..."
 	$(VLOG) $(MODULE_OPT) -F $<
 
+# Check if vlog is available
+.PHONY: .check-vlog
+.check-vlog:
+	@if [ ! `which vlog` ]; then \
+	printf -- "### ERROR: 'vlog' is not in PATH. Did you run the initialization script?\n" >&2; \
+	exit 1; fi
+
 # QuestaSim library
-$(VLIB):
+$(VWORK): .check-vlog
 	@echo "## Creating library '$@'..."
 	mkdir -p $(@D)
-	vlib $(VLIB)
+	vlib $(VWORK)
 
 # Software
 # --------
@@ -116,23 +120,13 @@ test-files: liblen5
 	$(MAKE) -C $(TEST_DIR) all
 .PHONY: $(TESTS)
 $(TESTS):
+	@echo "## Compiling test '$@'..."
 	$(MAKE) -C $(TEST_DIR) $@
 
-# .PRECIOUS: $(TEST_DIR)/objdump/%.objdump $(TEST_DIR)/obj/%.o
-# $(TEST_DIR)/mem/%.txt: $(TEST_DIR)/objdump/%.objdump | $(TEST_DIR)/mem
-# 	awk '/[ ]+[0-9a-f]+:\t[0-9a-f]{8}/' $< | awk -f $(AWK_FORMAT) > $@
-# $(TEST_DIR)/objdump/%.objdump: $(TEST_DIR)/obj/%.o | $(TEST_DIR)/objdump
-# 	$(OBJDUMP) -M numeric -M no-aliases -d -j .text $< > $@
-# $(TEST_DIR)/obj/%.o: $(TEST_DIR)/src/%.c | $(TEST_DIR)/obj
-# 	$(CC) $(CFLAGS) $(CINC) -c $< -o $@
-# $(TEST_DIR)/obj/%.o: $(TEST_DIR)/src/%.s | $(TEST_DIR)/obj
-# 	$(AS) $(ASFLAGS) $(CINC) -c $< -o $@
-
-# Libraries
-# Write dummy library (redefines _write from Newlib)
+# LEN5 library with crt0, IRQ table, _write
 .PHONY: liblen5
 liblen5: 
-	$(MAKE) -C $(SW_DIR) liblen5
+	$(MAKE) -C $(SW_DIR)
 
 # Directories
 # -----------
@@ -143,13 +137,13 @@ $(BUILD_DIR) $(HW_BUILD_DIR):
 # -----------
 .PHONY: clean
 clean:
-	if [ -d $(VLIB) ]; then vdel -lib $(VLIB) -all; fi
+	if [ -d $(VWORK) ]; then vdel -lib $(VWORK) -all; fi
 	$(RM) $(HW_BUILD_DIR)/*.f
 	$(MAKE) -C $(SW_DIR) clean
 	$(MAKE) -C $(TEST_DIR) clean
 
 .PHONY: clean-all
-clean-all: | clean
+clean-all:
 	$(RM) -r $(BUILD_DIR)
 
 .test:

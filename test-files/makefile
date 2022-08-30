@@ -7,38 +7,33 @@
 # ---------
 # Paths
 ROOT 			:= ..
-BUILD_DIR		?= $(ROOT)/build/
-SW_BUILD_DIR	:= $(BUILD_DIR)/sw/tests
+BUILD_DIR		?= $(ROOT)/build
+SW_BUILD_DIR	:= $(BUILD_DIR)/sw
+TEST_BUILD_DIR	:= $(SW_BUILD_DIR)/tests
 TEST_DIR 		:= .
 TEST_SRCS		:= $(shell find $(TEST_DIR)/src/ -name '*.c' -or -name '*.s')
-TEST_OBJS		:= $(patsubst $(TEST_DIR)/src/%.c,$(SW_BUILD_DIR)/obj/%.o,$(TEST_SRCS))
-TEST_BINS		:= $(patsubst $(TEST_DIR)/obj/%.o,$(SW_BUILD_DIR)/bin/%,$(TEST_OBJS))
 TESTS			:= $(addprefix tests/,$(basename $(notdir $(TEST_SRCS))))
-
-# LEN5 software libraries
-SW_DIR			?= $(ROOT)/sw
-LIB_DIR 		?= $(ROOT)/build/sw/lib
-LEN5_LIB 		?= $(LIB_DIR)/liblen5.a
-LD_SCRIPT		?= $(SW_DIR)/len5-sim.ld
+SW_DIR 			:= $(ROOT)/sw
+LINK_SCRIPT		:= $(SW_BUILD_DIR)/len5-sim.ld
 
 # RISC-V C compiler
 CROSS_COMPILE 	?= riscv64-unknown-elf-
 ISA_STRING		?= rv64i
 ABI_STRING		?= lp64
 CC 				:= $(CROSS_COMPILE)gcc
-CFLAGS			?= 	-march=$(ISA_STRING) \
-					-mabi=$(ABI_STRING) \
-					-ffreestanding \
-					-Wl,--gc-sections \
-					-nostartfiles \
-					-Wl,-T,$(LD_SCRIPT)
-LDFLAGS			?= -llen5
-CINC			?= -I$(SW_DIR)/include
-CLIB			?= -L$(SW_BUILD_DIR)/../lib
+CFLAGS			:= -march=$(ISA_STRING) \
+				   -mabi=$(ABI_STRING) \
+				   -ffreestanding
+CUSTOM_SRCS		:= $(SW_DIR)/src/crt0.S \
+				   $(SW_DIR)/src/irq.S \
+				   $(SW_DIR)/src/write.c
+LDFLAGS			:= -T $(LINK_SCRIPT) \
+				   -nostartfiles \
+				   -static \
+				   -Wl,--gc-sections
+CINC			:= -I$(SW_BUILD_DIR)/include
 AS 				:= $(CROSS_COMPILE)as
 ASFLAGS			:= $(CFLAGS)
-AR 				:= $(CROSS_COMPILE)ar
-ARFLAGS			:= rcu
 OBJDUMP			:= $(CROSS_COMPILE)objdump
 OBJCOPY			:= $(CROSS_COMPILE)objcopy
 
@@ -50,30 +45,31 @@ OBJCOPY			:= $(CROSS_COMPILE)objcopy
 # --------------
 .PHONY: all
 all: $(TESTS)
-
 .PHONY: $(TESTS)
-$(TESTS): tests/%: $(SW_BUILD_DIR)/mem/%.mem $(SW_BUILD_DIR)/objdump/%.objdump
+$(TESTS): tests/%: $(TEST_BUILD_DIR)/mem/%.mem $(TEST_BUILD_DIR)/dis/%.dis
 
 # Implicit rules
-.PRECIOUS: $(SW_BUILD_DIR)/objdump/%.objdump $(SW_BUILD_DIR)/bin/%
-$(SW_BUILD_DIR)/mem/%.mem: $(SW_BUILD_DIR)/bin/% | $(SW_BUILD_DIR)/mem
+.PRECIOUS: $(TEST_BUILD_DIR)/obj/%.o $(TEST_BUILD_DIR)/dis/%.dis $(TEST_BUILD_DIR)/bin/%
+$(TEST_BUILD_DIR)/mem/%.mem: $(TEST_BUILD_DIR)/bin/% | $(TEST_BUILD_DIR)/mem
 	$(OBJCOPY) -O binary $< $@
-$(SW_BUILD_DIR)/objdump/%.objdump: $(SW_BUILD_DIR)/bin/% | $(SW_BUILD_DIR)/objdump
+$(TEST_BUILD_DIR)/dis/%.dis: $(TEST_BUILD_DIR)/bin/% | $(TEST_BUILD_DIR)/dis
 	$(OBJDUMP) -D $< > $@
-$(SW_BUILD_DIR)/bin/%: $(SW_BUILD_DIR)/obj/%.o $(LEN5_LIB) | $(SW_BUILD_DIR)/bin
-	$(CC) $(CFLAGS) $(CINC) $(CLIB) $(SW_DIR)/src/crt0.S $< -o $@ $(LDFLAGS)
-$(SW_BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.c | $(SW_BUILD_DIR)/obj
+$(TEST_BUILD_DIR)/bin/%: $(TEST_BUILD_DIR)/obj/%.o liblen5 | $(TEST_BUILD_DIR)/bin
+	$(CC) $(CFLAGS) $(CINC) $(LDFLAGS) $(CUSTOM_SRCS) $< -o $@
+$(TEST_BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.c sw-support | $(TEST_BUILD_DIR)/obj
 	$(CC) $(CFLAGS) $(CINC) -c $< -o $@
-$(SW_BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.s | $(SW_BUILD_DIR)/obj
+$(TEST_BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.S sw-support | $(TEST_BUILD_DIR)/obj
+	$(CC) $(CFLAGS) $(CINC) -c $< -o $@
+$(TEST_BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.s sw-support | $(TEST_BUILD_DIR)/obj
 	$(CC) $(CFLAGS) $(CINC) -c $< -o $@
 
-# LEN5 library
-$(LEN5_LIB): 
-	$(MAKE) -C $(SW_DIR) liblen5
+# LEN5 library and software support files
+sw-support liblen5:
+	$(MAKE) -C $(SW_DIR) $@
 
 # Directories
 # -----------
-$(SW_BUILD_DIR)/obj $(SW_BUILD_DIR)/bin $(SW_BUILD_DIR)/objdump $(SW_BUILD_DIR)/mem:
+$(TEST_BUILD_DIR) $(TEST_BUILD_DIR)/obj $(TEST_BUILD_DIR)/bin $(TEST_BUILD_DIR)/dis $(TEST_BUILD_DIR)/mem:
 	mkdir -p $@
 
 # Clean rules

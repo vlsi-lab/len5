@@ -9,24 +9,34 @@ OUTPUT(len5.out)
 OUTPUT_FORMAT("elf64-littleriscv", "elf64-littleriscv",
 	      "elf64-littleriscv")
 OUTPUT_ARCH(riscv)
+ENTRY(_start)
 /* >>> CUSTOM START <<< */
-/* Simulation memory map */
+/* Simulation memory layout */
 MEMORY
 {
+  /* The testbench uses associative arrays, the memory is not allocated unless 
+  needed. */
   ROM (rx)  : ORIGIN = 0x0, LENGTH = 128M
   RAM (!rx) : ORIGIN = 0x8000000, LENGTH = 512M
 }
 /* >>>  CUSTOM END  <<< */
-ENTRY(_start)
 SEARCH_DIR("/opt/riscv/riscv64-unknown-elf/lib");
 SECTIONS
 {
+  /* >>> CUSTOM START <<< */
+  /* Define UART base address */
+  PROVIDE(__uart_base = 0x100);
+  /* Boot program counter (fixed entry point). The initial part of the ROM is
+     used to store interrupt and exception vectors. */
+  PROVIDE(__boot_pc = 0x1000);
+  /* Define stack and heap size (used by custom crt0.s) */
+  PROVIDE(__stack_size = 8M);
+  PROVIDE(__heap_size = 256M);
+  /* >>>  CUSTOM END  <<< */
   /* Read-only sections, merged into text segment: */
   PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x10000)); . = SEGMENT_START("text-segment", 0x10000) + SIZEOF_HEADERS;
-  /* >>> CUSTOM START <<< */
-  /* Define stack entry point (used by custom crt0.s) */
-  PROVIDE(__stack_top = ORIGIN(RAM) + LENGTH(RAM));
-  /* >>>  CUSTOM END  <<< */
+
+  /* DYNAMIC LINKING START */
   .interp         : { *(.interp) }
   .note.gnu.build-id  : { *(.note.gnu.build-id) }
   .hash           : { *(.hash) }
@@ -62,15 +72,30 @@ SECTIONS
       *(.rela.iplt)
       PROVIDE_HIDDEN (__rela_iplt_end = .);
     }
-  .init           :
+  /* DYNAMIC LINKING END */
+  
+  /* >>> CUSTOM START <<< */
+  /* Interrupts and exceptions vector table (64 instructions) */
+  .irq_vector_table (ORIGIN(ROM)):
+  {
+    PROVIDE (__vector_start = .);
+    KEEP (*(.irq_vector_table));
+  } > ROM
+  /* Initialization (at fixed address) */
+  .init (__boot_pc):
+  {
+    KEEP (*(SORT_NONE(.init)));
+  } > ROM
+  /* Original code below */
+  /* .init           :
   {
     KEEP (*(SORT_NONE(.init)))
-  }
+  } */  
+  /* >>>  CUSTOM END  <<< */
+
+  /* DYNAMIC LINKING START */
   .plt            : { *(.plt) *(.iplt) }
-  
-  /* Set the starting point for .text */
-  . = 0x80000;
-  
+  /* DYNAMIC LINKING END */
   .text           :
   {
     *(.text.unlikely .text.*_unlikely .text.unlikely.*)
@@ -216,6 +241,24 @@ SECTIONS
 		            MAX(__DATA_BEGIN__ + 0x800, __BSS_END__ - 0x800));
   _end = .; PROVIDE (end = .);
   . = DATA_SEGMENT_END (.);
+
+  /* >>> CUSTOM START <<< */
+  /* Heap */
+  .heap   :
+  {
+    PROVIDE (__heap_bottom = .);
+    . = __heap_size;
+    PROVIDE (__heap_top = .);
+  } > RAM
+  /* Stack (grows down) */
+  .stack  : ALIGN(16)
+  {
+    PROVIDE (__stack_bottom = .);
+    . = __stack_size;
+    PROVIDE (__stack_top = .);
+  } > RAM
+  /* >>>  CUSTOM END  <<< */
+
   /* Stabs debugging sections.  */
   .stab          0 : { *(.stab) }
   .stabstr       0 : { *(.stabstr) }

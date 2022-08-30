@@ -2,11 +2,10 @@
 
 void serial_write(char c)
 {
-    char *p = SERIAL_DATA_ADDR;
-    *p = c;
+    *((volatile char *)UART_WRITE_BUFFER) = c;
 }
 
-/* Redefine stup _write() from newlib */
+/* Redefine stub _write() from newlib */
 int _write(int handle, char *data, int size)
 {
     int count;

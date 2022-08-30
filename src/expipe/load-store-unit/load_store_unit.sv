@@ -72,9 +72,9 @@ module load_store_unit #(
 
     // Load buffer <--> store buffer
     logic                       sb_lb_latest_valid;
-    logic [$clog2(SB_DEPTH)]    sb_lb_latest_tag;
+    logic [STBUFF_TAG_W-1:0]    sb_lb_latest_tag;
     logic                       sb_lb_oldest_completed;
-    logic [$clog2(SB_DEPTH)]    sb_lb_oldest_tag;
+    logic [STBUFF_TAG_W-1:0]    sb_lb_oldest_tag;
 
     // Load/store buffer <--> address adder arbiter
     logic           lb_adderarb_valid, sb_adderarb_valid;

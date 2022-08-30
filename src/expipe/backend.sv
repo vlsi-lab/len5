@@ -189,7 +189,7 @@ module backend (
     csr_instr_t                 comm_csr_instr_type;
     logic [FUNCT3_LEN-1:0]      comm_csr_funct3;
     logic [CSR_ADDR_LEN-1:0]    comm_csr_addr;
-    logic [REG_IDX_LEN]         comm_csr_rs1_idx;
+    logic [REG_IDX_LEN-1:0]     comm_csr_rs1_idx;
     logic [XLEN-1:0]            comm_csr_rs1_value;
     except_code_t               comm_csr_except_code;
     logic [REG_IDX_LEN-1:0]     comm_csr_rd_idx;

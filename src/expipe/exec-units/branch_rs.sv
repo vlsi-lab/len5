@@ -67,7 +67,7 @@ module branch_rs
     output  logic [XLEN-1:0]        bu_curr_pc_o,
     output  logic [XLEN-1:0]        bu_pred_target_o,
     output  logic                   bu_pred_taken_o,
-    output  logic [BU_CTL_LEN-1:0]  bu_branch_type_o
+    output  branch_type_t           bu_branch_type_o
 );
     // INTERNAL SIGNALS
     // ----------------
