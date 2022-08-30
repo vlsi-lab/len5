@@ -29,6 +29,10 @@ TB_SRCS 		:= 	$(ROOT)/tb/tb_with_l2cemu.sv \
 					$(ROOT)/tb/memory/cache_L2_system_emulator.sv \
 					$(ROOT)/tb/memory/memory_if.sv \
 					$(ROOT)/tb/memory/memory_bare_emu.sv
+ifdef CUSTOM_SRC_DIR
+CUSTOM_PKGS		?= 	$(shell grep --include=\*.sv -rlE "^package \w+;" $(CUSTOM_SRC_DIR))
+CUSTOM_SRCS 	?=	$(shell find $(CUSTOM_SRC_DIR) -type f -name '*.sv')
+endif
 
 # LEN5 test files
 TEST_DIR 		:= $(ROOT)/test-files
@@ -69,34 +73,54 @@ sw: test-files
 # Hardware
 # --------
 # Packages
-.PHONY: packages .check-vlog
-packages: $(HW_BUILD_DIR)/pkg_list.f
-$(HW_BUILD_DIR)/pkg_list.f: $(PKG_SRCS) | $(VWORK)
-	@echo "## Compiling LEN5 packages..."
+.PHONY: packages
+packages: $(HW_BUILD_DIR)/.cache/.pkg_done
+$(HW_BUILD_DIR)/.cache/.pkg_done: $(HW_BUILD_DIR)/.cache/pkg_list.f | .check-vlog
+	@echo "## Compiling LEN5 files..."
+	$(VLOG) $(PKG_OPT) -F $<
+	touch $@
+$(HW_BUILD_DIR)/.cache/pkg_list.f: $(PKG_SRCS) | $(HW_BUILD_DIR)/.cache
+	@echo "## Assembling list of updated LEN5 packages..."
 	@printf '%s\n' $? > $@
-	$(VLOG) $(PKG_OPT) -F $@
 
-# Source files
-.PHONY: source-files .check-vlog
-source-files: $(HW_BUILD_DIR)/src_list.f
-$(HW_BUILD_DIR)/src_list.f: $(MODULES_SRCS) | $(HW_BUILD_DIR)/pkg_list.f
-	@echo "## Compiling LEN5 source files..."
+# Modules
+.PHONY: modules
+modules: $(HW_BUILD_DIR)/.cache/.mod_done
+$(HW_BUILD_DIR)/.cache/.mod_done : $(HW_BUILD_DIR)/.cache/src_list.f $(HW_BUILD_DIR)/.cache/.pkg_done | .check-vlog
+	@echo "## Compiling LEN5 modules..."
+	$(VLOG) $(MODULE_OPT) -F $<
+	touch $@
+$(HW_BUILD_DIR)/.cache/src_list.f: $(MODULES_SRCS) | $(HW_BUILD_DIR)/.cache
+	@echo "## Assembling list of updated LEN5 modules..."
 	@printf '%s\n' $? > $@
-	$(VLOG) $(MODULE_OPT) -F $@
 
 # Testbench
-.PHONY: tb .check-vlog
-tb: $(HW_BUILD_DIR)/tb_list.f
-$(HW_BUILD_DIR)/tb_list.f: $(TB_SRCS) | $(HW_BUILD_DIR)/src_list.f
-	@echo "## Compiling LEN5 testbench files..."
+.PHONY: tb
+tb: $(HW_BUILD_DIR)/.cache/.tb_done
+$(HW_BUILD_DIR)/.cache/.tb_done: $(HW_BUILD_DIR)/.cache/tb_list.f $(HW_BUILD_DIR)/.cache/.mod_done | .check-vlog
+	@echo "## Compiling LEN5 testbench..."
+	$(VLOG) $(MODULE_OPT) -F $<
+	touch $@
+$(HW_BUILD_DIR)/.cache/tb_list.f: $(TB_SRCS) | $(HW_BUILD_DIR)/.cache
+	@echo "## Assembling list of updated LEN5 testbench files..."
 	@printf '%s\n' $? > $@
-	$(VLOG) $(MODULE_OPT) -F $@
 
 # Custom files
-.PHONY: custom-src .check-vlog
-custom-src: $(HW_BUILD_DIR)/$(CUSTOM_SRC_LIST) | $(HW_BUILD_DIR)/pkg_list.f
-	@echo "## Compiling custom source files..."
+.PHONY: custom-src
+custom-src: $(HW_BUILD_DIR)/.cache/.custom_done 
+$(HW_BUILD_DIR)/.cache/.custom_done: $(HW_BUILD_DIR)/.cache/custom_list.f $(HW_BUILD_DIR)/.cache/.pkg_done | .check-vlog
+	@echo "## Compiling custom modules..."
 	$(VLOG) $(MODULE_OPT) -F $<
+	touch $@
+$(HW_BUILD_DIR)/.cache/custom_list.f: $(CUSTOM_PKGS) $(CUSTOM_SRCS) | $(HW_BUILD_DIR)/.cache
+	@echo "Assembling list of updated custom modules..."
+	@printf '%s\n' $? > $@
+
+# QuestaSim library
+$(VWORK): | .check-vlog
+	@echo "## Creating library '$@'..."
+	mkdir -p $(@D)
+	vlib $(VWORK)
 
 # Check if vlog is available
 .PHONY: .check-vlog
@@ -104,12 +128,6 @@ custom-src: $(HW_BUILD_DIR)/$(CUSTOM_SRC_LIST) | $(HW_BUILD_DIR)/pkg_list.f
 	@if [ ! `which vlog` ]; then \
 	printf -- "### ERROR: 'vlog' is not in PATH. Did you run the initialization script?\n" >&2; \
 	exit 1; fi
-
-# QuestaSim library
-$(VWORK): .check-vlog
-	@echo "## Creating library '$@'..."
-	mkdir -p $(@D)
-	vlib $(VWORK)
 
 # Software
 # --------
@@ -128,9 +146,14 @@ $(TESTS):
 liblen5: 
 	$(MAKE) -C $(SW_DIR)
 
+.PHONY: print-tests
+print-tests:
+	@printf -- "Available tests:\n"
+	@printf -- "> %s\n" $(TESTS:tests/%=%)
+
 # Directories
 # -----------
-$(BUILD_DIR) $(HW_BUILD_DIR):
+$(BUILD_DIR) $(HW_BUILD_DIR) $(HW_BUILD_DIR)/.cache:
 	mkdir -p $@
 	
 # Clean rules

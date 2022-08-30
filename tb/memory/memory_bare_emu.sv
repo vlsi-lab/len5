@@ -68,7 +68,7 @@ module memory_bare_emu #(
         #1;
         i_mem = new(mem_file_i);
         d_mem = new(mem_file_i);
-        if (i_mem.LoadMem() < 0) begin
+        if (i_mem.LoadMem() <= 0) begin
             `uvm_fatal("MEM EMU", "Unable to load instruction memory")
         end
 

@@ -71,6 +71,43 @@ class memory_class #(
         $fclose(this.fd);
     endfunction: CloseMemFile
 
+    // Load memory wrapper
+    function int LoadMem(string file = this.memory_file_path, logic [AWIDTH-1:0] offs = 0);
+        string  ext =  file.substr(file.len()-3, file.len()-1);
+        
+        // Choose the memory load method based on the file extension
+        if (!ext.compare("txt") || !ext.compare("hex")) begin
+            return this.LoadMemTxt(file);
+        end
+        return this.LoadMemBin(file, offs);
+    endfunction: LoadMem
+
+    // Load the memory content from a memory dump file (e.g., the output of 'objcopy -O binary')
+    local function int LoadMemBin(string file = this.memory_file_path, logic [AWIDTH-1:0] offs = 0);
+        int                 ret_code = 0;
+        logic [AWIDTH-1:0]  addr = offs;
+        logic [7:0]         frame_buff[512]; // read 512 bytes at a time
+
+        // Open the memory file as binary
+        this.OpenMemFile("rb", file);
+
+        // Store the memory bytes
+        do begin
+            // Read multiple bytes at a time to reduce overhead
+            ret_code = $fread(frame_buff, this.fd);
+            for (int i = 0; i < ret_code; i++) begin
+                this.mem[addr+i]    = frame_buff[i];
+            end
+            addr += ret_code;
+        end while (ret_code != 0);
+        
+        // Close the memory file
+        this.CloseMemFile();
+
+        // Return the number of loaded bytes
+        return this.mem.num();
+    endfunction: LoadMemBin
+
     // Scan one line and return address and data
     local function bit ScanMemLine(ref logic [AWIDTH-1:0] addr, ref logic [WWIDTH-1:0] data);
         int ret_code = 0;
@@ -88,8 +125,8 @@ class memory_class #(
         return 0;
     endfunction: ScanMemLine
 
-    // Load the memory file
-    function int LoadMem(string file = this.memory_file_path);
+    // Load the memory content from a text file ('address data' pairs)
+    local function int LoadMemTxt(string file = this.memory_file_path);
         logic [AWIDTH-1:0]  waddr, baddr;
         logic [WWIDTH-1:0]  data;
 
@@ -112,7 +149,7 @@ class memory_class #(
         // Return the number of loaded bytes
         `uvm_info("MEMLOAD", $sformatf("Loaded %0d bytes (%0d words)", this.mem.num(), this.mem.num() >> 2), UVM_HIGH);
         return this.mem.num();
-    endfunction: LoadMem
+    endfunction: LoadMemTxt
 
     // READ FUNCTIONS
     // --------------

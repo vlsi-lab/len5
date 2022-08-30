@@ -33,14 +33,12 @@ SSH_OPT="-p $REMOTE_PORT -i $SSH_KEY"
 RSYNC_OPT="--relative -rtl --del"
 
 # Compilation options
-COMPILE_ONLY=0
-COMPILE_OPT_FILE=$HW_BUILD_DIR/compile.f
+LAUNCH_SIM=0
 CUSTOM_SRC=0
-BUILD_TARGET=hw
+BUILD_TARGET=modules
 
 # Simulation options
 TOP_MODULE_FILE=$LEN5_ROOT_DIR/tb/tb_bare.sv
-SIM_MACRO="$HW_BUILD_DIR/sim.do"
 SIM_WAVE_ZOOM=1000 # ns
 SIM_OPT="-sv_seed random" # default simulator options
 POST_SIM_SCRIPT=""
@@ -66,24 +64,26 @@ print_usage() {
     printf -- "General:\n"
     printf -- "-h:      print this message and exit.\n"
     printf -- "-l:      print command line arguments and exit.\n"
-    printf -- "-s DIR:  use DIR as simulation working directory.\n"
+    printf -- "-B DIR:  use DIR as simulation working directory.\n"
     printf -- "-g FILE: auto-generate compile-and-run script FILE.\n"
     printf -- "-r STR:  compile [and simulate] on a remote server.\n"
     printf -- "-L:      force local execution (overrides '-r').\n"
-    printf -- "-S STR:  set SSH options to 'STR' Default: '%s'.\n" "$SSH_OPT"
+    printf -- "-R STR:  set SSH options to 'STR' Default: '%s'.\n" "$SSH_OPT"
     printf -- "-d:      clean build subdirectories (shortcut for '-cb clean').\n"
     printf -- "-D:      clean build directory (shortcut for '-cb clean-all').\n"
     printf -- "\n"
     printf -- "Compilation:\n"
-    printf -- "-c:      don't start simulation (compile only).\n"
     printf -- "-b TGT:  build target TGT. Default: '%s'.\n" $BUILD_TARGET
-    printf -- "-t:      shortcut for '-b tb' (also compile testbench files).\n"
+    printf -- "-a:      shortcut for '-b all' (also compile testbench and SW).\n"
+    printf -- "-t:      shortcut for '-b tb' (also compile testbench).\n"
     printf -- "-n:      compile dry run (pass '-n' to make).\n"
     printf -- "-f OPTS: add OPTS to 'vlog' command-line arguments.\n"
     printf -- "-w LIB:  use custom library path LIB.\n"
     printf -- "\n"
     printf -- "Simulation (ignored with '-c'):\n"
-    printf -- "-m FILE: append '+MEM_FILE=FILE' to vsim command line.\n"
+    printf -- "-s:      launch simulation after compilation.\n"
+    printf -- "-T:      list available tests (alias for '-b print-tests').\n"
+    printf -- "-m TEST: compile and simulate TEST (see -T).\n"
     printf -- "-W FILE: load waveforms from FILE.\n"
     printf -- "-N NUM:  simulate NUM cycles; infinite if 0. Default: %d.\n" $NUM_CYCLES
     printf -- "-x:      launch simulation with GUI (ignores '-o').\n"
@@ -159,7 +159,7 @@ function clean_up() {
 
 # Parse command line options
 # --------------------------
-while getopts ':hls:g:rLS:dDcb:tnf:w:im:W:N:xop:' opt; do
+while getopts ':hlB:g:rLR:dDb:atnf:w:isTm:W:N:xop:' opt; do
     case $opt in
         h) # Print usage message
             print_usage
@@ -168,7 +168,7 @@ while getopts ':hls:g:rLS:dDcb:tnf:w:im:W:N:xop:' opt; do
         l) # print command line arguments
             PRINT_CMD_LINE=1
             ;;
-        s) # Change simulation working directory
+        B) # Change simulation working directory
             BUILD_DIR="$OPTARG"
             ;;
         g) # auto-generate script
@@ -181,25 +181,23 @@ while getopts ':hls:g:rLS:dDcb:tnf:w:im:W:N:xop:' opt; do
         L) # force local execution
             FORCE_LOCAL_EXEC=1
             ;;
-        S) # Set rsync options
+        R) # Set rsync options
             SSH_OPT="$OPTARG"
             ;;
         d) # Clean build subdirectories
             BUILD_TARGET=clean
-            COMPILE_ONLY=1
             ;;
         D) # Clean build directory
             BUILD_TARGET=clean-all
-            COMPILE_ONLY=1
-            ;;
-        c) # Only compile the source files
-            COMPILE_ONLY=1
             ;;
         b) # Select build target
             BUILD_TARGET=$OPTARG
             ;;
-        t) # shortcut for '-b all' (also compile testbench files)
-            BUILD_TARGET="all"
+        a) # shortcut for '-b all' (also compile testbench and sw files)
+            BUILD_TARGET=all
+            ;;
+        t) # shortcut for '-b tb' (also compile testbench and sw files)
+            BUILD_TARGET=tb
             ;;
         n) # compile dry run (pass '-n' to make)
             MAKE_OPT="$MAKE_OPT -n"
@@ -210,8 +208,16 @@ while getopts ':hls:g:rLS:dDcb:tnf:w:im:W:N:xop:' opt; do
         w) # Use custom library
             VLIB_PATH=$OPTARG
             ;;
-        m) # append '+MEM_FILE=FILE' to vsim command line
-            MEM_FILE=$OPTARG
+        s) # Launch simulation
+            LAUNCH_SIM=1
+            ;;
+        T) # Print available tests
+            BUILD_TARGET=print-tests
+            ;;
+        m) # Compile and simulate the requested test
+            TEST_NAME=$OPTARG
+            BUILD_TARGET="tb tests/$TEST_NAME"
+            LAUNCH_SIM=1
             ;;
         W) # add simulation options
             WAVE_FILE="$OPTARG"
@@ -240,7 +246,7 @@ shift $((OPTIND-1))
 HW_BUILD_DIR="$BUILD_DIR/hw"
 LOG_FILE="$BUILD_DIR/len5.log"
 [ -z ${VLIB_PATH+x} ] && VLIB_PATH=$HW_BUILD_DIR/work
-
+SIM_MACRO="$HW_BUILD_DIR/sim.do"
 
 ####################################
 # ----- COMPILE AND SIMULATE ----- #
@@ -352,17 +358,9 @@ to_run_script "source $INIT_SCRIPT"
 
 # Get a list of additional source files
 if [ $CUSTOM_SRC -ne 0 ]; then
-    REL_PATH=$(realpath --relative-to=$BUILD_DIR $INPUT_DIR)
-    SV_PKG_LIST=$(grep --include=\*.sv -rlE "^package \w+;" $INPUT_DIR | sed -e "s|$INPUT_DIR|$REL_PATH/|")
-    SV_SRC_LIST=$(find $INPUT_DIR -type f -not -path '*/\.*' -not -name "*_pkg.sv" -and -name "*.sv" -or -name "*.v" | sed -e "s|$INPUT_DIR|$REL_PATH/|")
-
-    # Save file list to file and add compilation flag
-    > $COMPILE_OPT_FILE
-    [ ! "$SV_PKG_LIST" = "" ] && echo "$SV_PKG_LIST" >> $COMPILE_OPT_FILE
-    [ ! "$SV_SRC_LIST" = "" ] && echo "$SV_SRC_LIST" >> $COMPILE_OPT_FILE
-    
-    export CUSTOM_SRC_LIST=$(basename $COMPILE_OPT_FILE)
-    to_run_script "export CUSTOM_SRC_LIST=\"$(basename $COMPILE_OPT_FILE)\""
+    REL_PATH=$(realpath --relative-to=$LEN5_ROOT_DIR $INPUT_DIR)
+    export CUSTOM_SRC_DIR=$REL_PATH
+    to_run_script "export CUSTOM_SRC_DIR=$REL_PATH"
     BUILD_TARGET="$BUILD_TARGET custom-src"
 fi
 
@@ -383,7 +381,7 @@ to_run_script "make $MAKE_OPT $BUILD_TARGET"
 # Exit if only compilation was requested
 log "COMPILATION SUCCESSFULLY COMPLETED!"
 log
-if [ $COMPILE_ONLY -ne 0 ]; then
+if [ $LAUNCH_SIM -eq 0 ]; then
     clean_up
     exit 0
 fi
@@ -407,8 +405,9 @@ else
     SIM_OPT="-c $SIM_OPT"
 fi
 [ $VSIM_DISABLE_OPT -ne 0 ] && SIM_OPT="-voptargs=+acc $SIM_OPT"
-if [ ! "$MEM_FILE" = "" ]; then
-    MEM_FILE=$(realpath --relative-to=$BUILD_DIR $MEM_FILE)
+if [ ! -z ${TEST_NAME+x} ]; then
+    MEM_FILE=$BUILD_DIR/sw/tests/mem/$TEST_NAME.mem
+    [ -f $MEM_FILE ] || err "Cannot find '%s'" $MEM_FILE
     SIM_OPT="$SIM_OPT +MEM_FILE=$MEM_FILE"
 fi
 SIM_OPT="$SIM_OPT +N=$NUM_CYCLES"
@@ -429,13 +428,13 @@ if [ $VSIM_GUI -eq 0 ]; then
 fi
 
 # Prepare relative path
-VLIB_PATH=$(realpath --relative-to $BUILD_DIR $VLIB_PATH)
-SIM_MACRO=$(realpath --relative-to $BUILD_DIR $SIM_MACRO)
+VLIB_PATH=$(realpath --relative-to $HW_BUILD_DIR $VLIB_PATH)
+SIM_MACRO=$(realpath --relative-to $HW_BUILD_DIR $SIM_MACRO)
 
 # Launch the simulation
 log "- starting simulation..."
 to_run_script "cd $BUILD_DIR"
-cd $BUILD_DIR
+cd $HW_BUILD_DIR
 run_and_log vsim -work $VLIB_PATH $SIM_OPT -do $SIM_MACRO ${TOP_MODULE}
 if [ $? -ne 0 ]; then 
     err "!!! ERROR while simulating the design"

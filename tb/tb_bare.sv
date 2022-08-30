@@ -29,10 +29,10 @@ module tb_bare;
     // ----------------
 
     // Boot program counter
-    localparam  FETCH_BOOT_PC = 64'h0000000000010218;
+    localparam  FETCH_BOOT_PC = 64'h0000000000001000;
 
     // Serial monitor configuration
-    localparam  MON_MEM_ADDR = 64'h0000000000000010;
+    localparam  MON_MEM_ADDR = 64'h0000000000000100;
 
     // Memory emulator configuration
     localparam string MEM_DUMP_FILE = "mem_dump.txt";
@@ -51,8 +51,8 @@ module tb_bare;
     // INTERNAL SIGNALS
     // ----------------
 
-    // Input memory file
-    string      mem_file = "memory.txt";
+    // Input memory file (binary)
+    string      mem_file = "memory.mem";
 
     // Number of cycles to simulate
     longint unsigned num_cycles = 0;    // 0: no boundary
