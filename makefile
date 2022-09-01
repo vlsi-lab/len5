@@ -35,8 +35,9 @@ CUSTOM_SRCS 	?=	$(shell find $(CUSTOM_SRC_DIR) -type f -name '*.sv')
 endif
 
 # LEN5 test files
-TEST_DIR 		:= $(ROOT)/test-files
-TEST_SRCS		:= $(shell find $(TEST_DIR)/src/ -name '*.c' -or -name '*.s')
+SW_DIR			:= $(ROOT)/sw
+TEST_DIR 		:= $(SW_DIR)/test-programs
+TEST_SRCS		:= $(shell find $(TEST_DIR)/src -name '*.c' -or -name '*.s')
 TESTS			:= $(addprefix tests/,$(basename $(notdir $(TEST_SRCS))))
 
 # vlog options
@@ -53,9 +54,6 @@ TB_OPT			:=
 # SystemVerilog compiler
 VLOG			:= vlog -pedanticerrors -work $(VWORK) $(GLOBAL_OPT) $(UVM_OPT)
 VLOG 			+= $(VLOG_ARGS) # from environment
-
-# LEN5 software directory
-SW_DIR			:= $(ROOT)/sw
 
 ###########################
 # ----- BUILD RULES ----- #
@@ -133,18 +131,13 @@ $(VWORK): | .check-vlog
 # --------
 # Test programs
 .PHONY: test-files
-test-files: liblen5
+test-files:
 	@echo "## Compiling LEN5 test files"
-	$(MAKE) -C $(TEST_DIR) all
+	$(MAKE) -C $(SW_DIR) all
 .PHONY: $(TESTS)
 $(TESTS):
 	@echo "## Compiling test '$@'..."
-	$(MAKE) -C $(TEST_DIR) $@
-
-# LEN5 library with crt0, IRQ table, _write
-.PHONY: liblen5
-liblen5: 
-	$(MAKE) -C $(SW_DIR)
+	$(MAKE) -C $(SW_DIR) $@
 
 .PHONY: print-tests
 print-tests:
@@ -161,17 +154,21 @@ $(BUILD_DIR) $(HW_BUILD_DIR) $(HW_BUILD_DIR)/.cache:
 .PHONY: clean
 clean:
 	if [ -d $(VWORK) ]; then vdel -lib $(VWORK) -all; fi
-	$(RM) $(HW_BUILD_DIR)/*.f
+	$(RM) -r $(HW_BUILD_DIR)/*.f $(HW_BUILD_DIR)/.cache
 	$(MAKE) -C $(SW_DIR) clean
-	$(MAKE) -C $(TEST_DIR) clean
 
 .PHONY: clean-all
 clean-all:
 	$(RM) -r $(BUILD_DIR)
 
 .test:
+	@echo $(ROOT)
+	@echo $(TEST_DIR)
+.list:
 	@echo "Packages:"
 	@printf ' - %s\n' $(PKG_SRCS)
 	@echo
 	@echo "Source files:"
 	@printf ' - %s\n' $(MODULES_SRCS)
+	@echo "Test programs:"
+	@printf ' - %s\n' $(TEST_SRCS)
