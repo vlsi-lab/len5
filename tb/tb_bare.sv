@@ -29,7 +29,7 @@ module tb_bare;
     // ----------------
 
     // Boot program counter
-    localparam  FETCH_BOOT_PC = 64'h0000000000001000;
+    localparam  FETCH_BOOT_PC = 64'h0000000000010000;
 
     // Serial monitor configuration
     localparam  MON_MEM_ADDR = 64'h0000000000000100;

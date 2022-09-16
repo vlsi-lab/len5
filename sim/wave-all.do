@@ -2,48 +2,48 @@ onerror {resume}
 quietly WaveActivateNextPane {} 0
 add wave -noupdate /tb_bare/u_datapath/clk_i
 add wave -noupdate /tb_bare/u_datapath/rst_n_i
-add wave -noupdate -group DATAPATH /tb_bare/u_datapath/mem_flush_o
-add wave -noupdate -group DATAPATH /tb_bare/u_datapath/ins_mem_valid_i
-add wave -noupdate -group DATAPATH /tb_bare/u_datapath/ins_mem_ready_i
-add wave -noupdate -group DATAPATH /tb_bare/u_datapath/ins_mem_valid_o
-add wave -noupdate -group DATAPATH /tb_bare/u_datapath/ins_mem_ready_o
-add wave -noupdate -group DATAPATH -expand /tb_bare/u_datapath/ins_mem_ans_i
-add wave -noupdate -group DATAPATH -expand /tb_bare/u_datapath/ins_mem_req_o
-add wave -noupdate -group DATAPATH /tb_bare/u_datapath/data_mem_valid_i
-add wave -noupdate -group DATAPATH /tb_bare/u_datapath/data_mem_ready_i
-add wave -noupdate -group DATAPATH /tb_bare/u_datapath/data_mem_valid_o
-add wave -noupdate -group DATAPATH /tb_bare/u_datapath/data_mem_ready_o
-add wave -noupdate -group DATAPATH /tb_bare/u_datapath/data_mem_ans_i
-add wave -noupdate -group DATAPATH -expand /tb_bare/u_datapath/data_mem_req_o
-add wave -noupdate -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/flush_i
-add wave -noupdate -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/flush_bpu_i
-add wave -noupdate -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/mem_valid_i
-add wave -noupdate -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/mem_ready_i
-add wave -noupdate -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/mem_valid_o
-add wave -noupdate -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/mem_ready_o
-add wave -noupdate -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/mem_ans_i
-add wave -noupdate -group {FETCH STAGE} -expand /tb_bare/u_datapath/u_fetch_stage/mem_req_o
-add wave -noupdate -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/issue_ready_i
-add wave -noupdate -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/issue_valid_o
-add wave -noupdate -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/issue_instr_o
-add wave -noupdate -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/issue_pred_o
-add wave -noupdate -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/issue_except_raised_o
-add wave -noupdate -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/issue_except_code_o
-add wave -noupdate -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/comm_except_raised_i
-add wave -noupdate -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/comm_except_pc_i
-add wave -noupdate -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/comm_res_valid_i
-add wave -noupdate -group {FETCH STAGE} -expand /tb_bare/u_datapath/u_fetch_stage/comm_res_i
-add wave -noupdate -group {FETCH STAGE} -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/comm_except_raised_i
-add wave -noupdate -group {FETCH STAGE} -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/comm_except_pc_i
-add wave -noupdate -group {FETCH STAGE} -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/comm_res_valid_i
-add wave -noupdate -group {FETCH STAGE} -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/comm_res_i
-add wave -noupdate -group {FETCH STAGE} -group {PC GEN} -expand /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/pred_i
-add wave -noupdate -group {FETCH STAGE} -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/mem_ready_i
-add wave -noupdate -group {FETCH STAGE} -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/valid_o
-add wave -noupdate -group {FETCH STAGE} -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/pc_o
-add wave -noupdate -group {FETCH STAGE} -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/next_pc
-add wave -noupdate -group {FETCH STAGE} -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/add_pc
-add wave -noupdate -group {FETCH STAGE} -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/adder_out
+add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/mem_flush_o
+add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/ins_mem_valid_i
+add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/ins_mem_ready_i
+add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/ins_mem_valid_o
+add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/ins_mem_ready_o
+add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/ins_mem_ans_i
+add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/ins_mem_req_o
+add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/data_mem_valid_i
+add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/data_mem_ready_i
+add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/data_mem_valid_o
+add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/data_mem_ready_o
+add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/data_mem_ans_i
+add wave -noupdate -expand -group DATAPATH -expand /tb_bare/u_datapath/data_mem_req_o
+add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/flush_i
+add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/flush_bpu_i
+add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/mem_valid_i
+add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/mem_ready_i
+add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/mem_valid_o
+add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/mem_ready_o
+add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/mem_ans_i
+add wave -noupdate -expand -group {FETCH STAGE} -expand /tb_bare/u_datapath/u_fetch_stage/mem_req_o
+add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/issue_ready_i
+add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/issue_valid_o
+add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/issue_instr_o
+add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/issue_pred_o
+add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/issue_except_raised_o
+add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/issue_except_code_o
+add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/comm_except_raised_i
+add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/comm_except_pc_i
+add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/comm_res_valid_i
+add wave -noupdate -expand -group {FETCH STAGE} -expand /tb_bare/u_datapath/u_fetch_stage/comm_res_i
+add wave -noupdate -expand -group {FETCH STAGE} -expand -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/comm_except_raised_i
+add wave -noupdate -expand -group {FETCH STAGE} -expand -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/comm_except_pc_i
+add wave -noupdate -expand -group {FETCH STAGE} -expand -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/comm_res_valid_i
+add wave -noupdate -expand -group {FETCH STAGE} -expand -group {PC GEN} -expand /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/comm_res_i
+add wave -noupdate -expand -group {FETCH STAGE} -expand -group {PC GEN} -expand /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/pred_i
+add wave -noupdate -expand -group {FETCH STAGE} -expand -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/mem_ready_i
+add wave -noupdate -expand -group {FETCH STAGE} -expand -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/valid_o
+add wave -noupdate -expand -group {FETCH STAGE} -expand -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/pc_o
+add wave -noupdate -expand -group {FETCH STAGE} -expand -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/next_pc
+add wave -noupdate -expand -group {FETCH STAGE} -expand -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/add_pc
+add wave -noupdate -expand -group {FETCH STAGE} -expand -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/adder_out
 add wave -noupdate -group ISSUE_QUEUE /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_fifo/flush_i
 add wave -noupdate -group ISSUE_QUEUE /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_fifo/valid_i
 add wave -noupdate -group ISSUE_QUEUE /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_fifo/ready_i
@@ -286,93 +286,95 @@ add wave -noupdate -group CDB /tb_bare/u_datapath/u_backend/u_cdb/rs_data_i
 add wave -noupdate -group CDB /tb_bare/u_datapath/u_backend/u_cdb/rob_ready_i
 add wave -noupdate -group CDB /tb_bare/u_datapath/u_backend/u_cdb/valid_o
 add wave -noupdate -group CDB /tb_bare/u_datapath/u_backend/u_cdb/data_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/mis_flush_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/fe_bpu_flush_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/fe_res_valid_o
-add wave -noupdate -group {COMMIT STAGE} -expand /tb_bare/u_datapath/u_backend/u_commit_stage/fe_res_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/fe_except_raised_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/fe_except_pc_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_valid_i
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_ready_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_data_i
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_jb_instr_i
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_tail_idx_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_rs1_rob_idx_i
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_rs1_ready_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_rs1_value_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_rs2_rob_idx_i
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_rs2_ready_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_rs2_value_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_resume_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/cdb_valid_i
-add wave -noupdate -group {COMMIT STAGE} -expand /tb_bare/u_datapath/u_backend/u_commit_stage/cdb_data_i
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/cdb_ready_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/sb_spec_instr_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/sb_rob_head_idx_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/int_rs_valid_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/int_rf_valid_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/rs_head_idx_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/rd_idx_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/rd_value_o
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/inreg_cu_valid
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/inreg_data_out
-add wave -noupdate -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/comm_reg_valid
-add wave -noupdate -group {COMMIT STAGE} -expand /tb_bare/u_datapath/u_backend/u_commit_stage/comm_reg_data
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/flush_i
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/issue_valid_i
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/issue_ready_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/issue_data_i
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/issue_tail_idx_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/issue_rs1_rob_idx_i
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/issue_rs2_rob_idx_i
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/opfwd_rs1_valid_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/opfwd_rs1_ready_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/opfwd_rs1_value_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/opfwd_rs2_valid_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/opfwd_rs2_ready_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/opfwd_rs2_value_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/comm_valid_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/comm_ready_i
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/comm_data_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/comm_head_idx_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/cdb_valid_i
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/cdb_data_i
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/cdb_ready_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB -expand /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/data_valid
-add wave -noupdate -group {COMMIT STAGE} -expand -group ROB -expand -subitemconfig {{/tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/data[2]} -expand} /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/data
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/comm_type_i
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/mispredict_i
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/comm_reg_en_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/comm_reg_clr_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/jb_instr_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/valid_i
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/ready_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/instr_i
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/res_ready_i
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/except_raised_i
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/except_code_i
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/int_rs_valid_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/int_rf_valid_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/sb_exec_store_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/csr_valid_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/csr_type_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/fe_ready_i
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/fe_res_valid_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/fe_bpu_flush_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/mis_flush_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/issue_resume_o
-add wave -noupdate -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/curr_state
-add wave -noupdate -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_valid_o
-add wave -noupdate -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_ready_i
-add wave -noupdate -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_data_i
-add wave -noupdate -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_acc_exc_i
-add wave -noupdate -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_instr_type_o
-add wave -noupdate -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_funct3_o
-add wave -noupdate -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_addr_o
-add wave -noupdate -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_rs1_idx_o
-add wave -noupdate -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_rs1_value_o
-add wave -noupdate -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_except_code_o
-add wave -noupdate -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_rd_idx_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/mis_flush_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/fe_bpu_flush_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/fe_res_valid_o
+add wave -noupdate -expand -group {COMMIT STAGE} -expand /tb_bare/u_datapath/u_backend/u_commit_stage/fe_res_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/fe_except_raised_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/fe_except_pc_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_valid_i
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_ready_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_data_i
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_jb_instr_i
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_tail_idx_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_rs1_rob_idx_i
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_rs1_ready_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_rs1_value_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_rs2_rob_idx_i
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_rs2_ready_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_rs2_value_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/issue_resume_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/cdb_valid_i
+add wave -noupdate -expand -group {COMMIT STAGE} -expand /tb_bare/u_datapath/u_backend/u_commit_stage/cdb_data_i
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/cdb_ready_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/sb_spec_instr_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/sb_rob_head_idx_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/int_rs_valid_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/int_rf_valid_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/rs_head_idx_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/rd_idx_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/rd_value_o
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/inreg_cu_valid
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/inreg_data_out
+add wave -noupdate -expand -group {COMMIT STAGE} /tb_bare/u_datapath/u_backend/u_commit_stage/comm_reg_valid
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -subitemconfig {/tb_bare/u_datapath/u_backend/u_commit_stage/comm_reg_data.data -expand /tb_bare/u_datapath/u_backend/u_commit_stage/comm_reg_data.data.instruction -expand} /tb_bare/u_datapath/u_backend/u_commit_stage/comm_reg_data
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/flush_i
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/issue_valid_i
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/issue_ready_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/issue_data_i
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/issue_tail_idx_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/issue_rs1_rob_idx_i
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/issue_rs2_rob_idx_i
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/opfwd_rs1_valid_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/opfwd_rs1_ready_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/opfwd_rs1_value_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/opfwd_rs2_valid_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/opfwd_rs2_ready_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/opfwd_rs2_value_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/comm_valid_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/comm_ready_i
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/comm_data_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/comm_head_idx_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/cdb_valid_i
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/cdb_data_i
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/cdb_ready_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB -expand /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/data_valid
+add wave -noupdate -expand -group {COMMIT STAGE} -group ROB -expand /tb_bare/u_datapath/u_backend/u_commit_stage/u_rob/data
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/comm_type_i
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/mispredict_i
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/comm_reg_en_o
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/comm_reg_clr_o
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/jb_instr_o
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/valid_i
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/ready_o
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/instr_i
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/res_ready_i
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/except_raised_i
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/except_code_i
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/int_rs_valid_o
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/int_rf_valid_o
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/sb_exec_store_o
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/csr_valid_o
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/csr_type_o
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/fe_ready_i
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/fe_res_valid_o
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/fe_bpu_flush_o
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/mis_flush_o
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/issue_resume_o
+add wave -noupdate -expand -group {COMMIT STAGE} -expand -group {COMMIT CU} /tb_bare/u_datapath/u_backend/u_commit_stage/u_commit_cu/curr_state
+add wave -noupdate -expand -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_valid_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_ready_i
+add wave -noupdate -expand -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_data_i
+add wave -noupdate -expand -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_acc_exc_i
+add wave -noupdate -expand -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_instr_type_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_funct3_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_addr_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_rs1_idx_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_rs1_value_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_except_code_o
+add wave -noupdate -expand -group {COMMIT STAGE} -group {to CSRs} /tb_bare/u_datapath/u_backend/u_commit_stage/csr_rd_idx_o
+add wave -noupdate -expand -group {REGISTER FILE} /tb_bare/u_datapath/u_backend/u_int_rf/clk_i
+add wave -noupdate -expand -group {REGISTER FILE} /tb_bare/u_datapath/u_backend/u_int_rf/rst_n_i
 add wave -noupdate -expand -group {REGISTER FILE} /tb_bare/u_datapath/u_backend/u_int_rf/comm_valid_i
 add wave -noupdate -expand -group {REGISTER FILE} /tb_bare/u_datapath/u_backend/u_int_rf/comm_rd_idx_i
 add wave -noupdate -expand -group {REGISTER FILE} /tb_bare/u_datapath/u_backend/u_int_rf/comm_rd_value_i
@@ -421,10 +423,10 @@ add wave -noupdate -group {MEM EMU} /tb_bare/u_memory_bare_emu/data_pipe_valid
 add wave -noupdate -group {MEM EMU} /tb_bare/u_memory_bare_emu/ins_pipe_reg
 add wave -noupdate -group {MEM EMU} /tb_bare/u_memory_bare_emu/data_pipe_reg
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {88 ns} 0}
+WaveRestoreCursors {{Cursor 1} {1970 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 197
-configure wave -valuecolwidth 121
+configure wave -valuecolwidth 154
 configure wave -justifyvalue left
 configure wave -signalnamewidth 1
 configure wave -snapdistance 10
@@ -437,4 +439,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 ns} {1159 ns}
+WaveRestoreZoom {1420 ns} {2510 ns}

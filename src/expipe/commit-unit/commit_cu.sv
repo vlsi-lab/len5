@@ -61,6 +61,7 @@ module commit_cu (
     output  logic                   sb_exec_store_o, // pop the store instruction from the store buffer
 
     // CU <--> CSRs
+    input   logic                   csr_ready_i,
     output  logic                   csr_valid_o,
     output  csr_instr_t             csr_type_o,
 
@@ -95,6 +96,7 @@ module commit_cu (
         COMMIT_XRET,        // commit xRET instructions
         COMMIT_WFI,         // wait for interrupt
         COMMIT_EXCEPT,      // handle the generated exception
+        ISSUE_RESUME,       // resume execution after stall
 
         HALT                // dead-end state
     } cu_state_t;
@@ -218,8 +220,8 @@ module commit_cu (
 
             // Atomically read and write CSRs
             COMMIT_CSR: begin
-                if (valid_i)    next_state  = v_next_state;
-                else            next_state  = IDLE;
+                if (!csr_ready_i)   next_state  = COMMIT_CSR;
+                else                next_state  = ISSUE_RESUME;
             end
 
             /* TODO: properly handle the following instructions */
@@ -229,6 +231,9 @@ module commit_cu (
             COMMIT_XRET:        next_state  = IDLE;
             COMMIT_WFI:         next_state  = IDLE;
             COMMIT_EXCEPT:      next_state  = IDLE;
+
+            // Resume state
+            ISSUE_RESUME:       next_state  = IDLE;
 
             // HALT state (deadlock)
             HALT:               next_state  = HALT;
@@ -254,7 +259,7 @@ module commit_cu (
         sb_exec_store_o     = 1'b0;
         csr_valid_o         = 1'b0;
         csr_type_o          = CSR_INSTR;
-        fe_res_valid_o      = 1'b0; // must be assedrted for exactly one cycle
+        fe_res_valid_o      = 1'b0; // must be asserted for exactly one cycle
         fe_bpu_flush_o      = 1'b0; // TODO: is this needed on context switch only?
         mis_flush_o         = 1'b0;
         issue_resume_o      = 1'b0;
@@ -306,17 +311,12 @@ module commit_cu (
 
             COMMIT_BRANCH: begin
                 ready_o         = 1'b1;
-                int_rs_valid_o  = 1'b1;
-                int_rf_valid_o  = 1'b1;
                 comm_reg_en_o   = 1'b1;
                 jb_instr_o      = 1'b1;
                 fe_res_valid_o  = 1'b1;
             end
             
-            // TODO: redundant with jumps?
             COMMIT_BRANCH_MIS: begin
-                int_rs_valid_o  = 1'b1;
-                int_rf_valid_o  = 1'b1;
                 jb_instr_o      = 1'b1;
                 mis_flush_o     = 1'b1;
             end
@@ -352,6 +352,10 @@ module commit_cu (
             end
             COMMIT_EXCEPT: begin
                 comm_reg_en_o   = 1'b1;
+            end
+
+            ISSUE_RESUME: begin
+                issue_resume_o  = 1'b1;
             end
 
             HALT:;

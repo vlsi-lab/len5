@@ -25,12 +25,14 @@ CMD_LINE=$@
 FORCE_LOCAL_EXEC=0
 REMOTE_EXEC=0
 REMOTE_USER=""
-REMOTE_PORT=10033 # vlsi21
-REMOTE_HOST=vlsiwall.polito.it
+# REMOTE_PORT=10033 # vlsi21
+REMOTE_PORT=50050 # saruman > centos-8-eda
+# REMOTE_HOST=vlsiwall.polito.it
+REMOTE_HOST=saruman.polito.it
 REMOTE_ROOT_DIR="~/sim/len5"
 SSH_KEY=~/.ssh/vlsi_rsa
 SSH_OPT="-p $REMOTE_PORT -i $SSH_KEY"
-RSYNC_OPT="--relative -rtl --del"
+RSYNC_OPT="-rtl --del"
 
 # Compilation options
 LAUNCH_SIM=0
@@ -227,6 +229,7 @@ while getopts ':hlB:g:rLR:dDb:atnf:w:isTm:W:N:xop:' opt; do
             ;;
         x) # Launch simulation with GUI
             VSIM_GUI=1
+            SSH_OPT="-Y $SSH_OPT"
             ;;
         o) # Remove -voptargs=+acc from simulation options
             VSIM_DISABLE_OPT=0
@@ -281,10 +284,10 @@ if [ $REMOTE_EXEC -ne 0 -a $FORCE_LOCAL_EXEC -eq 0 ]; then
     # Infer user name
     USR=$(whoami)
     case $USR in
-        michi)
+        michi|michele.caon)
             REMOTE_USER=michele.caon
             ;;
-        whasn)
+        whasn|walid.walid)
             REMOTE_USER=walid.walid
             ;;
         *) # other
@@ -293,9 +296,12 @@ if [ $REMOTE_EXEC -ne 0 -a $FORCE_LOCAL_EXEC -eq 0 ]; then
             ;;
     esac
 
-    # Copy source files to remote server
-    log "Copying LEN5 source files to '%s'..." "$REMOTE_HOST"
-    rsync -e "ssh $SSH_OPT" $RSYNC_OPT $LEN5_ROOT_DIR/./{include,src,tb,scripts,test-files} $REMOTE_USER@$REMOTE_HOST:$REMOTE_ROOT_DIR/
+    # Prepare remote directories
+    remote_and_log "mkdir -p $REMOTE_ROOT_DIR"
+
+    # Copy files to remote server
+    log "Copying LEN5 files to '%s'..." "$REMOTE_HOST"
+    rsync -e "ssh $SSH_OPT" $RSYNC_OPT --relative $LEN5_ROOT_DIR/./{include,src,tb,scripts,sw,sim,makefile} $REMOTE_USER@$REMOTE_HOST:$REMOTE_ROOT_DIR/
     [ $? -ne 0 ] && err "!!! ERROR while copying LEN5 source files..."
 
     # Pass options to remote script
@@ -303,6 +309,13 @@ if [ $REMOTE_EXEC -ne 0 -a $FORCE_LOCAL_EXEC -eq 0 ]; then
     CMD_LINE="-L $CMD_LINE"
     remote_and_log "$REMOTE_ROOT_DIR/scripts/$(basename $0) $CMD_LINE"
     [ $? -ne 0 ] && err "!!! ERROR while executing remote script..."
+
+    # Retrieve files
+    if [ $LAUNCH_SIM -ne 0 ]; then
+        log "Retrieving files from '%s'...\n" "$REMOTE_HOST"
+        rsync -e "ssh $SSH_OPT" $RSYNC_OPT $REMOTE_USER@$REMOTE_HOST:$REMOTE_ROOT_DIR/sim/*.do $LEN5_ROOT_DIR/sim/
+        rsync -e "ssh $SSH_OPT" $RSYNC_OPT $REMOTE_USER@$REMOTE_HOST:$REMOTE_ROOT_DIR/build/hw $LEN5_ROOT_DIR/build
+    fi
 
     # Exit
     log "REMOTE EXECUTION COMPLETED!"
@@ -314,10 +327,12 @@ fi
 
 # Default Questa Sim initialization script
 HOST_NAME=$(uname -n)
-if [[ $HOST_NAME =~ .*.vlsilab ]]; then              # VLSI servers
+if [[ $HOST_NAME =~ .*.vlsilab ]]; then   # VLSI Lab servers @ POLITO
     INIT_SCRIPT="/eda/scripts/init_questa"
-elif [ $HOST_NAME = "localhost.localdomain" ]; then  # Microelectronic Systems server
-    INIT_SCRIPT="/software/scripts/init_questa10.7c"
+elif [[ $HOST_NAME = centos-8-* ]]; then  # Saruman.eda @ POLITO
+    INIT_SCRIPT="/eda/scripts/init_questa"
+elif [[ $HOST_NAME = rocky-9-* ]]; then  # Saruman.rocky @ POLITO
+    INIT_SCRIPT="/eda/scripts/init_questa"
 elif [ $HOST_NAME = "ghostpro" ]; then
     INIT_SCRIPT="$HOME/Documents/scripts/init-questa.sh"
 else
@@ -413,7 +428,7 @@ fi
 SIM_OPT="$SIM_OPT +N=$NUM_CYCLES"
 SIM_OPT="$SIM_OPT $SIM_ARGS"
 if [ ! "$WAVE_FILE" = "" ]; then
-    WAVE_FILE=$(realpath --relative-to=$BUILD_DIR $WAVE_FILE)
+    WAVE_FILE=$(realpath --relative-to=$HW_BUILD_DIR $WAVE_FILE)
     SIM_OPT="$SIM_OPT -do $WAVE_FILE"
 fi
 echo "$HEADER_MSG" > $SIM_MACRO

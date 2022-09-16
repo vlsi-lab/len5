@@ -326,6 +326,7 @@ module commit_stage (
 
     // Jump commit adder and MUX
     // -------------------------
+    /* TODO: resuse this adder for vectored exceptions */
     assign  link_addr       = comm_reg_data.data.instr_pc + (ILEN >> 3);
     assign  rd_value        = (cu_jb_instr) ? link_addr : comm_reg_data.data.res_value;
 

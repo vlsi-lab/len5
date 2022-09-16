@@ -42,7 +42,8 @@ ABI_STRING		?= lp64
 CC 				:= $(CROSS_COMPILE)gcc
 CFLAGS			:= 	-march=$(ISA_STRING) \
 					-mabi=$(ABI_STRING) \
-					-ffreestanding
+					-ffreestanding \
+					-Wall
 CINC			:= -I$(SW_BUILD_DIR)/include
 LDFLAGS			:= -T $(LINK_SCRIPT) \
 				   -nostartfiles \
@@ -64,21 +65,21 @@ OBJCOPY			:= $(CROSS_COMPILE)objcopy
 all: test-programs
 .PHONY: test-programs
 test-programs: $(TESTS)
-$(TESTS): tests/%: $(TEST_BUILD_DIR)/mem/%.mem
+$(TESTS): tests/%: $(TEST_BUILD_DIR)/mem/%.mem $(TEST_BUILD_DIR)/dis/%.dis
 
 # Test programs implicit rules
 .PRECIOUS: $(TEST_BUILD_DIR)/obj/%.o $(TEST_BUILD_DIR)/dis/%.dis $(TEST_BUILD_DIR)/bin/%
 $(TEST_BUILD_DIR)/mem/%.mem: $(TEST_BUILD_DIR)/bin/% | $(TEST_BUILD_DIR)/mem
 	$(OBJCOPY) -O binary $< $@
 $(TEST_BUILD_DIR)/dis/%.dis: $(TEST_BUILD_DIR)/bin/% | $(TEST_BUILD_DIR)/dis
-	$(OBJDUMP) -D $< > $@
+	$(OBJDUMP) -D -M numeric $< > $@
 $(TEST_BUILD_DIR)/bin/%: $(TEST_BUILD_DIR)/obj/%.o $(LEN5_LIB) | $(TEST_BUILD_DIR)/bin
 	$(CC) $(CFLAGS) $(CINC) $(LDFLAGS) $(SW_SUPP_SRCS) $< -o $@
-$(TEST_BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.c $(BUILD_SUPP) | $(TEST_BUILD_DIR)/obj
+$(TEST_BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.c $(BUILD_SUPP) | $(TEST_BUILD_DIR)/obj .check-riscv
 	$(CC) $(CFLAGS) $(CINC) -c $< -o $@
-$(TEST_BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.S $(BUILD_SUPP) | $(TEST_BUILD_DIR)/obj
+$(TEST_BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.S $(BUILD_SUPP) | $(TEST_BUILD_DIR)/obj .check-riscv
 	$(CC) $(CFLAGS) $(CINC) -c $< -o $@
-$(TEST_BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.s $(BUILD_SUPP) | $(TEST_BUILD_DIR)/obj
+$(TEST_BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.s $(BUILD_SUPP) | $(TEST_BUILD_DIR)/obj .check-riscv
 	$(CC) $(CFLAGS) $(CINC) -c $< -o $@
 
 # Software support files (crt0, _write, headers)
@@ -88,12 +89,19 @@ $(LEN5_LIB): $(LIB_OBJS) | $(SW_BUILD_DIR)/lib
 	$(AR) $(ARFLAGS) $@ $+
 
 # Implicit compilation rules
-$(SW_BUILD_DIR)/obj/%.o: $(SW_DIR)/src/%.c | $(SW_BUILD_DIR)/obj
+$(SW_BUILD_DIR)/obj/%.o: $(SW_DIR)/src/%.c | $(SW_BUILD_DIR)/obj .check-riscv
 	$(CC) $(CFLAGS) $(CINC) -c $< -o $@
-$(SW_BUILD_DIR)/obj/%.o: $(SW_DIR)/src/%.S | $(SW_BUILD_DIR)/obj
+$(SW_BUILD_DIR)/obj/%.o: $(SW_DIR)/src/%.S | $(SW_BUILD_DIR)/obj .check-riscv
 	$(CC) $(CFLAGS) $(CINC) -c $< -o $@
-$(SW_BUILD_DIR)/obj/%.o: $(SW_DIR)/src/%.s | $(SW_BUILD_DIR)/obj
+$(SW_BUILD_DIR)/obj/%.o: $(SW_DIR)/src/%.s | $(SW_BUILD_DIR)/obj .check-riscv
 	$(AS) $(ASFLAGS) $(CINC) -c $< -o $@
+
+# Check if RISC-V toolchain is in PATH
+.PHONY: .check-riscv
+.check-riscv:
+	@if [ ! `which $(CC)` ]; then \
+	printf -- "### ERROR: '$(CC)' is not in PATH.\n" >&2; \
+	exit 1; fi
 
 # Directories
 # -----------

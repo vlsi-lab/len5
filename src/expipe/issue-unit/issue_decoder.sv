@@ -39,7 +39,7 @@ module issue_decoder (
     output  logic           except_raised_o,  // an exception occurred during decoding
     output  except_code_t   except_code_o,    // exception code to send to the ROB
     output  logic           res_ready_o,      // force ready to commit in the ROB
-    output  logic           stall_possible_o, // the instruction issue can be stall to save power
+    output  logic           stall_o, // the instruction issue can be stall to save power
 
     output  issue_eu_t      eu_o,             // assigned EU
     output  eu_ctl_t        eu_ctl_o,         // controls for the assigned EU
@@ -61,7 +61,7 @@ module issue_decoder (
     logic                           except_raised; 
     except_code_t                   except_code;
     logic                           res_ready;
-    logic                           stall_possible;
+    logic                           stall         ;
     issue_eu_t                      assigned_eu;
     eu_ctl_t                        eu_ctl;
     logic                           rs_fp;
@@ -87,7 +87,7 @@ module issue_decoder (
         except_raised               = 1'b0; 
         except_code                 = E_UNKNOWN;    // whatever: ignored if except_raised is not asserted
         res_ready                   = 1'b0;
-        stall_possible              = 1'b0;
+        stall                       = 1'b0;
         assigned_eu                 = EU_NONE;       // whatever: ignored if except_raised is asserted
         eu_ctl.raw                  = '0;
         rs_fp                       = 1'b0;         // normally from the integer register file
@@ -653,7 +653,7 @@ module issue_decoder (
                 (instruction_i[30 -: 4] == `FENCE_FM_LSBS) && 
                 (instruction_i.i.rs1 == `FENCE_RS1) && 
                 (instruction_i.i.rd == `FENCE_RD)) begin
-            stall_possible              = 1'b1;
+            stall                       = 1'b1;
             assigned_eu                 = EU_NONE;
             res_ready                   = 1'b1;
         end
@@ -664,7 +664,7 @@ module issue_decoder (
                 (instruction_i.i.imm11 == `ECALL_IMM) && 
                 (instruction_i.i.rs1 == `ECALL_RS1) && 
                 (instruction_i.i.rd == `ECALL_RD)) begin
-            stall_possible              = 1'b1;
+            stall                       = 1'b1;
             assigned_eu                 = EU_NONE;
             res_ready                   = 1'b1;
         end
@@ -675,7 +675,7 @@ module issue_decoder (
                 (instruction_i.i.imm11 == `EBREAK_IMM) && 
                 (instruction_i.i.rs1 == `EBREAK_RS1) && 
                 (instruction_i.i.rd == `EBREAK_RD)) begin
-            stall_possible              = 1'b1;
+            stall                       = 1'b1;
             assigned_eu                 = EU_NONE;
             res_ready                   = 1'b1;
             except_raised               = 1'b1;
@@ -691,7 +691,7 @@ module issue_decoder (
                 (instruction_i.i.imm11 == `FENCE_I_IMM) && 
                 (instruction_i.i.rs1 == `FENCE_I_RS1) && 
                 (instruction_i.i.rd == `FENCE_I_RD)) begin
-            stall_possible              = 1'b1;
+            stall                       = 1'b1;
             assigned_eu                 = EU_NONE;
             res_ready                   = 1'b1;
         end
@@ -702,7 +702,7 @@ module issue_decoder (
         // CSRRW
         else if ((instruction_i.i.opcode == `OPCODE_CSRRW) && 
                 (instruction_i.i.funct3 == `FUNCT3_CSRRW)) begin
-            stall_possible              = 1'b1;
+            stall                       = 1'b1;
             assigned_eu                 = EU_OPERANDS_ONLY;
             rs1_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -711,7 +711,7 @@ module issue_decoder (
         // CSRRS
         else if ((instruction_i.i.opcode == `OPCODE_CSRRS) && 
                 (instruction_i.i.funct3 == `FUNCT3_CSRRS)) begin
-            stall_possible              = 1'b1;
+            stall                       = 1'b1;
             assigned_eu                 = EU_OPERANDS_ONLY;
             rs1_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -720,7 +720,7 @@ module issue_decoder (
         // CSRRC
         else if ((instruction_i.i.opcode == `OPCODE_CSRRC) && 
                 (instruction_i.i.funct3 == `FUNCT3_CSRRC)) begin
-            stall_possible              = 1'b1;
+            stall                       = 1'b1;
             assigned_eu                 = EU_OPERANDS_ONLY;
             rs1_req                     = 1'b1;
             regstat_upd                 = 1'b1;
@@ -729,7 +729,7 @@ module issue_decoder (
         // CSRRWI
         else if ((instruction_i.i.opcode == `OPCODE_CSRRWI) && 
                 (instruction_i.i.funct3 == `FUNCT3_CSRRWI)) begin
-            stall_possible              = 1'b1;
+            stall                       = 1'b1;
             assigned_eu                 = EU_NONE;
             res_ready                   = 1'b1;
             imm_format                  = IMM_TYPE_RS1;
@@ -739,7 +739,7 @@ module issue_decoder (
         // CSRRSI
         else if ((instruction_i.i.opcode == `OPCODE_CSRRSI) && 
                 (instruction_i.i.funct3 == `FUNCT3_CSRRSI)) begin
-            stall_possible              = 1'b1;
+            stall                       = 1'b1;
             assigned_eu                 = EU_NONE;
             res_ready                   = 1'b1;
             imm_format                  = IMM_TYPE_RS1;
@@ -749,7 +749,7 @@ module issue_decoder (
         // CSRRCI
         else if ((instruction_i.i.opcode == `OPCODE_CSRRCI) && 
                 (instruction_i.i.funct3 == `FUNCT3_CSRRCI)) begin
-            stall_possible              = 1'b1;
+            stall                       = 1'b1;
             assigned_eu                 = EU_NONE;
             res_ready                   = 1'b1;
             imm_format                  = IMM_TYPE_RS1;
@@ -849,7 +849,7 @@ module issue_decoder (
                 (instruction_i.r.rs2 == `URET_RS2) && 
                 (instruction_i.r.rs1 == `URET_RS1) && 
                 (instruction_i.r.rd == `URET_RD)) begin
-            stall_possible              = 1'b1;
+            stall                       = 1'b1;
             assigned_eu                 = EU_NONE;
             res_ready                   = 1'b1;
         end
@@ -865,7 +865,7 @@ module issue_decoder (
                 except_raised           = 1'b1;
                 except_code_t           = E_ILLEGAL_INSTRUCTION;
             end else begin
-                stall_possible          = 1'b1;
+                stall                   = 1'b1;
                 assigned_eu             = EU_NONE;
                 res_ready               = 1'b1;
             end
@@ -880,7 +880,7 @@ module issue_decoder (
                 (instruction_i.r.rd == `MRET_RD)) begin
             assigned_eu                 = EU_NONE;
             res_ready                   = 1'b1;
-            stall_possible              = 1'b1;
+            stall                       = 1'b1;
         end
 
         // Interrupt-Management Instructions
@@ -895,7 +895,7 @@ module issue_decoder (
                 (instruction_i.r.rd == `WFI_RD)) begin
             assigned_eu                 = EU_NONE;
             res_ready                   = 1'b1;
-            stall_possible              = 1'b1;
+            stall                       = 1'b1;
         end
 
         // Supervisor Memory-Management Instructions
@@ -908,7 +908,7 @@ module issue_decoder (
                 (instruction_i.r.rd == `SFENCE_VMA_RD)) begin
             assigned_eu                 = EU_NONE;
             res_ready                   = 1'b1;
-            stall_possible              = 1'b1;
+            stall                       = 1'b1;
         end
 
         // Hypervisor Memory-Management Instructions
@@ -921,7 +921,7 @@ module issue_decoder (
                 (instruction_i.r.rd == `HFENCE_BVMA_RD)) begin
             assigned_eu                 = EU_NONE;
             res_ready                   = 1'b1;
-            stall_possible              = 1'b1;
+            stall                       = 1'b1;
         end
 
         // HFENCE.GVMA
@@ -931,7 +931,7 @@ module issue_decoder (
                 (instruction_i.r.rd == `HFENCE_GVMA_RD)) begin
             assigned_eu                 = EU_NONE;
             res_ready                   = 1'b1;
-            stall_possible              = 1'b1;
+            stall                       = 1'b1;
         end
 
     `endif /* LEN5_PRIVILEGED_EN */
@@ -949,23 +949,23 @@ module issue_decoder (
     // -----------------
     // OUTPUT GENERATION
     // -----------------
-    assign except_raised_o          = except_raised;
-    assign except_code_o            = except_code;
-    assign res_ready_o              = res_ready;
-    assign stall_possible_o         = stall_possible;
+    assign except_raised_o      = except_raised;
+    assign except_code_o        = except_code;
+    assign res_ready_o          = res_ready;
+    assign stall_o              = stall;
 
-    assign eu_o                     = assigned_eu;
-    assign eu_ctl_o                 = eu_ctl;
-    assign fp_rs_o                  = rs_fp;
-    assign rs1_req_o                = rs1_req;
-    assign rs1_is_pc_o              = rs1_is_pc;
-    assign rs2_req_o                = rs2_req;
-    assign rs2_is_imm_o             = rs2_is_imm;
+    assign eu_o                 = assigned_eu;
+    assign eu_ctl_o             = eu_ctl;
+    assign fp_rs_o              = rs_fp;
+    assign rs1_req_o            = rs1_req;
+    assign rs1_is_pc_o          = rs1_is_pc;
+    assign rs2_req_o            = rs2_req;
+    assign rs2_is_imm_o         = rs2_is_imm;
 `ifdef LEN5_FP_EN
-    assign rs3_req_o                = rs3_req;
+    assign rs3_req_o            = rs3_req;
 `endif /* LEN5_FP_EN */
-    assign imm_format_o             = imm_format;
-    assign regstat_upd_o            = regstat_upd;
+    assign imm_format_o         = imm_format;
+    assign regstat_upd_o        = regstat_upd;
 
     // ----------
     // ASSERTIONS

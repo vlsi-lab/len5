@@ -114,7 +114,7 @@ module issue_logic (
     logic                               id_except_raised;
     except_code_t                       id_except_code;
     logic                               id_res_ready;
-    logic                               id_stall_possible;
+    logic                               id_stall;
     
     issue_eu_t                          id_assigned_eu;
     eu_ctl_t                            id_eu_ctl;
@@ -132,7 +132,7 @@ module issue_logic (
     logic                               id_regstat_upd;
 
     // Exception handling 
-    logic                               eh_stall_possible, eh_except_raised;
+    logic                               eh_stall, eh_except_raised;
     except_code_t                       eh_except_code;
 
     // ---------------------------
@@ -153,22 +153,13 @@ module issue_logic (
     // -----------------
     // HANDSHAKE CONTROL
     // -----------------
-
-    // Select the corresponding register status register ready signal
-    // `ifdef LEN5_FP_EN
-    //     assign regstat_ready    = (id_fp_rs) ? fp_regstat_ready_i : int_regstat_ready_i;
-    // `else
-    //     assign regstat_ready    = int_regstat_ready_i;
-    // `endif /* LEN5_FP_EN */
-
     always_comb begin: issue_control_logic
         // Default values 
         iq_ready_o      = 1'b0;
         foreach (ex_valid_o[i]) ex_valid_o[i] = 1'b0;
-        comm_valid_o     = 1'b0;
+        comm_valid_o    = 1'b0;
 
         // The instruction can be issue (i.e. popped from the issue queue) if both the assigned reservation station and the ROB can accept it
-        
         if (iq_valid_i && comm_ready_i) begin // an instr. can be issued
             case(id_assigned_eu)
                 EU_LOAD_BUFFER: begin   // 0
@@ -234,7 +225,7 @@ module issue_logic (
                     end
                 end
                 EU_NONE: begin          // the instr. is sent directly to the ROB
-                    comm_valid_o         = 1'b1;
+                    comm_valid_o        = 1'b1;
                     iq_ready_o          = 1'b1;
                 end
                 default: begin
@@ -382,17 +373,17 @@ module issue_logic (
     always_comb begin: exception_handling_logic
         // If an exception was raised during the fetch stage, keep it and discard exception raised during the issue phase (if any)
         if (iq_valid_i && iq_instr_i.except_raised) begin
-            eh_except_raised            = 1'b1;
-            eh_except_code              = iq_instr_i.except_code;
-            eh_stall_possible           = 1'b1;             // the pipeline and issue queue will be flushed anyway
+            eh_except_raised   = 1'b1;
+            eh_except_code     = iq_instr_i.except_code;
+            eh_stall           = 1'b1;             // the pipeline and issue queue will be flushed anyway
         end else if (iq_valid_i && id_except_raised) begin
-            eh_except_raised            = 1'b1;
-            eh_except_code              = id_except_code;
-            eh_stall_possible           = 1'b1;
+            eh_except_raised   = 1'b1;
+            eh_except_code     = id_except_code;
+            eh_stall           = 1'b1;
         end else begin
-            eh_except_raised            = 1'b0;             // no exception
-            eh_except_code              = iq_instr_i.except_code; // whatever, it is ignored since comm_data_o.except_raised is not asserted
-            eh_stall_possible           = 1'b0;
+            eh_except_raised   = 1'b0;             // no exception
+            eh_except_code     = iq_instr_i.except_code; // whatever, it is ignored since comm_data_o.except_raised is not asserted
+            eh_stall           = 1'b0;
         end
     end
 
@@ -408,24 +399,24 @@ module issue_logic (
     `endif /* LEN5_PRIVILEGED_EN */
 
         // Information to the issue logic
-        .except_raised_o      (id_except_raised),     
-        .except_code_o        (id_except_code),     
-        .res_ready_o          (id_res_ready),     
-        .stall_possible_o     (id_stall_possible),     
+        .except_raised_o    (id_except_raised),     
+        .except_code_o      (id_except_code),     
+        .res_ready_o        (id_res_ready),     
+        .stall_o            (id_stall),     
 
-        .eu_o                 (id_assigned_eu),     
-        .eu_ctl_o             (id_eu_ctl), 
-        .fp_rs_o              (id_fp_rs),       
-        .rs1_req_o            (id_rs1_req), 
-        .rs1_is_pc_o          (id_rs1_is_pc),
-        .rs2_req_o            (id_rs2_req),
-        .rs2_is_imm_o         (id_rs2_is_imm),
+        .eu_o               (id_assigned_eu),     
+        .eu_ctl_o           (id_eu_ctl), 
+        .fp_rs_o            (id_fp_rs),       
+        .rs1_req_o          (id_rs1_req), 
+        .rs1_is_pc_o        (id_rs1_is_pc),
+        .rs2_req_o          (id_rs2_req),
+        .rs2_is_imm_o       (id_rs2_is_imm),
     `ifdef LEN5_FP_EN
-        .rs3_req_o            (id_rs3_req),  
+        .rs3_req_o          (id_rs3_req),  
     `endif /* LEN5_FP_EN */     
-        .imm_format_o         (id_imm_format),  
-        .regstat_upd_o        (id_regstat_upd),
-        .jb_instr_o           (comm_jb_instr_o)
+        .imm_format_o       (id_imm_format),  
+        .regstat_upd_o      (id_regstat_upd),
+        .jb_instr_o         (comm_jb_instr_o)
     );
 
     // ------------------------------------
@@ -455,7 +446,7 @@ module issue_logic (
     // OUTPUT EVALUATION
     // -----------------
     // To the main control 
-    assign  cu_stall_o                  = id_stall_possible || eh_stall_possible;
+    assign  cu_stall_o                  = id_stall || eh_stall;
 
     // To the integer register status register
     assign  int_regstat_valid_o         = comm_valid_o && comm_ready_i && id_regstat_upd;

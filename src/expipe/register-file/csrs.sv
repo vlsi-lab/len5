@@ -102,6 +102,9 @@ csr_fcsr_t      fcsr;
 // SATP
 csr_satp_t      satp;
 
+// MTVEC
+csr_mtvec_t     mtvec;
+
 // MSTATUS
 csr_mstatus_t   mstatus;
 
@@ -162,7 +165,6 @@ always_comb begin : csr_read
 
                 // S-mode CSRs
                 // -----------
-
                 // satp
                 `CSR_ADDR_SATP: begin
                     // only readable in S and M modes
@@ -171,7 +173,10 @@ always_comb begin : csr_read
 
                 // M-mode CSRs
                 // -----------
-
+                // mtvec
+                `CSR_ADDR_MTVEC: begin
+                    csr_rd_val  = mtvec;
+                end
                 // mstatus
                 `CSR_ADDR_MSTATUS: begin
                     // Only readable in M mode
@@ -201,7 +206,6 @@ always_comb begin : csr_read
                 
                 // S-mode CSRs
                 // -----------
-
                 // satp
                 `CSR_ADDR_SATP: begin
                     // only readable in S and M modes
@@ -210,7 +214,11 @@ always_comb begin : csr_read
 
                 // M-mode CSRs
                 // -----------
-
+                // mtvec
+                `CSR_ADDR_MTVEC: begin
+                    csr_rd_val  = mtvec;
+                end
+                // mstatus
                 `CSR_ADDR_MSTATUS: begin
                     if (priv_mode >= PRIV_MODE_M)    csr_rd_val = mstatus;
                 end
@@ -361,6 +369,13 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
                     end
                     default:;   // do not modify the CSR value
                 endcase
+            end
+
+            // M-mode CSRs
+            // -----------
+            // mtvec
+            `CSR_ADDR_MTVEC: begin
+                mtvec   <= rs1_value_i;
             end
 
             default:;   // do not modify the CSR values

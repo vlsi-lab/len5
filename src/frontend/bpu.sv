@@ -59,11 +59,11 @@ module bpu #(
         .res_i            (comm_res_i     ),
         .hit_o            (btb_hit        ),
         .target_o         (btb_target     )
-        );
+    );
     
     // Assignments
-    assign btb_update     = comm_res_valid_i & comm_res_i.mispredict;
-    assign btb_del_entry  = comm_res_i.mispredict & ~comm_res_i.taken;
+    assign btb_update     = comm_res_valid_i;
+    assign btb_del_entry  = comm_res_i.mispredict & ~comm_res_i.taken; // Why delete?
     assign pred_o.pc      = curr_pc_i;
     assign pred_o.taken   = gshare_taken & btb_hit;
     assign pred_o.target  = {btb_target, 2'b00};

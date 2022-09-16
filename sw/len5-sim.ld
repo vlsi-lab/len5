@@ -28,7 +28,7 @@ SECTIONS
   PROVIDE(__uart_base = 0x100);
   /* Boot program counter (fixed entry point). The initial part of the ROM is
      used to store interrupt and exception vectors. */
-  PROVIDE(__boot_pc = 0x1000);
+  PROVIDE(__boot_pc = 0x10000);
   /* Define stack and heap size (used by custom crt0.s) */
   PROVIDE(__stack_size = 8M);
   PROVIDE(__heap_size = 256M);
@@ -75,9 +75,10 @@ SECTIONS
   /* DYNAMIC LINKING END */
   
   /* >>> CUSTOM START <<< */
-  /* Interrupts and exceptions vector table (64 instructions) */
+  /* Interrupts and exceptions vector table (64 jump instructions) */
   .irq_vector_table (ORIGIN(ROM)):
   {
+    . = ALIGN(4); /* per specs */
     PROVIDE (__vector_start = .);
     KEEP (*(.irq_vector_table));
   } > ROM

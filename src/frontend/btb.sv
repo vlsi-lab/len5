@@ -59,13 +59,13 @@ module btb
 
         // If a valid branch resolution arrives, update BTB
         if (valid_i) begin
-        if (del_entry_i) begin
-            btb_d[addr_w] = '0;
-        end else begin
-            btb_d[addr_w].valid = 'b1;
-            btb_d[addr_w].tag = tag_w;
-            btb_d[addr_w].target = res_i.target[XLEN-1:OFFSET];
-        end
+            if (del_entry_i) begin
+                btb_d[addr_w] = '0;
+            end else begin
+                btb_d[addr_w].valid = 1'b1;
+                btb_d[addr_w].tag = tag_w;
+                btb_d[addr_w].target = res_i.target[XLEN-1:OFFSET];
+            end
         end
     end
 

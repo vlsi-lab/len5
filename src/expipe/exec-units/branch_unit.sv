@@ -116,7 +116,7 @@ module branch_unit
     // Misprediction logic
     assign  wrong_target        = rs_bu_pred_target != res_target;
     assign  wrong_taken         = rs_bu_pred_taken != res_taken;
-    assign  res_mispredicted    = wrong_taken | wrong_target;
+    assign  res_mispredicted    = wrong_taken | (rs_bu_pred_taken & wrong_target);
 
     // Exception control
     // NOTE: as per specs, only instruction address misaligned can be generated
