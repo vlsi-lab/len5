@@ -33,11 +33,12 @@ module commit_cu (
     input   logic                   rst_n_i,
 
     // Commit logic <--> CU
-    input   comm_type_t             comm_type_i,    // from commit decoder
-    input   logic                   mispredict_i,   // branch misprediction
-    output  logic                   comm_reg_en_o,  // commit register enable
-    output  logic                   comm_reg_clr_o, // commit register clear
-    output  logic                   jb_instr_o,     // the committing instruction is a jump/branch 
+    input   comm_type_t             comm_type_i,      // from commit decoder
+    input   logic                   mispredict_i,     // branch misprediction
+    output  logic                   comm_reg_en_o,    // commit register enable
+    output  logic                   comm_reg_clr_o,   // commit register clear
+    output  comm_adder_ctl_t        comm_adder_ctl_o, // the committing instruction is a jump/branch 
+    output  comm_rd_sel_t           comm_rd_sel_o,    // rd is link address
 
     // ROB <--> CU
     input   logic                   valid_i,
@@ -69,6 +70,7 @@ module commit_cu (
     input   logic                   fe_ready_i,
     output  logic                   fe_res_valid_o,
     output  logic                   fe_bpu_flush_o,
+    output  logic                   fe_except_raised_o,
     output  logic                   mis_flush_o,    // flush after misprediction
     output  logic                   issue_resume_o  // resume after stall
 );
@@ -88,7 +90,6 @@ module commit_cu (
         COMMIT_BRANCH,      // commit correctly predicted branch instructions
         COMMIT_BRANCH_MIS,  // handle branch misprediction
         MIS_LOAD_PC,        // load correct PC after misprediction
-        CLEAR_COMM_REG,     // clear the commit register
         COMMIT_CSR,         // commit to CSRs
         COMMIT_FENCE,       // commit fence instructions
         COMMIT_ECALL,       // commit ECALL instructions
@@ -96,6 +97,8 @@ module commit_cu (
         COMMIT_XRET,        // commit xRET instructions
         COMMIT_WFI,         // wait for interrupt
         COMMIT_EXCEPT,      // handle the generated exception
+        EXCEPT_LOAD_PC,     // load exception handling program counter
+        CLEAR_COMM_REG,     // clear the commit register
         ISSUE_RESUME,       // resume execution after stall
 
         HALT                // dead-end state
@@ -190,12 +193,7 @@ module commit_cu (
             end
 
             // Commit jump with mispredition
-            // NOTE: go to idle since no instructions are committing in the
-            // next cycle.
-            COMMIT_JUMP_MIS: begin
-                if (fe_ready_i) next_state  = CLEAR_COMM_REG;
-                else            next_state  = MIS_LOAD_PC;
-            end
+            COMMIT_JUMP_MIS:    next_state  = MIS_LOAD_PC;
 
             // Correctly predicted branch: just commit
             COMMIT_BRANCH: begin
@@ -204,19 +202,13 @@ module commit_cu (
             end
 
             // Flush the in-flight instructions
-            COMMIT_BRANCH_MIS: begin
-                if (fe_ready_i) next_state  = CLEAR_COMM_REG;
-                else            next_state  = MIS_LOAD_PC;
-            end
+            COMMIT_BRANCH_MIS:  next_state  = MIS_LOAD_PC;
 
             // Load the correct PC and restart execution
             MIS_LOAD_PC: begin
                 if (fe_ready_i) next_state  = CLEAR_COMM_REG;
                 else            next_state  = MIS_LOAD_PC;
             end
-
-            // Clear the commit register and return to IDLE
-            CLEAR_COMM_REG:     next_state  = IDLE;
 
             // Atomically read and write CSRs
             COMMIT_CSR: begin
@@ -230,7 +222,18 @@ module commit_cu (
             COMMIT_EBREAK:      next_state  = IDLE;
             COMMIT_XRET:        next_state  = IDLE;
             COMMIT_WFI:         next_state  = IDLE;
-            COMMIT_EXCEPT:      next_state  = IDLE;
+
+            // Flush the in-flight instructions
+            COMMIT_EXCEPT:      next_state  = EXCEPT_LOAD_PC;
+            
+            // Load the exception handler PC
+            EXCEPT_LOAD_PC: begin
+                if (fe_ready_i) next_state  = CLEAR_COMM_REG;
+                else            next_state  = EXCEPT_LOAD_PC;
+            end
+
+            // Clear the commit register and return to IDLE
+            CLEAR_COMM_REG:     next_state  = IDLE;
 
             // Resume state
             ISSUE_RESUME:       next_state  = IDLE;
@@ -249,7 +252,8 @@ module commit_cu (
         ready_o             = 1'b0;
         comm_reg_en_o       = 1'b0;
         comm_reg_clr_o      = 1'b0;
-        jb_instr_o          = 1'b0;
+        comm_adder_ctl_o    = COMM_ADDER_CTL_LINK;
+        comm_rd_sel_o       = COMM_RD_SEL_RES;
         int_rs_valid_o      = 1'b0;
         int_rf_valid_o      = 1'b0;
     `ifdef LEN5_FP_EN
@@ -261,6 +265,7 @@ module commit_cu (
         csr_type_o          = CSR_INSTR;
         fe_res_valid_o      = 1'b0; // must be asserted for exactly one cycle
         fe_bpu_flush_o      = 1'b0; // TODO: is this needed on context switch only?
+        fe_except_raised_o  = 1'b0;
         mis_flush_o         = 1'b0;
         issue_resume_o      = 1'b0;
 
@@ -268,70 +273,69 @@ module commit_cu (
             RESET:; // default
 
             IDLE: begin
-                ready_o         = 1'b1;
-                comm_reg_en_o   = 1'b1;
+                ready_o             = 1'b1;
+                comm_reg_en_o       = 1'b1;
             end
 
             COMMIT_INT_RF: begin
-                ready_o         = 1'b1;
-                int_rs_valid_o  = 1'b1;
-                int_rf_valid_o  = 1'b1;
-                comm_reg_en_o   = 1'b1;
+                ready_o             = 1'b1;
+                int_rs_valid_o      = 1'b1;
+                int_rf_valid_o      = 1'b1;
+                comm_reg_en_o       = 1'b1;
             end
 
         `ifdef LEN5_FP_EN
             COMMIT_FP_RF: begin
-                ready_o         = 1'b1;
-                fp_rs_valid_o   = 1'b1;
-                fp_rf_valid_o   = 1'b1;
-                comm_reg_en_o   = 1'b1;
+                ready_o             = 1'b1;
+                fp_rs_valid_o       = 1'b1;
+                fp_rf_valid_o       = 1'b1;
+                comm_reg_en_o       = 1'b1;
             end
         `endif /* LEN5_FP_EN */
 
             COMMIT_STORE: begin
-                ready_o         = 1'b1;
-                comm_reg_en_o   = 1'b1;
+                ready_o             = 1'b1;
+                comm_reg_en_o       = 1'b1;
             end
 
             COMMIT_JUMP: begin
-                ready_o         = 1'b1;
-                int_rs_valid_o  = 1'b1;
-                int_rf_valid_o  = 1'b1;
-                comm_reg_en_o   = 1'b1;
-                jb_instr_o      = 1'b1;
-                fe_res_valid_o  = 1'b1;
+                ready_o             = 1'b1;
+                int_rs_valid_o      = 1'b1;
+                int_rf_valid_o      = 1'b1;
+                comm_reg_en_o       = 1'b1;
+                fe_res_valid_o      = 1'b1;
+                comm_rd_sel_o       = COMM_RD_SEL_LINK;
             end
 
             COMMIT_JUMP_MIS: begin
-                int_rs_valid_o  = 1'b1;
-                int_rf_valid_o  = 1'b1;
-                jb_instr_o      = 1'b1;
-                mis_flush_o     = 1'b1;
+                int_rs_valid_o      = 1'b1;
+                int_rf_valid_o      = 1'b1;
+                mis_flush_o         = 1'b1;
+                comm_rd_sel_o       = COMM_RD_SEL_LINK;
             end
 
             COMMIT_BRANCH: begin
-                ready_o         = 1'b1;
-                comm_reg_en_o   = 1'b1;
-                jb_instr_o      = 1'b1;
-                fe_res_valid_o  = 1'b1;
+                ready_o             = 1'b1;
+                comm_reg_en_o       = 1'b1;
+                fe_res_valid_o      = 1'b1;
             end
             
             COMMIT_BRANCH_MIS: begin
-                jb_instr_o      = 1'b1;
-                mis_flush_o     = 1'b1;
+                mis_flush_o         = 1'b1;
             end
 
             MIS_LOAD_PC: begin
-                fe_res_valid_o  = 1'b1;
+                fe_res_valid_o      = 1'b1;
             end
 
             CLEAR_COMM_REG: begin
-                comm_reg_clr_o  = 1'b1;
+                comm_reg_clr_o      = 1'b1;
             end
 
             COMMIT_CSR: begin
-                csr_valid_o     = 1'b1;
-                comm_reg_en_o   = 1'b1;
+                csr_valid_o         = 1'b1;
+                comm_reg_en_o       = 1'b1;
+                comm_rd_sel_o       = COMM_RD_SEL_CSR;
             end
 
             /* TODO: properly handle the following instructions */
@@ -350,8 +354,14 @@ module commit_cu (
             COMMIT_WFI: begin
                 comm_reg_en_o   = 1'b1;
             end
+
             COMMIT_EXCEPT: begin
-                comm_reg_en_o   = 1'b1;
+                mis_flush_o     = 1'b1;
+            end
+
+            EXCEPT_LOAD_PC: begin
+                fe_except_raised_o  = 1'b1;
+                comm_adder_ctl_o    = COMM_ADDER_CTL_EXCEPT;
             end
 
             ISSUE_RESUME: begin

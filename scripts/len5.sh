@@ -65,7 +65,6 @@ print_usage() {
     printf -- "\n"
     printf -- "General:\n"
     printf -- "-h:      print this message and exit.\n"
-    printf -- "-l:      print command line arguments and exit.\n"
     printf -- "-B DIR:  use DIR as simulation working directory.\n"
     printf -- "-g FILE: auto-generate compile-and-run script FILE.\n"
     printf -- "-r STR:  compile [and simulate] on a remote server.\n"
@@ -80,17 +79,18 @@ print_usage() {
     printf -- "-t:      shortcut for '-b tb' (also compile testbench).\n"
     printf -- "-n:      compile dry run (pass '-n' to make).\n"
     printf -- "-f OPTS: add OPTS to 'vlog' command-line arguments.\n"
-    printf -- "-w LIB:  use custom library path LIB.\n"
+    printf -- "-l LIB:  use custom library path LIB.\n"
     printf -- "\n"
     printf -- "Simulation (ignored with '-c'):\n"
     printf -- "-s:      launch simulation after compilation.\n"
     printf -- "-T:      list available tests (alias for '-b print-tests').\n"
     printf -- "-m TEST: compile and simulate TEST (see -T).\n"
-    printf -- "-W FILE: load waveforms from FILE.\n"
+    printf -- "-W FILE: load waveforms from FILE. Implies '-x'.\n"
     printf -- "-N NUM:  simulate NUM cycles; infinite if 0. Default: %d.\n" $NUM_CYCLES
     printf -- "-x:      launch simulation with GUI (ignores '-o').\n"
     printf -- "-o:      remove '-voptargs=+acc' from simulation options.\n"
     printf -- "-p FILE: pass '-do FILE' to the simulator AFTER the 'run' command.\n"
+    printf -- "-v LVL:  set UVM verbosity level to NUM (accepted: [0:5])"
 }
 
 # Log message
@@ -161,14 +161,11 @@ function clean_up() {
 
 # Parse command line options
 # --------------------------
-while getopts ':hlB:g:rLR:dDb:atnf:w:isTm:W:N:xop:' opt; do
+while getopts ':hB:g:rLR:dDb:atnf:l:isTm:W:N:xop:v:' opt; do
     case $opt in
         h) # Print usage message
             print_usage
             exit 0
-            ;;
-        l) # print command line arguments
-            PRINT_CMD_LINE=1
             ;;
         B) # Change simulation working directory
             BUILD_DIR="$OPTARG"
@@ -207,7 +204,7 @@ while getopts ':hlB:g:rLR:dDb:atnf:w:isTm:W:N:xop:' opt; do
         f) # add compilation options to 'vlog' command line
             VLOG_ARGS="$VLOG_ARGS $OPTARG"
             ;;
-        w) # Use custom library
+        l) # Use custom library
             VLIB_PATH=$OPTARG
             ;;
         s) # Launch simulation
@@ -221,21 +218,24 @@ while getopts ':hlB:g:rLR:dDb:atnf:w:isTm:W:N:xop:' opt; do
             BUILD_TARGET="tb tests/$TEST_NAME"
             LAUNCH_SIM=1
             ;;
-        W) # add simulation options
+        W) # pass macro to simulator
             WAVE_FILE="$OPTARG"
+            VSIM_GUI=1
             ;;
         N) # set the number of simulation cycles
             NUM_CYCLES=$OPTARG
             ;;
         x) # Launch simulation with GUI
             VSIM_GUI=1
-            SSH_OPT="-Y $SSH_OPT"
             ;;
         o) # Remove -voptargs=+acc from simulation options
             VSIM_DISABLE_OPT=0
             ;;
         p) # pass '-do FILE' to the simulator AFTER the 'run' command
             POST_SIM_SCRIPT="$OPTARG"
+            ;;
+        v) # Set UVM verbosity level [0:5]
+            UVM_VERBOSITY=$OPTARG
             ;;
         *) # Invalid option
             print_usage "invalid option"
@@ -275,7 +275,6 @@ if [ $PRINT_CMD_LINE -ne 0 ]; then
     for arg in $CMD_LINE; do
         log "\t%s" "$arg"
     done
-    exit 0
 fi
 
 # REMOTE EXECUTION
@@ -296,8 +295,9 @@ if [ $REMOTE_EXEC -ne 0 -a $FORCE_LOCAL_EXEC -eq 0 ]; then
             ;;
     esac
 
-    # Prepare remote directories
+    # Prepare remote directories and SSH options
     remote_and_log "mkdir -p $REMOTE_ROOT_DIR"
+    [ $VSIM_GUI -ne 0 ] && SSH_OPT="-Y $SSH_OPT"
 
     # Copy files to remote server
     log "Copying LEN5 files to '%s'..." "$REMOTE_HOST"
@@ -313,8 +313,9 @@ if [ $REMOTE_EXEC -ne 0 -a $FORCE_LOCAL_EXEC -eq 0 ]; then
     # Retrieve files
     if [ $LAUNCH_SIM -ne 0 ]; then
         log "Retrieving files from '%s'...\n" "$REMOTE_HOST"
+        mkdir -p $HW_BUILD_DIR
         rsync -e "ssh $SSH_OPT" $RSYNC_OPT $REMOTE_USER@$REMOTE_HOST:$REMOTE_ROOT_DIR/sim/*.do $LEN5_ROOT_DIR/sim/
-        rsync -e "ssh $SSH_OPT" $RSYNC_OPT $REMOTE_USER@$REMOTE_HOST:$REMOTE_ROOT_DIR/build/hw $LEN5_ROOT_DIR/build
+        rsync -e "ssh $SSH_OPT" $RSYNC_OPT $REMOTE_USER@$REMOTE_HOST:$REMOTE_ROOT_DIR/build/hw/{*.txt,*.do} $HW_BUILD_DIR/
     fi
 
     # Exit
@@ -411,6 +412,18 @@ TOP_MODULE=${TOP_MODULE%.*}
 # Run the simulation
 log "Launching simulation of top module '%s'..." "$TOP_MODULE"
 
+# Set UVM verbosity macro
+case $UVM_VERBOSITY in
+    0) UVM_VERBOSITY=UVM_NONE;;
+    1) UVM_VERBOSITY=UVM_LOW;;
+    2) UVM_VERBOSITY=UVM_MEDIUM;;
+    3) UVM_VERBOSITY=UVM_HIGH;;
+    4) UVM_VERBOSITY=UVM_FULL;;
+    5) UVM_VERBOSITY=UVM_DEBUG;;
+    *) UVM_VERBOSITY=UVM_MEDIUM;;
+esac
+# SIM_OPT="$SIM_OPT +UVM_VERBOSITY=$UVM_VERBOSITY"
+
 # Assemble the simulation script
 log "- assembling simulation script '%s'..." "${SIM_MACRO}"
 if [ $VSIM_GUI -ne 0 ]; then 
@@ -421,7 +434,7 @@ else
 fi
 [ $VSIM_DISABLE_OPT -ne 0 ] && SIM_OPT="-voptargs=+acc $SIM_OPT"
 if [ ! -z ${TEST_NAME+x} ]; then
-    MEM_FILE=$BUILD_DIR/sw/tests/mem/$TEST_NAME.mem
+    MEM_FILE=$BUILD_DIR/sw/tests/mem/$TEST_NAME.img
     [ -f $MEM_FILE ] || err "Cannot find '%s'" $MEM_FILE
     SIM_OPT="$SIM_OPT +MEM_FILE=$MEM_FILE"
 fi

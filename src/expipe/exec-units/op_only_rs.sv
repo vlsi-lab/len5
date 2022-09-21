@@ -67,7 +67,7 @@ module op_only_rs
     } rs_entry_t;
 
     // Reservation station pointers
-    logic [RS_IDX_LEN-1:0]      tail_idx, ex_idx, head_idx, wr_res_idx; 
+    logic [RS_IDX_LEN-1:0]      head_idx, tail_idx; 
 
     // Head, ex and tail counters
     logic                       head_cnt_en, head_cnt_clr, tail_cnt_en, tail_cnt_clr;
@@ -208,16 +208,6 @@ module op_only_rs
         .en_i       (tail_cnt_en),
         .clr_i      (tail_cnt_clr),
         .count_o    (tail_idx),
-        .tc_o       ()              // Not needed
-    );
-
-    modn_counter #(.N(RS_DEPTH)) wr_res_counter
-    (
-        .clk_i      (clk_i),
-        .rst_n_i    (rst_n_i),
-        .en_i       (wr_res_cnt_en),
-        .clr_i      (wr_res_cnt_clr),
-        .count_o    (wr_res_idx),
         .tc_o       ()              // Not needed
     );
 

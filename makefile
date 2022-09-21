@@ -30,7 +30,7 @@ TB_SRCS 		:= 	$(ROOT)/tb/tb_with_l2cemu.sv \
 					$(ROOT)/tb/memory/cache_L2_system_emulator.sv \
 					$(ROOT)/tb/memory/memory_if.sv \
 					$(ROOT)/tb/memory/memory_bare_emu.sv
-TB_INCS			:= 	$(shell find $(ROOT)/src/ $(ROOT)/include/ -type f -name "*.svh")
+TB_INCS			:= 	$(shell find $(ROOT)/src/ $(ROOT)/include/ $(ROOT)/tb/ -type f -name "*.svh")
 ifdef CUSTOM_SRC_DIR
 CUSTOM_PKGS		?= 	$(shell grep --include=\*.sv -rlE "^package \w+;" $(CUSTOM_SRC_DIR))
 CUSTOM_SRCS 	?=	$(shell find $(CUSTOM_SRC_DIR) -type f -name '*.sv')

@@ -19,13 +19,12 @@ import uvm_pkg::*;
 // LEN5 compilation switches
 `include "len5_config.svh"
 `include "instr_macros.svh"
+`include "csr_macros.svh"
 
 import expipe_pkg::*;
 import len5_pkg::*;
 import fetch_pkg::resolution_t;
-import csr_pkg::csr_instr_t;
-import csr_pkg::CSR_ADDR_LEN;
-import csr_pkg::CSR_INSTR;
+import csr_pkg::*;
 
 module commit_stage (
 	input   logic                       clk_i,
@@ -83,8 +82,9 @@ module commit_stage (
     // CSRs
     output  logic                       csr_valid_o,
     input   logic                       csr_ready_i,
-    input   logic [XLEN-1:0]            csr_data_i,
+    input   csr_t                       csr_data_i,
     input   logic                       csr_acc_exc_i,      // CSR illegal instruction or access permission denied
+    input   csr_mtvec_t                 csr_mtvec_i,    // mtvec data 
     output  csr_instr_t                 csr_instr_type_o,
     output  logic [FUNCT3_LEN-1:0]      csr_funct3_o,
     output  logic [CSR_ADDR_LEN-1:0]    csr_addr_o,
@@ -134,14 +134,17 @@ module commit_stage (
     inreg_data_t                comm_reg_data;
     logic                       comm_reg_valid;
 
-    // Jump adder and MUX
-    logic [XLEN-1:0]            link_addr;
+    // Commit adder
+    comm_adder_ctl_t            cu_adder_ctl;
+    logic [XLEN-1:0]            adder_a, adder_b, adder_out;
+
+    // rd MUX
+    comm_rd_sel_t               cu_rd_mux_sel;
     logic [XLEN-1:0]            rd_value;
 
     // commit CU <--> others
     logic                       cu_instr_valid;
     logic                       cu_csr_type;
-    logic                       cu_jb_instr;
     logic                       cu_mis_flush;
 
     // In-flight jump/branch instructions counter
@@ -301,7 +304,8 @@ module commit_stage (
         .mispredict_i       (inreg_cu_mispredicted  ),
         .comm_reg_en_o      (comm_reg_en            ),
         .comm_reg_clr_o     (comm_reg_clr           ),
-        .jb_instr_o         (cu_jb_instr            ),
+        .comm_adder_ctl_o   (cu_adder_ctl           ),
+        .comm_rd_sel_o      (cu_rd_mux_sel          ),
         .valid_i            (inreg_cu_valid         ),
         .ready_o            (cu_inreg_ready         ),
         .instr_i            (inreg_data_out.data.instruction),
@@ -315,24 +319,48 @@ module commit_stage (
         .fp_rf_valid_o      (fp_rf_valid_o          ),
     `endif /* LEN5_FP_EN */
         .sb_exec_store_o    (sb_exec_store_o        ),
+        .csr_ready_i        (csr_ready_i            ),
         .csr_valid_o        (csr_valid_o            ),
         .csr_type_o         (csr_instr_type_o       ),
         .fe_ready_i         (fe_ready_i             ),
         .fe_res_valid_o     (fe_res_valid_o         ),
         .fe_bpu_flush_o     (fe_bpu_flush_o         ),
+        .fe_except_raised_o (fe_except_raised_o     ),
         .mis_flush_o        (cu_mis_flush           ),
-        .issue_resume_o     (issue_resume_o            )
+        .issue_resume_o     (issue_resume_o         )
     );
 
-    // Jump commit adder and MUX
-    // -------------------------
-    /* TODO: resuse this adder for vectored exceptions */
-    assign  link_addr       = comm_reg_data.data.instr_pc + (ILEN >> 3);
-    assign  rd_value        = (cu_jb_instr) ? link_addr : comm_reg_data.data.res_value;
+    // Commit adder
+    // ------------
+
+    // Commit adder operand MUX's
+    always_comb begin : comm_adder_mux
+        case (cu_adder_ctl)
+            COMM_ADDER_CTL_LINK: begin // compute link address
+                adder_a     = comm_reg_data.data.instr_pc;
+                adder_b     = ILEN >> 3;
+            end
+            COMM_ADDER_CTL_EXCEPT: begin // compute exception PC
+                adder_a     = csr_mtvec_i.base; // exc. vector base address
+                adder_b     = (csr_mtvec_i.mode == 0) ? 'h0 : comm_reg_data.data.except_code;
+            end
+            default: begin
+                adder_a     = 'h0;
+                adder_b     = 'h0;
+            end
+        endcase
+    end
+
+    // Commit adder output
+    assign  adder_out   = adder_a + adder_b;
+
+    // rd MUX
+    // ------
+    assign  rd_value    = (cu_adder_ctl == COMM_ADDER_CTL_LINK) ? adder_out : comm_reg_data.data.res_value;
 
     // Jump/branch in-flight instructions counter
     // ------------------------------------------
-    assign  jb_instr_cnt_en     = issue_jb_instr_i ^ cu_jb_instr; 
+    assign  jb_instr_cnt_en     = issue_jb_instr_i ^ cu_adder_ctl; 
     assign  jb_instr_cnt_clr    = cu_mis_flush;
     assign  jb_instr_cnt_up     = issue_jb_instr_i;
     updown_counter #(
@@ -356,8 +384,7 @@ module commit_stage (
     assign  fe_res_o.target     = comm_reg_data.data.res_value;  // computed target address
     assign  fe_res_o.taken      = comm_reg_data.data.res_aux.jb.taken;
     assign  fe_res_o.mispredict = comm_reg_data.data.res_aux.jb.mispredicted;
-    assign  fe_except_raised_o  = comm_reg_data.data.except_raised;
-    assign  fe_except_pc_o      = 64'hffffffffffffffff; // TODO: add proper exception handling
+    assign  fe_except_pc_o      = adder_out;
 
     assign  rs_head_idx_o       = rob_reg_head_idx;
 

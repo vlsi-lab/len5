@@ -162,7 +162,8 @@ class memory_class #(
     function int ReadB(logic [AWIDTH-1:0] addr);
         // Search the byte in memory
         if (!this.mem.exists(addr)) begin
-            `uvm_error("MEMREAD", $sformatf("Cannot find byte at address 0x%h", addr));
+            `uvm_warning("MEM READ", $sformatf("Reading uninitialized byte at address 0x%h", addr));
+            this.read_byte = '0;
             return 2;
         end
 
@@ -179,7 +180,7 @@ class memory_class #(
 
         // Check address alignment
         if (addr[0] != 1'b0) begin
-            `uvm_error("MISALIGNED", $sformatf("Halfword address 0x%h is NOT aligned on 16 bits", addr))
+            `uvm_error("MEM READ", $sformatf("Halfword address 0x%h is NOT aligned on 16 bits", addr))
             return 1; // exit
         end
 
@@ -189,18 +190,12 @@ class memory_class #(
 
             // Read current byte
             ret     = this.ReadB(baddr);
-            if (ret != 0) begin
-                `uvm_error("MEM ACCESS", $sformatf("Unable to find halfword at %h", addr));
-                return ret;
-            end
-
-            // Save current byte
             hw [BWIDTH*(i+1)-1-:BWIDTH] = this.read_byte;
         end
 
         // Save the requested halfword
         this.read_halfword  = hw;
-        return 0;
+        return ret;
     endfunction: ReadHW
 
     // Read a word
@@ -211,7 +206,7 @@ class memory_class #(
 
         // Check address alignment
         if (addr[1:0] != 2'b00) begin
-            `uvm_error("MISALIGNED", $sformatf("Word address 0x%h is NOT aligned on 32 bits", addr))
+            `uvm_error("MEM READ", $sformatf("Word address 0x%h is NOT aligned on 32 bits", addr))
             return 1; // exit
         end
 
@@ -221,18 +216,12 @@ class memory_class #(
 
             // Read current byte
             ret     = this.ReadB(baddr);
-            if (ret != 0) begin
-                `uvm_error("MEM ACCESS", $sformatf("Unable to find word at %h", addr));
-                return ret;
-            end
-
-            // Save current byte
             w [BWIDTH*(i+1)-1-:BWIDTH] = this.read_byte;
         end
 
         // Save the requested word
         this.read_word  = w;
-        return 0;
+        return ret;
     endfunction: ReadW
 
     // Read a doubleword
@@ -243,7 +232,7 @@ class memory_class #(
 
         // Check address alignment
         if (addr[2:0] != 3'b000) begin
-            `uvm_error("MISALIGNED", $sformatf("Doubleword address 0x%h is NOT aligned on 64 bits", addr))
+            `uvm_error("MEM READ", $sformatf("Doubleword address 0x%h is NOT aligned on 64 bits", addr))
             return 1; // exit
         end
 
@@ -253,18 +242,12 @@ class memory_class #(
 
             // Read current byte
             ret     = this.ReadB(baddr);
-            if (ret != 0) begin
-                `uvm_error("MEM ACCESS", $sformatf("Unable to find doubleword at %h", addr));
-                return ret;
-            end
-
-            // Save current byte
             dw [BWIDTH*(i+1)-1-:BWIDTH] = this.read_byte;
         end
 
         // Save the requested word
         this.read_doubleword  = dw;
-        return 0;
+        return ret;
     endfunction: ReadDW
 
     // Read a line
@@ -275,7 +258,7 @@ class memory_class #(
 
         // Check address alignment
         if (addr[5:0] != 9'b000000) begin
-            `uvm_error("MISALIGNED", $sformatf("Line address 0x%h is NOT aligned on 512 bits", addr))
+            `uvm_error("MEM READ", $sformatf("Line address 0x%h is NOT aligned on 512 bits", addr))
             return 1; // exit
         end
 
@@ -285,18 +268,12 @@ class memory_class #(
 
             // Read current byte
             ret     = this.ReadB(baddr);
-            if (ret != 0) begin
-                `uvm_error("MEM ACCESS", $sformatf("Unable to find line at %h", addr));
-                return ret;
-            end
-
-            // Save current byte
             l [BWIDTH*(i+1)-1-:BWIDTH] = this.read_byte;
         end
 
         // Save the requested word
         this.read_line  = l;
-        return 0;
+        return ret;
     endfunction: ReadLine
 
     // WRITE FUNCTIONS
@@ -319,7 +296,7 @@ class memory_class #(
 
         // Check address alignment
         if (addr[0] != 1'b0) begin
-            `uvm_error("MISALIGNED", $sformatf("Halfword address 0x%h is NOT aligned on 16 bits", addr))
+            `uvm_error("MEM WRITE", $sformatf("Halfword address 0x%h is NOT aligned on 16 bits", addr))
             return 1; // exit
         end
 
@@ -338,7 +315,7 @@ class memory_class #(
 
         // Check address alignment
         if (addr[1:0] != 2'b00) begin
-            `uvm_error("MISALIGNED", $sformatf("Word address 0x%h is NOT aligned on 32 bits", addr))
+            `uvm_error("MEM WRITE", $sformatf("Word address 0x%h is NOT aligned on 32 bits", addr))
             return 1; // exit
         end
 
@@ -357,7 +334,7 @@ class memory_class #(
 
         // Check address alignment
         if (addr[2:0] != 3'b000) begin
-            `uvm_error("MISALIGNED", $sformatf("Doubleword address 0x%h is NOT aligned on 64 bits", addr))
+            `uvm_error("MEM WRITE", $sformatf("Doubleword address 0x%h is NOT aligned on 64 bits", addr))
             return 1; // exit
         end
 
@@ -376,7 +353,7 @@ class memory_class #(
 
         // Check address alignment
         if (addr[5:0] != 9'b000000) begin
-            `uvm_error("MISALIGNED", $sformatf("Line address 0x%h is NOT aligned on 512 bits", addr))
+            `uvm_error("MEM WRITE", $sformatf("Line address 0x%h is NOT aligned on 512 bits", addr))
             return 1; // exit
         end
 

@@ -2,19 +2,19 @@ onerror {resume}
 quietly WaveActivateNextPane {} 0
 add wave -noupdate /tb_bare/u_datapath/clk_i
 add wave -noupdate /tb_bare/u_datapath/rst_n_i
-add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/mem_flush_o
-add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/ins_mem_valid_i
-add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/ins_mem_ready_i
-add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/ins_mem_valid_o
-add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/ins_mem_ready_o
-add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/ins_mem_ans_i
-add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/ins_mem_req_o
-add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/data_mem_valid_i
-add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/data_mem_ready_i
-add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/data_mem_valid_o
-add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/data_mem_ready_o
-add wave -noupdate -expand -group DATAPATH /tb_bare/u_datapath/data_mem_ans_i
-add wave -noupdate -expand -group DATAPATH -expand /tb_bare/u_datapath/data_mem_req_o
+add wave -noupdate -group DATAPATH /tb_bare/u_datapath/mem_flush_o
+add wave -noupdate -group DATAPATH /tb_bare/u_datapath/ins_mem_valid_i
+add wave -noupdate -group DATAPATH /tb_bare/u_datapath/ins_mem_ready_i
+add wave -noupdate -group DATAPATH /tb_bare/u_datapath/ins_mem_valid_o
+add wave -noupdate -group DATAPATH /tb_bare/u_datapath/ins_mem_ready_o
+add wave -noupdate -group DATAPATH /tb_bare/u_datapath/ins_mem_ans_i
+add wave -noupdate -group DATAPATH /tb_bare/u_datapath/ins_mem_req_o
+add wave -noupdate -group DATAPATH /tb_bare/u_datapath/data_mem_valid_i
+add wave -noupdate -group DATAPATH /tb_bare/u_datapath/data_mem_ready_i
+add wave -noupdate -group DATAPATH /tb_bare/u_datapath/data_mem_valid_o
+add wave -noupdate -group DATAPATH /tb_bare/u_datapath/data_mem_ready_o
+add wave -noupdate -group DATAPATH /tb_bare/u_datapath/data_mem_ans_i
+add wave -noupdate -group DATAPATH -expand /tb_bare/u_datapath/data_mem_req_o
 add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/flush_i
 add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/flush_bpu_i
 add wave -noupdate -expand -group {FETCH STAGE} /tb_bare/u_datapath/u_fetch_stage/mem_valid_i
@@ -106,8 +106,21 @@ add wave -noupdate -group {ISSUE LOGIC} /tb_bare/u_datapath/u_backend/u_issue_st
 add wave -noupdate -group {ISSUE LOGIC} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/comm_rs2_rob_idx_o
 add wave -noupdate -group {ISSUE LOGIC} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/comm_rs2_ready_i
 add wave -noupdate -group {ISSUE LOGIC} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/comm_rs2_value_i
-add wave -noupdate -group {ISSUE LOGIC} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/id_stall_possible
-add wave -noupdate -group {ISSUE LOGIC} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/eh_stall_possible
+add wave -noupdate -group {ISSUE LOGIC} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/u_issue_decoder/instruction_i
+add wave -noupdate -group {ISSUE LOGIC} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/u_issue_decoder/except_raised_o
+add wave -noupdate -group {ISSUE LOGIC} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/u_issue_decoder/except_code_o
+add wave -noupdate -group {ISSUE LOGIC} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/u_issue_decoder/res_ready_o
+add wave -noupdate -group {ISSUE LOGIC} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/u_issue_decoder/stall_o
+add wave -noupdate -group {ISSUE LOGIC} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/u_issue_decoder/eu_o
+add wave -noupdate -group {ISSUE LOGIC} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/u_issue_decoder/eu_ctl_o
+add wave -noupdate -group {ISSUE LOGIC} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/u_issue_decoder/fp_rs_o
+add wave -noupdate -group {ISSUE LOGIC} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/u_issue_decoder/rs1_req_o
+add wave -noupdate -group {ISSUE LOGIC} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/u_issue_decoder/rs1_is_pc_o
+add wave -noupdate -group {ISSUE LOGIC} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/u_issue_decoder/rs2_req_o
+add wave -noupdate -group {ISSUE LOGIC} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/u_issue_decoder/rs2_is_imm_o
+add wave -noupdate -group {ISSUE LOGIC} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/u_issue_decoder/imm_format_o
+add wave -noupdate -group {ISSUE LOGIC} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/u_issue_decoder/regstat_upd_o
+add wave -noupdate -group {ISSUE LOGIC} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_logic/u_issue_decoder/jb_instr_o
 add wave -noupdate -group {LOAD STORE UNIT} /tb_bare/u_datapath/u_backend/u_exec_stage/u_load_store_unit/flush_i
 add wave -noupdate -group {LOAD STORE UNIT} /tb_bare/u_datapath/u_backend/u_exec_stage/u_load_store_unit/issue_lb_valid_i
 add wave -noupdate -group {LOAD STORE UNIT} /tb_bare/u_datapath/u_backend/u_exec_stage/u_load_store_unit/issue_sb_valid_i
@@ -423,7 +436,7 @@ add wave -noupdate -group {MEM EMU} /tb_bare/u_memory_bare_emu/data_pipe_valid
 add wave -noupdate -group {MEM EMU} /tb_bare/u_memory_bare_emu/ins_pipe_reg
 add wave -noupdate -group {MEM EMU} /tb_bare/u_memory_bare_emu/data_pipe_reg
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {1970 ns} 0}
+WaveRestoreCursors {{Cursor 1} {4450 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 197
 configure wave -valuecolwidth 154
@@ -439,4 +452,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {1420 ns} {2510 ns}
+WaveRestoreZoom {3905 ns} {4995 ns}

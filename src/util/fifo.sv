@@ -136,27 +136,30 @@ module fifo #(
     // ----------
     `ifndef SYNTHESIS
     property p_fifo_push;
-        @(posedge clk_i) disable iff (!rst_n_i || flush_i)
+        @(posedge clk_i) disable iff (!rst_n_i)
+        sync_accept_on(flush_i)
         valid_i && ready_o |-> ##1
-        valid_o ##0
-        data_valid[$past(tail_cnt)] == 1'b1 ##0
-        data[$past(tail_cnt)] == $past(data_i);
+            valid_o &&
+            data_valid[$past(tail_cnt)] == 1'b1 &&
+            data[$past(tail_cnt)] == $past(data_i);
     endproperty
     a_fifo_push: assert property (p_fifo_push)
     else $error("valid_o: %b | past data_valid: %b | past data: %h | past data_i: %h", valid_o, data_valid[$past(tail_cnt)], data[$past(tail_cnt)], $past(data_i));
 
     property p_fifo_pop;
-        @(posedge clk_i) disable iff (!rst_n_i || flush_i)
+        @(posedge clk_i) disable iff (!rst_n_i)
+        sync_accept_on(flush_i)
         valid_o && ready_i |-> ##1
-        ready_o == 1'b1 ##0
-        data_valid[$past(head_cnt)] == 1'b0;
+            ready_o == 1'b1 &&
+            data_valid[$past(head_cnt)] == 1'b0;
     endproperty
     a_fifo_pop: assert property (p_fifo_pop);
 
     property p_ready_n;
-        @(posedge clk_i) disable iff (!rst_n_i || flush_i)
+        @(posedge clk_i) disable iff (!rst_n_i)
+        sync_accept_on(flush_i)
         !ready_i && valid_o |-> ##1
-        valid_o;
+            valid_o;
     endproperty
     a_ready_n: assert property (p_ready_n);
     `endif /* SYNTHESIS */

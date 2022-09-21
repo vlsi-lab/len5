@@ -178,43 +178,52 @@ module rob #(
     // ----------
     `ifndef SYNTHESIS
     property p_fifo_push;
-        @(posedge clk_i) disable iff (!rst_n_i || flush_i)
+        @(posedge clk_i) disable iff (!rst_n_i)
+        sync_accept_on(flush_i)
         issue_valid_i && issue_ready_o |-> ##1
-        //tail_idx == $past(tail_idx) + 1 ##0
-        data_valid[$past(tail_idx)] == 1'b1 ##0
-        data[$past(tail_idx)] == $past(issue_data_i);
+            data_valid[$past(tail_idx)] == 1'b1 &&
+            data[$past(tail_idx)] == $past(issue_data_i);
     endproperty
     a_fifo_push: assert property (p_fifo_push)
     else $error("%t: issue_valid_i: %b | past data_valid: %b | tail_idx: %h | past tail_idx: %h", $time, issue_valid_i, data_valid[$past(tail_idx)], tail_idx, $past(tail_idx));
 
     property p_fifo_pop;
-        @(posedge clk_i) disable iff (!rst_n_i || flush_i)
+        @(posedge clk_i) disable iff (!rst_n_i)
+        sync_accept_on(flush_i)
         comm_valid_o && comm_ready_i |-> ##1
-        issue_ready_o == 1'b1 ##0
-        data_valid[$past(head_idx)] == 1'b0;
+            issue_ready_o == 1'b1 &&
+            data_valid[$past(head_idx)] == 1'b0;
     endproperty
     a_fifo_pop: assert property (p_fifo_pop);
 
     property p_ready_n;
-        @(posedge clk_i) disable iff (!rst_n_i || flush_i)
+        @(posedge clk_i) disable iff (!rst_n_i)
+        sync_accept_on(flush_i) 
         !comm_ready_i && comm_valid_o |=>
-        comm_valid_o;
+            comm_valid_o;
     endproperty
     a_ready_n: assert property (p_ready_n);
 
     property p_push_pop;
         @(posedge clk_i) disable iff (!rst_n_i)
         fifo_push && fifo_pop |->
-        head_idx != tail_idx;
+            head_idx != tail_idx;
     endproperty
     a_push_pop: assert property (p_push_pop);
 
     property p_cdb_valid;
         @(posedge clk_i) disable iff (!rst_n_i)
         cdb_valid_i |->
-        data_valid[cdb_data_i.rob_idx];
+            data_valid[cdb_data_i.rob_idx];
     endproperty
     a_cdb_valid: assert property (p_cdb_valid);
+
+    property p_flush;
+        @(posedge clk_i) disable iff (!rst_n_i)
+        $rose(flush_i) |=>
+            comm_valid_o == 1'b0 && issue_ready_o == 1'b1;
+    endproperty
+    a_flush: assert property (p_flush);
     `endif /* SYNTHESIS */
 
 endmodule

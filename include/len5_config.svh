@@ -22,11 +22,20 @@
 // Boot memory translation mode
 `define BOOT_VM_MODE BARE // BARE|SV39|SV48
 
+// Boot program counter
+`define BOOT_PC 'h10000
+
+// Serial interface base address
+`define SERIAL_ADDR 'h100
+
+// MEMORY EMULATOR PARAMETERS
+// --------------------------
+
+// Raise access fault on load from empty (uninitialized) memory location
+//`define MEM_EMU_RAISE_READ_ACCESS_FAULT
+
 // FRONTEND PARAMETERS
 // -------------------
-
-// Boot program counter
-`define BOOT_PC 'h800f8
 
 // BPU g-share predictor global history length
 `define BPU_HLEN 4
@@ -58,7 +67,7 @@
 // must be enabled (i.e., not skipped). Therefore, at least one of the 
 // following switches must be commented in this case.
 `define SKIP_FETCH_MEMIF_REQ_SPILL_CELL // memory requests from the fetch unit are directly passed to the memory
-// `define SKIP_FETCH_MEMIF_ANS_SPILL_CELL // fetched instructions are directly passed to the issue stage 
+//`define SKIP_FETCH_MEMIF_ANS_SPILL_CELL // fetched instructions are directly passed to the issue stage 
 
 // EXECUTION PIPELINE
 // ------------------

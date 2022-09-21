@@ -16,7 +16,7 @@ MEMORY
 {
   /* The testbench uses associative arrays, the memory is not allocated unless 
   needed. */
-  ROM (rx)  : ORIGIN = 0x0, LENGTH = 128M
+  ROM (rx)  : ORIGIN = 0x80000000, LENGTH = 128M
   RAM (!rx) : ORIGIN = (ORIGIN(ROM) + LENGTH(ROM)), LENGTH = 512M
 }
 /* >>>  CUSTOM END  <<< */
@@ -25,8 +25,8 @@ SECTIONS
 {
   /* >>> CUSTOM START <<< */
   /* Boot program counter (fixed entry point). The initial part of the ROM is
-     used to store interrupt and exception vectors. */
-  PROVIDE(__boot_pc = 0x10000);
+     used by QEMU to store the firmware. */
+  PROVIDE(__boot_pc = ORIGIN(ROM) + 0x20000);
   /* Define stack and heap size (used by custom crt0.s) */
   PROVIDE(__stack_size = 8M);
   PROVIDE(__heap_size = 256M);

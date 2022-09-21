@@ -46,8 +46,9 @@ module csrs (
     input   logic [XLEN-1:0]            rs1_value_i, // data to write to the CSR
     input   except_code_t               exc_data_i, // exception data (e.g., FPU exceptions)
     input   logic [REG_IDX_LEN-1:0]     rd_idx_i,   // destination register
-    output  logic [XLEN-1:0]            data_o,
+    output  csr_t                       data_o,
     output  logic                       acc_exc_o,  // ILLEGAL INSTRUCTION flag (invalid address or access permission)
+    output  csr_mtvec_t                 mtvec_o,    // exception base address and mode
 
     // Data to the FPU
     `ifdef LEN5_FP_EN
@@ -464,6 +465,9 @@ assign  fpu_frm_o       = fcsr.frm;
 `ifdef LEN5_PRIVILEGED_EN
 assign  mstatus_tsr_o   = mstatus.tsr;
 `endif /* LEN5_PRIVILEGED_EN */
+
+// Data to commit logic
+assign  mtvec_o         = mtvec;
 
 // Memory protection mode
 assign  vm_mode_o       = satp.mode;

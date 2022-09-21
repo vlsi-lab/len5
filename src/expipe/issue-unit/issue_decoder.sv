@@ -110,8 +110,7 @@ module issue_decoder (
         // NOTE: do not issue NOP to ALU
         if ((instruction_i.i.opcode == `OPCODE_ADDI) && 
             (instruction_i.i.funct3 == `FUNCT3_ADDI) && 
-            (instruction_i.i.rs1 == '0) && 
-            (instruction_i.i.imm11 == '0)) begin
+            ({instruction_i.i.imm11, instruction_i.i.rs1, instruction_i.i.rd} == '0)) begin
             assigned_eu                 = EU_NONE;
             res_ready                   = 1'b1;
         end

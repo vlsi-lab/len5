@@ -186,6 +186,7 @@ module backend (
     logic                       csr_comm_ready;
     logic [XLEN-1:0]            csr_comm_data;
     logic                       csr_comm_acc_exc;
+    csr_mtvec_t                 csr_comm_mtvec;
     csr_instr_t                 comm_csr_instr_type;
     logic [FUNCT3_LEN-1:0]      comm_csr_funct3;
     logic [CSR_ADDR_LEN-1:0]    comm_csr_addr;
@@ -484,6 +485,7 @@ module backend (
         .csr_ready_i            (csr_comm_ready             ),
         .csr_data_i             (csr_comm_data              ),
         .csr_acc_exc_i          (csr_comm_acc_exc           ),
+        .csr_mtvec_i            (csr_comm_mtvec             ),
         .csr_instr_type_o       (comm_csr_instr_type        ),
         .csr_funct3_o           (comm_csr_funct3            ),
         .csr_addr_o             (comm_csr_addr              ),
@@ -510,6 +512,7 @@ module backend (
         .rd_idx_i           (comm_csr_rd_idx      ),
         .data_o             (csr_comm_data        ),
         .acc_exc_o          (csr_comm_acc_exc     ),
+        .mtvec_o            (csr_comm_mtvec       ),
     `ifdef LEN5_FP_EN
         .fpu_frm_o          (csr_ex_frm           ),
     `endif /* LEN5_FP_EN */

@@ -34,8 +34,8 @@ _start:
     csrw mtvec, a0
 
     # Clear the bss segment
-    la a0, _edata # 
-    la a2, _end # 
+    la a0, _edata # bss sections begin (from linker script)
+    la a2, _end # bss sections end (from linker script)
     sub a2, a2, a0 # a2 = a2 - a0
     li a1, 0 # a1 = 0
     call memset

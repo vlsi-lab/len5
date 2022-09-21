@@ -12,8 +12,9 @@
 // Author: Michele Caon
 // Date: 01/08/2022
 
-`include "memory_class.svh"
 `include "uvm_macros.svh"
+`include "memory_class.svh"
+`include "len5_config.svh"
 
 import uvm_pkg::*;
 import memory_pkg::*;
@@ -198,6 +199,9 @@ module memory_bare_emu #(
                     endcase
                 end
                 2: begin: access_fault
+                `ifdef MEM_EMU_RAISE_READ_ACCESS_FAULT
+                    data_ans.except_raised   = 1'b0;
+                `else
                     data_ans.except_raised   = 1'b1;
                     case (data_req_i.acc_type)
                         MEM_ACC_INSTR:  data_ans.except_code = E_I_ACCESS_FAULT;
@@ -205,6 +209,7 @@ module memory_bare_emu #(
                         MEM_ACC_ST:     data_ans.except_code = E_ST_ACCESS_FAULT;
                         default:        data_ans.except_code = E_UNKNOWN;
                     endcase
+                `endif /* MEM_EMU_RAISE_READ_ACCESS_FAULT */
                 end
                 default: begin
                     data_ans.except_raised   = 1'b1;

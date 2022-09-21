@@ -1,7 +1,7 @@
-#include "write.h"
+#include "syscall.h"
 
 void main(void)
 {
-    char c = 'a';
-    serial_write(c);
+    char str[] = "Hello World!\n";
+    _write(STDOUT, str, sizeof(str));
 }

@@ -29,14 +29,14 @@ module tb_bare;
     // ----------------
 
     // Boot program counter
-    localparam  FETCH_BOOT_PC = 64'h0000000000010000;
+    localparam  FETCH_BOOT_PC = `BOOT_PC;
 
     // Serial monitor configuration
-    localparam  MON_MEM_ADDR = 64'h0000000000000100;
+    localparam  MON_MEM_ADDR = `SERIAL_ADDR;
 
     // Memory emulator configuration
     localparam string MEM_DUMP_FILE = "mem_dump.txt";
-    localparam  MEM_DUMP_T          = 1; // memory dump period (in cycles)
+    localparam  MEM_DUMP_T          = 100; // memory dump period (in cycles)
     localparam  MEM_PIPE_NUM        = 0; // memory latency
     localparam  MEM_SKIP_INS_REG    = 1; // skip instruction output register
     localparam  MEM_SKIP_DATA_REG   = 1; // skip data output register
@@ -58,7 +58,10 @@ module tb_bare;
     longint unsigned num_cycles = 0;    // 0: no boundary
 
     // Clock and reset
-    logic clk, rst_n;
+    logic       clk, rst_n;
+
+    // Serial monitor string
+    string      serial_str;
 
     // Mmeory Emulator <--> Datapath
     logic       ins_mem_dp_valid;
@@ -126,8 +129,20 @@ module tb_bare;
     // Serial monitor
     // --------------
     always_ff @( posedge clk ) begin : serial_monitor
+        byte c;
+
+        // Sniff SERIAL ADDRESS and print content
         if (dp_data_mem_valid && dp_data_mem_req.addr == MON_MEM_ADDR) begin
-            $display("Detected character: %s", dp_data_mem_req.value[7:0]);
+            c = dp_data_mem_req.value[7:0];
+            `uvm_info("SERIAL MONITOR", $sformatf("Detected character: %c [0x%h]", c, c), UVM_HIGH);
+
+            // Check for end-of-string
+            if (c == "\0") begin
+                `uvm_info("SERIAL MONITOR", $sformatf("Received string: %s", serial_str), UVM_LOW);
+                serial_str = "";
+            end else begin
+                serial_str = {serial_str, c};
+            end
         end
     end
 

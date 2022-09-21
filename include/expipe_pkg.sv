@@ -351,6 +351,9 @@ package expipe_pkg;
     // ---------------
     // LOAD-STORE UNIT
     // ---------------
+
+    // LOAD BUFFER DATA TYPES
+    // ----------------------
     
     /* Load instruction status */
     typedef enum logic [3:0] {
@@ -430,8 +433,11 @@ package expipe_pkg;
         STORE_OP_SAVE_MEM
     } sb_op_t;
 
-    // Address adder interface
-    // -----------------------
+    // ADDRESS ADDER
+    // -------------
+
+    // Virtual address adder exception codes
+    typedef enum logic [1:0] { VADDER_ALIGN_EXCEPT, VADDER_PAGE_EXCEPT, VADDER_NO_EXCEPT } vadder_except_t;
     
     // Request
     typedef struct packed {
@@ -455,9 +461,6 @@ package expipe_pkg;
     // COMMIT LOGIC
     // ------------
 
-    // Virtual address adder exception codes
-    typedef enum logic [1:0] { VADDER_ALIGN_EXCEPT, VADDER_PAGE_EXCEPT, VADDER_NO_EXCEPT } vadder_except_t;
-
     // Commit destination data type
     typedef enum logic [3:0] { 
         COMM_TYPE_NONE,     // no data to commit (e.g., nops)
@@ -474,6 +477,19 @@ package expipe_pkg;
         COMM_TYPE_WFI,      // commit wait for interrupt instructions
         COMM_TYPE_EXCEPT    // handle exceptions
     } comm_type_t;
+
+    // Commit adder control
+    typedef enum logic {
+        COMM_ADDER_CTL_LINK,    // compute link address: rd = instr_pc + 4
+        COMM_ADDER_CTL_EXCEPT   // compute exception program counter
+    } comm_adder_ctl_t;
+
+    // rd MUX control
+    typedef enum logic [1:0] {
+        COMM_RD_SEL_RES,    // rd = instruction result
+        COMM_RD_SEL_LINK,   // rd = instruction PC + 4
+        COMM_RD_SEL_CSR     // rd = CSR data
+    } comm_rd_sel_t;
 
 endpackage
 
