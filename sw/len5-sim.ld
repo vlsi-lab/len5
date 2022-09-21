@@ -242,7 +242,7 @@ SECTIONS
   . = DATA_SEGMENT_END (.);
 
   /* >>> CUSTOM START <<< */
-  /* Heap */
+  /* Heap (grows up) */
   .heap   :
   {
     PROVIDE (__heap_bottom = .);

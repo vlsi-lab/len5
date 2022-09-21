@@ -28,6 +28,10 @@ _start:
     la gp, __global_pointer$ # 
     .option pop
 
+    # Initialize stack pointer
+    la sp, __stack_top # provided by linker script
+    add s0, sp, zero; # s0 = sp + zero
+
     # Setup 'mtvec' CSR to vectored exception mode
     la a0, __vector_start # base address, provided by linker script 
     addi a0, a0, 0x1 # a0 = a0 | 0x1 (enable vectored mode)
@@ -44,10 +48,6 @@ _start:
     la a0, __libc_fini_array # 
     call atexit
     call __libc_init_array
-
-    # Initialize stack pointer
-    la sp, __stack_top # provided by linker script
-    add s0, sp, zero; # s0 = sp + zero
 
     # Call main
     lw a0, 0(sp) # a0 = argc

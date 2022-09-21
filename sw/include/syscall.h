@@ -34,16 +34,6 @@
 // FUNCTION PROTOTYPES
 // -------------------
 
-/**
- * @brief	Minimal serial interface
- *
- * @details	Write the input character to a designated memory location defined
- * in 'serial_write.h'.
- *
- * @param	c: the character to write
- */
-void serial_write(char c);
-
 int _access(const char *file, int mode);
 int _chdir(const char *path);
 int _chmod(const char *path, mode_t mode);
@@ -85,6 +75,16 @@ int _utime(const char *path, void *times);
 int _wait(int *status);
 
 /**
+ * @brief	Minimal serial interface
+ *
+ * @details	Write the input character to a designated memory location defined
+ * in 'serial_write.h'.
+ *
+ * @param	c: the character to write
+ */
+void serial_write(char c);
+
+/**
  * @brief	Stub _write implementation
  *
  * @details	Redirect STDOUT to a low-level serial interface implemented by
@@ -98,6 +98,9 @@ int _wait(int *status);
  *
  * @retval	{0 :success value}
  */
-int _write(int handle, char *data, int size);
+ssize_t _write(int handle, const char *data, size_t size);
+
+int _brk(void *addr);
+void *_sbrk(ptrdiff_t incr);
 
 #endif // WRITE_H_

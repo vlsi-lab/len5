@@ -16,8 +16,8 @@ MEMORY
 {
   /* The testbench uses associative arrays, the memory is not allocated unless 
   needed. */
-  ROM (rx)  : ORIGIN = 0x80000000, LENGTH = 128M
-  RAM (!rx) : ORIGIN = (ORIGIN(ROM) + LENGTH(ROM)), LENGTH = 512M
+  ROM (rx)  : ORIGIN = 0x80000000, LENGTH = 64M
+  RAM (!rx) : ORIGIN = (ORIGIN(ROM) + LENGTH(ROM)), LENGTH = 128M
 }
 /* >>>  CUSTOM END  <<< */
 SEARCH_DIR("/opt/riscv/riscv64-unknown-elf/lib");
@@ -25,11 +25,11 @@ SECTIONS
 {
   /* >>> CUSTOM START <<< */
   /* Boot program counter (fixed entry point). The initial part of the ROM is
-     used by QEMU to store the firmware. */
-  PROVIDE(__boot_pc = ORIGIN(ROM) + 0x20000);
+     used to store interrupt and exception vectors. */
+  PROVIDE(__boot_pc = ORIGIN(ROM));
   /* Define stack and heap size (used by custom crt0.s) */
   PROVIDE(__stack_size = 8M);
-  PROVIDE(__heap_size = 256M);
+  PROVIDE(__heap_size = 64M);
   /* >>>  CUSTOM END  <<< */
   /* Read-only sections, merged into text segment: */
   PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x10000)); . = SEGMENT_START("text-segment", 0x10000) + SIZEOF_HEADERS;
@@ -73,17 +73,17 @@ SECTIONS
   /* DYNAMIC LINKING END */
   
   /* >>> CUSTOM START <<< */
-  /* Interrupts and exceptions vector table (64 jump instructions) */
-  .irq_vector_table (ORIGIN(ROM)):
-  {
-    . = ALIGN(4); /* per specs */
-    PROVIDE (__vector_start = .);
-    KEEP (*(.irq_vector_table));
-  } > ROM
   /* Initialization (at fixed address) */
   .init (__boot_pc):
   {
     KEEP (*(SORT_NONE(.init)));
+  } > ROM
+  /* Interrupts and exceptions vector table (64 jump instructions) */
+  .irq_vector_table   :
+  {
+    . = ALIGN(4); /* per specs */
+    PROVIDE (__vector_start = .);
+    KEEP (*(.irq_vector_table));
   } > ROM
   /* Original code below */
   /* .init           :

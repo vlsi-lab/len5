@@ -90,7 +90,7 @@ $(TEST_BUILD_DIR)/mem/%.img: $(TEST_BUILD_DIR)/bin/%.elf | $(TEST_BUILD_DIR)/mem
 $(TEST_BUILD_DIR)/dis/%.dis: $(TEST_BUILD_DIR)/bin/%.elf | $(TEST_BUILD_DIR)/dis
 	$(OBJDUMP) -D -M numeric $< > $@
 $(TEST_BUILD_DIR)/qemu/%.dis: $(TEST_BUILD_DIR)/qemu/%.elf | $(TEST_BUILD_DIR)/dis
-	$(OBJDUMP) -D -M numeric $< > $@
+	$(OBJDUMP) -D $< > $@
 
 # LEN5 executable
 $(TEST_BUILD_DIR)/bin/%.elf: $(TEST_BUILD_DIR)/obj/%.o $(LEN5_LIB) | $(TEST_BUILD_DIR)/bin

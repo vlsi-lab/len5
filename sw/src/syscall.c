@@ -30,6 +30,14 @@
 #include <errno.h>
 #include "syscall.h"
 
+// GLOBAL VARIABLES
+// ----------------
+
+/* Heap top and bottom, provided by the linker script */
+extern char __heap_bottom[];
+extern char __heap_top[];
+static char *brk = __heap_bottom;
+
 // FUNCTION DEFINITIONS
 // --------------------
 
@@ -97,10 +105,10 @@ int _fork(void)
 
 int _fstat(int file, struct stat *st)
 {
-    // st->st_mode = S_IFCHR;
-    // return 0;
-    errno = -ENOSYS;
-    return -1;
+    st->st_mode = S_IFCHR;
+    return 0;
+    // errno = -ENOSYS;
+    // return -1;
 }
 
 int _fstatat(int dirfd, const char *file, struct stat *st, int flags)
@@ -190,10 +198,10 @@ ssize_t _read(int file, void *ptr, size_t len)
 
 int _stat(const char *file, struct stat *st)
 {
-    // st->st_mode = S_IFCHR;
-    // return 0;
-    errno = ENOSYS;
-    return -1;
+    st->st_mode = S_IFCHR;
+    return 0;
+    // errno = ENOSYS;
+    // return -1;
 }
 
 long _sysconf(int name)
@@ -251,17 +259,40 @@ inline void serial_write(char c)
  *
  * @retval	{0 :success value}
  */
-int _write(int handle, char *data, int size)
+ssize_t _write(int handle, const char *data, size_t size)
 {
-    int count;
-
     // Skip files other than STDOUT
     if (handle != STDOUT)
         return -1;
 
-    for (count = 0; count < size; count++)
+    while (*data)
+        serial_write(*data++);
+
+    return size;
+}
+
+int _brk(void *addr)
+{
+    brk = addr;
+    return 0;
+}
+
+void *_sbrk(ptrdiff_t incr)
+{
+    char *old_brk = brk;
+
+    if (&__heap_bottom[0] == &__heap_top[0])
     {
-        serial_write(data[count]);
+        return NULL;
     }
-    return count;
+
+    if ((brk += incr) < __heap_top)
+    {
+        brk += incr;
+    }
+    else
+    {
+        brk = __heap_top;
+    }
+    return old_brk;
 }
