@@ -314,8 +314,8 @@ if [ $REMOTE_EXEC -ne 0 -a $FORCE_LOCAL_EXEC -eq 0 ]; then
     if [ $LAUNCH_SIM -ne 0 ]; then
         log "Retrieving files from '%s'...\n" "$REMOTE_HOST"
         mkdir -p $HW_BUILD_DIR
-        rsync -e "ssh $SSH_OPT" $RSYNC_OPT $REMOTE_USER@$REMOTE_HOST:$REMOTE_ROOT_DIR/sim/*.do $LEN5_ROOT_DIR/sim/
-        rsync -e "ssh $SSH_OPT" $RSYNC_OPT $REMOTE_USER@$REMOTE_HOST:$REMOTE_ROOT_DIR/build/hw/{*.txt,*.do} $HW_BUILD_DIR/
+        rsync -e "ssh $SSH_OPT" $RSYNC_OPT --ignore-missing-args $REMOTE_USER@$REMOTE_HOST:$REMOTE_ROOT_DIR/sim/*.do $LEN5_ROOT_DIR/sim/
+        rsync -e "ssh $SSH_OPT" $RSYNC_OPT --ignore-missing-args $REMOTE_USER@$REMOTE_HOST:$REMOTE_ROOT_DIR/build/hw/{*.txt,*.do} $HW_BUILD_DIR/
     fi
 
     # Exit

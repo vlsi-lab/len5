@@ -16,8 +16,8 @@ MEMORY
 {
   /* The testbench uses associative arrays, the memory is not allocated unless 
   needed. */
-  ROM (rx)  : ORIGIN = 0x0, LENGTH = 128M
-  RAM (!rx) : ORIGIN = (ORIGIN(ROM) + LENGTH(ROM)), LENGTH = 512M
+  ROM (rx)  : ORIGIN = 0x0, LENGTH = 8M
+  RAM (!rx) : ORIGIN = (ORIGIN(ROM) + LENGTH(ROM)), LENGTH = 128M
 }
 /* >>>  CUSTOM END  <<< */
 SEARCH_DIR("/opt/riscv/riscv64-unknown-elf/lib");
@@ -29,10 +29,20 @@ SECTIONS
   PROVIDE(__boot_pc = 0x10000);
   /* Define stack and heap size (used by custom crt0.s) */
   PROVIDE(__stack_size = 8M);
-  PROVIDE(__heap_size = 256M);
+  PROVIDE(__heap_size = 64M);
   /* >>>  CUSTOM END  <<< */
   /* Read-only sections, merged into text segment: */
   PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x10000)); . = SEGMENT_START("text-segment", 0x10000) + SIZEOF_HEADERS;
+
+  /* >>> CUSTOM START <<< */
+  /* Interrupts and exceptions vector table (64 jump instructions) */
+  .irq_vector_table (ORIGIN(ROM)):
+  {
+    . = ALIGN(4); /* per specs */
+    PROVIDE (__vector_start = .);
+    KEEP (*(.irq_vector_table));
+  } > ROM
+  /* >>>  CUSTOM END  <<< */
 
   /* DYNAMIC LINKING START */
   .interp         : { *(.interp) }
@@ -73,13 +83,6 @@ SECTIONS
   /* DYNAMIC LINKING END */
   
   /* >>> CUSTOM START <<< */
-  /* Interrupts and exceptions vector table (64 jump instructions) */
-  .irq_vector_table (ORIGIN(ROM)):
-  {
-    . = ALIGN(4); /* per specs */
-    PROVIDE (__vector_start = .);
-    KEEP (*(.irq_vector_table));
-  } > ROM
   /* Initialization (at fixed address) */
   .init (__boot_pc):
   {

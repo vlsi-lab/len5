@@ -94,7 +94,7 @@ $(TEST_BUILD_DIR)/qemu/%.dis: $(TEST_BUILD_DIR)/qemu/%.elf | $(TEST_BUILD_DIR)/d
 
 # LEN5 executable
 $(TEST_BUILD_DIR)/bin/%.elf: $(TEST_BUILD_DIR)/obj/%.o $(LEN5_LIB) | $(TEST_BUILD_DIR)/bin
-	$(CC) $(CFLAGS) $(CINC) -T $(LD_SCRIPT) $(LDFLAGS) -L$(SW_BUILD_DIR)/lib $< -o $@ -llen5
+	$(CC) $(CFLAGS) $(CINC) -T $(LD_SCRIPT) $(LDFLAGS) -L$(SW_BUILD_DIR)/lib $(SW_DIR)/src/irq.S $< -o $@ -llen5
 
 # Objects
 $(TEST_BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.c $(BUILD_SUPP) | $(TEST_BUILD_DIR)/obj .check-riscv

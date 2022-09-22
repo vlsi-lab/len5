@@ -22,7 +22,7 @@ import len5_pkg::*;
 import expipe_pkg::*;
 
 module memory_bare_emu #(
-    parameter   DUMP_PERIOD         = 1, // cycles
+    parameter   DUMP_PERIOD         = 0, // cycles, zero to disable
     parameter   PIPE_NUM            = 0, // number of pipeline registers 
     parameter   SKIP_INS_ANS_REG    = 0, // instruction from memory is directly passed to fetch
     parameter   SKIP_DATA_ANS_REG   = 0  // data from memory is directly passed to LSU
@@ -67,20 +67,29 @@ module memory_bare_emu #(
     // ---------------------
     initial begin
         #1;
+        `uvm_info("MEM EMU", $sformatf("Flashing memory image '%s'...", mem_file_i), UVM_HIGH);
         i_mem = new(mem_file_i);
         d_mem = new(mem_file_i);
         if (i_mem.LoadMem() <= 0) begin
             `uvm_fatal("MEM EMU", "Unable to load instruction memory")
         end
+    end
 
-        // Dump the memory content in each cycle 
-        while (1) begin
-            repeat (DUMP_PERIOD) @(posedge clk_i);
-            if (i_mem.PrintMem(mem_dump_file_i)) begin
-                `uvm_error("MEM EMU", "Unable to dump memory content to file");
+    // Memory dump
+    // -----------
+    // Dump the memory content in each cycle 
+    generate
+        if (DUMP_PERIOD > 0) begin: mem_dump
+            initial begin
+                while (1) begin
+                    repeat (DUMP_PERIOD) @(posedge clk_i);
+                    if (i_mem.PrintMem(mem_dump_file_i)) begin
+                        `uvm_error("MEM EMU", "Unable to dump memory content to file");
+                    end
+                end
             end
         end
-    end
+    endgenerate
 
     // INSTRUCTION REQUEST
     // -------------------

@@ -36,7 +36,7 @@ module tb_bare;
 
     // Memory emulator configuration
     localparam string MEM_DUMP_FILE = "mem_dump.txt";
-    localparam  MEM_DUMP_T          = 100; // memory dump period (in cycles)
+    localparam  MEM_DUMP_T          = 0; // memory dump period (in cycles, 0 to disable)
     localparam  MEM_PIPE_NUM        = 0; // memory latency
     localparam  MEM_SKIP_INS_REG    = 1; // skip instruction output register
     localparam  MEM_SKIP_DATA_REG   = 1; // skip data output register
@@ -101,7 +101,10 @@ module tb_bare;
         `uvm_info("CONFIG", $sformatf("Number of simulation cycles: %0d", num_cycles), UVM_MEDIUM);
 
         /* Print memory file being used */
-        `uvm_info("CONFIG", $sformatf("Memory file: %s", mem_file), UVM_MEDIUM);
+        `uvm_info("CONFIG", $sformatf("Memory image: %s", mem_file), UVM_MEDIUM);
+
+        /* Print the serial monitor base address */
+        `uvm_info("CONFIG", $sformatf("Serial monitor memory address: 0x%h", MON_MEM_ADDR), UVM_MEDIUM);
 
         /* Print M extension information */
         `uvm_info("CONFIG", $sformatf("M extension: %s", `ifdef LEN5_M_EN "YES" `else "NO" `endif), UVM_MEDIUM);
