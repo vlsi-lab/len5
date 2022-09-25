@@ -35,15 +35,14 @@ module issue_decoder (
     input                   mstatus_tsr_i,    // the TSR bit from the mstatus CSR
 `endif /* LEN5_PRIVILEGED_EN */
 
-    // Information to the issue logic
-    output  logic           except_raised_o,  // an exception occurred during decoding
-    output  except_code_t   except_code_o,    // exception code to send to the ROB
-    output  logic           res_ready_o,      // force ready to commit in the ROB
-    output  logic           stall_o, // the instruction issue can be stall to save power
+    // Issue decoder <--> issue CU
+    output  issue_type_t    issue_type_o,     // issue operation type
 
-    output  issue_eu_t      eu_o,             // assigned EU
+    // Information to the issue logic
+    output  except_code_t   except_code_o,    // exception code to send to the ROB
+    output  issue_eu_t      assigned_eu_o,    // assigned EU
+    output  logic           skip_eu_o,        // do not assign to any EU
     output  eu_ctl_t        eu_ctl_o,         // controls for the assigned EU
-    output  logic           fp_rs_o,          // source operands are from FP register file
     output  logic           rs1_req_o,        // rs1 fetch is required
     output  logic           rs1_is_pc_o,      // rs1 is the current PC (for AUIPC)
     output  logic           rs2_req_o,        // rs2 fetch is required
@@ -51,20 +50,15 @@ module issue_decoder (
 `ifdef LEN5_FP_EN
     output  logic           rs3_req_o,        // rs3 (S, D only) fetch is required
 `endif /* LEN5_FP_EN */
-    output  imm_format_t    imm_format_o,     // immediate format
-    output  logic           regstat_upd_o,    // the register status must be updated
-    output  logic           jb_instr_o        // the isntruction is a jump or a branch (i.e. causes speculation)
+    output  logic           res_ready_o,      // the result is ready
+    output  imm_format_t    imm_format_o      // immediate format
 );
 
     // DEFINITIONS
 
-    logic                           except_raised; 
     except_code_t                   except_code;
-    logic                           res_ready;
-    logic                           stall         ;
     issue_eu_t                      assigned_eu;
     eu_ctl_t                        eu_ctl;
-    logic                           rs_fp;
     logic                           rs1_req; 
     logic                           rs1_is_pc;      // for AUIPC
     logic                           rs2_req;
@@ -73,7 +67,6 @@ module issue_decoder (
     logic                           rs3_req;
 `endif /* LEN5_FP_EN */
     imm_format_t                    imm_format;
-    logic                           regstat_upd;
 
     // ------------------
     // INSTRUCTION DECODE
@@ -84,13 +77,11 @@ module issue_decoder (
 
     always_comb begin: instr_format_logic
         // DEFAULT VALUES 
-        except_raised               = 1'b0; 
-        except_code                 = E_UNKNOWN;    // whatever: ignored if except_raised is not asserted
-        res_ready                   = 1'b0;
-        stall                       = 1'b0;
-        assigned_eu                 = EU_NONE;       // whatever: ignored if except_raised is asserted
+        issue_type_o                = ISSUE_TYPE_NONE;
+        except_code                 = E_UNKNOWN;
+        skip_eu_o                   = 1'b0;
+        assigned_eu                 = EU_INT_ALU;
         eu_ctl.raw                  = '0;
-        rs_fp                       = 1'b0;         // normally from the integer register file
         rs1_req                     = 1'b0;
         rs1_is_pc                   = 1'b0;
         rs2_req                     = 1'b0;
@@ -99,8 +90,6 @@ module issue_decoder (
         rs3_req                     = 1'b0;
     `endif /* LEN5_FP_EN */
         imm_format                  = IMM_TYPE_I;
-        regstat_upd                 = 1'b0;
-        jb_instr_o                  = 1'b0;
 
         // ----------------
         // UNPRIVILEGED ISA
@@ -111,8 +100,7 @@ module issue_decoder (
         if ((instruction_i.i.opcode == `OPCODE_ADDI) && 
             (instruction_i.i.funct3 == `FUNCT3_ADDI) && 
             ({instruction_i.i.imm11, instruction_i.i.rs1, instruction_i.i.rd} == '0)) begin
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
+            skip_eu_o                   = 1'b1;
         end
         
         // RV64I
@@ -120,10 +108,9 @@ module issue_decoder (
         
         // LUI
         else if ((instruction_i.u.opcode == `OPCODE_LUI)) begin
-            assigned_eu                 = EU_NONE;
+            skip_eu_o                   = 1'b1;
             imm_format                  = IMM_TYPE_U;
-            res_ready                   = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_LUI;
         end
 
         // AUIPC
@@ -133,7 +120,7 @@ module issue_decoder (
             imm_format                  = IMM_TYPE_U;
             rs1_is_pc                   = 1'b1;         // first operand is PC
             rs2_is_imm                  = 1'b1;         // second operand is U-immediate
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // JAL
@@ -141,8 +128,7 @@ module issue_decoder (
             assigned_eu                 = EU_BRANCH_UNIT;
             eu_ctl.bu                   = JAL;
             imm_format                  = IMM_TYPE_J;
-            regstat_upd                 = 1'b1;
-            jb_instr_o                  = 1'b1;
+            issue_type_o                = ISSUE_TYPE_JUMP;
         end 
 
         // JALR
@@ -152,8 +138,7 @@ module issue_decoder (
             eu_ctl.bu                   = JALR;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-            jb_instr_o                  = 1'b1;
+            issue_type_o                = ISSUE_TYPE_JUMP;
         end
 
         // BEQ
@@ -164,7 +149,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_B;
-            jb_instr_o                  = 1'b1;
+            issue_type_o                = ISSUE_TYPE_BRANCH;
         end
 
         // BNE
@@ -175,7 +160,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_B;
-            jb_instr_o                  = 1'b1;
+            issue_type_o                = ISSUE_TYPE_BRANCH;
         end
 
         // BLT
@@ -186,7 +171,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_B;
-            jb_instr_o                  = 1'b1;
+            issue_type_o                = ISSUE_TYPE_BRANCH;
         end
 
         // BGE
@@ -197,7 +182,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_B;
-            jb_instr_o                  = 1'b1;
+            issue_type_o                = ISSUE_TYPE_BRANCH;
         end
 
         // BLTU
@@ -208,7 +193,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_B;
-            jb_instr_o                  = 1'b1;
+            issue_type_o                = ISSUE_TYPE_BRANCH;
         end
 
         // BGEU
@@ -219,7 +204,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
             imm_format                  = IMM_TYPE_B;
-            jb_instr_o                  = 1'b1;
+            issue_type_o                = ISSUE_TYPE_BRANCH;
         end
 
         // LB
@@ -229,7 +214,7 @@ module issue_decoder (
             eu_ctl.lsu                  = LS_BYTE;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // LH
@@ -239,7 +224,7 @@ module issue_decoder (
             eu_ctl.lsu                  = LS_HALFWORD;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // LW
@@ -249,7 +234,7 @@ module issue_decoder (
             eu_ctl.lsu                  = LS_WORD;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // LD
@@ -259,7 +244,7 @@ module issue_decoder (
             eu_ctl.lsu                  = LS_DOUBLEWORD;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // LBU
@@ -269,7 +254,7 @@ module issue_decoder (
             eu_ctl.lsu                  = LS_BYTE_U;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // LHU
@@ -279,7 +264,7 @@ module issue_decoder (
             eu_ctl.lsu                  = LS_HALFWORD_U;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // LWU
@@ -289,13 +274,14 @@ module issue_decoder (
             eu_ctl.lsu                  = LS_WORD_U;
             rs1_req                     = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SB
         else if ((instruction_i.s.opcode == `OPCODE_SB) && 
                 (instruction_i.s.funct3 == `FUNCT3_SB)) begin
             assigned_eu                 = EU_STORE_BUFFER;
+            issue_type_o                = ISSUE_TYPE_STORE;
             eu_ctl.lsu                  = LS_BYTE;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
@@ -306,6 +292,7 @@ module issue_decoder (
         else if ((instruction_i.s.opcode == `OPCODE_SH) && 
                 (instruction_i.s.funct3 == `FUNCT3_SH)) begin
             assigned_eu                 = EU_STORE_BUFFER;
+            issue_type_o                = ISSUE_TYPE_STORE;
             eu_ctl.lsu                  = LS_HALFWORD;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
@@ -316,6 +303,7 @@ module issue_decoder (
         else if ((instruction_i.s.opcode == `OPCODE_SW) && 
                 (instruction_i.s.funct3 == `FUNCT3_SW)) begin
             assigned_eu                 = EU_STORE_BUFFER;
+            issue_type_o                = ISSUE_TYPE_STORE;
             eu_ctl.lsu                  = LS_WORD;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
@@ -326,6 +314,7 @@ module issue_decoder (
         else if ((instruction_i.s.opcode == `OPCODE_SD) && 
                 (instruction_i.s.funct3 == `FUNCT3_SD)) begin
             assigned_eu                 = EU_STORE_BUFFER;
+            issue_type_o                = ISSUE_TYPE_STORE;
             eu_ctl.lsu                  = LS_DOUBLEWORD;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
@@ -340,7 +329,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // ADDIW
@@ -351,7 +340,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SLTI
@@ -362,7 +351,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
         
         // SLTIU
@@ -373,7 +362,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // XORI
@@ -384,7 +373,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // ORI
@@ -395,7 +384,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // ANDI
@@ -406,7 +395,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SLLIW
@@ -418,7 +407,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SLLI
@@ -430,7 +419,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SRLIW
@@ -442,7 +431,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SRLI
@@ -454,7 +443,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SRAIW
@@ -466,7 +455,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SRAI
@@ -478,7 +467,7 @@ module issue_decoder (
             rs1_req                     = 1'b1;
             rs2_is_imm                  = 1'b1;
             imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // ADDW
@@ -489,7 +478,7 @@ module issue_decoder (
             eu_ctl.alu                  = ALU_ADDW;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SUBW
@@ -500,7 +489,7 @@ module issue_decoder (
             eu_ctl.alu                  = ALU_SUBW;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // ADD
@@ -511,7 +500,7 @@ module issue_decoder (
             eu_ctl.alu                  = ALU_ADD;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SUB
@@ -522,7 +511,7 @@ module issue_decoder (
             eu_ctl.alu                  = ALU_SUB;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SLLW
@@ -533,7 +522,7 @@ module issue_decoder (
             eu_ctl.alu                  = ALU_SLLW;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SLL
@@ -544,7 +533,7 @@ module issue_decoder (
             eu_ctl.alu                  = ALU_SLL;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SLT
@@ -555,7 +544,7 @@ module issue_decoder (
             eu_ctl.alu                  = ALU_SLT;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SLTU
@@ -566,7 +555,7 @@ module issue_decoder (
             eu_ctl.alu                  = ALU_SLTU;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // XOR
@@ -577,7 +566,7 @@ module issue_decoder (
             eu_ctl.alu                  = ALU_XOR;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SRLW
@@ -588,7 +577,7 @@ module issue_decoder (
             eu_ctl.alu                  = ALU_SRLW;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SRL
@@ -599,7 +588,7 @@ module issue_decoder (
             eu_ctl.alu                  = ALU_SRL;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SRAW
@@ -610,7 +599,7 @@ module issue_decoder (
             eu_ctl.alu                  = ALU_SRAW;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // SRA
@@ -621,7 +610,7 @@ module issue_decoder (
             eu_ctl.alu                  = ALU_SRA;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // OR
@@ -632,7 +621,7 @@ module issue_decoder (
             eu_ctl.alu                  = ALU_OR;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // AND
@@ -643,7 +632,7 @@ module issue_decoder (
             eu_ctl.alu                  = ALU_AND;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
 
         // FENCE
@@ -652,9 +641,8 @@ module issue_decoder (
                 (instruction_i[30 -: 4] == `FENCE_FM_LSBS) && 
                 (instruction_i.i.rs1 == `FENCE_RS1) && 
                 (instruction_i.i.rd == `FENCE_RD)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
+            issue_type_o                = ISSUE_TYPE_STALL;
+            skip_eu_o                   = 1'b1;
         end
 
         // ECALL
@@ -663,9 +651,8 @@ module issue_decoder (
                 (instruction_i.i.imm11 == `ECALL_IMM) && 
                 (instruction_i.i.rs1 == `ECALL_RS1) && 
                 (instruction_i.i.rd == `ECALL_RD)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
+            issue_type_o                = ISSUE_TYPE_STALL;
+            skip_eu_o                   = 1'b1;
         end
 
         // EBREAK
@@ -674,10 +661,8 @@ module issue_decoder (
                 (instruction_i.i.imm11 == `EBREAK_IMM) && 
                 (instruction_i.i.rs1 == `EBREAK_RS1) && 
                 (instruction_i.i.rd == `EBREAK_RD)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-            except_raised               = 1'b1;
+            skip_eu_o                   = 1'b1;
+            issue_type_o                = ISSUE_TYPE_EXCEPT;
             except_code                 = E_BREAKPOINT;
         end
 
@@ -690,9 +675,8 @@ module issue_decoder (
                 (instruction_i.i.imm11 == `FENCE_I_IMM) && 
                 (instruction_i.i.rs1 == `FENCE_I_RS1) && 
                 (instruction_i.i.rd == `FENCE_I_RD)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
+            issue_type_o                = ISSUE_TYPE_STALL;
+            skip_eu_o                   = 1'b1;
         end
 
         // RV64 Zicsr
@@ -701,58 +685,49 @@ module issue_decoder (
         // CSRRW
         else if ((instruction_i.i.opcode == `OPCODE_CSRRW) && 
                 (instruction_i.i.funct3 == `FUNCT3_CSRRW)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_OPERANDS_ONLY;
+            skip_eu_o                   = 1'b1;
             rs1_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_CSR;
         end
 
         // CSRRS
         else if ((instruction_i.i.opcode == `OPCODE_CSRRS) && 
                 (instruction_i.i.funct3 == `FUNCT3_CSRRS)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_OPERANDS_ONLY;
+            skip_eu_o                   = 1'b1;
+            issue_type_o                = ISSUE_TYPE_CSR;
             rs1_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
         end
 
         // CSRRC
         else if ((instruction_i.i.opcode == `OPCODE_CSRRC) && 
                 (instruction_i.i.funct3 == `FUNCT3_CSRRC)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_OPERANDS_ONLY;
+            skip_eu_o                   = 1'b1;
             rs1_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_CSR;
         end
 
         // CSRRWI
         else if ((instruction_i.i.opcode == `OPCODE_CSRRWI) && 
                 (instruction_i.i.funct3 == `FUNCT3_CSRRWI)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
+            skip_eu_o                   = 1'b1;
             imm_format                  = IMM_TYPE_RS1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_CSR;
         end
 
         // CSRRSI
         else if ((instruction_i.i.opcode == `OPCODE_CSRRSI) && 
                 (instruction_i.i.funct3 == `FUNCT3_CSRRSI)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
+            skip_eu_o                   = 1'b1;
             imm_format                  = IMM_TYPE_RS1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_CSR;
         end
 
         // CSRRCI
         else if ((instruction_i.i.opcode == `OPCODE_CSRRCI) && 
                 (instruction_i.i.funct3 == `FUNCT3_CSRRCI)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
+            skip_eu_o                   = 1'b1;
             imm_format                  = IMM_TYPE_RS1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_CSR;
         end
 
     `ifdef LEN5_M_EN
@@ -769,7 +744,7 @@ module issue_decoder (
             eu_ctl.mult                 = MULT_MUL;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
         
         // MULW
@@ -780,7 +755,7 @@ module issue_decoder (
             eu_ctl.mult                 = MULT_MULW;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_INT;
         end
         
         // MULH
@@ -791,7 +766,7 @@ module issue_decoder (
             eu_ctl.mult                 = MULT_MULH;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_CSR;
         end
         
         // MULHSU
@@ -802,7 +777,7 @@ module issue_decoder (
             eu_ctl.mult                 = MULT_MULHSU;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_CSR;
         end
         
         // MULHU
@@ -813,7 +788,7 @@ module issue_decoder (
             eu_ctl.mult                 = MULT_MULHU;
             rs1_req                     = 1'b1;
             rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
+            issue_type_o                = ISSUE_TYPE_CSR;
         end
 
     `endif /* LEN5_M_EN */
@@ -848,9 +823,8 @@ module issue_decoder (
                 (instruction_i.r.rs2 == `URET_RS2) && 
                 (instruction_i.r.rs1 == `URET_RS1) && 
                 (instruction_i.r.rd == `URET_RD)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
+            issue_type_o                = ISSUE_TYPE_STALL;
+            skip_eu_o                   = 1'b1;
         end
 
         // SRET
@@ -861,12 +835,10 @@ module issue_decoder (
                 (instruction_i.r.rs1 == `SRET_RS1) && 
                 (instruction_i.r.rd == `SRET_RD)) begin
             if (mstatus_tsr_i) begin
-                except_raised           = 1'b1;
+                issue_type_o            = ISSUE_TYPE_EXCEPT;
                 except_code_t           = E_ILLEGAL_INSTRUCTION;
             end else begin
-                stall                   = 1'b1;
-                assigned_eu             = EU_NONE;
-                res_ready               = 1'b1;
+                issue_type_o            = ISSUE_TYPE_STALL;
             end
         end
 
@@ -877,9 +849,8 @@ module issue_decoder (
                 (instruction_i.r.rs2 == `MRET_RS2) && 
                 (instruction_i.r.rs1 == `MRET_RS1) && 
                 (instruction_i.r.rd == `MRET_RD)) begin
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-            stall                       = 1'b1;
+            skip_eu_o                   = 1'b1;
+            issue_type_o                = ISSUE_TYPE_STALL;
         end
 
         // Interrupt-Management Instructions
@@ -892,9 +863,8 @@ module issue_decoder (
                 (instruction_i.r.rs2 == `WFI_RS2) && 
                 (instruction_i.r.rs1 == `WFI_RS1) && 
                 (instruction_i.r.rd == `WFI_RD)) begin
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-            stall                       = 1'b1;
+            skip_eu_o                   = 1'b1;
+            issue_type_o                = ISSUE_TYPE_WFI;
         end
 
         // Supervisor Memory-Management Instructions
@@ -905,9 +875,8 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_SFENCE_VMA) && 
                 (instruction_i.r.funct7 == `FUNCT7_SFENCE_VMA) && 
                 (instruction_i.r.rd == `SFENCE_VMA_RD)) begin
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-            stall                       = 1'b1;
+            skip_eu_o                   = 1'b1;
+            issue_type_o                = ISSUE_TYPE_STALL;
         end
 
         // Hypervisor Memory-Management Instructions
@@ -918,9 +887,8 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_HFENCE_BVMA) && 
                 (instruction_i.r.funct7 == `FUNCT7_HFENCE_BVMA) && 
                 (instruction_i.r.rd == `HFENCE_BVMA_RD)) begin
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-            stall                       = 1'b1;
+            skip_eu_o                   = 1'b1;
+            issue_type_o                = ISSUE_TYPE_STALL;
         end
 
         // HFENCE.GVMA
@@ -928,9 +896,8 @@ module issue_decoder (
                 (instruction_i.r.funct3 == `FUNCT3_HFENCE_GVMA) && 
                 (instruction_i.r.funct7 == `FUNCT7_HFENCE_GVMA) && 
                 (instruction_i.r.rd == `HFENCE_GVMA_RD)) begin
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-            stall                       = 1'b1;
+            skip_eu_o                   = 1'b1;
+            issue_type_o                = ISSUE_TYPE_STALL;
         end
 
     `endif /* LEN5_PRIVILEGED_EN */
@@ -939,8 +906,8 @@ module issue_decoder (
         // -----------------------
 
         else begin
-            assigned_eu                 = EU_NONE;
-            except_raised               = 1'b1;  
+            skip_eu_o                   = 1'b1;
+            issue_type_o                = ISSUE_TYPE_EXCEPT;
             except_code                 = E_ILLEGAL_INSTRUCTION;
         end
     end
@@ -948,14 +915,9 @@ module issue_decoder (
     // -----------------
     // OUTPUT GENERATION
     // -----------------
-    assign except_raised_o      = except_raised;
     assign except_code_o        = except_code;
-    assign res_ready_o          = res_ready;
-    assign stall_o              = stall;
-
-    assign eu_o                 = assigned_eu;
+    assign assigned_eu_o        = assigned_eu;
     assign eu_ctl_o             = eu_ctl;
-    assign fp_rs_o              = rs_fp;
     assign rs1_req_o            = rs1_req;
     assign rs1_is_pc_o          = rs1_is_pc;
     assign rs2_req_o            = rs2_req;
@@ -964,7 +926,6 @@ module issue_decoder (
     assign rs3_req_o            = rs3_req;
 `endif /* LEN5_FP_EN */
     assign imm_format_o         = imm_format;
-    assign regstat_upd_o        = regstat_upd;
 
     // ----------
     // ASSERTIONS

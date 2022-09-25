@@ -12,11 +12,13 @@
 # Author: Michele Caon
 # Date: 15/09/2022
 
+# NOTE: this file is based on Newlib (libgloss) crt0 implementation
+
 # Switches and macros
 #include "len5.h"
 
 # Bare-metal entry point
-.section .init, "ax"
+.section .text.start, "ax"
 .global _start
 _start:
     .cfi_startproc
@@ -30,7 +32,7 @@ _start:
 
     # Initialize stack pointer
     la sp, __stack_top # provided by linker script
-    add s0, sp, zero; # s0 = sp + zero
+    mv  s0, sp # s0 = sp
 
     # Setup 'mtvec' CSR to vectored exception mode
     la a0, __vector_start # base address, provided by linker script 
@@ -45,9 +47,11 @@ _start:
     call memset
 
     # Ctors and dtors
-    la a0, __libc_fini_array # 
-    call atexit
-    call __libc_init_array
+#ifndef LEN5_SKIP_CRT0_LIBC_INIT_ARRAY
+    la a0, __libc_fini_array # register global termination functions
+    call atexit # to be called upon exit
+    call __libc_init_array # Run global initialization functions
+#endif
 
     # Call main
     lw a0, 0(sp) # a0 = argc
@@ -58,3 +62,10 @@ _start:
     
     .cfi_endproc
     .end
+
+.global _init
+.global _fini
+_init:
+_fini:
+    /* These don't have to do anything since we use init_array/fini_array */
+	ret

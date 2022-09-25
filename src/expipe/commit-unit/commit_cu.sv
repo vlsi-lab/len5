@@ -37,8 +37,9 @@ module commit_cu (
     input   logic                   mispredict_i,     // branch misprediction
     output  logic                   comm_reg_en_o,    // commit register enable
     output  logic                   comm_reg_clr_o,   // commit register clear
-    output  comm_adder_ctl_t        comm_adder_ctl_o, // the committing instruction is a jump/branch 
     output  comm_rd_sel_t           comm_rd_sel_o,    // rd is link address
+    output  logic                   comm_jb_instr_o,  // committing a jump/branch
+    output  logic                   comm_ret_cnt_en_o,// retired instructions counter enable
 
     // ROB <--> CU
     input   logic                   valid_i,
@@ -46,7 +47,6 @@ module commit_cu (
     input   instr_t                 instr_i,
     input   logic                   res_ready_i,
     input   logic                   except_raised_i,
-    input   except_code_t           except_code_i,
 
     // CU <--> integer register file and status
     output  logic                   int_rs_valid_o,
@@ -62,7 +62,6 @@ module commit_cu (
     output  logic                   sb_exec_store_o, // pop the store instruction from the store buffer
 
     // CU <--> CSRs
-    input   logic                   csr_ready_i,
     output  logic                   csr_valid_o,
     output  csr_instr_t             csr_type_o,
 
@@ -211,10 +210,7 @@ module commit_cu (
             end
 
             // Atomically read and write CSRs
-            COMMIT_CSR: begin
-                if (!csr_ready_i)   next_state  = COMMIT_CSR;
-                else                next_state  = ISSUE_RESUME;
-            end
+            COMMIT_CSR:         next_state  = IDLE;
 
             /* TODO: properly handle the following instructions */
             COMMIT_FENCE:       next_state  = IDLE;
@@ -235,9 +231,6 @@ module commit_cu (
             // Clear the commit register and return to IDLE
             CLEAR_COMM_REG:     next_state  = IDLE;
 
-            // Resume state
-            ISSUE_RESUME:       next_state  = IDLE;
-
             // HALT state (deadlock)
             HALT:               next_state  = HALT;
 
@@ -252,8 +245,9 @@ module commit_cu (
         ready_o             = 1'b0;
         comm_reg_en_o       = 1'b0;
         comm_reg_clr_o      = 1'b0;
-        comm_adder_ctl_o    = COMM_ADDER_CTL_LINK;
         comm_rd_sel_o       = COMM_RD_SEL_RES;
+        comm_jb_instr_o     = 1'b0;
+        comm_ret_cnt_en_o   = 1'b0;
         int_rs_valid_o      = 1'b0;
         int_rf_valid_o      = 1'b0;
     `ifdef LEN5_FP_EN
@@ -281,6 +275,7 @@ module commit_cu (
                 ready_o             = 1'b1;
                 int_rs_valid_o      = 1'b1;
                 int_rf_valid_o      = 1'b1;
+                comm_ret_cnt_en_o   = 1'b1;
                 comm_reg_en_o       = 1'b1;
             end
 
@@ -289,12 +284,14 @@ module commit_cu (
                 ready_o             = 1'b1;
                 fp_rs_valid_o       = 1'b1;
                 fp_rf_valid_o       = 1'b1;
+                comm_ret_cnt_en_o   = 1'b1;
                 comm_reg_en_o       = 1'b1;
             end
         `endif /* LEN5_FP_EN */
 
             COMMIT_STORE: begin
                 ready_o             = 1'b1;
+                comm_ret_cnt_en_o   = 1'b1;
                 comm_reg_en_o       = 1'b1;
             end
 
@@ -302,9 +299,11 @@ module commit_cu (
                 ready_o             = 1'b1;
                 int_rs_valid_o      = 1'b1;
                 int_rf_valid_o      = 1'b1;
+                comm_ret_cnt_en_o   = 1'b1;
                 comm_reg_en_o       = 1'b1;
                 fe_res_valid_o      = 1'b1;
                 comm_rd_sel_o       = COMM_RD_SEL_LINK;
+                comm_jb_instr_o     = 1'b1;
             end
 
             COMMIT_JUMP_MIS: begin
@@ -312,16 +311,22 @@ module commit_cu (
                 int_rf_valid_o      = 1'b1;
                 mis_flush_o         = 1'b1;
                 comm_rd_sel_o       = COMM_RD_SEL_LINK;
+                comm_ret_cnt_en_o   = 1'b1;
+                comm_jb_instr_o     = 1'b1;
             end
 
             COMMIT_BRANCH: begin
                 ready_o             = 1'b1;
+                comm_ret_cnt_en_o   = 1'b1;
                 comm_reg_en_o       = 1'b1;
                 fe_res_valid_o      = 1'b1;
+                comm_jb_instr_o     = 1'b1;
             end
             
             COMMIT_BRANCH_MIS: begin
                 mis_flush_o         = 1'b1;
+                comm_ret_cnt_en_o   = 1'b1;
+                comm_jb_instr_o     = 1'b1;
             end
 
             MIS_LOAD_PC: begin
@@ -333,39 +338,45 @@ module commit_cu (
             end
 
             COMMIT_CSR: begin
+                int_rf_valid_o      = 1'b1;
+                int_rs_valid_o      = 1'b1;
                 csr_valid_o         = 1'b1;
+                comm_ret_cnt_en_o   = 1'b1;
                 comm_reg_en_o       = 1'b1;
                 comm_rd_sel_o       = COMM_RD_SEL_CSR;
+                issue_resume_o      = 1'b1;
             end
 
             /* TODO: properly handle the following instructions */
             COMMIT_FENCE: begin
+                comm_ret_cnt_en_o   = 1'b1;
                 comm_reg_en_o   = 1'b1;
             end
             COMMIT_ECALL: begin
+                comm_ret_cnt_en_o   = 1'b1;
                 comm_reg_en_o   = 1'b1;
             end
             COMMIT_EBREAK: begin
+                comm_ret_cnt_en_o   = 1'b1;
                 comm_reg_en_o   = 1'b1;
             end
             COMMIT_XRET: begin
+                comm_ret_cnt_en_o   = 1'b1;
                 comm_reg_en_o   = 1'b1;
             end
             COMMIT_WFI: begin
+                comm_ret_cnt_en_o   = 1'b1;
                 comm_reg_en_o   = 1'b1;
             end
 
             COMMIT_EXCEPT: begin
+                comm_ret_cnt_en_o   = 1'b1;
                 mis_flush_o     = 1'b1;
             end
 
             EXCEPT_LOAD_PC: begin
                 fe_except_raised_o  = 1'b1;
-                comm_adder_ctl_o    = COMM_ADDER_CTL_EXCEPT;
-            end
-
-            ISSUE_RESUME: begin
-                issue_resume_o  = 1'b1;
+                comm_rd_sel_o       = COMM_RD_SEL_EXCEPT;
             end
 
             HALT:;

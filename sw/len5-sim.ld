@@ -87,6 +87,7 @@ SECTIONS
   .init (__boot_pc):
   {
     KEEP (*(SORT_NONE(.init)));
+    KEEP (*(.text.start)) /* custom crt0 */
   } > ROM
   /* Original code below */
   /* .init           :
@@ -216,7 +217,7 @@ SECTIONS
   } > RAM
   _edata = .; PROVIDE (edata = .);
   . = .;
-  __bss_start = .;
+
   .sbss           :
   {
     *(.dynsbss)

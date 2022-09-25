@@ -46,6 +46,7 @@ CC 				:= $(CROSS_COMPILE)gcc
 CFLAGS			:= 	-march=$(ISA_STRING) \
 					-mabi=$(ABI_STRING) \
 					-ffreestanding \
+					-nostartfiles \
 					-O1 \
 					-Wall
 QEMU_CFLAGS		:= 	-march=$(ISA_STRING) \

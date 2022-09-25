@@ -86,31 +86,31 @@ module tb_bare;
     initial begin
         // Set the memory file path
         if ($value$plusargs("MEM_FILE=%s", mem_file)) begin
-            `uvm_info("CMDLINE", "Updated memory file", UVM_INFO);
+            `uvm_info("CMDLINE", "Updated memory file", UVM_HIGH);
         end
         
         // Set the number of cycles to simulate
         if ($value$plusargs("N=%d", num_cycles)) begin
-            `uvm_info("CMDLINE", "Updated number of simulation cycles", UVM_INFO);
+            `uvm_info("CMDLINE", "Updated number of simulation cycles", UVM_HIGH);
         end
 
         /* Print boot program counter */
-        `uvm_info("CONFIG", $sformatf("Boot program counter: 0x%x", `BOOT_PC), UVM_MEDIUM);
+        `uvm_info("CONFIG", $sformatf("Boot program counter: 0x%x", `BOOT_PC), UVM_INFO);
 
         /* Print the number of simulation cycles */
-        `uvm_info("CONFIG", $sformatf("Number of simulation cycles: %0d", num_cycles), UVM_MEDIUM);
+        `uvm_info("CONFIG", $sformatf("Number of simulation cycles: %0d", num_cycles), UVM_INFO);
 
         /* Print memory file being used */
-        `uvm_info("CONFIG", $sformatf("Memory image: %s", mem_file), UVM_MEDIUM);
+        `uvm_info("CONFIG", $sformatf("Memory image: %s", mem_file), UVM_INFO);
 
         /* Print the serial monitor base address */
-        `uvm_info("CONFIG", $sformatf("Serial monitor memory address: 0x%h", MON_MEM_ADDR), UVM_MEDIUM);
+        `uvm_info("CONFIG", $sformatf("Serial monitor memory address: 0x%h", MON_MEM_ADDR), UVM_INFO);
 
         /* Print M extension information */
-        `uvm_info("CONFIG", $sformatf("M extension: %s", `ifdef LEN5_M_EN "YES" `else "NO" `endif), UVM_MEDIUM);
+        `uvm_info("CONFIG", $sformatf("M extension: %s", `ifdef LEN5_M_EN "YES" `else "NO" `endif), UVM_INFO);
         
         /* Print FP extension information */
-        `uvm_info("CONFIG", $sformatf("D extension: %s", `ifdef LEN5_FP_EN "YES" `else "NO" `endif), UVM_MEDIUM);
+        `uvm_info("CONFIG", $sformatf("D extension: %s", `ifdef LEN5_FP_EN "YES" `else "NO" `endif), UVM_INFO);
     end
 
     // Clock and reset generation
@@ -135,13 +135,13 @@ module tb_bare;
         byte c;
 
         // Sniff SERIAL ADDRESS and print content
-        if (dp_data_mem_valid && dp_data_mem_req.addr == MON_MEM_ADDR) begin
+        if (dp_data_mem_valid && dp_data_mem_req.addr == MON_MEM_ADDR && dp_data_mem_req.acc_type == MEM_ACC_ST) begin
             c = dp_data_mem_req.value[7:0];
-            `uvm_info("SERIAL MONITOR", $sformatf("Detected character: %c [0x%h]", c, c), UVM_HIGH);
+            `uvm_info("TB SERIAL MONITOR", $sformatf("Detected character: %c [0x%h]", c, c), UVM_HIGH);
 
             // Check for end-of-string
             if (c == "\0") begin
-                `uvm_info("SERIAL MONITOR", $sformatf("Received string: %s", serial_str), UVM_LOW);
+                `uvm_info("TB SERIAL MONITOR", $sformatf("Received string: %s", serial_str), UVM_LOW);
                 serial_str = "";
             end else begin
                 serial_str = {serial_str, c};

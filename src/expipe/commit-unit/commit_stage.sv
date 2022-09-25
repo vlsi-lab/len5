@@ -81,7 +81,6 @@ module commit_stage (
 
     // CSRs
     output  logic                       csr_valid_o,
-    input   logic                       csr_ready_i,
     input   csr_t                       csr_data_i,
     input   logic                       csr_acc_exc_i,      // CSR illegal instruction or access permission denied
     input   csr_mtvec_t                 csr_mtvec_i,    // mtvec data 
@@ -135,29 +134,33 @@ module commit_stage (
     logic                       comm_reg_valid;
 
     // Commit adder
-    comm_adder_ctl_t            cu_adder_ctl;
     logic [XLEN-1:0]            adder_a, adder_b, adder_out;
 
     // rd MUX
-    comm_rd_sel_t               cu_rd_mux_sel;
+    comm_rd_sel_t               cu_rd_sel;
     logic [XLEN-1:0]            rd_value;
 
     // commit CU <--> others
     logic                       cu_instr_valid;
     logic                       cu_csr_type;
     logic                       cu_mis_flush;
+    logic                       cu_jb_instr;
+    logic                       cu_ret_cnt_en;
 
     // In-flight jump/branch instructions counter
     logic [ROB_IDX_LEN-1:0]     jb_instr_cnt;
     logic                       jb_instr_cnt_en, jb_instr_cnt_clr, jb_instr_cnt_up;
 
+    // Retired instructions counter
+    logic [31:0]                ret_cnt, jb_cnt;
+
     // -------
     // MODULES
     // -------
 
-    //     cdb    \                        /    COMMIT CU   \  / register file(s)
-    //              ROB > ROB HEAD BUFFER - COMMIT REGISTER  -- csrs
-    // issue logic /                       \ COMMIT DECODER /  \ special cases
+    //     cdb    \                            /    COMMIT CU   \     / register file(s)
+    //              } > ROB > ROB HEAD BUFFER { COMMIT REGISTER  } > { csrs
+    // issue logic /                           \ COMMIT DECODER /     \ special cases
 
     // Reorder Buffer (ROB)
     // --------------------
@@ -304,14 +307,14 @@ module commit_stage (
         .mispredict_i       (inreg_cu_mispredicted  ),
         .comm_reg_en_o      (comm_reg_en            ),
         .comm_reg_clr_o     (comm_reg_clr           ),
-        .comm_adder_ctl_o   (cu_adder_ctl           ),
-        .comm_rd_sel_o      (cu_rd_mux_sel          ),
+        .comm_rd_sel_o      (cu_rd_sel              ),
+        .comm_jb_instr_o    (cu_jb_instr            ),
+        .comm_ret_cnt_en_o  (cu_ret_cnt_en          ),
         .valid_i            (inreg_cu_valid         ),
         .ready_o            (cu_inreg_ready         ),
         .instr_i            (inreg_data_out.data.instruction),
         .res_ready_i        (inreg_data_out.data.res_ready),
         .except_raised_i    (inreg_data_out.data.except_raised),
-        .except_code_i      (inreg_data_out.data.except_code),
         .int_rs_valid_o     (int_rs_valid_o         ),
         .int_rf_valid_o     (int_rf_valid_o         ),
     `ifdef LEN5_FP_EN
@@ -319,7 +322,6 @@ module commit_stage (
         .fp_rf_valid_o      (fp_rf_valid_o          ),
     `endif /* LEN5_FP_EN */
         .sb_exec_store_o    (sb_exec_store_o        ),
-        .csr_ready_i        (csr_ready_i            ),
         .csr_valid_o        (csr_valid_o            ),
         .csr_type_o         (csr_instr_type_o       ),
         .fe_ready_i         (fe_ready_i             ),
@@ -335,14 +337,14 @@ module commit_stage (
 
     // Commit adder operand MUX's
     always_comb begin : comm_adder_mux
-        case (cu_adder_ctl)
-            COMM_ADDER_CTL_LINK: begin // compute link address
+        case (cu_rd_sel)
+            COMM_RD_SEL_LINK: begin // compute link address
                 adder_a     = comm_reg_data.data.instr_pc;
                 adder_b     = ILEN >> 3;
             end
-            COMM_ADDER_CTL_EXCEPT: begin // compute exception PC
-                adder_a     = csr_mtvec_i.base; // exc. vector base address
-                adder_b     = (csr_mtvec_i.mode == 0) ? 'h0 : comm_reg_data.data.except_code;
+            COMM_RD_SEL_EXCEPT: begin // compute exception PC
+                adder_a     = {csr_mtvec_i.base, 2'b00}; // exc. vector base address
+                adder_b     = (csr_mtvec_i.mode == 0) ? 'h0 : {{(XLEN-2-EXCEPT_TYPE_LEN){1'b0}}, comm_reg_data.data.except_code, 2'b00};
             end
             default: begin
                 adder_a     = 'h0;
@@ -356,11 +358,18 @@ module commit_stage (
 
     // rd MUX
     // ------
-    assign  rd_value    = (cu_adder_ctl == COMM_ADDER_CTL_LINK) ? adder_out : comm_reg_data.data.res_value;
+    always_comb begin : rd_value_mux
+        case (cu_rd_sel)
+            COMM_RD_SEL_LINK:   rd_value    = adder_out;
+            COMM_RD_SEL_EXCEPT: rd_value    = adder_out;
+            COMM_RD_SEL_CSR:    rd_value    = csr_data_i;
+            default:            rd_value    = comm_reg_data.data.res_value;
+        endcase
+    end
 
     // Jump/branch in-flight instructions counter
     // ------------------------------------------
-    assign  jb_instr_cnt_en     = issue_jb_instr_i ^ cu_adder_ctl; 
+    assign  jb_instr_cnt_en     = issue_jb_instr_i ^ cu_jb_instr; 
     assign  jb_instr_cnt_clr    = cu_mis_flush;
     assign  jb_instr_cnt_up     = issue_jb_instr_i;
     updown_counter #(
@@ -373,6 +382,30 @@ module commit_stage (
         .up_dn_i (jb_instr_cnt_up   ),
         .count_o (jb_instr_cnt      ),
         .tc_o    () // not needed
+    );
+
+    // Retired instructions counters
+    // -----------------------------
+    // NOTE: move to CSRs as performance counter
+    modn_counter #(
+        .N (64'd4294967296)
+    ) u_ret_cnt (
+    	.clk_i   (clk_i         ),
+        .rst_n_i (rst_n_i       ),
+        .en_i    (cu_ret_cnt_en ),
+        .clr_i   (1'b0          ),
+        .count_o (ret_cnt       ),
+        .tc_o    ()
+    );
+    modn_counter #(
+        .N (64'd4294967296)
+    ) u_jb_cnt (
+    	.clk_i   (clk_i         ),
+        .rst_n_i (rst_n_i       ),
+        .en_i    (cu_jb_instr   ),
+        .clr_i   (1'b0          ),
+        .count_o (jb_cnt        ),
+        .tc_o    ()
     );
     
     // -----------------
@@ -409,4 +442,23 @@ module commit_stage (
     // Data to others
     assign  mis_flush_o         = cu_mis_flush;
     
+    // ----------
+    // ASSERTIONS
+    // ----------
+    `ifndef SYNTHESIS
+    property p_no_except;
+        @(posedge clk_i) disable iff (!rst_n_i)
+        mis_flush_o |=>
+            !fe_except_raised_o
+    endproperty
+    a_no_except: assert property (p_no_except)
+    else `uvm_warning("COMMIT STAGE", $sformatf("Committing exception: %s", comm_reg_data.data.except_code.name()));
+    // ISR address
+    property p_except;
+        @(posedge clk_i) disable iff (!rst_n_i)
+        fe_except_raised_o |->
+            fe_except_pc_o == ((comm_reg_data.data.except_code << 2) + (csr_mtvec_i.base << 2))
+    endproperty
+    a_except: assert property (p_except);
+    `endif // SYNTHESIS
 endmodule

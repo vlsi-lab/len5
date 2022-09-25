@@ -46,7 +46,7 @@ package expipe_pkg;
 
     // EXECUTION UNITS
     // ---------------
-    localparam BASE_EU_N    = 5;   // load buffer, store buffer, branch unit, ALU, operands only
+    localparam BASE_EU_N    = 4;   // load buffer, store buffer, branch unit, ALU
 
 `ifdef LEN5_M_EN
     localparam MULT_EU_N    = 2;   // MULT, DIV
@@ -141,49 +141,6 @@ package expipe_pkg;
         except_code_t               except_code;
     } cdb_data_t;
 
-    // -----------
-    // ISSUE QUEUE
-    // -----------
-
-    typedef struct packed {
-        logic [XLEN-1:0]    curr_pc;
-        instr_t             instruction;
-        logic [XLEN-1:0]    pred_target;
-        logic               pred_taken;
-        logic               except_raised;
-        except_code_t       except_code;
-    } iq_entry_t;
-    
-    // ---------------
-    // REGISTER STATUS
-    // ---------------
-    
-    typedef struct packed {
-        rob_idx_t     busy;       /* at most as many entry in the ROB, the current (this instruction) */
-        rob_idx_t     rob_idx;
-    } regstat_entry_t;
-
-    // Operand data
-    // ------------
-    typedef struct packed {
-        logic                   ready;
-        rob_idx_t               rob_idx;
-        logic [XLEN-1:0]        value;
-    } op_data_t;
-
-    // -----------
-    // ISSUE LOGIC
-    // -----------
-
-    // IMMEDIATE TYPE
-    typedef enum logic [2:0] {
-        IMM_TYPE_I,
-        IMM_TYPE_S,
-        IMM_TYPE_B,
-        IMM_TYPE_U,
-        IMM_TYPE_J,
-        IMM_TYPE_RS1
-    } imm_format_t;
 
     // --------------------
     // RESERVATION STATIONS
@@ -261,12 +218,40 @@ package expipe_pkg;
         ldst_width_t                lsu;
         logic [MAX_EU_CTL_LEN-1:0]  raw;
     } eu_ctl_t;
-    
-    // ASSIGNED EU
+
+    // -----------
+    // ISSUE STAGE
+    // -----------
+
+    // Issue queue data
+    typedef struct packed {
+        logic [XLEN-1:0]    curr_pc;
+        instr_t             instruction;
+        logic [XLEN-1:0]    pred_target;
+        logic               pred_taken;
+        logic               except_raised;
+        except_code_t       except_code;
+    } iq_entry_t;
+
+    // Issue operation type
+    typedef enum logic [3:0] { 
+        ISSUE_TYPE_NONE,    // no special action required
+        ISSUE_TYPE_INT,     // update integer register status
+        ISSUE_TYPE_LUI,     // LUI instruction
+        ISSUE_TYPE_STORE,   // store instructions
+        ISSUE_TYPE_BRANCH,  // branch instructions
+        ISSUE_TYPE_JUMP,    // jump instructions
+        ISSUE_TYPE_FP,      // update floating-point register status
+        ISSUE_TYPE_CSR,     // CSR immediate instruction
+        ISSUE_TYPE_STALL,   // stall until the current instruction commits
+        ISSUE_TYPE_WFI,     // wait for interrupt instruction
+        ISSUE_TYPE_EXCEPT   // an exception was generated
+    } issue_type_t;
+        
+    // Assigned execution unit
     typedef enum logic [$clog2(EU_N)-1:0] {
         EU_LOAD_BUFFER,
         EU_STORE_BUFFER,
-        EU_BRANCH_UNIT,
         EU_INT_ALU,
     `ifdef LEN5_M_EN
         EU_INT_MULT,
@@ -275,9 +260,56 @@ package expipe_pkg;
     `ifdef LEN5_FP_EN
         EU_FPU,
     `endif /* LEN5_FP_EN */
-        EU_OPERANDS_ONLY,   // probably not necessary if pipeline is stalled
-        EU_NONE             //the instruction is directly sent to the ROB (csr, special instructions, etc.)
+        EU_BRANCH_UNIT
     } issue_eu_t;
+
+    // Issue register data
+    typedef struct packed {
+        logic [XLEN-1:0]        curr_pc;
+        instr_t                 instr;
+        logic                   skip_eu;
+        issue_eu_t              assigned_eu;
+        logic                   rs1_req;
+        logic [REG_IDX_LEN-1:0] rs1_idx;
+        logic                   rs1_is_pc;
+        logic                   rs2_req;
+        logic [REG_IDX_LEN-1:0] rs2_idx;
+        logic                   rs2_is_imm;
+        logic [XLEN-1:0]        imm_value;
+        logic [REG_IDX_LEN-1:0] rd_idx;
+        eu_ctl_t                eu_ctl;
+        logic                   pred_taken;
+        logic [XLEN-1:0]        pred_target;
+        logic                   except_raised;
+        except_code_t           except_code;
+    } issue_reg_t;
+
+    // Immediate type
+    typedef enum logic [2:0] {
+        IMM_TYPE_I,
+        IMM_TYPE_S,
+        IMM_TYPE_B,
+        IMM_TYPE_U,
+        IMM_TYPE_J,
+        IMM_TYPE_RS1
+    } imm_format_t;
+    
+    // ---------------
+    // REGISTER STATUS
+    // ---------------
+    
+    typedef struct packed {
+        rob_idx_t     busy;       /* at most as many entry in the ROB, the current (this instruction) */
+        rob_idx_t     rob_idx;
+    } regstat_entry_t;
+
+    // Operand data
+    // ------------
+    typedef struct packed {
+        logic                   ready;
+        rob_idx_t               rob_idx;
+        logic [XLEN-1:0]        value;
+    } op_data_t;
 
     // ARITHMETIC RESERVATION STATION
     // ------------------------------
@@ -478,16 +510,11 @@ package expipe_pkg;
         COMM_TYPE_EXCEPT    // handle exceptions
     } comm_type_t;
 
-    // Commit adder control
-    typedef enum logic {
-        COMM_ADDER_CTL_LINK,    // compute link address: rd = instr_pc + 4
-        COMM_ADDER_CTL_EXCEPT   // compute exception program counter
-    } comm_adder_ctl_t;
-
-    // rd MUX control
+    // rd MUX and adder control
     typedef enum logic [1:0] {
         COMM_RD_SEL_RES,    // rd = instruction result
         COMM_RD_SEL_LINK,   // rd = instruction PC + 4
+        COMM_RD_SEL_EXCEPT, // rd = irq address (or base if no vectored mode)
         COMM_RD_SEL_CSR     // rd = CSR data
     } comm_rd_sel_t;
 

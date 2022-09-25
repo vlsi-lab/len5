@@ -139,21 +139,17 @@ module memory_bare_emu #(
 
     // DATA REQUEST
     // ------------
-    always_comb begin : p_data_mem_req
-        data_ans.tag             = data_req_i.tag;
-        data_ans.acc_type        = data_req_i.acc_type;
-        data_ans.addr            = data_req_i.addr;
-        data_ans.value           = 'h0;
-        data_ans.except_raised   = 1'b0;
-        data_ans.except_code     = E_UNKNOWN;
+    always_ff @( negedge clk_i ) begin : p_data_mem_req
+        data_ans.tag             <= data_req_i.tag;
+        data_ans.acc_type        <= data_req_i.acc_type;
+        data_ans.addr            <= data_req_i.addr;
+        data_ans.value           <= 'h0;
+        data_ans.except_raised   <= 1'b0;
+        data_ans.except_code     <= E_UNKNOWN;
 
         if (data_valid_i) begin
             
             case (data_req_i.acc_type)
-                MEM_ACC_INSTR: begin: read_instruction
-                    d_ret         = d_mem.ReadW(data_req_i.addr);
-                    data_ans.value   = {'0, d_mem.read_word};
-                end
                 MEM_ACC_ST: begin: store_data
                     case (data_req_i.ls_type)
                         LS_BYTE, LS_BYTE_U: begin
@@ -165,28 +161,34 @@ module memory_bare_emu #(
                         LS_WORD, LS_WORD_U: begin
                             d_ret = d_mem.WriteW(data_req_i.addr, data_req_i.value[31:0]);
                         end
+                        LS_DOUBLEWORD: begin
+                            d_ret = d_mem.WriteDW(data_req_i.addr, data_req_i.value);
+                        end
                         default: begin
-                            d_ret = d_mem.WriteDW(data_req_i.addr, data_req_i.value[63:0]);
+                            `uvm_error("MEM EMU", "Unsupported data store request");
                         end
                     endcase
                 end
                 MEM_ACC_LD: begin: load_data
                     case (data_req_i.ls_type)
                         LS_BYTE, LS_BYTE_U: begin
-                            d_ret         = d_mem.ReadB(data_req_i.addr);
-                            data_ans.value   = {'0, d_mem.read_byte};
+                            d_ret           = d_mem.ReadB(data_req_i.addr);
+                            data_ans.value  <= {'0, d_mem.read_byte};
                         end
                         LS_HALFWORD, LS_HALFWORD_U: begin
-                            d_ret         = d_mem.ReadHW(data_req_i.addr);
-                            data_ans.value   = {'0, d_mem.read_halfword};
+                            d_ret           = d_mem.ReadHW(data_req_i.addr);
+                            data_ans.value  <= {'0, d_mem.read_halfword};
                         end
                         LS_WORD, LS_WORD_U: begin
-                            d_ret         = d_mem.ReadW(data_req_i.addr);
-                            data_ans.value   = {'0, d_mem.read_word};
+                            d_ret           = d_mem.ReadW(data_req_i.addr);
+                            data_ans.value  <= {'0, d_mem.read_word};
+                        end
+                        LS_DOUBLEWORD: begin
+                            d_ret           = d_mem.ReadDW(data_req_i.addr);
+                            data_ans.value  <= {'0, d_mem.read_doubleword};
                         end
                         default: begin
-                            d_ret         = d_mem.ReadDW(data_req_i.addr);
-                            data_ans.value   = d_mem.read_doubleword;
+                            `uvm_error("MEM EMU", "Unsupported data load request");
                         end
                     endcase
                 end
@@ -197,32 +199,33 @@ module memory_bare_emu #(
 
             // Exception handling
             case (d_ret)
-                0: data_ans.except_raised = 1'b0;
+                0: data_ans.except_raised <= 1'b0;
                 1: begin: address_misaligned
-                    data_ans.except_raised   = 1'b1;
+                    data_ans.except_raised   <= 1'b1;
                     case (data_req_i.acc_type)
-                        MEM_ACC_INSTR:  data_ans.except_code = E_I_ADDR_MISALIGNED;
-                        MEM_ACC_LD:     data_ans.except_code = E_LD_ADDR_MISALIGNED;
-                        MEM_ACC_ST:     data_ans.except_code = E_ST_ADDR_MISALIGNED;
-                        default:        data_ans.except_code = E_UNKNOWN;
+                        MEM_ACC_INSTR:  data_ans.except_code <= E_I_ADDR_MISALIGNED;
+                        MEM_ACC_LD:     data_ans.except_code <= E_LD_ADDR_MISALIGNED;
+                        MEM_ACC_ST:     data_ans.except_code <= E_ST_ADDR_MISALIGNED;
+                        default:        data_ans.except_code <= E_UNKNOWN;
                     endcase
                 end
                 2: begin: access_fault
-                `ifdef MEM_EMU_RAISE_READ_ACCESS_FAULT
-                    data_ans.except_raised   = 1'b0;
+                `ifndef MEM_EMU_RAISE_READ_ACCESS_FAULT
+                    data_ans.except_raised   <= 1'b0;
+                    data_ans.value           <= '0;
                 `else
-                    data_ans.except_raised   = 1'b1;
+                    data_ans.except_raised   <= 1'b1;
                     case (data_req_i.acc_type)
-                        MEM_ACC_INSTR:  data_ans.except_code = E_I_ACCESS_FAULT;
-                        MEM_ACC_LD:     data_ans.except_code = E_LD_ACCESS_FAULT;
-                        MEM_ACC_ST:     data_ans.except_code = E_ST_ACCESS_FAULT;
-                        default:        data_ans.except_code = E_UNKNOWN;
+                        MEM_ACC_INSTR:  data_ans.except_code <= E_I_ACCESS_FAULT;
+                        MEM_ACC_LD:     data_ans.except_code <= E_LD_ACCESS_FAULT;
+                        MEM_ACC_ST:     data_ans.except_code <= E_ST_ACCESS_FAULT;
+                        default:        data_ans.except_code <= E_UNKNOWN;
                     endcase
                 `endif /* MEM_EMU_RAISE_READ_ACCESS_FAULT */
                 end
                 default: begin
-                    data_ans.except_raised   = 1'b1;
-                    data_ans.except_code = E_UNKNOWN;
+                    data_ans.except_raised  <= 1'b1;
+                    data_ans.except_code    <= E_UNKNOWN;
                 end
             endcase
         end

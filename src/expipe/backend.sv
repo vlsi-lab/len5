@@ -482,7 +482,6 @@ module backend (
         .rd_value_o             (comm_rf_rd_value           ),
 
         .csr_valid_o            (comm_csr_valid             ),
-        .csr_ready_i            (csr_comm_ready             ),
         .csr_data_i             (csr_comm_data              ),
         .csr_acc_exc_i          (csr_comm_acc_exc           ),
         .csr_mtvec_i            (csr_comm_mtvec             ),
@@ -502,7 +501,6 @@ module backend (
     	.clk_i              (clk_i                ),
         .rst_n_i            (rst_n_i              ),
         .valid_i            (comm_csr_valid       ),
-        .ready_o            (csr_comm_ready       ),
         .instr_type_i       (comm_csr_instr_type  ),
         .funct3_i           (comm_csr_funct3      ),
         .addr_i             (comm_csr_addr        ),

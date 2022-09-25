@@ -34,7 +34,6 @@ module csrs (
 
     // Handshaking with commit logic
     input   logic                       valid_i,
-    output  logic                       ready_o,
 
     // Control from commit logic
     input   csr_instr_t                 instr_type_i,
@@ -77,7 +76,7 @@ module csrs (
 logic   [XLEN-1:0]      csr_rd_val;
 
 // 64-bit zero-extended immediate
-logic   [XLEN-1:0]      uimm_zext   = { 59'b0, rs1_idx_i };
+logic   [XLEN-1:0]      uimm_zext;
 
 // CSR access exception
 logic                   inv_acc_exc;    // invalid CSR address or no write permission
@@ -137,6 +136,8 @@ assign mstatus.not_used_0    = 1'b0;
 assign mstatus.sie           = 1'b0;
 assign mstatus.uie           = 1'b0;
 
+assign uimm_zext             = { 59'b0, rs1_idx_i };
+
 // --------
 // CSR READ
 // --------
@@ -188,8 +189,8 @@ always_comb begin : csr_read
                 default:;   // use default value (see Exception Handling)
             endcase
 
-        // CSRRS, CSRRS, CSRRC, CSRRCI
-        // ---------------------------
+        // CSRRS, CSRRSI, CSRRC, CSRRCI
+        // ----------------------------
         // Read the CSR unconditionally 
         end else if (funct3_i == `FUNCT3_CSRRS ||
                      funct3_i == `FUNCT3_CSRRSI ||
@@ -217,11 +218,11 @@ always_comb begin : csr_read
                 // -----------
                 // mtvec
                 `CSR_ADDR_MTVEC: begin
-                    csr_rd_val  = mtvec;
+                    if (priv_mode >= PRIV_MODE_M) csr_rd_val  = mtvec;
                 end
                 // mstatus
                 `CSR_ADDR_MSTATUS: begin
-                    if (priv_mode >= PRIV_MODE_M)    csr_rd_val = mstatus;
+                    if (priv_mode >= PRIV_MODE_M) csr_rd_val = mstatus;
                 end
                 
                 // Default
@@ -253,6 +254,9 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
         satp.mode   <= `BOOT_VM_MODE;
         satp.asid   <= '0;
         satp.ppn    <= '0;
+
+        // mtvec
+        mtvec       <= 'h0;
     end
     
     // Explicit CSR instructions
@@ -376,7 +380,17 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
             // -----------
             // mtvec
             `CSR_ADDR_MTVEC: begin
-                mtvec   <= rs1_value_i;
+                if (priv_mode >= PRIV_MODE_M) begin
+                    case (funct3_i)
+                        `FUNCT3_CSRRW:  mtvec <= rs1_value_i;
+                        `FUNCT3_CSRRS:  if (rs1_idx_i != '0) mtvec <= mtvec | rs1_value_i;
+                        `FUNCT3_CSRRC:  if (rs1_idx_i != '0) mtvec <= mtvec & ~rs1_value_i; 
+                        `FUNCT3_CSRRWI: mtvec <= uimm_zext;
+                        `FUNCT3_CSRRSI: if (rs1_idx_i != '0) mtvec <= mtvec | uimm_zext;
+                        `FUNCT3_CSRRCI: if (rs1_idx_i != '0) mtvec <= mtvec & ~uimm_zext; 
+                        default:;
+                    endcase
+                end
             end
 
             default:;   // do not modify the CSR values
@@ -416,8 +430,10 @@ always_comb begin : exc_handling
         `ifdef LEN5_FP_EN
             `CSR_ADDR_FFLAGS,
             `CSR_ADDR_FRM,
-            `CSR_ADDR_FCSR: inv_acc_exc = 1'b0; 
+            `CSR_ADDR_FCSR, 
         `endif /* LEN5_FP_EN */
+            `CSR_ADDR_SATP,
+            `CSR_ADDR_MTVEC: inv_acc_exc = 1'b0;
             
             // Invalid address
             default:        inv_acc_exc = 1'b1;
@@ -431,7 +447,7 @@ end
 
 /*
  * NOTE: CSRs are accessed in a single read-modify-write operation. Therefore,
- * the current value of the selected CSR is updated on the first negative clock
+ * the current value of the selected CSR is accessed on the first negative clock
  * edge, before the current value is modified.
  */
 
@@ -452,9 +468,6 @@ end
 // -----------
 // OUTPUT DATA
 // -----------
-
-// Always ready to accept data
-assign  ready_o         = 1'b1;
 
 // Data to FPU
 `ifdef LEN5_FP_EN
