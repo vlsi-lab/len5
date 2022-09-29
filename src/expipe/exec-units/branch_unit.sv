@@ -29,7 +29,7 @@ module branch_unit
     // Issue Stage
     input   logic                           issue_valid_i,
     output  logic                           issue_ready_o,
-    input   branch_type_t                   issue_branch_type_i,
+    input   branch_ctl_t                   issue_branch_type_i,
     input   op_data_t                       issue_rs1_i,
     input   op_data_t                       issue_rs2_i,
     input   logic [XLEN-1:0]                issue_imm_value_i,
@@ -53,7 +53,7 @@ module branch_unit
     logic [XLEN-1:0]    rs_bu_curr_pc;
     logic [XLEN-1:0]    rs_bu_pred_target;
     logic               rs_bu_pred_taken;
-    branch_type_t       rs_bu_branch_type;
+    branch_ctl_t       rs_bu_branch_type;
 
     // Beanch logic <--> Reservation Station
     logic                           bu_rs_ready;

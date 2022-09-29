@@ -15,8 +15,10 @@
 `define BYTE *8 // 1 byte = 8 bits
 
 // Import UVM report macros
+`ifndef SYNTHESIS
 `include "uvm_macros.svh"
 import uvm_pkg::*;
+`endif
 
 import expipe_pkg::*;
 import len5_pkg::XLEN;

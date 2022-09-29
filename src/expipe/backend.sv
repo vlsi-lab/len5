@@ -191,7 +191,7 @@ module backend (
     logic [FUNCT3_LEN-1:0]      comm_csr_funct3;
     logic [CSR_ADDR_LEN-1:0]    comm_csr_addr;
     logic [REG_IDX_LEN-1:0]     comm_csr_rs1_idx;
-    logic [XLEN-1:0]            comm_csr_rs1_value;
+    logic [XLEN-1:0]            comm_csr_data;
     except_code_t               comm_csr_except_code;
     logic [REG_IDX_LEN-1:0]     comm_csr_rd_idx;
 
@@ -489,7 +489,7 @@ module backend (
         .csr_funct3_o           (comm_csr_funct3            ),
         .csr_addr_o             (comm_csr_addr              ),
         .csr_rs1_idx_o          (comm_csr_rs1_idx           ),
-        .csr_rs1_value_o        (comm_csr_rs1_value         ),
+        .csr_data_o             (comm_csr_data              ),
         .csr_except_code_o      (comm_csr_except_code       ),
         .csr_rd_idx_o           (comm_csr_rd_idx            )
     );
@@ -505,7 +505,7 @@ module backend (
         .funct3_i           (comm_csr_funct3      ),
         .addr_i             (comm_csr_addr        ),
         .rs1_idx_i          (comm_csr_rs1_idx     ),
-        .rs1_value_i        (comm_csr_rs1_value   ),
+        .data_i             (comm_csr_data        ),
         .exc_data_i         (comm_csr_except_code ),
         .rd_idx_i           (comm_csr_rd_idx      ),
         .data_o             (csr_comm_data        ),

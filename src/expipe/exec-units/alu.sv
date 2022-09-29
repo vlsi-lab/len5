@@ -59,18 +59,18 @@ module alu
 
         unique case (ctl_i)
             ALU_ADD:    result  = rs1_i + rs2_i;
-            ALU_ADDW:   result  = signed'(rs1_i[(XLEN>>1):0] + rs2_i[(XLEN>>1):0]);
+            ALU_ADDW:   result  = signed'(rs1_i[(XLEN>>1)-1:0] + rs2_i[(XLEN>>1)-1:0]);
             ALU_SUB:    result  = rs1_i - rs2_i;
-            ALU_SUBW:   result  = signed'(rs1_i[(XLEN>>1):0] - rs2_i[(XLEN>>1):0]);
+            ALU_SUBW:   result  = signed'(rs1_i[(XLEN>>1)-1:0] - rs2_i[(XLEN>>1)-1:0]);
             ALU_AND:    result  = rs1_i & rs2_i;
             ALU_OR:     result  = rs1_i | rs2_i;
             ALU_XOR:    result  = rs1_i ^ rs2_i;
             ALU_SLL:    result  = rs1_i << rs2_i[5:0];
-            ALU_SLLW:   result  = signed'(rs1_i[(XLEN>>1):0] << rs2_i[4:0]);
+            ALU_SLLW:   result  = signed'(rs1_i[(XLEN>>1)-1:0] << rs2_i[4:0]);
             ALU_SRL:    result  = rs1_i >> rs2_i[5:0];
-            ALU_SRLW:   result  = { '0, rs1_i[(XLEN>>1):0] >> rs2_i[4:0] };
+            ALU_SRLW:   result  = { 32'h0, rs1_i[(XLEN>>1)-1:0] >> rs2_i[4:0] };
             ALU_SRA:    result  = rs1_i >>> rs2_i[5:0];
-            ALU_SRAW:   result  = rs1_i[(XLEN>>1):0] >>> rs2_i[4:0];
+            ALU_SRAW:   result  = rs1_i[(XLEN>>1)-1:0] >>> rs2_i[4:0];
             ALU_SLT:    result  = signed'(rs1_i) < signed'(rs2_i);
             ALU_SLTU:   result  = rs1_i < rs2_i;
             default:    except_raised   = 1'b1;

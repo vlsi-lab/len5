@@ -22,8 +22,7 @@
 // Data types and parameters
 import len5_pkg::*;
 import csr_pkg::*;
-import expipe_pkg::ROB_EXCEPT_LEN;
-import expipe_pkg::except_code_t;
+import expipe_pkg::*;
 import memory_pkg::PPN_LEN;
 import memory_pkg::asid_t;
 
@@ -42,7 +41,7 @@ module csrs (
     // CSR address and data to/from commit logic
     input   logic [CSR_ADDR_LEN-1:0]    addr_i,
     input   logic [REG_IDX_LEN-1:0]     rs1_idx_i,  // source register or unsigned immediate
-    input   logic [XLEN-1:0]            rs1_value_i, // data to write to the CSR
+    input   logic [XLEN-1:0]            data_i,     // data to write to the CSR
     input   except_code_t               exc_data_i, // exception data (e.g., FPU exceptions)
     input   logic [REG_IDX_LEN-1:0]     rd_idx_i,   // destination register
     output  csr_t                       data_o,
@@ -72,8 +71,9 @@ module csrs (
     output  logic [PPN_LEN-1:0]         mem_csr_root_ppn_o
 );
 
-// CSR read value
+// CSR read and write values
 logic   [XLEN-1:0]      csr_rd_val;
+logic   [XLEN-1:0]      csr_wr_val;
 
 // 64-bit zero-extended immediate
 logic   [XLEN-1:0]      uimm_zext;
@@ -101,9 +101,6 @@ csr_fcsr_t      fcsr;
 
 // SATP
 csr_satp_t      satp;
-
-// MTVEC
-csr_mtvec_t     mtvec;
 
 // MSTATUS
 csr_mstatus_t   mstatus;
@@ -138,6 +135,23 @@ assign mstatus.uie           = 1'b0;
 
 assign uimm_zext             = { 59'b0, rs1_idx_i };
 
+// MTVEC
+csr_mtvec_t     mtvec;
+
+// MEPC
+csr_mepc_t      mepc;
+
+// CSR write value MUX
+// -------------------
+always_comb begin : csr_wr_sel
+    case (instr_type_i)
+        CSR_CSRRWI, CSR_CSRRSI, CSR_CSRRCI:
+            csr_wr_val  = uimm_zext;
+        default: 
+            csr_wr_val  = data_i;
+    endcase
+end
+
 // --------
 // CSR READ
 // --------
@@ -147,88 +161,94 @@ always_comb begin : csr_read
     csr_rd_val      = '0;   // default value
 
     // Read the target CSR
-    if (valid_i && instr_type_i == CSR_INSTR) begin
-        // CSRRW, CSRRWI
-        // -------------
-        // Only read the CSR value if rd is not x0
-        if ((funct3_i == `FUNCT3_CSRRW ||
-             funct3_i == `FUNCT3_CSRRWI) &&
-             rd_idx_i != '0) begin
-            case (addr_i)
+    if (valid_i) begin
+        case (instr_type_i) begin
+            // CSRRW, CSRRWI
+            // -------------
+            // Only read the CSR value if rd is not x0
+            if ((funct3_i == `FUNCT3_CSRRW ||
+                funct3_i == `FUNCT3_CSRRWI) &&
+                rd_idx_i != '0) begin
+                case (addr_i)
 
-                // Floating-point status CSR
-                // -------------------------
-            `ifdef LEN5_FP_EN
-                // fcsr
-                `CSR_ADDR_FCSR:     csr_rd_val = { '0, fcsr };
-                `CSR_ADDR_FRM:      csr_rd_val = { '0, fcsr.frm };
-                `CSR_ADDR_FFLAGS:   csr_rd_val = { '0, fcsr.fflags };
-            `endif /* LEN5_FP_EN */
+                    // Floating-point status CSR
+                    // -------------------------
+                `ifdef LEN5_FP_EN
+                    // fcsr
+                    `CSR_ADDR_FCSR:     csr_rd_val = { '0, fcsr };
+                    `CSR_ADDR_FRM:      csr_rd_val = { '0, fcsr.frm };
+                    `CSR_ADDR_FFLAGS:   csr_rd_val = { '0, fcsr.fflags };
+                `endif /* LEN5_FP_EN */
 
-                // S-mode CSRs
-                // -----------
-                // satp
-                `CSR_ADDR_SATP: begin
-                    // only readable in S and M modes
-                    if (priv_mode >= PRIV_MODE_S)    csr_rd_val = satp;
-                end
+                    // S-mode CSRs
+                    // -----------
+                    // satp
+                    `CSR_ADDR_SATP: begin
+                        // only readable in S and M modes
+                        if (priv_mode >= PRIV_MODE_S)    csr_rd_val = satp;
+                    end
 
-                // M-mode CSRs
-                // -----------
-                // mtvec
-                `CSR_ADDR_MTVEC: begin
-                    csr_rd_val  = mtvec;
-                end
-                // mstatus
-                `CSR_ADDR_MSTATUS: begin
-                    // Only readable in M mode
-                    if (priv_mode >= PRIV_MODE_M)    csr_rd_val = mstatus;
-                end
+                    // M-mode CSRs
+                    // -----------
+                    // mtvec
+                    `CSR_ADDR_MTVEC: begin
+                        csr_rd_val  = mtvec;
+                    end
+                    // mstatus
+                    `CSR_ADDR_MSTATUS: begin
+                        // Only readable in M mode
+                        if (priv_mode >= PRIV_MODE_M)    csr_rd_val = mstatus;
+                    end
 
-                // Default
-                default:;   // use default value (see Exception Handling)
-            endcase
+                    // Default
+                    default:;   // use default value (see Exception Handling)
+                endcase
 
-        // CSRRS, CSRRSI, CSRRC, CSRRCI
-        // ----------------------------
-        // Read the CSR unconditionally 
-        end else if (funct3_i == `FUNCT3_CSRRS ||
-                     funct3_i == `FUNCT3_CSRRSI ||
-                     funct3_i == `FUNCT3_CSRRC ||
-                     funct3_i == `FUNCT3_CSRRCI) begin
-            case (addr_i)
-                // U-mode CSRs
-                // -----------
-            `ifdef LEN5_FP_EN
-                // fcsr
-                `CSR_ADDR_FCSR:     csr_rd_val = { '0, fcsr };
-                `CSR_ADDR_FRM:      csr_rd_val = { '0, fcsr.frm };
-                `CSR_ADDR_FFLAGS:   csr_rd_val = { '0, fcsr.fflags };
-            `endif /* LEN5_FP_EN */
-                
-                // S-mode CSRs
-                // -----------
-                // satp
-                `CSR_ADDR_SATP: begin
-                    // only readable in S and M modes
-                    if (priv_mode >= PRIV_MODE_S)    csr_rd_val = satp;
-                end
+            // CSRRS, CSRRSI, CSRRC, CSRRCI
+            // ----------------------------
+            // Read the CSR unconditionally 
+            end else if (funct3_i == `FUNCT3_CSRRS ||
+                        funct3_i == `FUNCT3_CSRRSI ||
+                        funct3_i == `FUNCT3_CSRRC ||
+                        funct3_i == `FUNCT3_CSRRCI) begin
+                case (addr_i)
+                    // U-mode CSRs
+                    // -----------
+                `ifdef LEN5_FP_EN
+                    // fcsr
+                    `CSR_ADDR_FCSR:     csr_rd_val = { '0, fcsr };
+                    `CSR_ADDR_FRM:      csr_rd_val = { '0, fcsr.frm };
+                    `CSR_ADDR_FFLAGS:   csr_rd_val = { '0, fcsr.fflags };
+                `endif /* LEN5_FP_EN */
+                    
+                    // S-mode CSRs
+                    // -----------
+                    // satp
+                    `CSR_ADDR_SATP: begin
+                        // only readable in S and M modes
+                        if (priv_mode >= PRIV_MODE_S)    csr_rd_val = satp;
+                    end
 
-                // M-mode CSRs
-                // -----------
-                // mtvec
-                `CSR_ADDR_MTVEC: begin
-                    if (priv_mode >= PRIV_MODE_M) csr_rd_val  = mtvec;
-                end
-                // mstatus
-                `CSR_ADDR_MSTATUS: begin
-                    if (priv_mode >= PRIV_MODE_M) csr_rd_val = mstatus;
-                end
-                
-                // Default
-                default:;   // use default value (see Exception Handling)
-            endcase
-        end // else use the default value (see Exception Handling)
+                    // M-mode CSRs
+                    // -----------
+                    // mtvec
+                    `CSR_ADDR_MTVEC: begin
+                        if (priv_mode >= PRIV_MODE_M) csr_rd_val = mtvec;
+                    end
+                    // mstatus
+                    `CSR_ADDR_MSTATUS: begin
+                        if (priv_mode >= PRIV_MODE_M) csr_rd_val = mstatus;
+                    end
+                    // MEPC
+                    `CSR_ADDR_MEPC: begin
+                        if (priv_mode >= PRIV_MODE_M) csr_rd_val = mepc;
+                    end
+                    
+                    // Default
+                    default:;   // use default value (see Exception Handling)
+                endcase
+            end // else use the default value (see Exception Handling)
+        end
     end
 end
 
@@ -257,6 +277,9 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
 
         // mtvec
         mtvec       <= 'h0;
+
+        // MEPC
+        mepc        <= 'h0;
     end
     
     // Explicit CSR instructions
@@ -267,9 +290,9 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
         `ifdef LEN5_FP_EN
             `CSR_ADDR_FCSR: begin
                 case (funct3_i)
-                    `FUNCT3_CSRRW:  fcsr <= rs1_value_i[7:0];
-                    `FUNCT3_CSRRS:  if (rs1_idx_i != '0) fcsr <= fcsr | rs1_value_i[7:0];
-                    `FUNCT3_CSRRC:  if (rs1_idx_i != '0) fcsr <= fcsr & ~rs1_value_i[7:0]; 
+                    `FUNCT3_CSRRW:  fcsr <= data_i[7:0];
+                    `FUNCT3_CSRRS:  if (rs1_idx_i != '0) fcsr <= fcsr | data_i[7:0];
+                    `FUNCT3_CSRRC:  if (rs1_idx_i != '0) fcsr <= fcsr & ~data_i[7:0]; 
                     `FUNCT3_CSRRWI: fcsr <= uimm_zext[7:0];
                     `FUNCT3_CSRRSI: if (rs1_idx_i != '0) fcsr <= fcsr | uimm_zext[7:0];
                     `FUNCT3_CSRRCI: if (rs1_idx_i != '0) fcsr <= fcsr & ~uimm_zext[7:0];
@@ -278,9 +301,9 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
             end
             `CSR_ADDR_FRM: begin
                 case (funct3_i)
-                    `FUNCT3_CSRRW:  fcsr.frm <= rs1_value_i[2:0];
-                    `FUNCT3_CSRRS:  if (rs1_idx_i != '0) fcsr.frm <= fcsr.frm | rs1_value_i[2:0];
-                    `FUNCT3_CSRRC:  if (rs1_idx_i != '0) fcsr.frm <= fcsr.frm & ~rs1_value_i[2:0]; 
+                    `FUNCT3_CSRRW:  fcsr.frm <= data_i[2:0];
+                    `FUNCT3_CSRRS:  if (rs1_idx_i != '0) fcsr.frm <= fcsr.frm | data_i[2:0];
+                    `FUNCT3_CSRRC:  if (rs1_idx_i != '0) fcsr.frm <= fcsr.frm & ~data_i[2:0]; 
                     `FUNCT3_CSRRWI: fcsr.frm <= uimm_zext[2:0];
                     `FUNCT3_CSRRSI: if (rs1_idx_i != '0) fcsr.frm <= fcsr.frm | uimm_zext[2:0];
                     `FUNCT3_CSRRCI: if (rs1_idx_i != '0) fcsr.frm <= fcsr.frm & ~uimm_zext[2:0];
@@ -289,9 +312,9 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
             end
             `CSR_ADDR_FFLAGS: begin
                 case (funct3_i)
-                    `FUNCT3_CSRRW:  fcsr.fflags <= rs1_value_i[4:0];
-                    `FUNCT3_CSRRS:  if (rs1_idx_i != '0) fcsr.fflags <= fcsr.fflags | rs1_value_i[4:0];
-                    `FUNCT3_CSRRC:  if (rs1_idx_i != '0) fcsr.fflags <= fcsr.fflags & ~rs1_value_i[4:0]; 
+                    `FUNCT3_CSRRW:  fcsr.fflags <= data_i[4:0];
+                    `FUNCT3_CSRRS:  if (rs1_idx_i != '0) fcsr.fflags <= fcsr.fflags | data_i[4:0];
+                    `FUNCT3_CSRRC:  if (rs1_idx_i != '0) fcsr.fflags <= fcsr.fflags & ~data_i[4:0]; 
                     `FUNCT3_CSRRWI: fcsr.fflags <= uimm_zext[4:0];
                     `FUNCT3_CSRRSI: if (rs1_idx_i != '0) fcsr.fflags <= fcsr.fflags | uimm_zext[4:0];
                     `FUNCT3_CSRRCI: if (rs1_idx_i != '0) fcsr.fflags <= fcsr.fflags & ~uimm_zext[4:0];
@@ -308,35 +331,35 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
                 case (funct3_i)
                     `FUNCT3_CSRRW:  begin
                         if (priv_mode >= PRIV_MODE_S) begin
-                            if (rs1_value_i[63:60] == BARE ||
-                                rs1_value_i[63:60] == SV39 ||
-                                rs1_value_i[63:60] == SV48) begin
-                                satp.mode   <= rs1_value_i[63:60];
+                            if (data_i[63:60] == BARE ||
+                                data_i[63:60] == SV39 ||
+                                data_i[63:60] == SV48) begin
+                                satp.mode   <= data_i[63:60];
                             end
-                            satp.asid   <= rs1_value_i[59:44];
-                            satp.ppn    <= rs1_value_i[43:0];
+                            satp.asid   <= data_i[59:44];
+                            satp.ppn    <= data_i[43:0];
                         end
                     end
                     `FUNCT3_CSRRS:  begin
                         if (priv_mode >= PRIV_MODE_S) begin
-                            if (rs1_value_i[63:60] == BARE ||
-                                rs1_value_i[63:60] == SV39 ||
-                                rs1_value_i[63:60] == SV48) begin
-                                satp.mode   <= satp.mode | rs1_value_i[63:60];
+                            if (data_i[63:60] == BARE ||
+                                data_i[63:60] == SV39 ||
+                                data_i[63:60] == SV48) begin
+                                satp.mode   <= satp.mode | data_i[63:60];
                             end
-                            satp.asid   <= satp.asid | rs1_value_i[59:44];
-                            satp.ppn    <= satp.ppn | rs1_value_i[43:0];
+                            satp.asid   <= satp.asid | data_i[59:44];
+                            satp.ppn    <= satp.ppn | data_i[43:0];
                         end
                     end
                     `FUNCT3_CSRRC:  begin
                         if (priv_mode >= PRIV_MODE_S) begin
-                            if (rs1_value_i[63:60] == BARE ||
-                                rs1_value_i[63:60] == SV39 ||
-                                rs1_value_i[63:60] == SV48) begin
-                                satp.mode   <= satp.mode & ~rs1_value_i[63:60];
+                            if (data_i[63:60] == BARE ||
+                                data_i[63:60] == SV39 ||
+                                data_i[63:60] == SV48) begin
+                                satp.mode   <= satp.mode & ~data_i[63:60];
                             end
-                            satp.asid   <= satp.asid & ~rs1_value_i[59:44];
-                            satp.ppn    <= satp.ppn & ~rs1_value_i[43:0];
+                            satp.asid   <= satp.asid & ~data_i[59:44];
+                            satp.ppn    <= satp.ppn & ~data_i[43:0];
                         end
                     end
                     `FUNCT3_CSRRWI: begin
@@ -382,12 +405,27 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
             `CSR_ADDR_MTVEC: begin
                 if (priv_mode >= PRIV_MODE_M) begin
                     case (funct3_i)
-                        `FUNCT3_CSRRW:  mtvec <= rs1_value_i;
-                        `FUNCT3_CSRRS:  if (rs1_idx_i != '0) mtvec <= mtvec | rs1_value_i;
-                        `FUNCT3_CSRRC:  if (rs1_idx_i != '0) mtvec <= mtvec & ~rs1_value_i; 
+                        `FUNCT3_CSRRW:  mtvec <= data_i;
+                        `FUNCT3_CSRRS:  if (rs1_idx_i != '0) mtvec <= mtvec | data_i;
+                        `FUNCT3_CSRRC:  if (rs1_idx_i != '0) mtvec <= mtvec & ~data_i; 
                         `FUNCT3_CSRRWI: mtvec <= uimm_zext;
                         `FUNCT3_CSRRSI: if (rs1_idx_i != '0) mtvec <= mtvec | uimm_zext;
                         `FUNCT3_CSRRCI: if (rs1_idx_i != '0) mtvec <= mtvec & ~uimm_zext; 
+                        default:;
+                    endcase
+                end
+            end
+
+            // MEPC
+            `CSR_ADDR_MEPC: begin
+                if (priv_mode >= PRIV_MODE_M) begin
+                    case (funct3_i)
+                        `FUNCT3_CSRRW:  mepc <= data_i;
+                        `FUNCT3_CSRRS:  if (rs1_idx_i != '0) mepc <= mepc | data_i;
+                        `FUNCT3_CSRRC:  if (rs1_idx_i != '0) mepc <= mepc & ~data_i; 
+                        `FUNCT3_CSRRWI: mepc <= uimm_zext;
+                        `FUNCT3_CSRRSI: if (rs1_idx_i != '0) mepc <= mepc | uimm_zext;
+                        `FUNCT3_CSRRCI: if (rs1_idx_i != '0) mepc <= mepc & ~uimm_zext; 
                         default:;
                     endcase
                 end
@@ -398,7 +436,7 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : fcsr_reg
     
     // FPU exceptions update
 `ifdef LEN5_FP_EN
-    end else if (valid_i && instr_type_i == FP_INSTR) begin
+    end else if (valid_i && instr_type_i == CSR_FP_INSTR) begin
         fcsr.fflags <= exc_data_i[FCSR_FFLAGS_LEN-1:0];
 `endif /* LEN5_FP_EN */
     end

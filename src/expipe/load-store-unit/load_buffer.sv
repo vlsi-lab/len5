@@ -16,8 +16,11 @@
 `include "len5_config.svh"
 
 // Import UVM report macros
+`ifndef SYNTHESIS
 `include "uvm_macros.svh"
 import uvm_pkg::*;
+`endif
+
 import len5_pkg::XLEN;
 import len5_pkg::STBUFF_TAG_W;
 import len5_pkg::except_code_t;
@@ -283,23 +286,23 @@ module load_buffer #(
     end
 
     // Store dependency register
-    always_ff @( posedge clk_i or negedge rst_n_i ) begin : store_dep_reg
-        foreach (store_dep[i]) begin
-            if (!rst_n_i) begin
-                store_dep[i]        <= 1'b0;
-                store_dep_tag[i]    <= '0;
-            end else if (flush_i) begin 
-                store_dep[i]        <= 1'b0;
-            end else begin
-                if (store_dep_set[i]) begin
+    generate
+        for (genvar i = 0; i < DEPTH; i++) begin
+            always_ff @( posedge clk_i or negedge rst_n_i ) begin : store_dep_reg
+                if (!rst_n_i) begin
+                    store_dep[i]        <= 1'b0;
+                    store_dep_tag[i]    <= '0;
+                end else if (flush_i) begin 
+                    store_dep[i]        <= 1'b0;
+                end else if (store_dep_set[i]) begin
                     store_dep[i]        <= 1'b1;
                     store_dep_tag[i]    <= sb_latest_tag_i;
                 end else if (store_dep_clr[i]) begin
                     store_dep[i]        <= 1'b0;
                 end
-            end
+            end     
         end
-    end
+    endgenerate
 
     // -----------------
     // OUTPUT EVALUATION

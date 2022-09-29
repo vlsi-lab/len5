@@ -68,7 +68,7 @@ package expipe_pkg;
 
     // BRANCH UNIT
     localparam  BRANCH_TYPE_LEN = 3;
-    localparam  BU_CTL_LEN      = BRANCH_TYPE_LEN; // size of 'branch_type_t' from len5_pkg
+    localparam  BU_CTL_LEN      = BRANCH_TYPE_LEN; // size of 'branch_ctl_t' from len5_pkg
 
     // ALU
     localparam  ALU_CTL_LEN     = 4;            // ALU operation control
@@ -196,7 +196,7 @@ package expipe_pkg;
         BGEU  = 'h5,
         JAL   = 'h6,
         JALR  = 'h7
-    } branch_type_t;
+    } branch_ctl_t;
 
     // Load-store unit control
     typedef enum logic [MAX_EU_CTL_LEN-1:0] { 
@@ -214,7 +214,7 @@ package expipe_pkg;
         alu_ctl_t                   alu;
         mult_ctl_t                  mult;
         div_ctl_t                   div;
-        branch_type_t               bu;
+        branch_ctl_t               bu;
         ldst_width_t                lsu;
         logic [MAX_EU_CTL_LEN-1:0]  raw;
     } eu_ctl_t;
@@ -354,7 +354,7 @@ package expipe_pkg;
 
     /* Branch unit reservation station data */ 
     typedef struct packed {
-        branch_type_t           branch_type;        // Branch type for the branch unit
+        branch_ctl_t           branch_type;        // Branch type for the branch unit
         logic [XLEN-1:0]        curr_pc;
         rob_idx_t               rs1_rob_idx;        // The entry of the rob that will contain the required operand
         logic [XLEN-1:0]        rs1_value;          // The value of the first operand

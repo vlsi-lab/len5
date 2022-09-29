@@ -16,8 +16,10 @@
 `include "len5_config.svh"
 
 // Import UVM report macros
+`ifndef SYNTHESIS
 `include "uvm_macros.svh"
 import uvm_pkg::*;
+`endif
 
 /* Include instruction macros */
 `include "instr_macros.svh"
@@ -50,7 +52,6 @@ module issue_decoder (
 `ifdef LEN5_FP_EN
     output  logic           rs3_req_o,        // rs3 (S, D only) fetch is required
 `endif /* LEN5_FP_EN */
-    output  logic           res_ready_o,      // the result is ready
     output  imm_format_t    imm_format_o      // immediate format
 );
 
@@ -68,13 +69,30 @@ module issue_decoder (
 `endif /* LEN5_FP_EN */
     imm_format_t                    imm_format;
 
+    // EU control decoders
+    logic           alu_ctl_except;
+    alu_ctl_t       alu_ctl;
+`ifdef LEN5_M_EN
+    logic           mult_ctl_except;
+    mult_ctl_t      mult_ctl;
+    logic           div_ctl_except;
+    mult_ctl_t      div_ctl;
+`endif /* `LEN5_M_EN */
+    logic           branch_ctl_except;
+    branch_ctl_t    branch_ctl;
+    logic           jump_ctl_except;
+    branch_ctl_t    jump_ctl;
+    logic           ldst_ctl_except;
+    branch_ctl_t    ldst_ctl;
+
     // ------------------
     // INSTRUCTION DECODE
     // ------------------
     // New supported instructions can be added here. The necessary defines must
-    // be appended to the 'instr_macros.svh' file. 
-    // The reporting order is the the one from Chapter 24 of the Specs.
+    // be appended to the 'instr_macros.svh' file.
 
+    // OPCODE decoder
+    // --------------
     always_comb begin: instr_format_logic
         // DEFAULT VALUES 
         issue_type_o                = ISSUE_TYPE_NONE;
@@ -90,6 +108,82 @@ module issue_decoder (
         rs3_req                     = 1'b0;
     `endif /* LEN5_FP_EN */
         imm_format                  = IMM_TYPE_I;
+
+        jump_ctl_except     = 1'b0;
+        jump_ctl            = JAL;
+
+        unique case (instruction_i.i.opcode)
+            `OPCODE_OP_IMM: begin
+                
+            end
+            `OPCODE_OP_IMM_32: begin
+                
+            end
+            `OPCODE_OP: begin
+                
+            end
+            `OPCODE_OP_32: begin
+                
+            end
+            `OPCODE_LUI: begin
+                
+            end
+            `OPCODE_AUIPC: begin
+                
+            end
+            `OPCODE_JAL: begin
+                jump_ctl        = JAL;
+                jump_ctl_except = 1'b0; // cannot raise decode exceptions
+            end
+            `OPCODE_JALR: begin
+                jump_ctl        = JALR;
+                jump_ctl_except = (instruction_i.i.funct3 != `FUNCT3_JALR)
+            end
+            `OPCODE_BRANCH: begin
+                
+            end
+            `OPCODE_LOAD: begin
+                
+            end
+            `OPCODE_STORE: begin
+                
+            end
+            `OPCODE_SYSTEM: begin
+                
+            end
+            `OPCODE_MISC_MEM: begin
+                
+            end
+            `OPCODE_AMO: begin
+                
+            end
+            `OPCODE_LOAD_FP: begin
+                
+            end
+            `OPCODE_STORE_FP: begin
+                
+            end
+            `OPCODE_OP_FP: begin
+                
+            end
+            `OPCODE_FMADD: begin
+                
+            end
+            `OPCODE_FNMADD: begin
+                
+            end
+            `OPCODE_FMSUB: begin
+                
+            end
+            `OPCODE_FNMSUB: begin
+                
+            end: 
+            default: begin
+                skip_eu_o                   = 1'b1;
+                issue_type_o                = ISSUE_TYPE_EXCEPT;
+                except_code                 = E_ILLEGAL_INSTRUCTION;
+            end
+        endcase
 
         // ----------------
         // UNPRIVILEGED ISA
@@ -911,6 +1005,155 @@ module issue_decoder (
             except_code                 = E_ILLEGAL_INSTRUCTION;
         end
     end
+
+    // FUNCT3 DECODERS
+    // ---------------
+
+    // ALU control decoder
+    always_comb begin : alu_ctl_dec
+        alu_ctl_except  = 1'b0;
+        alu_ctl         = ALU_ADD;
+        unique case (intruction_i.r.funct3)
+            `FUNCT3_ADD: begin
+                unique case (instruction_i.r.opcode)
+                    `OPCODE_OP_IMM:         alu_ctl = ALU_ADD;
+                    `OPCODE_OP_IMM_32:      alu_ctl = ALU_ADDW;
+                    `OPCODE_OP: begin
+                        unique case (instruction_i.r.funct7)
+                            `FUNCT7_ADD:    alu_ctl = ALU_ADD;
+                            `FUNCT7_SUB:    alu_ctl = ALU_SUB;
+                            default: alu_ctl_except = 1'b1;
+                        endcase
+                    end
+                    `OPCODE_OP_32: begin
+                        unique case (instruction_i.r.funct7)
+                            `FUNCT7_ADDW:   alu_ctl = ALU_ADDW; 
+                            `FUNCT7_SUBW:   alu_ctl = ALU_SUBW; 
+                            default: alu_ctl_except = 1'b1;
+                        endcase
+                    end
+                    default: alu_ctl_except = 1'b1;
+                endcase
+            end
+            `FUNCT3_SLL: begin
+                unique case (instruction_i.r.opcode)
+                    `OPCODE_OP_IMM, `OPCODE_OP:         alu_ctl = ALU_SLL;
+                    `OPCODE_OP_IMM_32, `OPCODE_OP_32:   alu_ctl = ALU_SLLW;
+                    default: alu_ctl_except = 1'b1;
+                endcase
+            end
+            `FUNCT3_SLT:    alu_ctl = ALU_SLT;
+            `FUNCT3_SLTU:   alu_ctl = ALU_SLTU;
+            `FUNCT3_XOR:    alu_ctl = ALU_XOR;
+            `FUNCT3_SRA: begin
+                unique case (instruction_i.r.opcode)
+                    `OPCODE_OP_IMM, `OPCODE_OP: begin
+                        unique case (instruction_i.r.funct7)
+                            `FUNCT7_SRA:    alu_ctl = ALU_SRA;
+                            `FUNCT7_SRL:    alu_ctl = ALU_SRL; 
+                            default: alu_ctl_except = 1'b1;
+                        endcase
+                    end
+                    `OPCODE_OP_IMM_32, `OPCODE_OP_32: begin
+                        unique case (instruction_i.r.funct7)
+                            `FUNCT7_SRAW:   alu_ctl = ALU_SRAW;
+                            `FUNCT7_SRLW:   alu_ctl = ALU_SRLW;
+                            default: alu_ctl_except = 1'b1;
+                        endcase
+                    end
+                    default: alu_ctl_except = 1'b1;
+                endcase
+            end
+            `FUNCT3_OR:     alu_ctl = ALU_OR;
+            `FUNCT3_AND:    alu_ctl = ALU_AND;
+            default: alu_ctl_except = 1'b1;
+        endcase
+    end
+
+    // Load/store control decoder
+    always_comb begin : ldst_ctl_dec
+        ldst_ctl_except     = 1'b0;
+        ldst_ctl            = LS_DOUBLEWORD;
+        unique case (instruction_i.s.funct3)
+            `FUNCT3_LB, `FUNCT3_LBU, `FUNCT3_SB:
+                ldst_ctl = LS_BYTE;
+            `FUNCT3_LH, `FUNCT3_LHU, `FUNCT3_SH:
+                ldst_ctl = LS_HALFWORD;
+            `FUNCT3_LW, `FUNCT3_LWU, `FUNCT3_SW:
+                ldst_ctl = LS_WORD;
+            `FUNCT3_LD, `FUNCT3_SD:
+                ldst_ctl = LS_DOUBLEWORD;
+            default: ldst_ctl_except = 1'b1;
+        endcase
+    end
+
+    // Branch control decoder
+    always_comb begin : bu_ctl_dec
+        branch_ctl_except   = 1'b0;
+        branch_ctl          = BEQ;
+        unique case (instruction_i.r.funct3)
+            `FUNCT3_BEQ:    branch_ctl  = BEQ;
+            `FUNCT3_BNE:    branch_ctl  = BNE;
+            `FUNCT3_BLT:    branch_ctl  = BLT;
+            `FUNCT3_BGE:    branch_ctl  = BGE;
+            `FUNCT3_BLTU:   branch_ctl  = BLTU;
+            `FUNCT3_BGEU:   branch_ctl  = BGEU;
+            default: branch_ctl_except  = 1'b1;
+        endcase
+    end
+
+`ifdef LEN5_M_EN
+    // MULT decoder
+    always_comb begin : mult_ctl_dec
+        mult_ctl_except = 1'b0;
+        mult_ctl        = MULT_MUL;
+        unique case (instruction_i.r.opcode)
+            `OPCODE_OP: begin
+                unique case (instruction_i.r.funct3)
+                    `FUNCT3_MUL:    mult_ctl = MULT_MUL;
+                    `FUNCT3_MULH:   mult_ctl = MULT_MULH;
+                    `FUNCT3_MULHSU: mult_ctl = MULT_MULHU;
+                    `FUNCT3_MULHU:  mult_ctl = MULT_MULHSU;
+                    default: mult_ctl_except = 1'b1;
+                endcase
+            end 
+            `OPCODE_OP_32: begin
+                if (instruction_i.r.funct3 == `FUNCT3_MULW)
+                    mult_ctl        = MULT_MULw;
+                else
+                    mult_ctl_except = 1'b1;
+            end
+            default: mult_ctl_except = 1'b1;
+        endcase
+    end
+
+    // DIV decoder
+    always_comb begin : div_ctl_dec
+        div_ctl_except = 1'b0;
+        div_ctl        = DIV_DIV;
+        unique case (instruction_i.r.opcode)
+            `OPCODE_OP: begin
+                unique case (instruction_i.r.funct3)
+                    `FUNCT3_DIV:    div_ctl = DIV_DIV;
+                    `FUNCT3_DIVU:   div_ctl = DIV_DIVU;
+                    `FUNCT3_REM:    div_ctl = DIV_REM;
+                    `FUNCT3_REMU:   div_ctl = DIV_REMU;
+                    default: div_ctl_except = 1'b1;
+                endcase
+            end 
+            `OPCODE_OP_32: begin
+                unique case (instruction_i.r.funct3)
+                    `FUNCT3_DIV:    div_ctl = DIV_DIVW;
+                    `FUNCT3_DIVU:   div_ctl = DIV_DIVUW;
+                    `FUNCT3_REM:    div_ctl = DIV_REMW;
+                    `FUNCT3_REMU:   div_ctl = DIV_REMUW;
+                    default: div_ctl_except = 1'b1;
+                endcase
+            end
+            default: div_ctl_except = 1'b1;
+        endcase
+    end
+`endif /* LEN5_M_EN */
 
     // -----------------
     // OUTPUT GENERATION

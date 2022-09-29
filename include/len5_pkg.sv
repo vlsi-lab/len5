@@ -190,9 +190,9 @@ package len5_pkg;
     localparam ALU_RS_DEPTH     = 4;
     localparam MULT_RS_DEPTH    = 4;
     localparam DIV_RS_DEPTH     = 4;
+    localparam DIV_PIPE_DEPTH   = 8;
     localparam FPU_RS_DEPTH     = 4;
     localparam BU_RS_DEPTH      = 4;
-    localparam OP_ONLY_RS_DEPTH = 2;
 
 endpackage
 

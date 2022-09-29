@@ -35,9 +35,15 @@ package csr_pkg;
     // -----------
 
     // CSR instruction type
-    typedef enum logic [1:0] {
-        CSR_INSTR   = 'b00,  // explicit CSR instruction
-        FP_INSTR    = 'b01   // floating-point instruction
+    typedef enum logic [2:0] {
+        CSR_CSRRW,      // read-write CSR
+        CSR_CSRRWI,     // read-write CSR (immediate)
+        CSR_CSRRS,      // read-set CSR
+        CSR_CSRRSI,     // read-set CSR (immediate)
+        CSR_CSRRC,      // read-clear CSR
+        CSR_CSRRCI,     // read-clear CSR (immediate)
+        CSR_ECALL,      // ECALL instruction
+        CSR_FP_INSTR    // floating-point instruction
     } csr_instr_t;
 
     // ---------------
@@ -164,6 +170,9 @@ package csr_pkg;
         logic [XLEN-1:2] base; // WARL
         logic [     1:0] mode; // WARL
     } csr_mtvec_t;
+
+    // Machine-mode exception program counter
+    typedef logic[XLEN-1:0] csr_mepc_t;
 
     // Machine Exception Delegation Register
     typedef logic [XLEN-1:0] csr_medeleg_t;

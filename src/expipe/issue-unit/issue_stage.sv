@@ -16,10 +16,10 @@
 `include "len5_config.svh"
 
 /* Include UVM macros */
+`ifndef SYNTHESIS
 `include "uvm_macros.svh"
-
-/* Import UVM package */
 import uvm_pkg::*;
+`endif
 
 import len5_pkg::*;
 import expipe_pkg::*;
@@ -239,7 +239,7 @@ module issue_stage
     assign  instr_imm_b_value   = { {51{iq_data_out.instruction.b.imm12}},  iq_data_out.instruction.b.imm12, iq_data_out.instruction.b.imm11, iq_data_out.instruction.b.imm10, iq_data_out.instruction.b.imm4, 1'b0 };
     assign  instr_imm_u_value   = { {32{iq_data_out.instruction.u.imm31[31]}},  iq_data_out.instruction.u.imm31, 12'b0 };
     assign  instr_imm_j_value   = { {43{iq_data_out.instruction.j.imm20}}, iq_data_out.instruction.j.imm20, iq_data_out.instruction.j.imm19, iq_data_out.instruction.j.imm11, iq_data_out.instruction.j.imm10, 1'b0 };
-    assign  instr_imm_rs1_value = { '0, iq_data_out.instruction.r.rs1 };
+    assign  instr_imm_rs1_value = { 54'h0, iq_data_out.instruction.r.rs1 };
 
     // Immediate MUX
     always_comb begin : imm_mux

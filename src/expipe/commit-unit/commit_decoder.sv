@@ -18,6 +18,7 @@
 `include "instr_macros.svh"
 
 import expipe_pkg::*;
+import csr_pkg::*;
 import len5_pkg::ILEN;
 import len5_pkg::OPCODE_LEN;
 import len5_pkg::instr_t;
@@ -29,14 +30,16 @@ module commit_decoder
 	input   logic                   except_raised_i,
 
     // Control to the commit logic
-    output  comm_type_t             comm_type_o
+    output  comm_type_t             comm_type_o,
+    output  csr_instr_t             csr_instr_type_o
 );
     // --------------------
     // COMMIT DOCODER LOGIC
     // --------------------
     always_comb begin: comm_decoder
         // Default
-        comm_type_o     = COMM_TYPE_NONE;
+        comm_type_o         = COMM_TYPE_NONE;
+        csr_instr_type_o    = CSR_CSRRW;
 
         // Hanle exceptions
         if (except_raised_i)    comm_type_o = COMM_TYPE_EXCEPT;
@@ -115,12 +118,30 @@ module commit_decoder
 
                 // CSR instructions
                 // ----------------
-                `OPCODE_CSRRW,
-                `OPCODE_CSRRS,
-                `OPCODE_CSRRC,
-                `OPCODE_CSRRWI,
-                `OPCODE_CSRRSI,
-                `OPCODE_CSRRCI: comm_type_o     = COMM_TYPE_CSR;
+                `OPCODE_CSRRW: begin
+                    comm_type_o         = COMM_TYPE_CSR;
+                    csr_instr_type_o    = CSR_CSRRW;
+                end
+                `OPCODE_CSRRS: begin
+                    comm_type_o         = COMM_TYPE_CSR;
+                    csr_instr_type_o    = CSR_CSRRS;
+                end
+                `OPCODE_CSRRC: begin
+                    comm_type_o         = COMM_TYPE_CSR;
+                    csr_instr_type_o    = CSR_CSRRC;
+                end
+                `OPCODE_CSRRWI: begin
+                    comm_type_o         = COMM_TYPE_CSR;
+                    csr_instr_type_o    = CSR_CSRRWI;
+                end
+                `OPCODE_CSRRSI: begin
+                    comm_type_o         = COMM_TYPE_CSR;
+                    csr_instr_type_o    = CSR_CSRRSI;
+                end
+                `OPCODE_CSRRCI: begin
+                    comm_type_o         = COMM_TYPE_CSR;
+                    csr_instr_type_o    = CSR_CSRRCI;
+                end
 
                 // Fence instructions
                 // ------------------

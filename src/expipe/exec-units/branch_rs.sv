@@ -13,8 +13,10 @@
 // Date: 08/11/2019
 
 // Import UVM report macros
+`ifndef SYNTHESIS
 `include "uvm_macros.svh"
 import uvm_pkg::*;
+`endif
 
 import len5_pkg::*;
 import expipe_pkg::*;
@@ -32,7 +34,7 @@ module branch_rs
     /* Issue Stage */
     input   logic                   issue_valid_i,
     output  logic                   issue_ready_o,
-    input   branch_type_t           issue_branch_type_i,
+    input   branch_ctl_t           issue_branch_type_i,
     input   op_data_t               issue_rs1_i,
     input   op_data_t               issue_rs2_i,
     input   logic [XLEN-1:0]        issue_imm_value_i,
@@ -67,7 +69,7 @@ module branch_rs
     output  logic [XLEN-1:0]        bu_curr_pc_o,
     output  logic [XLEN-1:0]        bu_pred_target_o,
     output  logic                   bu_pred_taken_o,
-    output  branch_type_t           bu_branch_type_o
+    output  branch_ctl_t           bu_branch_type_o
 );
     // INTERNAL SIGNALS
     // ----------------

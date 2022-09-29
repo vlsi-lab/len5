@@ -13,10 +13,11 @@
 // Date: 01/08/2022
 
 `include "uvm_macros.svh"
+import uvm_pkg::*;
+
 `include "memory_class.svh"
 `include "len5_config.svh"
 
-import uvm_pkg::*;
 import memory_pkg::*;
 import len5_pkg::*;
 import expipe_pkg::*;

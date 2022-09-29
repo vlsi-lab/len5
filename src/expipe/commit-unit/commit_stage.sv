@@ -13,8 +13,10 @@
 // Date: 20/11/2019
 
 /* Include UVM macros */
+`ifndef SYNTHESIS
 `include "uvm_macros.svh"
 import uvm_pkg::*;
+`endif
 
 // LEN5 compilation switches
 `include "len5_config.svh"
@@ -88,7 +90,7 @@ module commit_stage (
     output  logic [FUNCT3_LEN-1:0]      csr_funct3_o,
     output  logic [CSR_ADDR_LEN-1:0]    csr_addr_o,
     output  logic [REG_IDX_LEN-1:0]     csr_rs1_idx_o,
-    output  logic [XLEN-1:0]            csr_rs1_value_o,
+    output  logic [XLEN-1:0]            csr_data_o,
     output  except_code_t               csr_except_code_o,
     output  logic [REG_IDX_LEN-1:0]     csr_rd_idx_o
 );
@@ -435,7 +437,7 @@ module commit_stage (
     assign  csr_funct3_o        = comm_reg_data.data.instruction.i.funct3;
     assign  csr_addr_o          = comm_reg_data.data.instruction.i.imm11;
     assign  csr_rs1_idx_o       = comm_reg_data.data.instruction.r.rs1;
-    assign  csr_rs1_value_o     = comm_reg_data.data.res_value;
+    assign  csr_data_o          = comm_reg_data.data.res_value;
     assign  csr_except_code_o   = comm_reg_data.data.except_code;
     assign  csr_rd_idx_o        = comm_reg_data.data.rd_idx;
 

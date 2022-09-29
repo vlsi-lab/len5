@@ -13,9 +13,11 @@
 // Date: 17/08/2022
 
 /* Include UVM macros */
+`ifndef SYNTHESIS
 `include "uvm_macros.svh"
-
 import uvm_pkg::*;
+`endif
+
 import expipe_pkg::*;
 
 module issue_cu (

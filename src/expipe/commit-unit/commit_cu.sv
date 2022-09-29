@@ -16,10 +16,10 @@
 `include "len5_config.svh"
 
 /* Include UVM macros */
+`ifndef SYNTHESIS
 `include "uvm_macros.svh"
-
-/* Import UVM package */
 import uvm_pkg::*;
+`endif
 
 import len5_pkg::ILEN;
 import len5_pkg::instr_t;
@@ -350,28 +350,29 @@ module commit_cu (
             /* TODO: properly handle the following instructions */
             COMMIT_FENCE: begin
                 comm_ret_cnt_en_o   = 1'b1;
-                comm_reg_en_o   = 1'b1;
+                comm_reg_en_o       = 1'b1;
             end
             COMMIT_ECALL: begin
+                csr_type_o          = CSR_ECALL;
                 comm_ret_cnt_en_o   = 1'b1;
-                comm_reg_en_o   = 1'b1;
+                comm_reg_en_o       = 1'b1;
             end
             COMMIT_EBREAK: begin
                 comm_ret_cnt_en_o   = 1'b1;
-                comm_reg_en_o   = 1'b1;
+                comm_reg_en_o       = 1'b1;
             end
             COMMIT_XRET: begin
                 comm_ret_cnt_en_o   = 1'b1;
-                comm_reg_en_o   = 1'b1;
+                comm_reg_en_o       = 1'b1;
             end
             COMMIT_WFI: begin
                 comm_ret_cnt_en_o   = 1'b1;
-                comm_reg_en_o   = 1'b1;
+                comm_reg_en_o       = 1'b1;
             end
 
             COMMIT_EXCEPT: begin
                 comm_ret_cnt_en_o   = 1'b1;
-                mis_flush_o     = 1'b1;
+                mis_flush_o         = 1'b1;
             end
 
             EXCEPT_LOAD_PC: begin

@@ -22,7 +22,8 @@ module div
     RS_DEPTH = 4, // must be a power of 2,
     
     // EU-specific parameters
-    EU_CTL_LEN = 4
+    EU_CTL_LEN = 4,
+    PIPE_DEPTH = 4
 )
 (
     input   logic                   clk_i,
@@ -45,44 +46,59 @@ module div
     output  logic                   except_raised_o,
     output  except_code_t           except_code_o
 );
+    // INTERNAL SIGNALS
+    // ----------------
 
-	// Main counting process. The counter clears when reaching the threshold
-always_ff @ (posedge clk_i or negedge rst_n_i) begin
-    if (!rst_n_i) begin
-        ready_o <= 0; // Asynchronous reset
-		valid_o <= 0;
-		entry_idx_o <= 'b000;
-		result_o <= 'h0000000000000000;
-		except_raised_o <= 0;
-		except_code_o <= E_UNKNOWN;
-    end
-    else if (flush_i) begin
-        ready_o <= 0; // Synchronous clear when requested or when reaching the threshold
-		valid_o <= 0;
-		entry_idx_o <= 'b000;
-		result_o <= 'h0000000000000000;
-		except_raised_o <= 0;
-		except_code_o <= E_UNKNOWN;
-    end
-	else if (ready_i) begin
-		//case () begin
-		entry_idx_o <= entry_idx_i;
-		ready_o <= 1;
-        result_o <= (rs2_value_i != 'd0)? rs1_value_i / rs2_value_i : 'd0;
+    // Pipeline registers
+    logic [XLEN-1:0]    pipe_res[0:PIPE_DEPTH];
+    logic               pipe_valid[0:PIPE_DEPTH];
 
-		if (valid_i) begin
-		valid_o <= 1;
-		end
-    end
-	else begin
-		ready_o = 1;
-		result_o <= 'h0000000000000000;
-		entry_idx_o <= 'b000;
-		valid_o <= 0;
-		result_o <= 'h0000000000000000;
-		except_raised_o <= 0;
-		except_code_o <= E_UNKNOWN;
-end
-end
+    // Output spill cell
+    logic               out_reg_div_ready;
+
+    // Divider
+    // -------
+    // TODO: add proper control
+    assign  pipe_res[0] = (rs2_value_i != 'd0)  ? rs1_value_i / rs2_value_i : 'h0;
+
+    // Pipeline registers
+    // ------------------
+    generate
+        for (genvar i = 1; i <= PIPE_DEPTH; i++) begin: l_pipe_reg
+            always_ff @( posedge clk_i or negedge rst_n_i ) begin
+                if (!rst_n_i) begin
+                    pipe_res[i]     <= '0;
+                    pipe_valid[i]   <= 1'b0;
+                end else if (flush_i) begin
+                    pipe_res[i]     <= '0;
+                    pipe_valid[i]   <= 1'b0;
+                end else if (out_reg_div_ready) begin
+                    pipe_res[i]     <= pipe_res[i-1];
+                    pipe_valid[i]   <= pipe_valid[i-1];
+                end
+            end
+        end
+    endgenerate
+
+    // Output spill cell
+    // -----------------
+    spill_cell_flush #(
+        .DATA_T (logic[XLEN-1:0] ),
+        .SKIP   (1'b0            )
+    ) u_out_reg (
+    	.clk_i   (clk_i                  ),
+        .rst_n_i (rst_n_i                ),
+        .flush_i (flush_i                ),
+        .valid_i (pipe_valid[PIPE_DEPTH] ),
+        .ready_i (ready_i                ),
+        .valid_o (valid_o                ),
+        .ready_o (out_reg_div_ready      ),
+        .data_i  (pipe_res[PIPE_DEPTH]   ),
+        .data_o  (result_o               )
+    );
+    
+    // Output evaluation
+    // -----------------
+    assign  ready_o = out_reg_div_ready;
 
 endmodule

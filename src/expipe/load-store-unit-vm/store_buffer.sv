@@ -16,8 +16,10 @@
 `include "len5_config.svh"
 
 // Import UVM report macros
+`ifndef SYNTHESIS
 `include "uvm_macros.svh"
 import uvm_pkg::*;
+`endif
 
 import len5_pkg::XLEN;
 import len5_pkg::STBUFF_DEPTH;

@@ -134,7 +134,7 @@ module exec_stage
 
     // Integer ALU
     // -----------
-    alu_unit #(.EU_CTL_LEN (ALU_CTL_LEN), .RS_DEPTH (ALU_RS_DEPTH)) u_alu_unit
+    alu_unit #(.EU_CTL_LEN (MAX_EU_CTL_LEN), .RS_DEPTH (ALU_RS_DEPTH)) u_alu_unit
     (
         .clk_i                  (clk_i                      ),
         .rst_n_i                (rst_n_i                    ),
@@ -155,8 +155,10 @@ module exec_stage
     `ifdef LEN5_M_EN
     // Integer multiplier
     // ------------------
-    mult_unit #(.EU_CTL_LEN (MULT_CTL_LEN), .RS_DEPTH (MULT_RS_DEPTH)) u_mult_unit
-    (
+    mult_unit #(
+        .EU_CTL_LEN (MAX_EU_CTL_LEN ), 
+        .RS_DEPTH   (MULT_RS_DEPTH  )
+    ) u_mult_unit (
         .clk_i                  (clk_i                      ),
         .rst_n_i                (rst_n_i                    ),
         .flush_i                (flush_i                    ),
@@ -175,8 +177,11 @@ module exec_stage
 
     // Integer divider
     // ---------------
-    div_unit #(.EU_CTL_LEN (DIV_CTL_LEN), .RS_DEPTH (DIV_RS_DEPTH)) u_div_unit
-    (
+    div_unit #(
+        .EU_CTL_LEN (MAX_EU_CTL_LEN ), 
+        .RS_DEPTH   (DIV_RS_DEPTH   ),
+        .PIPE_DEPTH (DIV_PIPE_DEPTH )
+    ) u_div_unit (
         .clk_i                  (clk_i                     ),
         .rst_n_i                (rst_n_i                   ),
         .flush_i                (flush_i                   ),

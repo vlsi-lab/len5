@@ -16,8 +16,11 @@
 `include "len5_config.svh"
 
 // Import UVM report macros
+`ifndef SYNTHESIS
 `include "uvm_macros.svh"
 import uvm_pkg::*;
+`endif
+
 import len5_pkg::XLEN;
 import len5_pkg::except_code_t;
 import len5_pkg::STBUFF_TAG_W;
@@ -329,7 +332,7 @@ module store_buffer #(
     end
 
     // Latest store instruction tag update
-    always_ff @( posedge clk_i or rst_n_i ) begin : latest_tag_reg
+    always_ff @( posedge clk_i or negedge rst_n_i ) begin : latest_tag_reg
         if (!rst_n_i)       latest_tag  <= '0;
         else if (flush_i)   latest_tag  <= '0;
         else if (push)      latest_tag  <= tail_idx;
