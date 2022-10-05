@@ -141,10 +141,11 @@ module tb_bare;
                 @(posedge tb_stop);
                 repeat (10) @(posedge clk);
                 `uvm_info("TB", "Stopping simulation", UVM_INFO);
-                `uvm_info("TB", $sformatf("- total cycles:                      %0d", curr_cycle), UVM_INFO);
-                `uvm_info("TB", $sformatf("- retired instructions:              %0d", u_datapath.u_backend.u_commit_stage.ret_cnt), UVM_INFO);
-                `uvm_info("TB", $sformatf("- retired branch/jump instruction:   %0d", u_datapath.u_backend.u_commit_stage.jb_cnt), UVM_INFO);
-                `uvm_info("TB", $sformatf("- average IPC:                       %0.2f", real'(u_datapath.u_backend.u_commit_stage.ret_cnt) / curr_cycle), UVM_INFO);
+                `uvm_info("TB", $sformatf("- current TB cycle:                  %0d", curr_cycle), UVM_INFO);
+                `uvm_info("TB", $sformatf("- total CPU cycles:                  %0d", u_datapath.u_backend.u_csrs.mcycle), UVM_INFO);
+                `uvm_info("TB", $sformatf("- retired instructions:              %0d", u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+                `uvm_info("TB", $sformatf("- retired branch/jump instructions:  %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter3, real'(u_datapath.u_backend.u_csrs.hpmcounter3) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+                `uvm_info("TB", $sformatf("- average IPC:                       %0.2f", real'(u_datapath.u_backend.u_csrs.minstret) / curr_cycle), UVM_INFO);
                 $stop;
             end
         join
@@ -159,11 +160,17 @@ module tb_bare;
         // Sniff SERIAL ADDRESS and print content
         if (dp_data_mem_valid && dp_data_mem_req.addr == MON_MEM_ADDR && dp_data_mem_req.acc_type == MEM_ACC_ST) begin
             c = dp_data_mem_req.value[7:0];
-            `uvm_info("TB SERIAL MONITOR", $sformatf("Detected character: %c [0x%h]", c, c), UVM_HIGH);
+            if (c == "\n") begin
+                `uvm_info("TB SERIAL MONITOR", $sformatf("Detected newline:         [0x%h]", c), UVM_HIGH);
+            end else if (c == "\0") begin
+                `uvm_info("TB SERIAL MONITOR", $sformatf("Detected end of string:   [0x%h]", c), UVM_HIGH);
+            end else begin
+                `uvm_info("TB SERIAL MONITOR", $sformatf("Detected character:     %c [0x%h]", c, c), UVM_HIGH);
+            end
 
             // Check for end-of-string
-            if (c == "\0") begin
-                `uvm_info("TB SERIAL MONITOR", $sformatf("Received string: %s", serial_str), UVM_LOW);
+            if ((c == "\0" || c == "\n") && serial_str.len() > 0) begin
+                `uvm_info("TB SERIAL MONITOR", $sformatf("Received string: \"%s\"", serial_str), UVM_LOW);
                 serial_str = "";
             end else begin
                 serial_str = {serial_str, c};

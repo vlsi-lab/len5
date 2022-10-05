@@ -145,6 +145,7 @@ module backend (
     // Issue stage <--> CSRs
     // ---------------------
     logic                       csr_il_mstatus_tsr;
+    csr_priv_t                  csr_il_priv_mode;
 
     // Execution stage <--> CDB
     // ------------------------
@@ -187,7 +188,9 @@ module backend (
     logic [XLEN-1:0]            csr_comm_data;
     logic                       csr_comm_acc_exc;
     csr_mtvec_t                 csr_comm_mtvec;
-    csr_instr_t                 comm_csr_instr_type;
+    logic                       comm_csr_comm_insn;
+    logic                       comm_csr_comm_jb;
+    csr_op_t                    comm_csr_op;
     logic [FUNCT3_LEN-1:0]      comm_csr_funct3;
     logic [CSR_ADDR_LEN-1:0]    comm_csr_addr;
     logic [REG_IDX_LEN-1:0]     comm_csr_rs1_idx;
@@ -257,10 +260,6 @@ module backend (
         .fprf_rs2_idx_o                 (il_fprf_rs2_idx            ),
     `endif /* LEN5_FP_EN */
 
-    `ifdef LEN5_PRIVILEGED_EN
-        .mstatus_tsr_i                  (csr_il_mstatus_tsr         ),
-    `endif /* LEN5_PRIVILEGED_EN */
-
         .ex_ready_i                     (ex_issue_ready             ),
         .ex_valid_o                     (il_ex_valid                ),
         .ex_eu_ctl_o                    (issue_ex_eu_ctl            ),
@@ -283,7 +282,9 @@ module backend (
         .comm_rs1_value_i               (comm_issue_rs1_value       ),
         .comm_rs2_rob_idx_o             (issue_comm_rs2_rob_idx     ),
         .comm_rs2_ready_i               (comm_issue_rs2_ready       ),
-        .comm_rs2_value_i               (comm_issue_rs2_value       )
+        .comm_rs2_value_i               (comm_issue_rs2_value       ),
+
+        .csr_priv_mode_i                (csr_il_priv_mode           )
     );
 
     // --------------------------------------------
@@ -485,7 +486,9 @@ module backend (
         .csr_data_i             (csr_comm_data              ),
         .csr_acc_exc_i          (csr_comm_acc_exc           ),
         .csr_mtvec_i            (csr_comm_mtvec             ),
-        .csr_instr_type_o       (comm_csr_instr_type        ),
+        .csr_comm_insn_o        (comm_csr_comm_insn         ),
+        .csr_comm_jb_o          (comm_csr_comm_jb           ),
+        .csr_op_o               (comm_csr_op                ),
         .csr_funct3_o           (comm_csr_funct3            ),
         .csr_addr_o             (comm_csr_addr              ),
         .csr_rs1_idx_o          (comm_csr_rs1_idx           ),
@@ -501,7 +504,9 @@ module backend (
     	.clk_i              (clk_i                ),
         .rst_n_i            (rst_n_i              ),
         .valid_i            (comm_csr_valid       ),
-        .instr_type_i       (comm_csr_instr_type  ),
+        .comm_insn_i        (comm_csr_comm_insn   ),
+        .comm_jb_i          (comm_csr_comm_jb     ),
+        .comm_op_i          (comm_csr_op          ),
         .funct3_i           (comm_csr_funct3      ),
         .addr_i             (comm_csr_addr        ),
         .rs1_idx_i          (comm_csr_rs1_idx     ),
@@ -514,17 +519,7 @@ module backend (
     `ifdef LEN5_FP_EN
         .fpu_frm_o          (csr_ex_frm           ),
     `endif /* LEN5_FP_EN */
-        .vm_mode_o          (csr_ex_vm_mode       ),
-    `ifdef LEN5_PRIVILEGED_EN
-        .mstatus_tsr_o      (csr_il_mstatus_tsr   ),
-    `endif /* LEN5_PRIVILEGED_EN */
-        .mem_vmem_on_o      (),
-        .mem_sum_bit_o      (),
-        .mem_mxr_bit_o      (),
-        .mem_priv_mode_o    (),
-        .mem_priv_mode_ls_o (),
-        .mem_base_asid_o    (),
-        .mem_csr_root_ppn_o ()
+        .priv_mode_o        (csr_il_priv_mode     )
     );
     
 

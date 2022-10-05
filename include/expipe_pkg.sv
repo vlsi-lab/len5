@@ -214,7 +214,7 @@ package expipe_pkg;
         alu_ctl_t                   alu;
         mult_ctl_t                  mult;
         div_ctl_t                   div;
-        branch_ctl_t               bu;
+        branch_ctl_t                bu;
         ldst_width_t                lsu;
         logic [MAX_EU_CTL_LEN-1:0]  raw;
     } eu_ctl_t;
@@ -293,7 +293,17 @@ package expipe_pkg;
         IMM_TYPE_J,
         IMM_TYPE_RS1
     } imm_format_t;
-    
+
+    // Decoder select
+    typedef enum logic [2:0] {
+        ISSUE_DEC_SEL_MAIN,
+        ISSUE_DEC_SEL_ALU,
+        ISSUE_DEC_SEL_MULT,
+        ISSUE_DEC_SEL_DIV,
+        ISSUE_DEC_SEL_LS,
+        ISSUE_DEC_SEL_BRANCH
+    } issue_dec_sel_t;
+
     // ---------------
     // REGISTER STATUS
     // ---------------
@@ -418,7 +428,9 @@ package expipe_pkg;
         LOAD_OP_PUSH,
         LOAD_OP_SAVE_RS1,
         LOAD_OP_SAVE_ADDR,
-        LOAD_OP_SAVE_MEM
+        LOAD_OP_ADDR_EXCEPT,
+        LOAD_OP_SAVE_MEM,
+        LOAD_OP_MEM_EXCEPT
     } lb_op_t;
 
     // STORE BUFFER DATA TYPES
@@ -505,7 +517,7 @@ package expipe_pkg;
         COMM_TYPE_FENCE,    // commit fence instructions
         COMM_TYPE_ECALL,    // commit ECALL instructions
         COMM_TYPE_EBREAK,   // commit EBREAK instructions
-        COMM_TYPE_XRET,     // commit URET, SRET, and MRET instructions
+        COMM_TYPE_MRET,     // commit MRET instructions
         COMM_TYPE_WFI,      // commit wait for interrupt instructions
         COMM_TYPE_EXCEPT    // handle exceptions
     } comm_type_t;
@@ -517,6 +529,16 @@ package expipe_pkg;
         COMM_RD_SEL_EXCEPT, // rd = irq address (or base if no vectored mode)
         COMM_RD_SEL_CSR     // rd = CSR data
     } comm_rd_sel_t;
+
+    // CSR mux control
+    typedef enum logic [2:0] {
+        COMM_CSR_SEL_RES,       // select instruction result
+        COMM_CSR_SEL_INSN,      // select instruction
+        COMM_CSR_SEL_PC,        // select PC of the current instruction
+        COMM_CSR_SEL_EXCEPT,    // select exception data
+        COMM_CSR_SEL_INT,       // select interrupt data
+        COMM_CSR_SEL_ZERO       // 'h0
+    } comm_csr_sel_t;
 
 endpackage
 

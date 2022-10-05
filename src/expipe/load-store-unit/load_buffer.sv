@@ -164,11 +164,13 @@ module load_buffer #(
                 end
                 LOAD_S_ADDR_REQ: begin // save address (from adder)
                     if (save_addr && adder_ans_i.tag == i) begin
-                        lb_op[i]        = LOAD_OP_SAVE_ADDR;
-                        if (adder_ans_i.except_raised)
+                        if (adder_ans_i.except_raised) begin
+                            lb_op[i]        = LOAD_OP_ADDR_EXCEPT;
                             next_state[i]   = LOAD_S_COMPLETED;
-                        else
+                        end else begin
+                            lb_op[i]        = LOAD_OP_SAVE_ADDR;
                             next_state[i]   = LOAD_S_MEM_REQ;
+                        end
                     end else if (addr_idx == i && addr_accepted)
                         next_state[i]   = LOAD_S_ADDR_WAIT;
                     else
@@ -176,25 +178,33 @@ module load_buffer #(
                 end
                 LOAD_S_ADDR_WAIT: begin
                     if (save_addr && adder_ans_i.tag == i) begin
-                        lb_op[i]        = LOAD_OP_SAVE_ADDR;
-                        if (adder_ans_i.except_raised)
+                        if (adder_ans_i.except_raised) begin
+                            lb_op[i]        = LOAD_OP_ADDR_EXCEPT;
                             next_state[i]   = LOAD_S_COMPLETED;
-                        else if (store_dep[i]) begin
+                        end else if (store_dep[i]) begin
+                            lb_op[i]        = LOAD_OP_SAVE_ADDR;
                             next_state[i]   = LOAD_S_DEP_WAIT;
-                        end else
+                        end else begin
+                            lb_op[i]        = LOAD_OP_SAVE_ADDR;
                             next_state[i]   = LOAD_S_MEM_REQ;
+                        end
                     end else
                         next_state[i]   = LOAD_S_ADDR_WAIT;
                 end
                 LOAD_S_DEP_WAIT: begin
                     if (!store_dep[i]) begin
                         next_state[i]   = LOAD_S_MEM_REQ;
-                    end else
+                    end else begin
                         next_state[i]   = LOAD_S_DEP_WAIT;
+                    end
                 end
                 LOAD_S_MEM_REQ: begin // save memory value (from memory)
                     if (save_mem && mem_ans_i.tag == i) begin
-                        lb_op[i]        = LOAD_OP_SAVE_MEM;
+                        if (mem_ans_i.except_raised) begin
+                            lb_op[i]    = LOAD_OP_MEM_EXCEPT;
+                        end else begin
+                            lb_op[i]    = LOAD_OP_SAVE_MEM;
+                        end
                         next_state[i]   = LOAD_S_COMPLETED;
                     end else if (mem_accepted && mem_idx == i) begin
                         next_state[i]   = LOAD_S_MEM_WAIT;
@@ -203,7 +213,11 @@ module load_buffer #(
                 end
                 LOAD_S_MEM_WAIT: begin
                     if (save_mem && mem_ans_i.tag == i) begin
-                        lb_op[i]        = LOAD_OP_SAVE_MEM;
+                        if (mem_ans_i.except_raised) begin
+                            lb_op[i]    = LOAD_OP_MEM_EXCEPT;
+                        end else begin
+                            lb_op[i]    = LOAD_OP_SAVE_MEM;
+                        end
                         next_state[i]   = LOAD_S_COMPLETED;
                     end else
                         next_state[i]   = LOAD_S_MEM_WAIT;
@@ -258,7 +272,7 @@ module load_buffer #(
             /* Performed the required action for each instruction */
             foreach (lb_op[i]) begin
                 case (lb_op[i])
-                    LOAD_OP_PUSH: begin
+                    LOAD_OP_PUSH: begin // save new instruction data
                         data[i].load_type           <= issue_type_i;
                         data[i].rs1_rob_idx         <= issue_rs1_i.rob_idx;
                         data[i].rs1_value           <= issue_rs1_i.value;
@@ -266,16 +280,23 @@ module load_buffer #(
                         data[i].imm_addr_value      <= issue_imm_i;
                         data[i].except_raised       <= 1'b0;
                     end
-                    LOAD_OP_SAVE_RS1: begin
+                    LOAD_OP_SAVE_RS1: begin // fetch rs1 from the CDB
                         data[i].rs1_value           <= cdb_data_i.res_value;
                     end
-                    LOAD_OP_SAVE_ADDR: begin
+                    LOAD_OP_SAVE_ADDR: begin // save the computed mem. address
                         data[i].imm_addr_value      <= adder_ans_i.result;
+                    end
+                    LOAD_OP_ADDR_EXCEPT: begin
+                        data[i].imm_addr_value      <= adder_ans_i.result;
+                        data[i].value               <= adder_ans_i.result;
                         data[i].except_raised       <= adder_ans_i.except_raised;
                         data[i].except_code         <= adder_ans_i.except_code;
                     end
-                    LOAD_OP_SAVE_MEM: begin
+                    LOAD_OP_SAVE_MEM: begin // save loaded value
                         data[i].value               <= read_data;
+                    end
+                    LOAD_OP_MEM_EXCEPT: begin // save faulting mem. address
+                        data[i].value               <= data[i].imm_addr_value;
                         data[i].except_raised       <= mem_ans_i.except_raised;
                         data[i].except_code         <= mem_ans_i.except_code;
                     end

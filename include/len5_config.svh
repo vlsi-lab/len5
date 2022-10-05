@@ -13,7 +13,7 @@
 // Date: 04/11/2021
 
 `ifndef LEN5_CONFIG_
-`define LEN5_CONFIG
+`define LEN5_CONFIG_
 
 // --------------------
 // GLOBAL CONFIGURATION
@@ -95,15 +95,15 @@
 
 // Enable M extension support
 // --------------------------
-`define LEN5_M_EN
+//`define LEN5_M_EN
 
 // Enable floating-point support
 // -----------------------------
 //`define LEN5_FP_EN
 
-// Enable privileged instructions support
-// --------------------------------------
-//`define LEN5_PRIVILEGED_EN
+// Enable atomic support
+// ---------------------
+//`define LEN5_A_EN
 
 // Reservation stations
 // --------------------

@@ -22,7 +22,7 @@ import csr_pkg::CSR_ADDR_LEN;
 import csr_pkg::SATP_MODE_LEN;
 import csr_pkg::csr_priv_t;
 import csr_pkg::satp_mode_t;
-import csr_pkg::csr_instr_t;
+import csr_pkg::csr_op_t;
 import memory_pkg::*;
 
 module backend_vm (
@@ -237,7 +237,7 @@ module backend_vm (
     logic                       csr_comm_ready;
     logic [XLEN-1:0]            csr_comm_data;
     logic                       csr_comm_acc_exc;
-    csr_instr_t                 comm_csr_instr_type;
+    csr_op_t                    comm_csr_op;
     logic [FUNCT3_LEN-1:0]      comm_csr_funct3;
     logic [CSR_ADDR_LEN-1:0]    comm_csr_addr;
     logic [REG_IDX_LEN]         comm_csr_rs1_idx;
@@ -300,10 +300,6 @@ module backend_vm (
         .fprf_rs1_idx_o                 (il_fprf_rs1_idx),
         .fprf_rs2_idx_o                 (il_fprf_rs2_idx),
     `endif /* LEN5_FP_EN */
-
-    `ifdef LEN5_PRIVILEGED_EN
-        .mstatus_tsr_i                  (csr_il_mstatus_tsr),
-    `endif /* LEN5_PRIVILEGED_EN */
 
         .ex_ready_i                     (ex_il_ready),
         .ex_valid_o                     (il_ex_valid),
@@ -581,7 +577,7 @@ module backend_vm (
         .csr_valid_o            (comm_csr_valid),
         .csr_data_i             (csr_comm_data),
         .csr_acc_exc_i          (csr_comm_acc_exc),
-        .csr_instr_type_o       (comm_csr_instr_type),
+        .csr_instr_type_o       (comm_csr_op),
         .csr_funct3_o           (comm_csr_funct3),
         .csr_addr_o             (comm_csr_addr),
         .csr_rs1_idx_o          (comm_csr_rs1_idx),
@@ -600,7 +596,7 @@ module backend_vm (
         .rst_n_i            (rst_n_i),
         .valid_i            (comm_csr_valid),
         .ready_o            (csr_comm_ready),
-        .instr_type_i       (comm_csr_instr_type),
+        .instr_type_i       (comm_csr_op),
         .funct3_i           (comm_csr_funct3),
         .addr_i             (comm_csr_addr),
         .rs1_idx_i          (comm_csr_rs1_idx),
@@ -613,9 +609,6 @@ module backend_vm (
         .fpu_frm_o          (csr_ex_frm),
     `endif /* LEN5_FP_EN */
         .vm_mode_o          (csr_ex_vm_mode),
-    `ifdef LEN5_PRIVILEGED_EN
-        .mstatus_tsr_o      (csr_il_mstatus_tsr),
-    `endif /* LEN5_PRIVILEGED_EN */
         .mem_vmem_on_o      (mem_vmem_on_o),
         .mem_sum_bit_o      (mem_sum_bit_o),
         .mem_mxr_bit_o      (mem_mxr_bit_o),

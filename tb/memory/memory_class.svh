@@ -162,7 +162,7 @@ class memory_class #(
     function int ReadB(logic [AWIDTH-1:0] addr);
         // Search the byte in memory
         if (!this.mem.exists(addr)) begin
-            `uvm_warning("MEM READ", $sformatf("Reading uninitialized byte at address 0x%h", addr));
+            `uvm_info("MEM READ", $sformatf("Reading uninitialized byte at address 0x%h", addr), UVM_HIGH);
             this.read_byte = '0;
             return 2;
         end

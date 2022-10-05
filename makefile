@@ -24,7 +24,7 @@ PKG_SRCS 		:= 	$(ROOT)/include/len5_pkg.sv \
 					$(ROOT)/include/memory_pkg.sv
 # NOTE: currently compile non virtual memory source only
 MODULES_SRCS 	:= 	$(shell find $(ROOT)/src/ -type f -name '*.sv' -not -path "$(ROOT)/src/**-vm/*" -not -path "$(ROOT)/src/**_vm.sv" -not -path "$(ROOT)/src/memory/*")
-MODULES_INCS	:= 	$(shell find $(ROOT)/src/ $(ROOT)/include/ -type f -name "*.svh")
+HW_INCS			:= 	$(shell find $(ROOT)/src/ $(ROOT)/include/ -type f -name "*.svh")
 TB_SRCS 		:= 	$(ROOT)/tb/tb_with_l2cemu.sv \
 					$(ROOT)/tb/tb_bare.sv \
 					$(ROOT)/tb/memory/cache_L2_system_emulator.sv \
@@ -75,7 +75,7 @@ sw: test-files
 # Packages
 .PHONY: packages
 packages: $(HW_BUILD_DIR)/.cache/.pkg_done
-$(HW_BUILD_DIR)/.cache/.pkg_done: $(HW_BUILD_DIR)/.cache/pkg_list.f | .check-vlog
+$(HW_BUILD_DIR)/.cache/.pkg_done: $(HW_BUILD_DIR)/.cache/pkg_list.f $(HW_INCS) | .check-vlog
 	@echo "## Compiling LEN5 files..."
 	$(VLOG) $(PKG_OPT) -F $<
 	touch $@
@@ -86,7 +86,7 @@ $(HW_BUILD_DIR)/.cache/pkg_list.f: $(PKG_SRCS) | $(HW_BUILD_DIR)/.cache
 # Modules
 .PHONY: modules
 modules: $(HW_BUILD_DIR)/.cache/.mod_done
-$(HW_BUILD_DIR)/.cache/.mod_done : $(HW_BUILD_DIR)/.cache/src_list.f $(MODULES_INCS) $(HW_BUILD_DIR)/.cache/.pkg_done | .check-vlog
+$(HW_BUILD_DIR)/.cache/.mod_done : $(HW_BUILD_DIR)/.cache/src_list.f $(HW_INCS) $(HW_BUILD_DIR)/.cache/.pkg_done | .check-vlog
 	@echo "## Compiling LEN5 modules..."
 	$(VLOG) $(MODULE_OPT) -F $<
 	touch $@
@@ -97,7 +97,7 @@ $(HW_BUILD_DIR)/.cache/src_list.f: $(MODULES_SRCS) | $(HW_BUILD_DIR)/.cache
 # Testbench
 .PHONY: tb
 tb: $(HW_BUILD_DIR)/.cache/.tb_done
-$(HW_BUILD_DIR)/.cache/.tb_done: $(HW_BUILD_DIR)/.cache/tb_list.f $(MODULES_INCS) $(TB_INCS) $(HW_BUILD_DIR)/.cache/.mod_done | .check-vlog
+$(HW_BUILD_DIR)/.cache/.tb_done: $(HW_BUILD_DIR)/.cache/tb_list.f $(TB_INCS) $(HW_BUILD_DIR)/.cache/.mod_done | .check-vlog
 	@echo "## Compiling LEN5 testbench..."
 	$(VLOG) $(MODULE_OPT) -F $<
 	touch $@

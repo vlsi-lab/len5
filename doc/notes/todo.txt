@@ -1,3 +1,4 @@
 [x] Force load-after-store ordering
+[ ] Implement store-to-load forwarding
 [ ] Test with more comprehensive code (benchmarks?)
 [ ] Add C extension support

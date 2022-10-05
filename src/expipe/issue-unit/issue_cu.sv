@@ -319,7 +319,7 @@ module issue_cu (
     // ----------
     `ifndef SYNTHESIS
     always @(posedge clk_i) begin
-        `uvm_info("ISSUE CU", $sformatf("valid_i: %b | commit ready: %b | ex. ready: %d | type: %s | state: %s", iq_valid_i, comm_ready_i, ex_ready_i, issue_type_i.name(), curr_state.name()), UVM_HIGH)
+        `uvm_info("ISSUE CU", $sformatf("valid_i: %b | commit ready: %b | ex. ready: %d | type: %s | state: %s", iq_valid_i, comm_ready_i, ex_ready_i, issue_type_i.name(), curr_state.name()), UVM_DEBUG)
     end
     `endif /* SYNTHESIS */
 endmodule

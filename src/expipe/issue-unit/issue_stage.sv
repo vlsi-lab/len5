@@ -23,6 +23,7 @@ import uvm_pkg::*;
 
 import len5_pkg::*;
 import expipe_pkg::*;
+import csr_pkg::csr_priv_t;
 
 module issue_stage 
 (
@@ -77,11 +78,6 @@ module issue_stage
     output  logic [REG_IDX_LEN-1:0] fprf_rs2_idx_o,         // RF address of the second operand    
 `endif /* LEN5_FP_EN */
 
-`ifdef LEN5_PRIVILEGED_EN
-    // CSR data
-    input                           mstatus_tsr_i,    // the TSR bit from the mstatus CSR
-`endif /* LEN5_PRIVILEGED_EN */
-
 	// Execution pipeline
     input   logic                   ex_ready_i [0:EU_N-1],  // ready signal from each reservation station
     output  logic                   ex_valid_o [0:EU_N-1],  // valid signal to each reservation station
@@ -106,7 +102,10 @@ module issue_stage
     input   logic [XLEN-1:0]        comm_rs1_value_i,
     output  rob_idx_t               comm_rs2_rob_idx_o,
     input   logic                   comm_rs2_ready_i,
-    input   logic [XLEN-1:0]        comm_rs2_value_i
+    input   logic [XLEN-1:0]        comm_rs2_value_i,
+
+    // CSRs
+    input   csr_priv_t              csr_priv_mode_i     // current privilege mode
 );
 
     // INTERNAL SIGNALS
@@ -212,9 +211,7 @@ module issue_stage
     // Main instruction decoder
     issue_decoder u_issue_decoder(
     	.instruction_i (iq_data_out.instruction ),
-    `ifdef LEN5_PRIVILEGED_EN
-        .mstatus_tsr_i (mstatus_tsr_i            ),
-    `endif /* LEN5_PRIVILEGED_EN */
+        .priv_mode_i   (csr_priv_mode_i          ),
         .issue_type_o  (id_cu_issue_type         ),
         .except_code_o (id_except_code           ),
         .skip_eu_o     (id_skip_eu               ),
@@ -493,7 +490,7 @@ module issue_stage
     `ifndef SYNTHESIS
     always @(posedge clk_i) begin
         if (comm_valid_o && comm_ready_i) begin
-            `uvm_info("ISSUE", $sformatf("Issuing instruction: %h", comm_data_o.instruction.raw), UVM_HIGH);
+            `uvm_info("ISSUE", $sformatf("Issuing instruction: %h", comm_data_o.instruction.raw), UVM_DEBUG);
         end
     end
     // Instruction sent to at most one execution unit

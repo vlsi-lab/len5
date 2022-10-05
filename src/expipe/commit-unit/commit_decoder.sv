@@ -26,155 +26,127 @@ import len5_pkg::instr_t;
 module commit_decoder 
 (
     // Data from the commit logic
-    input   instr_t                 instruction_i,
-	input   logic                   except_raised_i,
+    input   instr_t         instruction_i,
+	input   logic           except_raised_i,
 
     // Control to the commit logic
-    output  comm_type_t             comm_type_o,
-    output  csr_instr_t             csr_instr_type_o
+    output  comm_type_t     comm_type_o,
+    output  csr_op_t        csr_op_o
 );
+    // INTERNAL SIGNALS
+    // ----------------
+    logic       sel_system_dec;
+    comm_type_t comm_type_normal;
+    comm_type_t comm_type_system;
+
     // --------------------
     // COMMIT DOCODER LOGIC
     // --------------------
+    // Main opcode decoder
     always_comb begin: comm_decoder
         // Default
-        comm_type_o         = COMM_TYPE_NONE;
-        csr_instr_type_o    = CSR_CSRRW;
+        comm_type_normal    = COMM_TYPE_NONE;
+        sel_system_dec      = 1'b0;
 
         // Hanle exceptions
-        if (except_raised_i)    comm_type_o = COMM_TYPE_EXCEPT;
+        if (except_raised_i)    comm_type_normal = COMM_TYPE_EXCEPT;
 
         // No exceptions raised
         else begin
             case (instruction_i.r.opcode)
-
                 // Intructions committing to the integer RF
                 // ----------------------------------------
+                `OPCODE_OP_IMM,
+                `OPCODE_OP_IMM_32,
+                `OPCODE_OP,
+                `OPCODE_OP_32,
                 `OPCODE_LUI,
                 `OPCODE_AUIPC,
-                `OPCODE_LB,
-                `OPCODE_LH,
-                `OPCODE_LW,
-                `OPCODE_LD,
-                `OPCODE_LBU,
-                `OPCODE_LHU,
-                `OPCODE_LWU,
-                `OPCODE_ADDI,
-                `OPCODE_ADDIW,
-                `OPCODE_SLTI,
-                `OPCODE_SLTIU,
-                `OPCODE_XORI,
-                `OPCODE_ORI,
-                `OPCODE_ANDI,
-                `OPCODE_SLLIW,
-                `OPCODE_SLLI,
-                `OPCODE_SRLIW,
-                `OPCODE_SRLI,
-                `OPCODE_SRAIW,
-                `OPCODE_SRAI,
-                `OPCODE_ADDW,
-                `OPCODE_SUBW,
-                `OPCODE_ADD,
-                `OPCODE_SUB,
-                `OPCODE_SLLW,
-                `OPCODE_SLL,
-                `OPCODE_SLT,
-                `OPCODE_SLTU,
-                `OPCODE_XOR,
-                `OPCODE_SRLW,
-                `OPCODE_SRL,
-                `OPCODE_SRAW,
-                `OPCODE_SRA,
-                `OPCODE_OR,
-            `ifndef LEN5_M_EN
-                `OPCODE_MUL,
-                `OPCODE_MULW,
-                `OPCODE_MULH,
-                `OPCODE_MULHSU,
-                `OPCODE_MULHU,
-            `endif /* LEN5_M_EN */
-                `OPCODE_AND:    comm_type_o      = COMM_TYPE_INT_RF;
+                `OPCODE_LOAD:       comm_type_normal    = COMM_TYPE_INT_RF;
 
                 // Store instructions
                 // ------------------
-                `OPCODE_SB,
-                `OPCODE_SH,
-                `OPCODE_SW,
-                `OPCODE_SD:     comm_type_o     = COMM_TYPE_STORE;
+                `OPCODE_STORE:      comm_type_normal    = COMM_TYPE_STORE;
 
                 // Jump instructions
                 // ----------------- 
                 `OPCODE_JAL,
-                `OPCODE_JALR:   comm_type_o     = COMM_TYPE_JUMP;
+                `OPCODE_JALR:       comm_type_normal    = COMM_TYPE_JUMP;
                 
                 // Branch instructions
                 // -------------------
-                `OPCODE_BEQ,
-                `OPCODE_BNE,
-                `OPCODE_BLT,
-                `OPCODE_BGE,
-                `OPCODE_BLTU,
-                `OPCODE_BGEU:   comm_type_o     = COMM_TYPE_BRANCH;
+                `OPCODE_BRANCH:     comm_type_normal    = COMM_TYPE_BRANCH;
 
-                // CSR instructions
-                // ----------------
-                `OPCODE_CSRRW: begin
-                    comm_type_o         = COMM_TYPE_CSR;
-                    csr_instr_type_o    = CSR_CSRRW;
-                end
-                `OPCODE_CSRRS: begin
-                    comm_type_o         = COMM_TYPE_CSR;
-                    csr_instr_type_o    = CSR_CSRRS;
-                end
-                `OPCODE_CSRRC: begin
-                    comm_type_o         = COMM_TYPE_CSR;
-                    csr_instr_type_o    = CSR_CSRRC;
-                end
-                `OPCODE_CSRRWI: begin
-                    comm_type_o         = COMM_TYPE_CSR;
-                    csr_instr_type_o    = CSR_CSRRWI;
-                end
-                `OPCODE_CSRRSI: begin
-                    comm_type_o         = COMM_TYPE_CSR;
-                    csr_instr_type_o    = CSR_CSRRSI;
-                end
-                `OPCODE_CSRRCI: begin
-                    comm_type_o         = COMM_TYPE_CSR;
-                    csr_instr_type_o    = CSR_CSRRCI;
-                end
+                // SYSTEM instructions
+                // -------------------
+                `OPCODE_SYSTEM:     sel_system_dec      = 1'b1;
 
                 // Fence instructions
                 // ------------------
-                `OPCODE_FENCE,
-            `ifdef LEN5_PRIVILEGED_EN
-                `OPCODE_SFENCE_VMA,
-                `OPCODE_HFENCE_BVMA,
-                `OPCODE_HFENCE_GVMA,
-            `endif /* LEN5_PRIVILEGED_EN */
-                `OPCODE_FENCE_I:    comm_type_o = COMM_TYPE_FENCE;
+                `OPCODE_MISC_MEM:   comm_type_normal    = COMM_TYPE_FENCE;
 
-                // ECALL instructions
-                // ------------------
-                `OPCODE_ECALL:  comm_type_o     = COMM_TYPE_ECALL;
-
-                // EBREAK instructions
-                // -------------------
-                `OPCODE_EBREAK: comm_type_o     = COMM_TYPE_EBREAK;
-                
-                // XRET instructions
-                // -----------------
-            `ifdef LEN5_PRIVILEGED_EN
-                `OPCODE_URET,
-                `OPCODE_SRET,
-                `OPCODE_MRET:   comm_type_o     = COMM_TYPE_XRET;
-
-                `OPCODE_WFI:    comm_type_o     = COMM_TYPE_WFI;
-            `endif /* LEN5_PRIVILEGED_EN */
-
-                // Ignore unsupported instructions (exception generated by issue)
-                default:        comm_type_o     = COMM_TYPE_NONE;
+                default:            comm_type_normal    = COMM_TYPE_EXCEPT;
             endcase
         end
     end
+
+    // System instruction decoder
+    always_comb begin : system_dec
+        csr_op_o    = CSR_OP_CSRRW;
+        unique case (instruction_i.i.funct3)
+            // CSR INSTRUCTIONS
+            `FUNCT3_CSRRW: begin
+                comm_type_system    = COMM_TYPE_CSR;
+                csr_op_o    = CSR_OP_CSRRW;
+            end
+            `FUNCT3_CSRRS: begin
+                comm_type_system    = COMM_TYPE_CSR;
+                csr_op_o    = CSR_OP_CSRRS;
+            end
+            `FUNCT3_CSRRC: begin
+                comm_type_system    = COMM_TYPE_CSR;
+                csr_op_o    = CSR_OP_CSRRC;
+            end
+            `FUNCT3_CSRRWI: begin
+                comm_type_system    = COMM_TYPE_CSR;
+                csr_op_o    = CSR_OP_CSRRWI;
+            end
+            `FUNCT3_CSRRSI: begin
+                comm_type_system    = COMM_TYPE_CSR;
+                csr_op_o    = CSR_OP_CSRRSI;
+            end
+            `FUNCT3_CSRRCI: begin
+                comm_type_system    = COMM_TYPE_CSR;
+                csr_op_o    = CSR_OP_CSRRCI;
+            end
+
+            `FUNCT3_ZERO: begin
+                unique case ({instruction_i.r.funct7, instruction_i.r.rs2, instruction_i.r.rs1})
+                    {`ECALL_IMM, `ECALL_RS1}: begin // ECALL
+                        comm_type_system    = COMM_TYPE_ECALL;
+                    end
+                    {`EBREAK_IMM, `EBREAK_RS1}: begin // EBREAK
+                        comm_type_system    = COMM_TYPE_EBREAK;
+                    end
+                    {`FUNCT7_MRET, `MRET_RS2, `MRET_RS1}: begin // MRET
+                        comm_type_system    = COMM_TYPE_MRET;
+                    end
+                    {`FUNCT7_WFI, `WFI_RS2, `WFI_RS1}: begin // WFI
+                        comm_type_system    = COMM_TYPE_WFI;
+                    end
+                    default: begin
+                        comm_type_system    = COMM_TYPE_EXCEPT;
+                    end
+                endcase
+            end
+            default: comm_type_system   = COMM_TYPE_EXCEPT;
+        endcase
+    end
+
+    // -----------------
+    // OUTPUT EVALUATION
+    // -----------------
+    // Commit type MUX
+    assign  comm_type_o = (sel_system_dec) ? comm_type_system : comm_type_normal;
     
 endmodule

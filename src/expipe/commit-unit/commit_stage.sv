@@ -86,7 +86,9 @@ module commit_stage (
     input   csr_t                       csr_data_i,
     input   logic                       csr_acc_exc_i,      // CSR illegal instruction or access permission denied
     input   csr_mtvec_t                 csr_mtvec_i,    // mtvec data 
-    output  csr_instr_t                 csr_instr_type_o,
+    output  logic                       csr_comm_insn_o, // an instruction is committing
+    output  logic                       csr_comm_jb_o,   // a jump/branch instruction is committing
+    output  csr_op_t                    csr_op_o,
     output  logic [FUNCT3_LEN-1:0]      csr_funct3_o,
     output  logic [CSR_ADDR_LEN-1:0]    csr_addr_o,
     output  logic [REG_IDX_LEN-1:0]     csr_rs1_idx_o,
@@ -106,6 +108,7 @@ module commit_stage (
 
     // Commit decoder
     comm_type_t                 cd_comm_type;
+    csr_op_t                    cd_csr_op;
 
     // ROB <--> input register
     logic                       rob_reg_valid;
@@ -142,19 +145,20 @@ module commit_stage (
     comm_rd_sel_t               cu_rd_sel;
     logic [XLEN-1:0]            rd_value;
 
+    // CSR MUX
+    comm_csr_sel_t              cu_csr_sel;
+    logic [CSR_ADDR_LEN-1:0]    cu_csr_addr;
+    logic [XLEN-1:0]            csr_data;
+    logic [CSR_ADDR_LEN-1:0]    csr_addr;
+
     // commit CU <--> others
-    logic                       cu_instr_valid;
-    logic                       cu_csr_type;
+    logic                       cu_csr_override;
     logic                       cu_mis_flush;
     logic                       cu_jb_instr;
-    logic                       cu_ret_cnt_en;
 
     // In-flight jump/branch instructions counter
     logic [ROB_IDX_LEN-1:0]     jb_instr_cnt;
     logic                       jb_instr_cnt_en, jb_instr_cnt_clr, jb_instr_cnt_up;
-
-    // Retired instructions counter
-    logic [31:0]                ret_cnt, jb_cnt;
 
     // -------
     // MODULES
@@ -291,7 +295,8 @@ module commit_stage (
     commit_decoder u_comm_decoder (
         .instruction_i      (inreg_data_out.data.instruction),
         .except_raised_i    (inreg_data_out.data.except_raised),
-        .comm_type_o        (cd_comm_type)
+        .comm_type_o        (cd_comm_type   ),
+        .csr_op_o           (cd_csr_op      )
     );
 
     // COMMIT CONTROL UNIT
@@ -311,12 +316,13 @@ module commit_stage (
         .comm_reg_clr_o     (comm_reg_clr           ),
         .comm_rd_sel_o      (cu_rd_sel              ),
         .comm_jb_instr_o    (cu_jb_instr            ),
-        .comm_ret_cnt_en_o  (cu_ret_cnt_en          ),
+        .comm_csr_sel_o     (cu_csr_sel             ),
         .valid_i            (inreg_cu_valid         ),
         .ready_o            (cu_inreg_ready         ),
         .instr_i            (inreg_data_out.data.instruction),
         .res_ready_i        (inreg_data_out.data.res_ready),
         .except_raised_i    (inreg_data_out.data.except_raised),
+        .except_code_i      (inreg_data_out.data.except_code),
         .int_rs_valid_o     (int_rs_valid_o         ),
         .int_rf_valid_o     (int_rf_valid_o         ),
     `ifdef LEN5_FP_EN
@@ -325,7 +331,9 @@ module commit_stage (
     `endif /* LEN5_FP_EN */
         .sb_exec_store_o    (sb_exec_store_o        ),
         .csr_valid_o        (csr_valid_o            ),
-        .csr_type_o         (csr_instr_type_o       ),
+        .csr_override_o     (cu_csr_override        ),
+        .csr_comm_insn_o    (csr_comm_insn_o        ),
+        .csr_addr_o         (cu_csr_addr            ),
         .fe_ready_i         (fe_ready_i             ),
         .fe_res_valid_o     (fe_res_valid_o         ),
         .fe_bpu_flush_o     (fe_bpu_flush_o         ),
@@ -348,6 +356,10 @@ module commit_stage (
                 adder_a     = {csr_mtvec_i.base, 2'b00}; // exc. vector base address
                 adder_b     = (csr_mtvec_i.mode == 0) ? 'h0 : {{(XLEN-2-EXCEPT_TYPE_LEN){1'b0}}, comm_reg_data.data.except_code, 2'b00};
             end
+            COMM_RD_SEL_CSR: begin
+                adder_a     = csr_data_i;
+                adder_b     = 'h0;
+            end
             default: begin
                 adder_a     = 'h0;
                 adder_b     = 'h0;
@@ -369,6 +381,38 @@ module commit_stage (
         endcase
     end
 
+    // CSR MUX
+    // -------
+    always_comb begin : csr_mux
+        unique case (cu_csr_sel)
+            COMM_CSR_SEL_INSN: begin
+                csr_data    = {{XLEN-ILEN{1'b0}}, comm_reg_data.data.instruction};
+                csr_addr    = cu_csr_addr;
+            end
+            COMM_CSR_SEL_PC: begin
+                csr_data    = comm_reg_data.data.instr_pc;
+                csr_addr    = cu_csr_addr;
+            end
+            COMM_CSR_SEL_EXCEPT: begin
+                csr_data    = {{XLEN-EXCEPT_TYPE_LEN{1'b0}}, comm_reg_data.data.except_code};
+                csr_addr    = cu_csr_addr;
+            end
+            COMM_CSR_SEL_INT: begin
+                csr_data    = {1'b1, {XLEN-EXCEPT_TYPE_LEN-1{1'b0}}, comm_reg_data.data.except_code};
+                csr_addr    = cu_csr_addr;
+            end
+            COMM_CSR_SEL_ZERO: begin
+                csr_data    = 'h0;
+                csr_addr    = cu_csr_addr;
+            end
+            default: begin // select zero
+                csr_data    = comm_reg_data.data.res_value;
+                csr_addr    = comm_reg_data.data.instruction.i.imm11;
+            end
+        endcase
+    end
+    assign  csr_op_o    = (cu_csr_override) ? CSR_OP_SYSTEM : cd_csr_op;
+
     // Jump/branch in-flight instructions counter
     // ------------------------------------------
     assign  jb_instr_cnt_en     = issue_jb_instr_i ^ cu_jb_instr; 
@@ -381,33 +425,9 @@ module commit_stage (
         .rst_n_i (rst_n_i           ),
         .en_i    (jb_instr_cnt_en   ),
         .clr_i   (jb_instr_cnt_clr  ),
-        .up_dn_i (jb_instr_cnt_up   ),
+        .up_dn_i (jb_instr_cnt_up   ), 
         .count_o (jb_instr_cnt      ),
         .tc_o    () // not needed
-    );
-
-    // Retired instructions counters
-    // -----------------------------
-    // NOTE: move to CSRs as performance counter
-    modn_counter #(
-        .N (64'd4294967296)
-    ) u_ret_cnt (
-    	.clk_i   (clk_i         ),
-        .rst_n_i (rst_n_i       ),
-        .en_i    (cu_ret_cnt_en ),
-        .clr_i   (1'b0          ),
-        .count_o (ret_cnt       ),
-        .tc_o    ()
-    );
-    modn_counter #(
-        .N (64'd4294967296)
-    ) u_jb_cnt (
-    	.clk_i   (clk_i         ),
-        .rst_n_i (rst_n_i       ),
-        .en_i    (cu_jb_instr   ),
-        .clr_i   (1'b0          ),
-        .count_o (jb_cnt        ),
-        .tc_o    ()
     );
     
     // -----------------
@@ -434,10 +454,11 @@ module commit_stage (
     assign  rd_value_o          = rd_value;
 
     // Data to CSRs
+    assign  csr_comm_jb_o       = cu_jb_instr;
     assign  csr_funct3_o        = comm_reg_data.data.instruction.i.funct3;
-    assign  csr_addr_o          = comm_reg_data.data.instruction.i.imm11;
+    assign  csr_addr_o          = csr_addr;
     assign  csr_rs1_idx_o       = comm_reg_data.data.instruction.r.rs1;
-    assign  csr_data_o          = comm_reg_data.data.res_value;
+    assign  csr_data_o          = csr_data;
     assign  csr_except_code_o   = comm_reg_data.data.except_code;
     assign  csr_rd_idx_o        = comm_reg_data.data.rd_idx;
 

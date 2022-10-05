@@ -48,8 +48,8 @@ import len5_pkg::XLEN;
 // ALU
 `define FUNCT3_ADD          3'b000
 `define FUNCT3_ADDI         `FUNCT3_ADD
-`define FUNCT3_ADDIW        `FUNCT3_ADD
 `define FUNCT3_ADDW         `FUNCT3_ADD
+`define FUNCT3_ADDIW        `FUNCT3_ADD
 `define FUNCT3_SUB          `FUNCT3_ADD
 `define FUNCT3_SUBW         `FUNCT3_ADD
 `define FUNCT3_SLL          3'b001
@@ -96,23 +96,24 @@ import len5_pkg::XLEN;
 `define FUNCT3_SW           3'b010
 `define FUNCT3_SD           3'b011
 // CSR
-`define FUNCT3_CSRRC        3'b011
-`define FUNCT3_CSRRCI       3'b111
-`define FUNCT3_CSRRS        3'b010
-`define FUNCT3_CSRRSI       3'b110
 `define FUNCT3_CSRRW        3'b001
+`define FUNCT3_CSRRS        3'b010
+`define FUNCT3_CSRRC        3'b011
 `define FUNCT3_CSRRWI       3'b101
+`define FUNCT3_CSRRSI       3'b110
+`define FUNCT3_CSRRCI       3'b111
 // SYSTEM
-`define FUNCT3_EBREAK       3'b000
-`define FUNCT3_ECALL        3'b000
-`define FUNCT3_FENCE        3'b000
-`define FUNCT3_HFENCE_BVMA  3'b000
-`define FUNCT3_HFENCE_GVMA  3'b000
-`define FUNCT3_MRET         3'b000
-`define FUNCT3_SFENCE_VMA   3'b000
-`define FUNCT3_SRET         3'b000
-`define FUNCT3_URET         3'b000
-`define FUNCT3_WFI          3'b000
+`define FUNCT3_ZERO         3'b000
+`define FUNCT3_EBREAK       `FUNCT3_ZERO
+`define FUNCT3_ECALL        `FUNCT3_ZERO
+`define FUNCT3_FENCE        `FUNCT3_ZERO
+`define FUNCT3_HFENCE_BVMA  `FUNCT3_ZERO
+`define FUNCT3_HFENCE_GVMA  `FUNCT3_ZERO
+`define FUNCT3_MRET         `FUNCT3_ZERO
+`define FUNCT3_SFENCE_VMA   `FUNCT3_ZERO
+`define FUNCT3_SRET         `FUNCT3_ZERO
+`define FUNCT3_URET         `FUNCT3_ZERO
+`define FUNCT3_WFI          `FUNCT3_ZERO
 `define FUNCT3_FENCE_I      3'b001
 // MULT/DIV
 `define FUNCT3_MUL          3'b000
@@ -145,44 +146,34 @@ import len5_pkg::XLEN;
 `define FUNCT3_FMV_W_X      3'b000
 
 // FUNCT7: only for R-type instructions
-// RV64I
-`define FUNCT7_ADD          7'b0000000
-`define FUNCT7_ADDW         7'b0000000
-`define FUNCT7_AND          7'b0000000
+`define FUNCT7_ZERO         7'b0000000
+`define FUNCT7_OP           7'b0000000
+`define FUNCT7_OP_ALT       7'b0100000
+`define FUNCT7_ADD          `FUNCT7_OP
+`define FUNCT7_ADDW         `FUNCT7_OP
+`define FUNCT7_AND          `FUNCT7_OP
 `define FUNCT7_HFENCE_BVMA  7'b0010001
 `define FUNCT7_HFENCE_GVMA  7'b1010001
 `define FUNCT7_MRET         7'b0011000
-`define FUNCT7_OR           7'b0000000
+`define FUNCT7_OR           `FUNCT7_OP
 `define FUNCT7_SFENCE_VMA   7'b0001001
-`define FUNCT7_SLL          7'b0000000
-`define FUNCT7_SLLW         7'b0000000
-`define FUNCT7_SLT          7'b0000000
-`define FUNCT7_SLTU         7'b0000000
-`define FUNCT7_SRA          7'b0100000
-`define FUNCT7_SRAW         7'b0100000
+`define FUNCT7_SLL          `FUNCT7_OP
+`define FUNCT7_SLLW         `FUNCT7_OP
+`define FUNCT7_SLT          `FUNCT7_OP
+`define FUNCT7_SLTU         `FUNCT7_OP
+`define FUNCT7_SRA          `FUNCT7_OP_ALT
+`define FUNCT7_SRAW         `FUNCT7_OP_ALT
 `define FUNCT7_SRET         7'b0001000
-`define FUNCT7_SRL          7'b0000000
-`define FUNCT7_SRLW         7'b0000000
-`define FUNCT7_SUB          7'b0100000
-`define FUNCT7_SUBW         7'b0100000
+`define FUNCT7_SRL          `FUNCT7_OP
+`define FUNCT7_SRLW         `FUNCT7_OP
+`define FUNCT7_SUB          `FUNCT7_OP_ALT
+`define FUNCT7_SUBW         `FUNCT7_OP_ALT
 `define FUNCT7_URET         7'b0011000
 `define FUNCT7_WFI          7'b0001000
-`define FUNCT7_XOR          7'b0000000
+`define FUNCT7_XOR          `FUNCT7_OP
 
 // RV64M
-`define FUNCT7_MUL          7'b0000001
-`define FUNCT7_MULW         7'b0000001
-`define FUNCT7_MULH         7'b0000001
-`define FUNCT7_MULHSU       7'b0000001
-`define FUNCT7_MULHU        7'b0000001
-`define FUNCT7_DIV          7'b0000001
-`define FUNCT7_DIVW         7'b0000001
-`define FUNCT7_DIVU         7'b0000001
-`define FUNCT7_DIVUW        7'b0000001
-`define FUNCT7_REM          7'b0000001
-`define FUNCT7_REMW         7'b0000001
-`define FUNCT7_REMU         7'b0000001
-`define FUNCT7_REMUW        7'b0000001
+`define FUNCT7_M            7'b0000001
 
 // RV64F
 `define FUNCT7_FADD_S       7'b0000000
