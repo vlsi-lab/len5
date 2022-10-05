@@ -16,8 +16,10 @@
 `include "len5_config.svh"
 
 // Import UVM report macros
+`ifndef SYNTHESIS
 `include "uvm_macros.svh"
 import uvm_pkg::*;
+`endif
 
 /* Include instruction macros */
 `include "instr_macros.svh"
@@ -25,25 +27,21 @@ import uvm_pkg::*;
 import len5_pkg::*;
 import expipe_pkg::*;
 import memory_pkg::*;
+import csr_pkg::*;
 
 module issue_decoder (
     // Instruction from the issue logic
     input   instr_t         instruction_i,    // the issuing instruction
-    
-`ifdef LEN5_PRIVILEGED_EN
-    // CSR data
-    input                   mstatus_tsr_i,    // the TSR bit from the mstatus CSR
-`endif /* LEN5_PRIVILEGED_EN */
+    input   csr_priv_t      priv_mode_i,      // current privilege mode
+
+    // Issue decoder <--> issue CU
+    output  issue_type_t    issue_type_o,     // issue operation type
 
     // Information to the issue logic
-    output  logic           except_raised_o,  // an exception occurred during decoding
     output  except_code_t   except_code_o,    // exception code to send to the ROB
-    output  logic           res_ready_o,      // force ready to commit in the ROB
-    output  logic           stall_o, // the instruction issue can be stall to save power
-
-    output  issue_eu_t      eu_o,             // assigned EU
+    output  issue_eu_t      assigned_eu_o,    // assigned EU
+    output  logic           skip_eu_o,        // do not assign to any EU
     output  eu_ctl_t        eu_ctl_o,         // controls for the assigned EU
-    output  logic           fp_rs_o,          // source operands are from FP register file
     output  logic           rs1_req_o,        // rs1 fetch is required
     output  logic           rs1_is_pc_o,      // rs1 is the current PC (for AUIPC)
     output  logic           rs2_req_o,        // rs2 fetch is required
@@ -51,46 +49,65 @@ module issue_decoder (
 `ifdef LEN5_FP_EN
     output  logic           rs3_req_o,        // rs3 (S, D only) fetch is required
 `endif /* LEN5_FP_EN */
-    output  imm_format_t    imm_format_o,     // immediate format
-    output  logic           regstat_upd_o,    // the register status must be updated
-    output  logic           jb_instr_o        // the isntruction is a jump or a branch (i.e. causes speculation)
+    output  imm_format_t    imm_format_o      // immediate format
 );
 
-    // DEFINITIONS
+    // INTERNAL SIGNALS
+    // ----------------
+    // Exceptions
+    logic           except_raised;
+    except_code_t   except_code;
 
-    logic                           except_raised; 
-    except_code_t                   except_code;
-    logic                           res_ready;
-    logic                           stall         ;
-    issue_eu_t                      assigned_eu;
-    eu_ctl_t                        eu_ctl;
-    logic                           rs_fp;
-    logic                           rs1_req; 
-    logic                           rs1_is_pc;      // for AUIPC
-    logic                           rs2_req;
-    logic                           rs2_is_imm;     // for i-type ALU instr
+    // Main decoder (opcode and special cases)
+    issue_dec_sel_t dec_sel;
+    logic           op_sel_32;  // select 32-bit operation
+    issue_type_t    issue_type;
+    issue_eu_t      assigned_eu;
+    eu_ctl_t        eu_ctl;
+    logic           rs1_req; 
+    logic           rs1_is_pc;      // for AUIPC
+    logic           rs2_req;
+    logic           rs2_is_imm;     // for i-type ALU instr
 `ifdef LEN5_FP_EN
-    logic                           rs3_req;
+    logic           rs3_req;
 `endif /* LEN5_FP_EN */
-    imm_format_t                    imm_format;
-    logic                           regstat_upd;
+    imm_format_t    imm_format;
+    logic           skip_eu;
+    logic           opcode_except;
+
+    // Exception control
+    except_code_t   system_except_code;
+    
+    // EU control decoders
+    logic           alu_ctl_except;
+    alu_ctl_t       alu_ctl, alu32_ctl;
+`ifdef LEN5_M_EN
+    logic           mult_ctl_except;
+    mult_ctl_t      mult_ctl, mult32_ctl;
+    logic           div_ctl_except;
+    div_ctl_t       div_ctl, div32_ctl;
+`endif /* `LEN5_M_EN */
+    logic           branch_ctl_except;
+    branch_ctl_t    branch_ctl;
+    ldst_width_t    ldst_ctl;
+    logic           ldst_ctl_except;
 
     // ------------------
     // INSTRUCTION DECODE
     // ------------------
     // New supported instructions can be added here. The necessary defines must
-    // be appended to the 'instr_macros.svh' file. 
-    // The reporting order is the the one from Chapter 24 of the Specs.
+    // be appended to the 'instr_macros.svh' file.
 
+    // OPCODE decoder
+    // --------------
     always_comb begin: instr_format_logic
         // DEFAULT VALUES 
-        except_raised               = 1'b0; 
-        except_code                 = E_UNKNOWN;    // whatever: ignored if except_raised is not asserted
-        res_ready                   = 1'b0;
-        stall                       = 1'b0;
-        assigned_eu                 = EU_NONE;       // whatever: ignored if except_raised is asserted
+        dec_sel                     = ISSUE_DEC_SEL_MAIN;
+        op_sel_32                   = 1'b0;
+        issue_type                  = ISSUE_TYPE_NONE;
+        skip_eu                     = 1'b0;
+        assigned_eu                 = EU_INT_ALU;
         eu_ctl.raw                  = '0;
-        rs_fp                       = 1'b0;         // normally from the integer register file
         rs1_req                     = 1'b0;
         rs1_is_pc                   = 1'b0;
         rs2_req                     = 1'b0;
@@ -99,872 +116,408 @@ module issue_decoder (
         rs3_req                     = 1'b0;
     `endif /* LEN5_FP_EN */
         imm_format                  = IMM_TYPE_I;
-        regstat_upd                 = 1'b0;
-        jb_instr_o                  = 1'b0;
-
-        // ----------------
-        // UNPRIVILEGED ISA
-        // ----------------
-
-        // NOP
-        // NOTE: do not issue NOP to ALU
-        if ((instruction_i.i.opcode == `OPCODE_ADDI) && 
-            (instruction_i.i.funct3 == `FUNCT3_ADDI) && 
-            ({instruction_i.i.imm11, instruction_i.i.rs1, instruction_i.i.rd} == '0)) begin
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-        end
-        
-        // RV64I
-        // -----
-        
-        // LUI
-        else if ((instruction_i.u.opcode == `OPCODE_LUI)) begin
-            assigned_eu                 = EU_NONE;
-            imm_format                  = IMM_TYPE_U;
-            res_ready                   = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // AUIPC
-        else if ((instruction_i.u.opcode == `OPCODE_AUIPC)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_ADD;
-            imm_format                  = IMM_TYPE_U;
-            rs1_is_pc                   = 1'b1;         // first operand is PC
-            rs2_is_imm                  = 1'b1;         // second operand is U-immediate
-            regstat_upd                 = 1'b1;
-        end
-
-        // JAL
-        else if (instruction_i.j.opcode == `OPCODE_JAL) begin
-            assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl.bu                   = JAL;
-            imm_format                  = IMM_TYPE_J;
-            regstat_upd                 = 1'b1;
-            jb_instr_o                  = 1'b1;
-        end 
-
-        // JALR
-        else if ((instruction_i.i.opcode == `OPCODE_JALR) && 
-                (instruction_i.i.funct3 == `FUNCT3_JALR)) begin
-            assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl.bu                   = JALR;
-            rs1_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-            jb_instr_o                  = 1'b1;
-        end
-
-        // BEQ
-        else if ((instruction_i.b.opcode == `OPCODE_BEQ) && 
-                (instruction_i.b.funct3 == `FUNCT3_BEQ)) begin
-            assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl.bu                   = BEQ;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_B;
-            jb_instr_o                  = 1'b1;
-        end
-
-        // BNE
-        else if ((instruction_i.b.opcode == `OPCODE_BNE) && 
-                (instruction_i.b.funct3 == `FUNCT3_BNE)) begin
-            assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl.bu                   = BNE;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_B;
-            jb_instr_o                  = 1'b1;
-        end
-
-        // BLT
-        else if ((instruction_i.b.opcode == `OPCODE_BLT) && 
-                (instruction_i.b.funct3 == `FUNCT3_BLT)) begin
-            assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl.bu                   = BLT;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_B;
-            jb_instr_o                  = 1'b1;
-        end
-
-        // BGE
-        else if ((instruction_i.b.opcode == `OPCODE_BGE) && 
-                (instruction_i.b.funct3 == `FUNCT3_BGE)) begin
-            assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl.bu                   = BGE;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_B;
-            jb_instr_o                  = 1'b1;
-        end
-
-        // BLTU
-        else if ((instruction_i.b.opcode == `OPCODE_BLTU) && 
-                (instruction_i.b.funct3 == `FUNCT3_BLTU)) begin
-            assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl.bu                   = BLTU;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_B;
-            jb_instr_o                  = 1'b1;
-        end
-
-        // BGEU
-        else if ((instruction_i.b.opcode == `OPCODE_BGEU) && 
-                (instruction_i.b.funct3 == `FUNCT3_BGEU)) begin
-            assigned_eu                 = EU_BRANCH_UNIT;
-            eu_ctl.bu                   = BGEU;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_B;
-            jb_instr_o                  = 1'b1;
-        end
-
-        // LB
-        else if ((instruction_i.i.opcode == `OPCODE_LB) && 
-                (instruction_i.i.funct3 == `FUNCT3_LB)) begin
-            assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl.lsu                  = LS_BYTE;
-            rs1_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // LH
-        else if ((instruction_i.i.opcode == `OPCODE_LH) && 
-                (instruction_i.i.funct3 == `FUNCT3_LH)) begin
-            assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl.lsu                  = LS_HALFWORD;
-            rs1_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // LW
-        else if ((instruction_i.i.opcode == `OPCODE_LW) && 
-                (instruction_i.i.funct3 == `FUNCT3_LW)) begin
-            assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl.lsu                  = LS_WORD;
-            rs1_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // LD
-        else if ((instruction_i.i.opcode == `OPCODE_LD) && 
-                (instruction_i.i.funct3 == `FUNCT3_LD)) begin
-            assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl.lsu                  = LS_DOUBLEWORD;
-            rs1_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // LBU
-        else if ((instruction_i.i.opcode == `OPCODE_LBU) && 
-                (instruction_i.i.funct3 == `FUNCT3_LBU)) begin
-            assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl.lsu                  = LS_BYTE_U;
-            rs1_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // LHU
-        else if ((instruction_i.i.opcode == `OPCODE_LHU) && 
-                (instruction_i.i.funct3 == `FUNCT3_LHU)) begin
-            assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl.lsu                  = LS_HALFWORD_U;
-            rs1_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // LWU
-        else if ((instruction_i.i.opcode == `OPCODE_LWU) && 
-                (instruction_i.i.funct3 == `FUNCT3_LWU)) begin
-            assigned_eu                 = EU_LOAD_BUFFER;
-            eu_ctl.lsu                  = LS_WORD_U;
-            rs1_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SB
-        else if ((instruction_i.s.opcode == `OPCODE_SB) && 
-                (instruction_i.s.funct3 == `FUNCT3_SB)) begin
-            assigned_eu                 = EU_STORE_BUFFER;
-            eu_ctl.lsu                  = LS_BYTE;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_S;
-        end
-
-        // SH
-        else if ((instruction_i.s.opcode == `OPCODE_SH) && 
-                (instruction_i.s.funct3 == `FUNCT3_SH)) begin
-            assigned_eu                 = EU_STORE_BUFFER;
-            eu_ctl.lsu                  = LS_HALFWORD;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_S;
-        end
-
-        // SW
-        else if ((instruction_i.s.opcode == `OPCODE_SW) && 
-                (instruction_i.s.funct3 == `FUNCT3_SW)) begin
-            assigned_eu                 = EU_STORE_BUFFER;
-            eu_ctl.lsu                  = LS_WORD;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_S;
-        end
-
-        // SD
-        else if ((instruction_i.s.opcode == `OPCODE_SD) && 
-                (instruction_i.s.funct3 == `FUNCT3_SD)) begin
-            assigned_eu                 = EU_STORE_BUFFER;
-            eu_ctl.lsu                  = LS_DOUBLEWORD;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            imm_format                  = IMM_TYPE_S;
-        end
-
-        // ADDI
-        else if ((instruction_i.i.opcode == `OPCODE_ADDI) && 
-                (instruction_i.i.funct3 == `FUNCT3_ADDI)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_ADD;
-            rs1_req                     = 1'b1;
-            rs2_is_imm                  = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // ADDIW
-        else if ((instruction_i.i.opcode == `OPCODE_ADDIW) && 
-                (instruction_i.i.funct3 == `FUNCT3_ADDIW)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_ADDW;
-            rs1_req                     = 1'b1;
-            rs2_is_imm                  = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SLTI
-        else if ((instruction_i.i.opcode == `OPCODE_SLTI) && 
-                (instruction_i.i.funct3 == `FUNCT3_SLTI)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SLT;
-            rs1_req                     = 1'b1;
-            rs2_is_imm                  = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-        
-        // SLTIU
-        else if ((instruction_i.i.opcode == `OPCODE_SLTIU) && 
-                (instruction_i.i.funct3 == `FUNCT3_SLTIU)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SLTU;
-            rs1_req                     = 1'b1;
-            rs2_is_imm                  = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // XORI
-        else if ((instruction_i.i.opcode == `OPCODE_XORI) && 
-                (instruction_i.i.funct3 == `FUNCT3_XORI)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_XOR;
-            rs1_req                     = 1'b1;
-            rs2_is_imm                  = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // ORI
-        else if ((instruction_i.i.opcode == `OPCODE_ORI) && 
-                (instruction_i.i.funct3 == `FUNCT3_ORI)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_OR;
-            rs1_req                     = 1'b1;
-            rs2_is_imm                  = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // ANDI
-        else if ((instruction_i.i.opcode == `OPCODE_ANDI) && 
-                (instruction_i.i.funct3 == `FUNCT3_ANDI)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_AND;
-            rs1_req                     = 1'b1;
-            rs2_is_imm                  = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SLLIW
-        else if ((instruction_i.i.opcode == `OPCODE_SLLIW) && 
-                (instruction_i.i.funct3 == `FUNCT3_SLLIW) &&
-                (instruction_i.i.imm11[31:25] == 7'b0000000)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SLLW;
-            rs1_req                     = 1'b1;
-            rs2_is_imm                  = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SLLI
-        else if ((instruction_i.i.opcode == `OPCODE_SLLI) && 
-                (instruction_i.i.funct3 == `FUNCT3_SLLI) &&
-                (instruction_i.i.imm11[31:26] == 6'b000000)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SLL;
-            rs1_req                     = 1'b1;
-            rs2_is_imm                  = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SRLIW
-        else if ((instruction_i.i.opcode == `OPCODE_SRLIW) && 
-                (instruction_i.i.funct3 == `FUNCT3_SRLIW) &&
-                (instruction_i.i.imm11[31:25] == 7'b0000000)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SRLW;
-            rs1_req                     = 1'b1;
-            rs2_is_imm                  = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SRLI
-        else if ((instruction_i.i.opcode == `OPCODE_SRLI) && 
-                (instruction_i.i.funct3 == `FUNCT3_SRLI) &&
-                (instruction_i.i.imm11[31:26] == 6'b000000)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SRL;
-            rs1_req                     = 1'b1;
-            rs2_is_imm                  = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SRAIW
-        else if ((instruction_i.i.opcode == `OPCODE_SRAIW) && 
-                (instruction_i.i.funct3 == `FUNCT3_SRAIW) &&
-                (instruction_i.i.imm11[31:25] == 7'b0100000)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SRAW;
-            rs1_req                     = 1'b1;
-            rs2_is_imm                  = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SRAI
-        else if ((instruction_i.i.opcode == `OPCODE_SRAI) && 
-                (instruction_i.i.funct3 == `FUNCT3_SRAI) &&
-                (instruction_i.i.imm11[31:26] == 6'b010000)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SRA;
-            rs1_req                     = 1'b1;
-            rs2_is_imm                  = 1'b1;
-            imm_format                  = IMM_TYPE_I;
-            regstat_upd                 = 1'b1;
-        end
-
-        // ADDW
-        else if ((instruction_i.r.opcode == `OPCODE_ADDW) && 
-                (instruction_i.r.funct3 == `FUNCT3_ADDW) && 
-                (instruction_i.r.funct7 == `FUNCT7_ADDW)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_ADDW;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SUBW
-        else if ((instruction_i.r.opcode == `OPCODE_SUBW) && 
-                (instruction_i.r.funct3 == `FUNCT3_SUBW) && 
-                (instruction_i.r.funct7 == `FUNCT7_SUBW)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SUBW;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // ADD
-        else if ((instruction_i.r.opcode == `OPCODE_ADD) && 
-            (instruction_i.r.funct3 == `FUNCT3_ADD) && 
-            (instruction_i.r.funct7 == `FUNCT7_ADD)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_ADD;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SUB
-        else if ((instruction_i.r.opcode == `OPCODE_SUB) && 
-                (instruction_i.r.funct3 == `FUNCT3_SUB) && 
-                (instruction_i.r.funct7 == `FUNCT7_SUB)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SUB;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SLLW
-        else if ((instruction_i.r.opcode == `OPCODE_SLLW) && 
-                (instruction_i.r.funct3 == `FUNCT3_SLLW) && 
-                (instruction_i.r.funct7 == `FUNCT7_SLLW)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SLLW;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SLL
-        else if ((instruction_i.r.opcode == `OPCODE_SLL) && 
-                (instruction_i.r.funct3 == `FUNCT3_SLL) && 
-                (instruction_i.r.funct7 == `FUNCT7_SLL)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SLL;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SLT
-        else if ((instruction_i.r.opcode == `OPCODE_SLT) && 
-                (instruction_i.r.funct3 == `FUNCT3_SLT) && 
-                (instruction_i.r.funct7 == `FUNCT7_SLT)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SLT;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SLTU
-        else if ((instruction_i.r.opcode == `OPCODE_SLTU) && 
-                (instruction_i.r.funct3 == `FUNCT3_SLTU) && 
-                (instruction_i.r.funct7 == `FUNCT7_SLTU)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SLTU;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // XOR
-        else if ((instruction_i.r.opcode == `OPCODE_XOR) && 
-                (instruction_i.r.funct3 == `FUNCT3_XOR) && 
-                (instruction_i.r.funct7 == `FUNCT7_XOR)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_XOR;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SRLW
-        else if ((instruction_i.r.opcode == `OPCODE_SRLW) && 
-                (instruction_i.r.funct3 == `FUNCT3_SRLW) && 
-                (instruction_i.r.funct7 == `FUNCT7_SRLW)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SRLW;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SRL
-        else if ((instruction_i.r.opcode == `OPCODE_SRL) && 
-                (instruction_i.r.funct3 == `FUNCT3_SRL) && 
-                (instruction_i.r.funct7 == `FUNCT7_SRL)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SRL;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SRAW
-        else if ((instruction_i.r.opcode == `OPCODE_SRAW) && 
-                (instruction_i.r.funct3 == `FUNCT3_SRAW) && 
-                (instruction_i.r.funct7 == `FUNCT7_SRAW)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SRAW;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // SRA
-        else if ((instruction_i.r.opcode == `OPCODE_SRA) && 
-                (instruction_i.r.funct3 == `FUNCT3_SRA) && 
-                (instruction_i.r.funct7 == `FUNCT7_SRA)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_SRA;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // OR
-        else if ((instruction_i.r.opcode == `OPCODE_OR) && 
-                (instruction_i.r.funct3 == `FUNCT3_OR) && 
-                (instruction_i.r.funct7 == `FUNCT7_OR)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_OR;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // AND
-        else if ((instruction_i.r.opcode == `OPCODE_AND) && 
-                (instruction_i.r.funct3 == `FUNCT3_AND) && 
-                (instruction_i.r.funct7 == `FUNCT7_AND)) begin
-            assigned_eu                 = EU_INT_ALU;
-            eu_ctl.alu                  = ALU_AND;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // FENCE
-        else if ((instruction_i.i.opcode == `OPCODE_FENCE) && 
-                (instruction_i.i.funct3 == `FUNCT3_FENCE) && 
-                (instruction_i[30 -: 4] == `FENCE_FM_LSBS) && 
-                (instruction_i.i.rs1 == `FENCE_RS1) && 
-                (instruction_i.i.rd == `FENCE_RD)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-        end
-
-        // ECALL
-        else if ((instruction_i.i.opcode == `OPCODE_ECALL) && 
-                (instruction_i.i.funct3 == `FUNCT3_ECALL) && 
-                (instruction_i.i.imm11 == `ECALL_IMM) && 
-                (instruction_i.i.rs1 == `ECALL_RS1) && 
-                (instruction_i.i.rd == `ECALL_RD)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-        end
-
-        // EBREAK
-        else if ((instruction_i.i.opcode == `OPCODE_EBREAK) && 
-                (instruction_i.i.funct3 == `FUNCT3_EBREAK) && 
-                (instruction_i.i.imm11 == `EBREAK_IMM) && 
-                (instruction_i.i.rs1 == `EBREAK_RS1) && 
-                (instruction_i.i.rd == `EBREAK_RD)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-            except_raised               = 1'b1;
-            except_code                 = E_BREAKPOINT;
-        end
-
-        // rv64 Zifencei
-        // -------------
-
-        // FENCE.I
-        else if ((instruction_i.i.opcode == `OPCODE_FENCE_I) && 
-                (instruction_i.i.funct3 == `FUNCT3_FENCE_I) && 
-                (instruction_i.i.imm11 == `FENCE_I_IMM) && 
-                (instruction_i.i.rs1 == `FENCE_I_RS1) && 
-                (instruction_i.i.rd == `FENCE_I_RD)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-        end
-
-        // RV64 Zicsr
-        // ----------
-
-        // CSRRW
-        else if ((instruction_i.i.opcode == `OPCODE_CSRRW) && 
-                (instruction_i.i.funct3 == `FUNCT3_CSRRW)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_OPERANDS_ONLY;
-            rs1_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // CSRRS
-        else if ((instruction_i.i.opcode == `OPCODE_CSRRS) && 
-                (instruction_i.i.funct3 == `FUNCT3_CSRRS)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_OPERANDS_ONLY;
-            rs1_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // CSRRC
-        else if ((instruction_i.i.opcode == `OPCODE_CSRRC) && 
-                (instruction_i.i.funct3 == `FUNCT3_CSRRC)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_OPERANDS_ONLY;
-            rs1_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // CSRRWI
-        else if ((instruction_i.i.opcode == `OPCODE_CSRRWI) && 
-                (instruction_i.i.funct3 == `FUNCT3_CSRRWI)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-            imm_format                  = IMM_TYPE_RS1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // CSRRSI
-        else if ((instruction_i.i.opcode == `OPCODE_CSRRSI) && 
-                (instruction_i.i.funct3 == `FUNCT3_CSRRSI)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-            imm_format                  = IMM_TYPE_RS1;
-            regstat_upd                 = 1'b1;
-        end
-
-        // CSRRCI
-        else if ((instruction_i.i.opcode == `OPCODE_CSRRCI) && 
-                (instruction_i.i.funct3 == `FUNCT3_CSRRCI)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-            imm_format                  = IMM_TYPE_RS1;
-            regstat_upd                 = 1'b1;
-        end
-
-    `ifdef LEN5_M_EN
-
-        // RV64M
-        // -----
-        // NOTE: DIV and REM to be implemented
-
-        // MUL
-        else if ((instruction_i.r.opcode == `OPCODE_MUL) &&
-                (instruction_i.r.funct3 == `FUNCT3_MUL) &&
-                (instruction_i.r.funct7 == `FUNCT7_MUL)) begin
-            assigned_eu                 = EU_INT_MULT;
-            eu_ctl.mult                 = MULT_MUL;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-        
-        // MULW
-        else if ((instruction_i.r.opcode == `OPCODE_MULW) &&
-                (instruction_i.r.funct3 == `FUNCT3_MULW) &&
-                (instruction_i.r.funct7 == `FUNCT7_MULW)) begin
-            assigned_eu                 = EU_INT_MULT;
-            eu_ctl.mult                 = MULT_MULW;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-        
-        // MULH
-        else if ((instruction_i.r.opcode == `OPCODE_MULH) &&
-                (instruction_i.r.funct3 == `FUNCT3_MULH) &&
-                (instruction_i.r.funct7 == `FUNCT7_MULH)) begin
-            assigned_eu                 = EU_INT_MULT;
-            eu_ctl.mult                 = MULT_MULH;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-        
-        // MULHSU
-        else if ((instruction_i.r.opcode == `OPCODE_MULHSU) &&
-                (instruction_i.r.funct3 == `FUNCT3_MULHSU) &&
-                (instruction_i.r.funct7 == `FUNCT7_MULHSU)) begin
-            assigned_eu                 = EU_INT_MULT;
-            eu_ctl.mult                 = MULT_MULHSU;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-        
-        // MULHU
-        else if ((instruction_i.r.opcode == `OPCODE_MULHU) &&
-                (instruction_i.r.funct3 == `FUNCT3_MULHU) &&
-                (instruction_i.r.funct7 == `FUNCT7_MULHU)) begin
-            assigned_eu                 = EU_INT_MULT;
-            eu_ctl.mult                 = MULT_MULHU;
-            rs1_req                     = 1'b1;
-            rs2_req                     = 1'b1;
-            regstat_upd                 = 1'b1;
-        end
-
-    `endif /* LEN5_M_EN */
-
-        // RV64A
-        // -----
-        // NOTE: to be implemented for OS support
-
-    `ifdef LEN5_FP_EN
-
-        // RV64F
-        // -----
-
-        // RV64D
-        // -----
-
-    `endif /* LEN5_FP_EN */
-
-    `ifdef LEN5_PRIVILEGED_EN
-
-        // --------------
-        // PRIVILEGED ISA
-        // --------------
-
-        // Trap-Return Instructions
-        // ------------------------
-
-        // URET
-        else if ((instruction_i.r.opcode == `OPCODE_URET) && 
-                (instruction_i.r.funct3 == `FUNCT3_URET) && 
-                (instruction_i.r.funct7 == `FUNCT7_URET) && 
-                (instruction_i.r.rs2 == `URET_RS2) && 
-                (instruction_i.r.rs1 == `URET_RS1) && 
-                (instruction_i.r.rd == `URET_RD)) begin
-            stall                       = 1'b1;
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-        end
-
-        // SRET
-        else if ((instruction_i.r.opcode == `OPCODE_SRET) && 
-                (instruction_i.r.funct3 == `FUNCT3_SRET) && 
-                (instruction_i.r.funct7 == `FUNCT7_SRET) && 
-                (instruction_i.r.rs2 == `SRET_RS2) && 
-                (instruction_i.r.rs1 == `SRET_RS1) && 
-                (instruction_i.r.rd == `SRET_RD)) begin
-            if (mstatus_tsr_i) begin
-                except_raised           = 1'b1;
-                except_code_t           = E_ILLEGAL_INSTRUCTION;
-            end else begin
-                stall                   = 1'b1;
-                assigned_eu             = EU_NONE;
-                res_ready               = 1'b1;
+        opcode_except               = 1'b0;
+        except_code                 = E_ILLEGAL_INSTRUCTION;
+
+        unique case (instruction_i.i.opcode)
+            `OPCODE_OP_IMM: begin
+                rs1_req         = 1'b1;
+                rs2_is_imm      = 1'b1;
+                imm_format      = IMM_TYPE_I;
+                issue_type      = ISSUE_TYPE_INT;
+                dec_sel         = ISSUE_DEC_SEL_ALU;
+                assigned_eu     = EU_INT_ALU;
+                // Skip nops
+                if ({instruction_i.i.imm11, instruction_i.i.rs1, instruction_i.i.funct3, instruction_i.i.rd} == '0)
+                    skip_eu     = 1'b1;
             end
-        end
-
-        // MRET
-        else if ((instruction_i.r.opcode == `OPCODE_MRET) && 
-                (instruction_i.r.funct3 == `FUNCT3_MRET) && 
-                (instruction_i.r.funct7 == `FUNCT7_MRET) && 
-                (instruction_i.r.rs2 == `MRET_RS2) && 
-                (instruction_i.r.rs1 == `MRET_RS1) && 
-                (instruction_i.r.rd == `MRET_RD)) begin
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-            stall                       = 1'b1;
-        end
-
-        // Interrupt-Management Instructions
-        // ---------------------------------
-
-        // WFI
-        else if ((instruction_i.r.opcode == `OPCODE_WFI) && 
-                (instruction_i.r.funct3 == `FUNCT3_WFI) && 
-                (instruction_i.r.funct7 == `FUNCT7_WFI) && 
-                (instruction_i.r.rs2 == `WFI_RS2) && 
-                (instruction_i.r.rs1 == `WFI_RS1) && 
-                (instruction_i.r.rd == `WFI_RD)) begin
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-            stall                       = 1'b1;
-        end
-
-        // Supervisor Memory-Management Instructions
-        // -----------------------------------------
-
-        // SFENCE.VMA
-        else if ((instruction_i.r.opcode == `OPCODE_SFENCE_VMA) && 
-                (instruction_i.r.funct3 == `FUNCT3_SFENCE_VMA) && 
-                (instruction_i.r.funct7 == `FUNCT7_SFENCE_VMA) && 
-                (instruction_i.r.rd == `SFENCE_VMA_RD)) begin
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-            stall                       = 1'b1;
-        end
-
-        // Hypervisor Memory-Management Instructions
-        // -----------------------------------------
-
-        // HFENCE.BVMA
-        else if ((instruction_i.r.opcode == `OPCODE_HFENCE_BVMA) && 
-                (instruction_i.r.funct3 == `FUNCT3_HFENCE_BVMA) && 
-                (instruction_i.r.funct7 == `FUNCT7_HFENCE_BVMA) && 
-                (instruction_i.r.rd == `HFENCE_BVMA_RD)) begin
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-            stall                       = 1'b1;
-        end
-
-        // HFENCE.GVMA
-        else if ((instruction_i.r.opcode == `OPCODE_HFENCE_GVMA) && 
-                (instruction_i.r.funct3 == `FUNCT3_HFENCE_GVMA) && 
-                (instruction_i.r.funct7 == `FUNCT7_HFENCE_GVMA) && 
-                (instruction_i.r.rd == `HFENCE_GVMA_RD)) begin
-            assigned_eu                 = EU_NONE;
-            res_ready                   = 1'b1;
-            stall                       = 1'b1;
-        end
-
-    `endif /* LEN5_PRIVILEGED_EN */
-        
-        // UNSUPPORTED INSTRUCTION
-        // -----------------------
-
-        else begin
-            assigned_eu                 = EU_NONE;
-            except_raised               = 1'b1;  
-            except_code                 = E_ILLEGAL_INSTRUCTION;
-        end
+            `OPCODE_OP_IMM_32: begin
+                op_sel_32       = 1'b1;
+                rs1_req         = 1'b1;
+                rs2_is_imm      = 1'b1;
+                imm_format      = IMM_TYPE_I;
+                issue_type      = ISSUE_TYPE_INT;
+                dec_sel         = ISSUE_DEC_SEL_ALU;
+                assigned_eu     = EU_INT_ALU;
+            end
+            `OPCODE_OP: begin
+                rs1_req         = 1'b1;
+                rs2_req         = 1'b1;
+                issue_type      = ISSUE_TYPE_INT;
+                unique case (instruction_i.r.funct7)
+                    `FUNCT7_OP, `FUNCT7_OP_ALT: begin
+                        assigned_eu = EU_INT_ALU;
+                        dec_sel     = ISSUE_DEC_SEL_ALU;
+                    end
+                `ifdef LEN5_M_EN
+                    `FUNCT7_M: begin
+                        if (instruction_i.r.funct3[14]) begin
+                            assigned_eu = EU_INT_DIV;
+                            dec_sel     = ISSUE_DEC_SEL_DIV;
+                        end else begin
+                            assigned_eu = EU_INT_MULT;
+                            dec_sel     = ISSUE_DEC_SEL_MULT;
+                        end
+                    end
+                `endif /* LEN5_M_EN */
+                    default: begin
+                        opcode_except   = 1'b1;
+                    end
+                endcase
+            end
+            `OPCODE_OP_32: begin
+                rs1_req         = 1'b1;
+                rs2_req         = 1'b1;
+                op_sel_32       = 1'b1;
+                issue_type      = ISSUE_TYPE_INT;
+                unique case (instruction_i.r.funct7)
+                    `FUNCT7_OP, `FUNCT7_OP_ALT: begin
+                        assigned_eu = EU_INT_ALU;
+                        dec_sel     = ISSUE_DEC_SEL_ALU;
+                    end
+                `ifdef LEN5_M_EN
+                    `FUNCT7_M: begin
+                        if (instruction_i.r.funct3[14]) begin
+                            assigned_eu = EU_INT_DIV;
+                            dec_sel     = ISSUE_DEC_SEL_DIV;
+                        end else begin
+                            assigned_eu = EU_INT_MULT;
+                            dec_sel     = ISSUE_DEC_SEL_MULT;
+                        end
+                    end
+                `endif /* LEN5_M_EN */
+                    default: opcode_except   = 1'b1;
+                endcase
+            end
+            `OPCODE_LUI: begin
+                skip_eu         = 1'b1;
+                imm_format      = IMM_TYPE_U;
+                issue_type      = ISSUE_TYPE_LUI;
+            end
+            `OPCODE_AUIPC: begin
+                assigned_eu     = EU_INT_ALU;
+                eu_ctl.alu      = ALU_ADD;
+                imm_format      = IMM_TYPE_U;
+                rs1_is_pc       = 1'b1;
+                rs2_is_imm      = 1'b1;
+                issue_type      = ISSUE_TYPE_INT;
+            end
+            `OPCODE_JAL: begin
+                assigned_eu     = EU_BRANCH_UNIT;
+                eu_ctl.bu       = JAL;
+                imm_format      = IMM_TYPE_J;
+                issue_type      = ISSUE_TYPE_JUMP;
+            end
+            `OPCODE_JALR: begin
+                assigned_eu     = EU_BRANCH_UNIT;
+                eu_ctl.bu       = JALR;
+                rs1_req         = 1'b1;
+                imm_format      = IMM_TYPE_I;
+                issue_type      = ISSUE_TYPE_JUMP;
+            end
+            `OPCODE_BRANCH: begin
+                assigned_eu     = EU_BRANCH_UNIT;
+                rs1_req         = 1'b1;
+                rs2_req         = 1'b1;
+                imm_format      = IMM_TYPE_B;
+                issue_type      = ISSUE_TYPE_BRANCH;
+                dec_sel         = ISSUE_DEC_SEL_BRANCH;
+            end
+            `OPCODE_LOAD: begin
+                assigned_eu     = EU_LOAD_BUFFER;
+                dec_sel         = ISSUE_DEC_SEL_LS;
+                rs1_req         = 1'b1;
+                imm_format      = IMM_TYPE_I;
+                issue_type      = ISSUE_TYPE_INT;
+            end
+            `OPCODE_STORE: begin
+                assigned_eu     = EU_STORE_BUFFER;
+                issue_type      = ISSUE_TYPE_STORE;
+                dec_sel         = ISSUE_DEC_SEL_LS;
+                rs1_req         = 1'b1;
+                rs2_req         = 1'b1;
+                imm_format      = IMM_TYPE_S;
+            end
+            `OPCODE_SYSTEM: begin
+                skip_eu         = 1'b1;
+                unique case (instruction_i.i.funct3)
+                    `FUNCT3_CSRRC,
+                    `FUNCT3_CSRRCI,
+                    `FUNCT3_CSRRS,
+                    `FUNCT3_CSRRSI,
+                    `FUNCT3_CSRRW,
+                    `FUNCT3_CSRRWI: begin
+                        issue_type      = ISSUE_TYPE_CSR;
+                        rs1_req         = 1'b1;
+                    end
+                    `FUNCT3_ZERO: begin
+                        issue_type      = ISSUE_TYPE_STALL;
+                        opcode_except   = 1'b1;
+                        except_code     = system_except_code;
+                    end
+                    default: opcode_except = 1'b1;
+                endcase
+            end
+            `OPCODE_MISC_MEM: begin
+                // NOTE: No proper support so far
+                if (instruction_i.r.funct3 == '0) begin
+                    issue_type      = ISSUE_TYPE_STALL;
+                    skip_eu         = 1'b1;
+                end else begin
+                    opcode_except = 1'b1;
+                end
+            end
+        `ifdef LEN5_A_EN
+        // TODO: add atomic instructions
+            `OPCODE_AMO: begin
+                
+            end
+        `endif /* LEN5_A_EN */
+        `ifdef LEN5_FP_EN
+            // Add floating-point support
+            `OPCODE_LOAD_FP: begin
+                
+            end
+            `OPCODE_STORE_FP: begin
+                
+            end
+            `OPCODE_OP_FP: begin
+                
+            end
+            `OPCODE_FMADD: begin
+                
+            end
+            `OPCODE_FNMADD: begin
+                
+            end
+            `OPCODE_FMSUB: begin
+                
+            end
+            `OPCODE_FNMSUB: begin
+                
+            end: 
+        `endif /* LEN5_FP_EN */
+            default: begin
+                skip_eu                     = 1'b1;
+                issue_type                  = ISSUE_TYPE_EXCEPT;
+                opcode_except               = 1'b1;
+            end
+        endcase
     end
+
+    // FUNCT3 DECODERS
+    // ---------------
+
+    // ALU control decoders
+    always_comb begin : alu_ctl_dec
+        alu_ctl_except  = 1'b0;
+        alu_ctl         = ALU_ADD;
+        unique case (instruction_i.r.funct3)
+            `FUNCT3_ADD: begin
+                if (instruction_i.r.funct7 == `FUNCT7_SUB && 
+                    instruction_i.r.opcode[5]) begin
+                    alu_ctl     = ALU_SUB;
+                    alu32_ctl   = ALU_SUBW;
+                end else begin
+                    alu_ctl     = ALU_ADD;
+                    alu32_ctl   = ALU_ADDW;
+                end
+            end
+            `FUNCT3_SLL: begin
+                alu_ctl     = ALU_SLL;
+                alu32_ctl   = ALU_SLLW;
+            end
+            `FUNCT3_SLT: begin 
+                alu_ctl     = ALU_SLT;
+                alu32_ctl   = ALU_SLT;
+            end
+            `FUNCT3_SLTU: begin
+                alu_ctl     = ALU_SLTU;
+                alu32_ctl   = ALU_SLTU;
+            end
+            `FUNCT3_XOR: begin
+                alu_ctl     = ALU_XOR;
+                alu32_ctl   = ALU_XOR;
+            end
+            `FUNCT3_SRA: begin
+                unique case ({instruction_i.r.funct7[31:26], 1'b0})
+                    `FUNCT7_SRA: begin
+                        alu_ctl     = ALU_SRA;
+                        alu32_ctl   = ALU_SRAW;
+                        alu_ctl_except = instruction_i.r.opcode[3] & instruction_i.r.funct7[25];
+                    end
+                    `FUNCT7_SRL: begin
+                        alu_ctl     = ALU_SRL;
+                        alu32_ctl   = ALU_SRLW;
+                        alu_ctl_except = instruction_i.r.opcode[3] & instruction_i.r.funct7[25];
+                    end
+                    default: alu_ctl_except = 1'b1;
+                endcase
+            end
+            `FUNCT3_OR: begin
+                alu_ctl     = ALU_OR;
+                alu32_ctl   = ALU_OR;
+            end
+            `FUNCT3_AND: begin
+                alu_ctl     = ALU_AND;
+                alu32_ctl   = ALU_AND;
+            end
+            default: alu_ctl_except = 1'b1;
+        endcase
+    end
+
+    // Load/store control decoder
+    always_comb begin : ldst_ctl_dec
+        ldst_ctl_except     = 1'b0;
+        ldst_ctl            = LS_DOUBLEWORD;
+        unique case (instruction_i.s.funct3)
+            `FUNCT3_LB, `FUNCT3_LBU, `FUNCT3_SB:
+                ldst_ctl = LS_BYTE;
+            `FUNCT3_LH, `FUNCT3_LHU, `FUNCT3_SH:
+                ldst_ctl = LS_HALFWORD;
+            `FUNCT3_LW, `FUNCT3_LWU, `FUNCT3_SW:
+                ldst_ctl = LS_WORD;
+            `FUNCT3_LD, `FUNCT3_SD:
+                ldst_ctl = LS_DOUBLEWORD;
+            default: ldst_ctl_except = 1'b1;
+        endcase
+    end
+
+    // Branch control decoder
+    always_comb begin : bu_ctl_dec
+        branch_ctl_except   = 1'b0;
+        branch_ctl          = BEQ;
+        unique case (instruction_i.r.funct3)
+            `FUNCT3_BEQ:    branch_ctl  = BEQ;
+            `FUNCT3_BNE:    branch_ctl  = BNE;
+            `FUNCT3_BLT:    branch_ctl  = BLT;
+            `FUNCT3_BGE:    branch_ctl  = BGE;
+            `FUNCT3_BLTU:   branch_ctl  = BLTU;
+            `FUNCT3_BGEU:   branch_ctl  = BGEU;
+            default: branch_ctl_except  = 1'b1;
+        endcase
+    end
+
+`ifdef LEN5_M_EN
+    // MULT decoder
+    always_comb begin : mult_ctl_dec
+        mult_ctl_except = 1'b0;
+        mult_ctl        = MULT_MUL;
+        unique case (instruction_i.r.funct3)
+            `FUNCT3_MUL: begin
+                mult_ctl    = MULT_MUL;
+                mult32_ctl  = MULT_MULW;
+            end
+            `FUNCT3_MULH: begin
+                mult_ctl    = MULT_MULH;
+                mult32_ctl  = MULT_MULH;
+            end
+            `FUNCT3_MULHSU: begin
+                mult_ctl    = MULT_MULHU;
+                mult32_ctl  = MULT_MULHU;
+            end
+            `FUNCT3_MULHU: begin
+                mult_ctl    = MULT_MULHSU;
+                mult32_ctl  = MULT_MULHSU;
+            end
+            default: mult_ctl_except = 1'b1;
+        endcase
+    end
+
+    // DIV decoder
+    always_comb begin : div_ctl_dec
+        div_ctl_except = 1'b0;
+        div_ctl        = DIV_DIV;
+        unique case (instruction_i.r.funct3)
+            `FUNCT3_DIV: begin
+                div_ctl     = DIV_DIV;
+                div32_ctl   = DIV_DIVW;
+            end
+            `FUNCT3_DIVU: begin
+                div_ctl     = DIV_DIVU;
+                div32_ctl   = DIV_DIVUW;
+            end
+            `FUNCT3_REM: begin
+                div_ctl     = DIV_REM;
+                div32_ctl   = DIV_REMW;
+            end
+            `FUNCT3_REMU: begin
+                div_ctl     = DIV_REMU;
+                div32_ctl   = DIV_REMUW;
+            end
+            default: div_ctl_except = 1'b1;
+        endcase
+    end
+`endif /* LEN5_M_EN */
+    
+    // Decoder MUX
+    // -----------
+    always_comb begin : dec_mux
+        unique case (dec_sel)
+            ISSUE_DEC_SEL_ALU: begin
+                except_raised   = alu_ctl_except;
+                eu_ctl_o.alu    = (op_sel_32) ? alu32_ctl : alu_ctl;
+            end
+        `ifdef LEN5_M_EN
+            ISSUE_DEC_SEL_MULT: begin
+                except_raised   = mult_ctl_except;
+                eu_ctl_o.mult   = (op_sel_32) ? mult32_ctl : mult_ctl;
+            end
+            ISSUE_DEC_SEL_DIV: begin
+                except_raised   = div_ctl_except;
+                eu_ctl_o.div    = (op_sel_32) ? div32_ctl : div_ctl;
+            end
+        `endif /* LEN5_M_EN */
+            ISSUE_DEC_SEL_LS: begin
+                except_raised   = ldst_ctl_except;
+                eu_ctl_o.lsu    = ldst_ctl;
+            end
+            ISSUE_DEC_SEL_BRANCH: begin
+                except_raised   = branch_ctl_except;
+                eu_ctl_o.bu     = branch_ctl;
+            end
+            default: begin
+                except_raised   = opcode_except;
+                eu_ctl_o        = eu_ctl;
+            end
+        endcase
+    end
+
+    // -----------------
+    // EXCEPTION CONTROL
+    // -----------------
+
+    // Privilege mode exception mux
+    always_comb begin : system_except_mux
+        unique case ({instruction_i.r.funct7, instruction_i.r.rs2, instruction_i.r.rs1})
+            {`ECALL_IMM, `ECALL_RS1}: begin // ECALL
+                system_except_code  = (priv_mode_i == PRIV_MODE_U) ? E_ENV_CALL_UMODE : E_ENV_CALL_MMODE;
+            end
+            {`EBREAK_IMM, `EBREAK_RS1}: begin // EBREAK
+                system_except_code  = E_BREAKPOINT;
+            end
+            default: begin
+                system_except_code  = E_UNKNOWN;
+            end
+        endcase
+    end
+
+    assign  issue_type_o        = (except_raised | opcode_except) ? ISSUE_TYPE_EXCEPT : issue_type;
+    assign  skip_eu_o           = (except_raised | opcode_except) ? 1'b1 : skip_eu;
 
     // -----------------
     // OUTPUT GENERATION
     // -----------------
-    assign except_raised_o      = except_raised;
-    assign except_code_o        = except_code;
-    assign res_ready_o          = res_ready;
-    assign stall_o              = stall;
-
-    assign eu_o                 = assigned_eu;
-    assign eu_ctl_o             = eu_ctl;
-    assign fp_rs_o              = rs_fp;
-    assign rs1_req_o            = rs1_req;
-    assign rs1_is_pc_o          = rs1_is_pc;
-    assign rs2_req_o            = rs2_req;
-    assign rs2_is_imm_o         = rs2_is_imm;
+    assign  except_code_o        = except_code;
+    assign  assigned_eu_o        = assigned_eu;
+    assign  rs1_req_o            = rs1_req;
+    assign  rs1_is_pc_o          = rs1_is_pc;
+    assign  rs2_req_o            = rs2_req;
+    assign  rs2_is_imm_o         = rs2_is_imm;
 `ifdef LEN5_FP_EN
-    assign rs3_req_o            = rs3_req;
+    assign  rs3_req_o            = rs3_req;
 `endif /* LEN5_FP_EN */
-    assign imm_format_o         = imm_format;
-    assign regstat_upd_o        = regstat_upd;
+    assign  imm_format_o         = imm_format;
 
     // ----------
     // ASSERTIONS

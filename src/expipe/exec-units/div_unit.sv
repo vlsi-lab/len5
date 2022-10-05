@@ -20,7 +20,8 @@ module div_unit
     RS_DEPTH = 4, // must be a power of 2,
     
     // EU-specific parameters
-    EU_CTL_LEN = 4
+    EU_CTL_LEN  = 4,
+    PIPE_DEPTH  = 4
 )
 (
     // Clock, reset, and flush
@@ -94,23 +95,27 @@ module div_unit
         .eu_entry_idx_o       (rs_div_entry_idx     )
     );
 
-    div #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH)) u_div
-    (
-        .clk_i (clk_i),
-        .rst_n_i (rst_n_i),
-        .flush_i (flush_i),
-        .eu_ready_i (eu_ready_i),
-        .eu_valid_i (eu_valid_i),
-        .eu_valid_o (eu_valid_o),
-        .eu_ready_o (eu_ready_o),
-        .eu_entry_idx_i (eu_entry_idx_i),
-        .eu_result_i (eu_result_i),
-        .eu_except_raised_i (eu_except_raised_i),
-        .eu_except_code_i (eu_except_code_i),
-        .eu_ctl_o (eu_ctl_o),
-        .eu_rs1_o (eu_rs1_o),
-        .eu_rs2_o (eu_rs2_o),
-        .eu_entry_idx_o (eu_entry_idx_o)
+    div #(
+        .RS_DEPTH   (RS_DEPTH   ),
+        .EU_CTL_LEN (EU_CTL_LEN ),
+        .PIPE_DEPTH (PIPE_DEPTH )
+    ) u_div (
+    	.clk_i           (clk_i                ),
+        .rst_n_i         (rst_n_i              ),
+        .flush_i         (flush_i              ),
+        .valid_i         (rs_div_valid         ),
+        .ready_i         (rs_div_ready         ),
+        .ready_o         (div_rs_ready         ),
+        .valid_o         (div_rs_valid         ),
+        .ctl_i           (rs_div_ctl           ),
+        .entry_idx_i     (rs_div_entry_idx     ),
+        .rs1_value_i     (rs_div_rs1_value     ),
+        .rs2_value_i     (rs_div_rs2_value     ),
+        .entry_idx_o     (div_rs_entry_idx     ),
+        .result_o        (div_rs_result        ),
+        .except_raised_o (div_rs_except_raised ),
+        .except_code_o   (div_rs_except_code   )
     );
+    
 
 endmodule

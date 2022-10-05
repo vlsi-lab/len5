@@ -45,6 +45,7 @@ ABI_STRING		?= lp64
 CC 				:= $(CROSS_COMPILE)gcc
 CFLAGS			:= 	-march=$(ISA_STRING) \
 					-mabi=$(ABI_STRING) \
+					-mcmodel=medlow \
 					-ffreestanding \
 					-O1 \
 					-Wall
@@ -57,6 +58,13 @@ QEMU_CFLAGS		:= 	-march=$(ISA_STRING) \
 					-D"UART_BASE=(unsigned char *)0x10000000"
 CINC			:= -I$(SW_BUILD_DIR)/include -I$(TEST_DIR)/include
 LDFLAGS			:= -nostartfiles \
+				   -static \
+				   -L$(SW_BUILD_DIR)/lib \
+				   -Wl,--gc-sections \
+				   -Wl,--whole-archive \
+				   -llen5 \
+				   -Wl,--no-whole-archive
+QEMU_LDFLAGS	:= -nostartfiles \
 				   -static \
 				   -Wl,--gc-sections
 AS 				:= $(CROSS_COMPILE)as
@@ -94,7 +102,7 @@ $(TEST_BUILD_DIR)/qemu/%.dis: $(TEST_BUILD_DIR)/qemu/%.elf | $(TEST_BUILD_DIR)/d
 
 # LEN5 executable
 $(TEST_BUILD_DIR)/bin/%.elf: $(TEST_BUILD_DIR)/obj/%.o $(LEN5_LIB) | $(TEST_BUILD_DIR)/bin
-	$(CC) $(CFLAGS) $(CINC) -T $(LD_SCRIPT) $(LDFLAGS) -L$(SW_BUILD_DIR)/lib $(SW_DIR)/src/irq.S $< -o $@ -llen5
+	$(CC) $(CFLAGS) $(CINC) -T $(LD_SCRIPT) $(LDFLAGS) $< -o $@
 
 # Objects
 $(TEST_BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.c $(BUILD_SUPP) | $(TEST_BUILD_DIR)/obj .check-riscv
@@ -106,11 +114,11 @@ $(TEST_BUILD_DIR)/obj/%.o: $(TEST_DIR)/src/%.s $(BUILD_SUPP) | $(TEST_BUILD_DIR)
 
 # Debuggable QEMU executable
 $(TEST_BUILD_DIR)/qemu/%.elf: $(TEST_DIR)/src/%.c | $(TEST_BUILD_DIR)/qemu
-	$(CC) $(QEMU_CFLAGS) -mcmodel=medany $(CINC) -O0 -g -T $(QEMU_LD_SCRIPT) $(LDFLAGS) $(SW_SUPP_SRCS) $< -o $@
+	$(CC) $(QEMU_CFLAGS) $(CINC) -O0 -g -T $(QEMU_LD_SCRIPT) $(QEMU_LDFLAGS) $(SW_SUPP_SRCS) $< -o $@
 $(TEST_BUILD_DIR)/qemu/%.elf: $(TEST_DIR)/src/%.s | $(TEST_BUILD_DIR)/qemu
-	$(CC) $(QEMU_CFLAGS) -mcmodel=medany $(CINC) -O0 -g -T $(QEMU_LD_SCRIPT) $(LDFLAGS) $(SW_SUPP_SRCS) $< -o $@
+	$(CC) $(QEMU_CFLAGS) $(CINC) -O0 -g -T $(QEMU_LD_SCRIPT) $(QEMU_LDFLAGS) $(SW_SUPP_SRCS) $< -o $@
 $(TEST_BUILD_DIR)/qemu/%.elf: $(TEST_DIR)/src/%.S | $(TEST_BUILD_DIR)/qemu
-	$(CC) $(QEMU_CFLAGS) -mcmodel=medany $(CINC) -O0 -g -T $(QEMU_LD_SCRIPT) $(LDFLAGS) $(SW_SUPP_SRCS) $< -o $@
+	$(CC) $(QEMU_CFLAGS) $(CINC) -O0 -g -T $(QEMU_LD_SCRIPT) $(QEMU_LDFLAGS) $(SW_SUPP_SRCS) $< -o $@
 
 # Software support files (crt0, _write, headers)
 $(BUILD_SUPP): $(SW_BUILD_DIR)/%: $(SW_DIR)/% | $(SW_BUILD_DIR)/include

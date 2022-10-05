@@ -13,8 +13,10 @@
 // Date: 12/11/2019
 
 /* Include UVM macros */
+`ifndef SYNTHESIS
 `include "uvm_macros.svh"
 import uvm_pkg::*;
+`endif
 
 import expipe_pkg::*;
 

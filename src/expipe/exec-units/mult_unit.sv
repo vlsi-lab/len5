@@ -71,7 +71,7 @@ module mult_unit
         .flush_i              (flush_i              ),
         .issue_valid_i        (issue_valid_i        ),
         .issue_ready_o        (issue_ready_o        ),
-        .issue_eu_ctl_i       (issue_issue_eu_ctl_i ),
+        .issue_eu_ctl_i       (issue_eu_ctl_i       ),
         .issue_rs1_i          (issue_rs1_i          ),
         .issue_rs2_i          (issue_rs2_i          ),
         .issue_dest_rob_idx_i (issue_dest_rob_idx_i ),

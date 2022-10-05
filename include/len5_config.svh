@@ -13,7 +13,7 @@
 // Date: 04/11/2021
 
 `ifndef LEN5_CONFIG_
-`define LEN5_CONFIG
+`define LEN5_CONFIG_
 
 // --------------------
 // GLOBAL CONFIGURATION
@@ -27,6 +27,9 @@
 
 // Serial interface base address
 `define SERIAL_ADDR 'h100
+
+// Exit register address (stop the simulation when written)
+`define EXIT_ADDR 'h200
 
 // MEMORY EMULATOR PARAMETERS
 // --------------------------
@@ -42,7 +45,7 @@
 
 // BPU g-share predictor counters initial value
 // NOTE: must one of {SNT, WNT, WT, ST}
-`define BPU_INIT_C2B WNT
+`define BPU_INIT_C2B WT
 
 // BPU Branch Target Buffer (BTB) addressing bits (the remaining ones are used
 // as tag)
@@ -81,9 +84,9 @@
 // Commit Stage
 `define SKIP_COMMIT_SPILL_CELL      // directly connect the commit CU to the ROB output
 
-// ----------------
-// FEATURE SWITCHES
-// ----------------
+// ------------------
+// EXTENSION SWITCHES
+// ------------------
 
 // Enable C extension
 // ------------------
@@ -98,9 +101,9 @@
 // -----------------------------
 //`define LEN5_FP_EN
 
-// Enable privileged instructions support
-// --------------------------------------
-//`define LEN5_PRIVILEGED_EN
+// Enable atomic support
+// ---------------------
+//`define LEN5_A_EN
 
 // Reservation stations
 // --------------------

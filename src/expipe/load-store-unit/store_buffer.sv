@@ -16,8 +16,11 @@
 `include "len5_config.svh"
 
 // Import UVM report macros
+`ifndef SYNTHESIS
 `include "uvm_macros.svh"
 import uvm_pkg::*;
+`endif
+
 import len5_pkg::XLEN;
 import len5_pkg::except_code_t;
 import len5_pkg::STBUFF_TAG_W;
@@ -329,7 +332,7 @@ module store_buffer #(
     end
 
     // Latest store instruction tag update
-    always_ff @( posedge clk_i or rst_n_i ) begin : latest_tag_reg
+    always_ff @( posedge clk_i or negedge rst_n_i ) begin : latest_tag_reg
         if (!rst_n_i)       latest_tag  <= '0;
         else if (flush_i)   latest_tag  <= '0;
         else if (push)      latest_tag  <= tail_idx;
@@ -343,9 +346,10 @@ module store_buffer #(
     assign  issue_ready_o  = curr_state[tail_idx] == STORE_S_EMPTY;
     
     /* CDB */
+    // NOTE: save memory address in result field for exception handling (mtval)
     assign  cdb_valid_o              = curr_state[head_idx] == STORE_S_COMPLETED;
     assign  cdb_data_o.rob_idx       = data[head_idx].dest_rob_idx;
-    assign  cdb_data_o.res_value     = '0;
+    assign  cdb_data_o.res_value     = data[head_idx].imm_addr_value;
     assign  cdb_data_o.res_aux       = data[head_idx].rs2_value;
     assign  cdb_data_o.except_raised = data[head_idx].except_raised;
     assign  cdb_data_o.except_code   = data[head_idx].except_code;

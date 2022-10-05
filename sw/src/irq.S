@@ -18,70 +18,70 @@
 .section .irq_vector_table, "ax"
 .option norvc
 vector_table:
-    j sw_irq_handler  # jump to sw_irq_handler
-    j __no_irq_handler  # jump to __no_irq_handler
-    j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j verification_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
-	j __no_irq_handler
+    j sw_irq_handler  	# all sync. exceptions, plus user-SW interrupt
+    j __no_irq_handler  # supervisor software interrupt
+    j __no_irq_handler	# [reserved for future standard use]
+	j __no_irq_handler	# machine software interrupt
+	j __no_irq_handler	# user timer interrupt
+	j __no_irq_handler	# supervisor timer interrupt
+	j __no_irq_handler	# [reserved for future standard use]
+	j __no_irq_handler	# machine timer interrupt
+	j __no_irq_handler	# user external interrupt
+	j __no_irq_handler	# supervisor external interrupt
+	j __no_irq_handler	# [reserved for future standard use]
+	j __no_irq_handler	# machine external interrupt
+	j __no_irq_handler	# [reserved for future standard use]
+	j __no_irq_handler	# [reserved for future standard use]
+	j __no_irq_handler	# [reserved for future standard use]
+	j __no_irq_handler	# [reserved for future standard use]
+	j __no_irq_handler	# , platform use - BEGIN
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j verification_irq_handler # |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# |
+	j __no_irq_handler	# ' platform use - END
 
 # Service routines
 .section .text.vecs

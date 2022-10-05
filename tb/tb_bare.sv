@@ -29,10 +29,11 @@ module tb_bare;
     // ----------------
 
     // Boot program counter
-    localparam  FETCH_BOOT_PC = `BOOT_PC;
+    localparam  FETCH_BOOT_PC   = `BOOT_PC;
 
-    // Serial monitor configuration
-    localparam  MON_MEM_ADDR = `SERIAL_ADDR;
+    // Serial monitor and exit register address
+    localparam  MON_MEM_ADDR    = `SERIAL_ADDR;
+    localparam  EXIT_ADDR       = `EXIT_ADDR;
 
     // Memory emulator configuration
     localparam string MEM_DUMP_FILE = "mem_dump.txt";
@@ -56,9 +57,13 @@ module tb_bare;
 
     // Number of cycles to simulate
     longint unsigned num_cycles = 0;    // 0: no boundary
+    longint unsigned curr_cycle = 0;
 
     // Clock and reset
     logic       clk, rst_n;
+
+    // Stop flag
+    logic       tb_stop = 1'b0;
 
     // Serial monitor string
     string      serial_str;
@@ -86,46 +91,64 @@ module tb_bare;
     initial begin
         // Set the memory file path
         if ($value$plusargs("MEM_FILE=%s", mem_file)) begin
-            `uvm_info("CMDLINE", "Updated memory file", UVM_INFO);
+            `uvm_info("CMDLINE", "Updated memory file", UVM_HIGH);
         end
         
         // Set the number of cycles to simulate
         if ($value$plusargs("N=%d", num_cycles)) begin
-            `uvm_info("CMDLINE", "Updated number of simulation cycles", UVM_INFO);
+            `uvm_info("CMDLINE", "Updated number of simulation cycles", UVM_HIGH);
         end
 
         /* Print boot program counter */
-        `uvm_info("CONFIG", $sformatf("Boot program counter: 0x%x", `BOOT_PC), UVM_MEDIUM);
+        `uvm_info("CONFIG", $sformatf("Boot program counter: 0x%x", `BOOT_PC), UVM_INFO);
 
         /* Print the number of simulation cycles */
-        `uvm_info("CONFIG", $sformatf("Number of simulation cycles: %0d", num_cycles), UVM_MEDIUM);
+        `uvm_info("CONFIG", $sformatf("Number of simulation cycles: %0d", num_cycles), UVM_INFO);
 
         /* Print memory file being used */
-        `uvm_info("CONFIG", $sformatf("Memory image: %s", mem_file), UVM_MEDIUM);
+        `uvm_info("CONFIG", $sformatf("Memory image: %s", mem_file), UVM_INFO);
 
         /* Print the serial monitor base address */
-        `uvm_info("CONFIG", $sformatf("Serial monitor memory address: 0x%h", MON_MEM_ADDR), UVM_MEDIUM);
+        `uvm_info("CONFIG", $sformatf("Serial monitor memory address: 0x%h", MON_MEM_ADDR), UVM_INFO);
 
         /* Print M extension information */
-        `uvm_info("CONFIG", $sformatf("M extension: %s", `ifdef LEN5_M_EN "YES" `else "NO" `endif), UVM_MEDIUM);
+        `uvm_info("CONFIG", $sformatf("M extension: %s", `ifdef LEN5_M_EN "YES" `else "NO" `endif), UVM_INFO);
         
         /* Print FP extension information */
-        `uvm_info("CONFIG", $sformatf("D extension: %s", `ifdef LEN5_FP_EN "YES" `else "NO" `endif), UVM_MEDIUM);
+        `uvm_info("CONFIG", $sformatf("D extension: %s", `ifdef LEN5_FP_EN "YES" `else "NO" `endif), UVM_INFO);
     end
 
     // Clock and reset generation
     // --------------------------
     initial begin
-        clk         = 1;
-        rst_n       = 0;
+        clk         = 1'b1;
+        rst_n       = 1'b0;
         
-        #10 rst_n = 1;
+        #10 rst_n = 1'b1;
 
-        // Stop the simulation after the requested number of cycles
-        if (num_cycles > 0) begin
-            repeat (num_cycles) @(posedge clk);
-            $stop;
-        end
+        fork
+            begin
+                if (num_cycles > 0) begin
+                    repeat (num_cycles) begin
+                        @(posedge clk);
+                        curr_cycle += 1;
+                    end
+                    $stop;
+                end
+            end
+
+            begin
+                @(posedge tb_stop);
+                repeat (10) @(posedge clk);
+                `uvm_info("TB", "Stopping simulation", UVM_INFO);
+                `uvm_info("TB", $sformatf("- current TB cycle:                  %0d", curr_cycle), UVM_INFO);
+                `uvm_info("TB", $sformatf("- total CPU cycles:                  %0d", u_datapath.u_backend.u_csrs.mcycle), UVM_INFO);
+                `uvm_info("TB", $sformatf("- retired instructions:              %0d", u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+                `uvm_info("TB", $sformatf("- retired branch/jump instructions:  %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter3, real'(u_datapath.u_backend.u_csrs.hpmcounter3) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+                `uvm_info("TB", $sformatf("- average IPC:                       %0.2f", real'(u_datapath.u_backend.u_csrs.minstret) / curr_cycle), UVM_INFO);
+                $stop;
+            end
+        join
     end
     always #5 clk   = ~clk;
 
@@ -135,18 +158,37 @@ module tb_bare;
         byte c;
 
         // Sniff SERIAL ADDRESS and print content
-        if (dp_data_mem_valid && dp_data_mem_req.addr == MON_MEM_ADDR) begin
+        if (dp_data_mem_valid && dp_data_mem_req.addr == MON_MEM_ADDR && dp_data_mem_req.acc_type == MEM_ACC_ST) begin
             c = dp_data_mem_req.value[7:0];
-            `uvm_info("SERIAL MONITOR", $sformatf("Detected character: %c [0x%h]", c, c), UVM_HIGH);
+            if (c == "\n") begin
+                `uvm_info("TB SERIAL MONITOR", $sformatf("Detected newline:         [0x%h]", c), UVM_HIGH);
+            end else if (c == "\0") begin
+                `uvm_info("TB SERIAL MONITOR", $sformatf("Detected end of string:   [0x%h]", c), UVM_HIGH);
+            end else begin
+                `uvm_info("TB SERIAL MONITOR", $sformatf("Detected character:     %c [0x%h]", c, c), UVM_HIGH);
+            end
 
             // Check for end-of-string
-            if (c == "\0") begin
-                `uvm_info("SERIAL MONITOR", $sformatf("Received string: %s", serial_str), UVM_LOW);
+            if ((c == "\0" || c == "\n") && serial_str.len() > 0) begin
+                `uvm_info("TB SERIAL MONITOR", $sformatf("Received string: \"%s\"", serial_str), UVM_LOW);
                 serial_str = "";
             end else begin
                 serial_str = {serial_str, c};
             end
         end
+    end
+
+    // Exit monitor
+    // ------------
+    // Stop the simulation after a certain memory location is written
+    always_ff @( posedge clk ) begin : exit_monitor
+        byte c;
+
+        if (dp_data_mem_valid && dp_data_mem_req.addr == EXIT_ADDR && dp_data_mem_req.acc_type == MEM_ACC_ST) begin
+            c = dp_data_mem_req.value[7:0];
+            `uvm_info("TB EXIT MONITOR", $sformatf("Program exit with code: 0x%h", c), UVM_INFO);
+            tb_stop <= 1'b1;
+        end else tb_stop <= 0;
     end
 
     // -------

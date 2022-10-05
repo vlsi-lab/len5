@@ -261,11 +261,13 @@ inline void serial_write(char c)
  */
 ssize_t _write(int handle, const char *data, size_t size)
 {
+    const char *end_data = data + size;
+
     // Skip files other than STDOUT
     if (handle != STDOUT)
         return -1;
 
-    while (*data)
+    while (data != end_data)
         serial_write(*data++);
 
     return size;

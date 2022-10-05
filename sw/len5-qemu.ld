@@ -77,6 +77,7 @@ SECTIONS
   .init (__boot_pc):
   {
     KEEP (*(SORT_NONE(.init)));
+    KEEP (*(.text.start)) /* custom crt0 */
   } > ROM
   /* Interrupts and exceptions vector table (64 jump instructions) */
   .irq_vector_table   :

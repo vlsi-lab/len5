@@ -15,46 +15,32 @@
 
 package csr_pkg;
     import len5_pkg::XLEN;
-    
+
     // ----
     // Misc
     // ----
-
     localparam TIMER_CNT_LEN      =      64;
     localparam CSR_ADDR_LEN       =      12;
 
-    `define   VENDOR_ID                 0   // non-commercial
-    `define   ARCHITECTURE_ID           0   // not implemented
-    `define   IMPLEMENTATION_VERSION    0   // fist implementation
-    `define   HART_ID_0                 0   // first and only core
-
-    `define   MISA_MXL                  2   // XLEN: 64 bit
-
     // -----------
-    // CSR Control
+    // CSR CONTROL
     // -----------
 
     // CSR instruction type
-    typedef enum logic [1:0] {
-        CSR_INSTR   = 'b00,  // explicit CSR instruction
-        FP_INSTR    = 'b01   // floating-point instruction
-    } csr_instr_t;
+    typedef enum logic [2:0] {
+        CSR_OP_CSRRW,   // read-write CSR
+        CSR_OP_CSRRWI,  // read-write CSR (immediate)
+        CSR_OP_CSRRS,   // read-set CSR
+        CSR_OP_CSRRSI,  // read-set CSR (immediate)
+        CSR_OP_CSRRC,   // read-clear CSR
+        CSR_OP_CSRRCI,  // read-clear CSR (immediate)
+        CSR_OP_SYSTEM,  // automatic CSR access
+        CSR_OP_FP       // floating-point instruction
+    } csr_op_t;
 
-    // ---------------
-    // CSR declaration
-    // ---------------
-
-    // COUNTERS
-    // --------
-
-    // Cycle counter
-    typedef logic [TIMER_CNT_LEN-1:0] csr_cycle_t;
-
-    // Time counter
-    typedef logic [TIMER_CNT_LEN-1:0] csr_time_t;
-
-    // Retired instruction counter
-    typedef logic [TIMER_CNT_LEN-1:0] csr_instret_t;
+    // ---------
+    // CSR TYPES
+    // ---------
 
     // FLOATING-POINT
     // --------------
@@ -77,8 +63,8 @@ package csr_pkg;
         fcsr_fflags_t                       fflags; // accrued exceptions
     } csr_fcsr_t;
 
-    // MACHINE FEATURES
-    // ----------------
+    // MACHINE MODE CSRs
+    // -----------------
 
     // Machine ISA register
     typedef struct packed {
@@ -165,10 +151,10 @@ package csr_pkg;
         logic [     1:0] mode; // WARL
     } csr_mtvec_t;
 
-    // Machine Exception Delegation Register
+    // Machine Exception Delegation Register (only implement with N extension)
     typedef logic [XLEN-1:0] csr_medeleg_t;
 
-    // Machine Interrupt Delegation Register
+    // Machine Interrupt Delegation Register (only implement with N extension)
     typedef logic [XLEN-1:0] csr_mideleg_t;
 
     // Machine Interrupt Registers
@@ -204,6 +190,28 @@ package csr_pkg;
         logic                   ssie;
         logic                   usie;
     } csr_mie_t;
+
+    // Performance counters
+    typedef logic [63:0]        csr_mcycle_t;
+    typedef logic [63:0]        csr_minstret_t;
+    typedef logic [63:0]        csr_hpmcounter_t;
+    typedef logic [31:0]        csr_mcounteren_t;
+    typedef logic [31:0]        csr_mcountinhibit_t;
+
+    // mscratch
+    typedef logic [XLEN-1:0]    csr_mscratch_t;
+
+    // Machine-mode exception program counter
+    typedef logic [XLEN-1:0]    csr_mepc_t;
+
+    // Machine Cause Register
+    typedef struct packed {
+        logic               interrupt;
+        logic [XLEN-2:0]    except_code;
+    } csr_mcause_t;
+
+    // Machine trap value register
+    typedef logic [XLEN-1:0]    csr_mtval_t;
     
     // --------------
     // VIRTUAL MEMORY

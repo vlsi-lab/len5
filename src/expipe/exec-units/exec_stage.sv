@@ -134,7 +134,7 @@ module exec_stage
 
     // Integer ALU
     // -----------
-    alu_unit #(.EU_CTL_LEN (ALU_CTL_LEN), .RS_DEPTH (ALU_RS_DEPTH)) u_alu_unit
+    alu_unit #(.EU_CTL_LEN (MAX_EU_CTL_LEN), .RS_DEPTH (ALU_RS_DEPTH)) u_alu_unit
     (
         .clk_i                  (clk_i                      ),
         .rst_n_i                (rst_n_i                    ),
@@ -155,8 +155,10 @@ module exec_stage
     `ifdef LEN5_M_EN
     // Integer multiplier
     // ------------------
-    mult_unit #(.EU_CTL_LEN (MULT_CTL_LEN), .RS_DEPTH (MULT_RS_DEPTH)) u_mult_unit
-    (
+    mult_unit #(
+        .EU_CTL_LEN (MAX_EU_CTL_LEN ), 
+        .RS_DEPTH   (MULT_RS_DEPTH  )
+    ) u_mult_unit (
         .clk_i                  (clk_i                      ),
         .rst_n_i                (rst_n_i                    ),
         .flush_i                (flush_i                    ),
@@ -175,8 +177,11 @@ module exec_stage
 
     // Integer divider
     // ---------------
-    div_unit #(.EU_CTL_LEN (DIV_CTL_LEN), .RS_DEPTH (DIV_RS_DEPTH)) u_div_unit
-    (
+    div_unit #(
+        .EU_CTL_LEN (MAX_EU_CTL_LEN ), 
+        .RS_DEPTH   (DIV_RS_DEPTH   ),
+        .PIPE_DEPTH (DIV_PIPE_DEPTH )
+    ) u_div_unit (
         .clk_i                  (clk_i                     ),
         .rst_n_i                (rst_n_i                   ),
         .flush_i                (flush_i                   ),
@@ -224,28 +229,4 @@ module exec_stage
         .csr_frm_i              (csr_frm_i)
     );
     `endif /* LEN5_FP_EN */
-
-    // ------------------
-    // OPERANDS ONLY UNIT
-    // ------------------
-
-    op_only_unit #(.RS_DEPTH(OP_ONLY_RS_DEPTH), .EU_CTL_LEN(OP_ONLY_CTL_LEN)) u_op_only_unit
-    (
-        .clk_i              (clk_i),
-        .rst_n_i            (rst_n_i),
-        .flush_i            (flush_i),
-        .issue_valid_i      (issue_valid_i[EU_OPERANDS_ONLY]),
-        .issue_ready_o      (issue_ready_o[EU_OPERANDS_ONLY]),
-        .rs1_ready_i        (issue_rs1_i.ready),
-        .rs1_idx_i          (issue_rs1_i.rob_idx),
-        .rs1_value_i        (issue_rs1_i.value),
-        .dest_idx_i         (issue_rob_idx_i),
-        .cdb_ready_i        (cdb_ready_i[EU_OPERANDS_ONLY]),
-        .cdb_valid_i        (cdb_valid_i),
-        .cdb_valid_o        (cdb_valid_o[EU_OPERANDS_ONLY]),
-        .cdb_data_i         (cdb_data_i),
-        .cdb_data_o         (cdb_data_o[EU_OPERANDS_ONLY])
-    );
-
-
 endmodule

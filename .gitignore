@@ -18,15 +18,8 @@
 private/
 build/
 
-# Library folders
-sw/lib
-sw/obj
-
-# Test objects and test files
-test-files/*
-!test-files/src
-!test-files/include
-!test-files/makefile
+## Synthesis report ##
+syn/reports/
 
 ## Visual Studio Code settings
 .vscode/

@@ -22,6 +22,7 @@ GDB_CMD_FILE=$TEST_DIR/gdb.cmd
 EXEC_FILE=$TEST_DIR/qemu/hello.elf
 
 # Launch QEMU
+RUN_ONLY=0
 LAUNCH_QEMU=0
 
 ####################################
@@ -35,7 +36,8 @@ print_usage () {
     printf -- "OPTIONS:\n"
     printf -- "\n"
     printf -- "-h:      print this message and exit.\n"
-    printf -- "-q:      Also launch QEMU (serial won't be visible).\n"
+    printf -- "-q:      also launch QEMU (serial won't be visible).\n"
+    printf -- "-r:      only run the executable (do not start GDB).\n"
 }
 
 ####################
@@ -44,7 +46,7 @@ print_usage () {
 
 # Parse command-line options
 # --------------------------
-while getopts 'hq' opt; do
+while getopts 'hqr' opt; do
     case $opt in
         h) # Print usage message
             print_usage
@@ -52,6 +54,9 @@ while getopts 'hq' opt; do
             ;;
         q) # also launch QEMU
             LAUNCH_QEMU=1
+            ;;
+        r) # only run the executable on QEMU
+            RUN_ONLY=1
             ;;
         *) # Invalid option
             print_usage "Invalid option"
@@ -69,6 +74,23 @@ fi
 
 # Launch the specified executable on QEMU
 # ---------------------------------------
+# Run only
+if [ $RUN_ONLY -ne 0 ]; then
+    qemu-system-riscv64 \
+        -nographic \
+        -machine \
+        virt \
+        -bios \
+        none \
+        -m \
+        256M \
+        -kernel \
+        $EXEC_FILE
+    
+    exit 0
+fi
+
+# Debug
 if [ $LAUNCH_QEMU -ne 0 ]; then
     qemu-system-riscv64 \
         -nographic \

@@ -13,8 +13,10 @@
 // Date: 17/11/2021
 
 // Import UVM report macros
+`ifndef SYNTHESIS
 `include "uvm_macros.svh"
 import uvm_pkg::*;
+`endif
 
 import len5_pkg::*;
 import expipe_pkg::*;
