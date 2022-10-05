@@ -52,11 +52,11 @@ module div_unit
     logic                   div_rs_ready;
 
     // Data from/to the execution unit
-    logic [$clog2(RS_DEPTH)-1:0] rs_div_entry_idx;
+    rob_idx_t               rs_div_rob_idx;
     logic [EU_CTL_LEN-1:0]  rs_div_ctl;
     logic [XLEN-1:0]        rs_div_rs1_value;
     logic [XLEN-1:0]        rs_div_rs2_value;
-    logic [$clog2(RS_DEPTH)-1:0] div_rs_entry_idx;
+    rob_idx_t               div_rs_rob_idx;
     logic [XLEN-1:0]        div_rs_result;
     logic                   div_rs_except_raised;
     except_code_t           div_rs_except_code;
@@ -85,18 +85,17 @@ module div_unit
         .eu_valid_i           (div_rs_valid         ),
         .eu_valid_o           (rs_div_valid         ),
         .eu_ready_o           (rs_div_ready         ),
-        .eu_entry_idx_i       (div_rs_entry_idx     ),
+        .eu_rob_idx_i         (div_rs_rob_idx       ),
         .eu_result_i          (div_rs_result        ),
         .eu_except_raised_i   (div_rs_except_raised ),
         .eu_except_code_i     (div_rs_except_code   ),
         .eu_ctl_o             (rs_div_ctl           ),
         .eu_rs1_o             (rs_div_rs1_value     ),
         .eu_rs2_o             (rs_div_rs2_value     ),
-        .eu_entry_idx_o       (rs_div_entry_idx     )
+        .eu_rob_idx_o         (rs_div_rob_idx       )
     );
 
     div #(
-        .RS_DEPTH   (RS_DEPTH   ),
         .EU_CTL_LEN (EU_CTL_LEN ),
         .PIPE_DEPTH (PIPE_DEPTH )
     ) u_div (
@@ -108,14 +107,13 @@ module div_unit
         .ready_o         (div_rs_ready         ),
         .valid_o         (div_rs_valid         ),
         .ctl_i           (rs_div_ctl           ),
-        .entry_idx_i     (rs_div_entry_idx     ),
+        .entry_idx_i     (rs_div_rob_idx       ),
         .rs1_value_i     (rs_div_rs1_value     ),
         .rs2_value_i     (rs_div_rs2_value     ),
-        .entry_idx_o     (div_rs_entry_idx     ),
+        .entry_idx_o     (div_rs_rob_idx       ),
         .result_o        (div_rs_result        ),
         .except_raised_o (div_rs_except_raised ),
         .except_code_o   (div_rs_except_code   )
     );
-    
 
 endmodule

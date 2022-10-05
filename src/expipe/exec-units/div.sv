@@ -19,11 +19,10 @@ import expipe_pkg::*;
 
 module div 
 #(
-    RS_DEPTH = 4, // must be a power of 2,
+    parameter PIPE_DEPTH    = 4,    // number of pipeline levels (>0)
     
     // EU-specific parameters
-    EU_CTL_LEN = 4,
-    PIPE_DEPTH = 4
+    parameter EU_CTL_LEN    = 4
 )
 (
     input   logic                   clk_i,
@@ -33,72 +32,110 @@ module div
     // Handshake from/to the reservation station unit
     input   logic                   valid_i,
     input   logic                   ready_i,
-    output  logic                   ready_o,
     output  logic                   valid_o,
+    output  logic                   ready_o,
 
     // Data from/to the reservation station unit
     input   logic [EU_CTL_LEN-1:0]  ctl_i,
-    input   logic [$clog2(RS_DEPTH)-1:0] entry_idx_i,
+    input   rob_idx_t               rob_idx_i,
     input   logic [XLEN-1:0]        rs1_value_i,
     input   logic [XLEN-1:0]        rs2_value_i,
-    output  logic [$clog2(RS_DEPTH)-1:0] entry_idx_o,
+    output  rob_idx_t               rob_idx_o,
     output  logic [XLEN-1:0]        result_o,
     output  logic                   except_raised_o,
     output  except_code_t           except_code_o
 );
-    // INTERNAL SIGNALS
-    // ----------------
+
+    // MULT output
+    logic [XLEN-1:0]        result;
+    logic                   except_raised;
 
     // Pipeline registers
-    logic [XLEN-1:0]    pipe_res[0:PIPE_DEPTH];
-    logic               pipe_valid[0:PIPE_DEPTH];
+    logic [XLEN-1:0]        pipe_result_d [PIPE_DEPTH-1:0];
+    rob_idx_t               pipe_rob_idx_d [PIPE_DEPTH-1:0];
+    logic                   pipe_except_raised_d [PIPE_DEPTH-1:0];
 
-    // Output spill cell
-    logic               out_reg_div_ready;
+    // --------------
+    // DIV OPERATIONS
+    // --------------
+    // TODO: add proper operations support
+    always_comb begin : div_ops
+        // Default values
+        result              = '0;
+        except_raised       = 1'b0;
 
-    // Divider
-    // -------
-    // TODO: add proper control
-    assign  pipe_res[0] = (rs2_value_i != 'd0)  ? rs1_value_i / rs2_value_i : 'h0;
+        unique case (ctl_i)
+            DIV_DIV: begin
+                if (rs2_value_i != 0)   result  = rs1_value_i / rs2_value_i;
+                else                    result  = '0;
+            end
+            default: except_raised  = 1'b1;
+        endcase
+    end
 
-    // Pipeline registers
     // ------------------
+    // PIPELINE REGISTERS
+    // ------------------
+
+    assign  pipe_result_d[0]        = result;
+    assign  pipe_rob_idx_d[0]       = rob_idx_i;
+    assign  pipe_except_raised_d[0] = except_raised;
+
+    // Generate PIPE_DEPTH-1 pipeline registers
     generate
-        for (genvar i = 1; i <= PIPE_DEPTH; i++) begin: l_pipe_reg
+        for (genvar i=1; i<PIPE_DEPTH; i=i+1) begin: l_pipe_reg
             always_ff @( posedge clk_i or negedge rst_n_i ) begin
                 if (!rst_n_i) begin
-                    pipe_res[i]     <= '0;
-                    pipe_valid[i]   <= 1'b0;
-                end else if (flush_i) begin
-                    pipe_res[i]     <= '0;
-                    pipe_valid[i]   <= 1'b0;
-                end else if (out_reg_div_ready) begin
-                    pipe_res[i]     <= pipe_res[i-1];
-                    pipe_valid[i]   <= pipe_valid[i-1];
+                    pipe_result_d[i]        <= '0;
+                    pipe_rob_idx_d[i]       <= '0;
+                    pipe_except_raised_d[i] <= 1'b0;
+                end else begin
+                    pipe_result_d[i]        <= pipe_result_d[i-1];
+                    pipe_rob_idx_d[i]       <= pipe_rob_idx_d[i-1];
+                    pipe_except_raised_d[i] <= pipe_except_raised_d[i-1];
                 end
             end
         end
     endgenerate
 
-    // Output spill cell
-    // -----------------
-    spill_cell_flush #(
-        .DATA_T (logic[XLEN-1:0] ),
-        .SKIP   (1'b0            )
-    ) u_out_reg (
-    	.clk_i   (clk_i                  ),
-        .rst_n_i (rst_n_i                ),
-        .flush_i (flush_i                ),
-        .valid_i (pipe_valid[PIPE_DEPTH] ),
-        .ready_i (ready_i                ),
-        .valid_o (valid_o                ),
-        .ready_o (out_reg_div_ready      ),
-        .data_i  (pipe_res[PIPE_DEPTH]   ),
-        .data_o  (result_o               )
+    // ---------------
+    // OUTPUT REGISTER
+    // ---------------
+    // NOTE: use a spill cell to break the handshaking path
+
+    // Interface data type
+    typedef struct packed {
+        logic [XLEN-1:0]        res;            // the ALU result
+        rob_idx_t               rob_idx;        // instr. index in the RS
+        logic                   except_raised;  // exception flag
+    } out_reg_data_t;
+    out_reg_data_t  out_reg_data_in, out_reg_data_out;
+
+    // Input data
+    assign  out_reg_data_in.res             = pipe_result_d[PIPE_DEPTH-1];
+    assign  out_reg_data_in.rob_idx         = pipe_rob_idx_d[PIPE_DEPTH-1];
+    assign  out_reg_data_in.except_raised   = pipe_except_raised_d[PIPE_DEPTH-1];
+
+    // Output data
+    assign  result_o            = out_reg_data_out.res;
+    assign  rob_idx_o           = out_reg_data_out.rob_idx;
+    assign  except_raised_o     = out_reg_data_out.except_raised;
+
+    // Output register
+    spill_cell_flush #(.DATA_T(out_reg_data_t), .SKIP(1'b0)) u_out_reg (
+        .clk_i          (clk_i),
+        .rst_n_i        (rst_n_i),
+        .flush_i        (flush_i),
+        .valid_i        (valid_i),
+        .ready_i        (ready_i),
+        .valid_o        (valid_o),
+        .ready_o        (ready_o),
+        .data_i         (out_reg_data_in),
+        .data_o         (out_reg_data_out)
     );
-    
-    // Output evaluation
-    // -----------------
-    assign  ready_o = out_reg_div_ready;
+
+    // Exception handling
+    // ------------------
+    assign  except_code_o       = E_ILLEGAL_INSTRUCTION;
 
 endmodule

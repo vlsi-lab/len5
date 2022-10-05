@@ -17,7 +17,7 @@ import expipe_pkg::*;
 
 module alu 
 #(
-    parameter RS_DEPTH      = 4, // it must be a power of 2
+    parameter SKIP_REG  = 0, // make the ALU fully combinational
     
     // EU-specific parameters
     parameter EU_CTL_LEN    = 4
@@ -35,10 +35,10 @@ module alu
 
     // Data from/to the reservation station unit
     input   logic [EU_CTL_LEN-1:0]  ctl_i,
-    input   logic [$clog2(RS_DEPTH)-1:0] entry_idx_i,
+    input   rob_idx_t               rob_idx_i,
     input   logic [XLEN-1:0]        rs1_i,
     input   logic [XLEN-1:0]        rs2_i,
-    output  logic [$clog2(RS_DEPTH)-1:0] entry_idx_o,
+    output  rob_idx_t               rob_idx_o,
     output  logic [XLEN-1:0]        result_o,
     output  logic                   except_raised_o,
     output  except_code_t           except_code_o
@@ -87,34 +87,37 @@ module alu
 
     // Interface data type
     typedef struct packed {
-        logic [XLEN-1:0]        res;            // the ALU result
-        logic [$clog2(RS_DEPTH)-1:0] entry_idx; // instr. index in the RS
-        logic                   except_raised;  // exception flag
+        logic [XLEN-1:0]    res;            // the ALU result
+        rob_idx_t           rob_idx;        // instr. ROB index
+        logic               except_raised;  // exception flag
     } out_reg_data_t;
 
     out_reg_data_t  out_reg_data_in, out_reg_data_out;
 
     // Input data
     assign  out_reg_data_in.res             = result;
-    assign  out_reg_data_in.entry_idx       = entry_idx_i;
+    assign  out_reg_data_in.rob_idx         = rob_idx_i;
     assign  out_reg_data_in.except_raised   = except_raised;
 
     // Output data
     assign  result_o                        = out_reg_data_out.res;
-    assign  entry_idx_o                     = out_reg_data_out.entry_idx;
+    assign  rob_idx_o                       = out_reg_data_out.rob_idx;
     assign  except_raised_o                 = out_reg_data_out.except_raised;
 
     // Output register
-    spill_cell_flush #(.DATA_T(out_reg_data_t), .SKIP(1'b0)) u_out_reg (
-        .clk_i          (clk_i),
-        .rst_n_i        (rst_n_i),
-        .flush_i        (flush_i),
-        .valid_i        (valid_i),
-        .ready_i        (ready_i),
-        .valid_o        (valid_o),
-        .ready_o        (ready_o),
-        .data_i         (out_reg_data_in),
-        .data_o         (out_reg_data_out)
+    spill_cell_flush #(
+        .DATA_T (out_reg_data_t ), 
+        .SKIP   (SKIP_REG       )
+    ) u_out_reg (
+        .clk_i          (clk_i              ),
+        .rst_n_i        (rst_n_i            ),
+        .flush_i        (flush_i            ),
+        .valid_i        (valid_i            ),
+        .ready_i        (ready_i            ),
+        .valid_o        (valid_o            ),
+        .ready_o        (ready_o            ),
+        .data_i         (out_reg_data_in    ),
+        .data_o         (out_reg_data_out   )
     );
 
     // Exception handling

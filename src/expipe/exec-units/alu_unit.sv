@@ -12,6 +12,8 @@
 // Author: Michele Caon
 // Date: 17/11/2021
 
+`include "len5_config.svh"
+
 import len5_pkg::*;
 import expipe_pkg::*;
 
@@ -50,11 +52,11 @@ module alu_unit
     logic                   alu_rs_ready;
 
     // Data from/to the execution unit
-    logic [$clog2(RS_DEPTH)-1:0] rs_alu_entry_idx;
+    logic [$clog2(RS_DEPTH)-1:0] rs_alu_rob_idx;
     logic [EU_CTL_LEN-1:0]  rs_alu_ctl;
     logic [XLEN-1:0]        rs_alu_rs1_value;
     logic [XLEN-1:0]        rs_alu_rs2_value;
-    logic [$clog2(RS_DEPTH)-1:0] alu_rs_entry_idx;
+    logic [$clog2(RS_DEPTH)-1:0] alu_rs_rob_idx;
     logic [XLEN-1:0]        alu_rs_result;
     logic                   alu_rs_except_raised;
     except_code_t           alu_rs_except_code;
@@ -83,35 +85,35 @@ module alu_unit
         .eu_valid_i           (alu_rs_valid         ),
         .eu_valid_o           (rs_alu_valid         ),
         .eu_ready_o           (rs_alu_ready         ),
-        .eu_entry_idx_i       (alu_rs_entry_idx     ),
+        .eu_rob_idx_i         (alu_rs_rob_idx       ),
         .eu_result_i          (alu_rs_result        ),
         .eu_except_raised_i   (alu_rs_except_raised ),
         .eu_except_code_i     (alu_rs_except_code   ),
         .eu_ctl_o             (rs_alu_ctl           ),
         .eu_rs1_o             (rs_alu_rs1_value     ),
         .eu_rs2_o             (rs_alu_rs2_value     ),
-        .eu_entry_idx_o       (rs_alu_entry_idx     )
+        .eu_rob_idx_o         (rs_alu_rob_idx       )
     );
 
-    alu #(.EU_CTL_LEN (EU_CTL_LEN), .RS_DEPTH (RS_DEPTH)) u_alu
-    (
-        .clk_i              (clk_i),
-        .rst_n_i            (rst_n_i),
-        .flush_i            (flush_i),
-        
-        .valid_i            (rs_alu_valid),
-        .ready_i            (rs_alu_ready),
-        .valid_o            (alu_rs_valid),
-        .ready_o            (alu_rs_ready),
-
-        .ctl_i              (rs_alu_ctl),
-        .rs1_i              (rs_alu_rs1_value),
-        .rs2_i              (rs_alu_rs2_value),
-        .entry_idx_i        (rs_alu_entry_idx),
-        .entry_idx_o        (alu_rs_entry_idx),
-        .result_o           (alu_rs_result),
-        .except_raised_o    (alu_rs_except_raised),
-        .except_code_o      (alu_rs_except_code)
+    alu #(
+        .SKIP_REG   (ALU_SPILL_SKIP ),
+        .EU_CTL_LEN (EU_CTL_LEN     )
+    ) u_alu (
+        .clk_i              (clk_i                  ),
+        .rst_n_i            (rst_n_i                ),
+        .flush_i            (flush_i                ),
+        .valid_i            (rs_alu_valid           ),
+        .ready_i            (rs_alu_ready           ),
+        .valid_o            (alu_rs_valid           ),
+        .ready_o            (alu_rs_ready           ),
+        .ctl_i              (rs_alu_ctl             ),
+        .rs1_i              (rs_alu_rs1_value       ),
+        .rs2_i              (rs_alu_rs2_value       ),
+        .rob_idx_i          (rs_alu_rob_idx         ),
+        .rob_idx_o          (alu_rs_rob_idx         ),
+        .result_o           (alu_rs_result          ),
+        .except_raised_o    (alu_rs_except_raised   ),
+        .except_code_o      (alu_rs_except_code     )
     );
 
 endmodule

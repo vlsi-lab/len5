@@ -51,11 +51,11 @@ module mult_unit
     logic                   mult_rs_ready;
 
     // Data from/to the execution unit
-    logic [$clog2(RS_DEPTH)-1:0] rs_mult_entry_idx;
+    rob_idx_t               rs_mult_rob_idx;
     logic [EU_CTL_LEN-1:0]  rs_mult_ctl;
     logic [XLEN-1:0]        rs_mult_rs1_value;
     logic [XLEN-1:0]        rs_mult_rs2_value;
-    logic [$clog2(RS_DEPTH)-1:0] mult_rs_entry_idx;
+    rob_idx_t               mult_rs_rob_idx;
     logic [XLEN-1:0]        mult_rs_result;
     logic                   mult_rs_except_raised;
     except_code_t           mult_rs_except_code;
@@ -84,33 +84,35 @@ module mult_unit
         .eu_valid_i           (mult_rs_valid        ),
         .eu_valid_o           (rs_mult_valid        ),
         .eu_ready_o           (rs_mult_ready        ),
-        .eu_entry_idx_i       (mult_rs_entry_idx    ),
+        .eu_rob_idx_i         (mult_rs_rob_idx      ),
         .eu_result_i          (mult_rs_result       ),
         .eu_except_raised_i   (mult_rs_except_raised),
         .eu_except_code_i     (mult_rs_except_code  ),
         .eu_ctl_o             (rs_mult_ctl          ),
         .eu_rs1_o             (rs_mult_rs1_value    ),
         .eu_rs2_o             (rs_mult_rs2_value    ),
-        .eu_entry_idx_o       (rs_mult_entry_idx    )
+        .eu_rob_idx_o         (rs_mult_rob_idx      )
     );
 
-mult #(.EU_CTL_LEN (EU_CTL_LEN), .PIPE_DEPTH(MULT_PIPE_DEPTH), .RS_DEPTH (RS_DEPTH)) u_mult
-(
-    .clk_i              (clk_i),
-    .rst_n_i            (rst_n_i),
-    .flush_i            (flush_i),
-	.valid_i            (rs_mult_valid),
-    .ready_i            (rs_mult_ready),
-    .valid_o            (mult_rs_valid),
-    .ready_o            (mult_rs_ready),
-    .ctl_i              (rs_mult_ctl),
-    .entry_idx_i        (rs_mult_entry_idx),
-    .rs1_value_i        (rs_mult_rs1_value),
-    .rs2_value_i        (rs_mult_rs2_value),
-    .entry_idx_o        (mult_rs_entry_idx),
-    .result_o           (mult_rs_result),
-    .except_raised_o    (mult_rs_except_raised),
-    .except_code_o      (mult_rs_except_code)
+mult #(
+    .EU_CTL_LEN (EU_CTL_LEN     ), 
+    .PIPE_DEPTH (MULT_PIPE_DEPTH)
+) u_mult (
+    .clk_i              (clk_i                  ),
+    .rst_n_i            (rst_n_i                ),
+    .flush_i            (flush_i                ),
+	.valid_i            (rs_mult_valid          ),
+    .ready_i            (rs_mult_ready          ),
+    .valid_o            (mult_rs_valid          ),
+    .ready_o            (mult_rs_ready          ),
+    .ctl_i              (rs_mult_ctl            ),
+    .rob_idx_i          (rs_mult_rob_idx        ),
+    .rs1_value_i        (rs_mult_rs1_value      ),
+    .rs2_value_i        (rs_mult_rs2_value      ),
+    .rob_idx_o          (mult_rs_rob_idx        ),
+    .result_o           (mult_rs_result         ),
+    .except_raised_o    (mult_rs_except_raised  ),
+    .except_code_o      (mult_rs_except_code    )
 );
 
 endmodule

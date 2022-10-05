@@ -4,12 +4,12 @@ int main(void)
 {
     int a = 0;
 
-    for (size_t i = 0; i < 10; i++)
+    for (size_t i = 0; i < 160; i++)
     {
         a++;
     }
 
-    printf("Hello LEN%d!\n", a >> 1);
+    printf("Hello LEN%d!\n", a >> 5);
     // puts("Hello, LEN5!");
     return 0;
 }

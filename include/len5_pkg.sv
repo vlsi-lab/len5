@@ -178,7 +178,7 @@ package len5_pkg;
 
     // LOAD/STORE UNIT
     localparam LDBUFF_DEPTH = 4; // number of entries in the load buffer
-    localparam STBUFF_DEPTH = 4; // number of entries in the store buffer
+    localparam STBUFF_DEPTH = 8; // number of entries in the store buffer
     localparam LDBUFF_TAG_W = $clog2(LDBUFF_DEPTH); // load buffer address width
     localparam STBUFF_TAG_W = $clog2(STBUFF_DEPTH); // store buffer address width
     localparam BUFF_IDX_LEN = (LDBUFF_TAG_W > STBUFF_TAG_W) ? (LDBUFF_TAG_W) : (STBUFF_TAG_W); // the largest of the two. Useful when comparing indexes from both

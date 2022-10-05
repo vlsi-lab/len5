@@ -75,6 +75,9 @@
 // EXECUTION PIPELINE
 // ------------------
 
+// ALU
+`define SKIP_ALU_SPILL_CELL         // make the ALU fully combinational
+
 // Branch Unit
 `define SKIP_BU_ADDER_SPILL_CELL    // make the target address adder fully combinational
 
@@ -133,17 +136,23 @@ localparam  FETCH_ANS_SPILL_SKIP = 1;
 localparam  FETCH_ANS_SPILL_SKIP = 0;
 `endif /* SKIP_FETCH_MEMIF_ANS_SPILL_CELL */
 
-`ifdef SKIP_LSU_ADDER_SPILL_CELL
-localparam LSU_SPILL_SKIP = 1;
+`ifdef SKIP_ALU_SPILL_CELL
+localparam ALU_SPILL_SKIP = 1;
 `else
-localparam LSU_SPILL_SKIP = 0;
-`endif /* SKIP_LSU_ADDER_SPILL_CELL */
+localparam ALU_SPILL_SKIP = 0;
+`endif /* SKIP_ALU_SPILL_CELL */
 
 `ifdef SKIP_BU_ADDER_SPILL_CELL
 localparam BU_SPILL_SKIP = 1;
 `else
 localparam BU_SPILL_SKIP = 0;
 `endif /* SKIP_BU_ADDER_SPILL_CELL */
+
+`ifdef SKIP_LSU_ADDER_SPILL_CELL
+localparam LSU_SPILL_SKIP = 1;
+`else
+localparam LSU_SPILL_SKIP = 0;
+`endif /* SKIP_LSU_ADDER_SPILL_CELL */
 
 `ifdef SKIP_COMMIT_SPILL_CELL
 localparam COMMIT_SPILL_SKIP = 1;

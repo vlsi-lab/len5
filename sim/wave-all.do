@@ -46,49 +46,49 @@ add wave -noupdate -group {FETCH STAGE} -expand -group {PC GEN} /tb_bare/u_datap
 add wave -noupdate -group {FETCH STAGE} -expand -group {PC GEN} /tb_bare/u_datapath/u_fetch_stage/u_pc_gen/adder_out
 add wave -noupdate -expand -group {ISSUE STAGE} /tb_bare/u_datapath/u_backend/u_issue_stage/clk_i
 add wave -noupdate -expand -group {ISSUE STAGE} /tb_bare/u_datapath/u_backend/u_issue_stage/flush_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/fetch_valid_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/fetch_ready_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/fetch_curr_pc_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/fetch_instr_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/fetch_pred_target_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/fetch_pred_taken_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/fetch_except_raised_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/fetch_except_code_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_valid_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_rs1_busy_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_rs1_rob_idx_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_rs2_busy_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_rs2_rob_idx_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_rd_idx_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_rob_idx_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_rs1_idx_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_rs2_idx_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/intrf_rs1_value_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/intrf_rs2_value_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/intrf_rs1_idx_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/intrf_rs2_idx_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/ex_ready_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/ex_valid_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/ex_eu_ctl_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS -expand /tb_bare/u_datapath/u_backend/u_issue_stage/ex_rs1_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS -expand /tb_bare/u_datapath/u_backend/u_issue_stage/ex_rs2_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/ex_imm_value_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/ex_rob_idx_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/ex_curr_pc_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/ex_pred_target_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/ex_pred_taken_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_ready_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_valid_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_resume_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_tail_idx_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS -expand -subitemconfig {/tb_bare/u_datapath/u_backend/u_issue_stage/comm_data_o.instruction -expand} /tb_bare/u_datapath/u_backend/u_issue_stage/comm_data_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_jb_instr_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_rs1_rob_idx_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_rs1_ready_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_rs1_value_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_rs2_rob_idx_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_rs2_ready_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_rs2_value_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/fetch_valid_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/fetch_ready_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/fetch_curr_pc_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/fetch_instr_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/fetch_pred_target_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/fetch_pred_taken_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/fetch_except_raised_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/fetch_except_code_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_valid_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_rs1_busy_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_rs1_rob_idx_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_rs2_busy_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_rs2_rob_idx_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_rd_idx_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_rob_idx_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_rs1_idx_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/int_regstat_rs2_idx_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/intrf_rs1_value_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/intrf_rs2_value_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/intrf_rs1_idx_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/intrf_rs2_idx_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/ex_ready_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/ex_valid_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/ex_eu_ctl_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS -expand /tb_bare/u_datapath/u_backend/u_issue_stage/ex_rs1_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS -expand /tb_bare/u_datapath/u_backend/u_issue_stage/ex_rs2_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/ex_imm_value_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/ex_rob_idx_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/ex_curr_pc_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/ex_pred_target_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/ex_pred_taken_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_ready_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_valid_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_resume_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_tail_idx_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS -expand -subitemconfig {/tb_bare/u_datapath/u_backend/u_issue_stage/comm_data_o.instruction -expand} /tb_bare/u_datapath/u_backend/u_issue_stage/comm_data_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_jb_instr_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_rs1_rob_idx_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_rs1_ready_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_rs1_value_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_rs2_rob_idx_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_rs2_ready_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group PORTS /tb_bare/u_datapath/u_backend/u_issue_stage/comm_rs2_value_i
 add wave -noupdate -expand -group {ISSUE STAGE} /tb_bare/u_datapath/u_backend/u_issue_stage/cu_ireg_en
 add wave -noupdate -expand -group {ISSUE STAGE} /tb_bare/u_datapath/u_backend/u_issue_stage/id_cu_issue_type
 add wave -noupdate -expand -group {ISSUE STAGE} /tb_bare/u_datapath/u_backend/u_issue_stage/cu_iq_ready
@@ -100,53 +100,46 @@ add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE QUEUE} /tb_bare/u_
 add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE QUEUE} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_fifo/ready_o
 add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE QUEUE} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_fifo/data_i
 add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE QUEUE} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_fifo/data_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} -expand /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/instruction_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/issue_type_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/except_code_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/assigned_eu_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/eu_ctl_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/rs1_req_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/rs1_is_pc_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/rs2_req_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/rs2_is_imm_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/imm_format_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/except_raised
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/except_code
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/dec_sel
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/opcode_except
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/alu_ctl_except
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/branch_ctl_except
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/ldst_ctl_except
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/clk_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/rst_n_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/flush_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/iq_valid_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/iq_ready_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/iq_except_raised_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/issue_type_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/issue_rs1_ready_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/issue_reg_en_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/issue_res_ready_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/issue_fetch_except_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/ex_ready_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/ex_valid_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/int_regstat_valid_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/comm_ready_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/downstream_ready
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/comm_valid_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/comm_resume_i
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/comm_jb_instr_o
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/curr_state
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/v_next_state
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/next_state
-add wave -noupdate -expand -group {ISSUE STAGE} -expand -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/downstream_ready
-add wave -noupdate -expand -group {ISSUE STAGE} /tb_bare/u_datapath/u_backend/u_issue_stage/clk_i
-add wave -noupdate -expand -group {ISSUE STAGE} /tb_bare/u_datapath/u_backend/u_issue_stage/flush_i
-add wave -noupdate -expand -group {ISSUE STAGE} /tb_bare/u_datapath/u_backend/u_issue_stage/cu_ireg_en
-add wave -noupdate -expand -group {ISSUE STAGE} /tb_bare/u_datapath/u_backend/u_issue_stage/id_cu_issue_type
-add wave -noupdate -expand -group {ISSUE STAGE} /tb_bare/u_datapath/u_backend/u_issue_stage/cu_iq_ready
-add wave -noupdate -expand -group {ISSUE STAGE} /tb_bare/u_datapath/u_backend/u_issue_stage/iq_cu_valid
-add wave -noupdate -expand -group {ISSUE STAGE} /tb_bare/u_datapath/u_backend/u_issue_stage/ex_valid
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} -expand /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/instruction_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/issue_type_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/except_code_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/assigned_eu_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/eu_ctl_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/rs1_req_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/rs1_is_pc_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/rs2_req_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/rs2_is_imm_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/imm_format_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/except_raised
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/except_code
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/dec_sel
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/opcode_except
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/alu_ctl_except
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/branch_ctl_except
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE DECODER} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_decoder/ldst_ctl_except
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/clk_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/rst_n_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/flush_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/iq_valid_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/iq_ready_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/iq_except_raised_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/issue_type_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/issue_rs1_ready_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/issue_reg_en_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/issue_res_ready_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/issue_fetch_except_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/ex_ready_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/ex_valid_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/int_regstat_valid_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/comm_ready_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/downstream_ready
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/comm_valid_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/comm_resume_i
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/comm_jb_instr_o
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/curr_state
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/v_next_state
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/next_state
+add wave -noupdate -expand -group {ISSUE STAGE} -group {ISSUE CU} /tb_bare/u_datapath/u_backend/u_issue_stage/u_issue_cu/downstream_ready
 add wave -noupdate -group {LOAD STORE UNIT} /tb_bare/u_datapath/u_backend/u_exec_stage/u_load_store_unit/flush_i
 add wave -noupdate -group {LOAD STORE UNIT} /tb_bare/u_datapath/u_backend/u_exec_stage/u_load_store_unit/issue_lb_valid_i
 add wave -noupdate -group {LOAD STORE UNIT} /tb_bare/u_datapath/u_backend/u_exec_stage/u_load_store_unit/issue_sb_valid_i
@@ -245,8 +238,8 @@ add wave -noupdate -group {ALU UNIT} /tb_bare/u_datapath/u_backend/u_exec_stage/
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/issue_valid_i
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/issue_ready_o
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/issue_eu_ctl_i
-add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/issue_rs1_i
-add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/issue_rs2_i
+add wave -noupdate -group {ALU UNIT} -group {ALU RS} -expand /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/issue_rs1_i
+add wave -noupdate -group {ALU UNIT} -group {ALU RS} -expand /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/issue_rs2_i
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/issue_dest_rob_idx_i
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/cdb_ready_i
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/cdb_valid_i
@@ -257,14 +250,12 @@ add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backe
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/eu_valid_i
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/eu_valid_o
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/eu_ready_o
-add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/eu_entry_idx_i
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/eu_result_i
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/eu_except_raised_i
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/eu_except_code_i
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/eu_ctl_o
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/eu_rs1_o
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/eu_rs2_o
-add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/eu_entry_idx_o
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/data
 add wave -noupdate -group {ALU UNIT} -group {ALU RS} -expand /tb_bare/u_datapath/u_backend/u_exec_stage/u_alu_unit/u_arith_rs/curr_state
 add wave -noupdate -group {BRANCH UNIT} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/issue_valid_i
@@ -282,40 +273,38 @@ add wave -noupdate -group {BRANCH UNIT} /tb_bare/u_datapath/u_backend/u_exec_sta
 add wave -noupdate -group {BRANCH UNIT} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/cdb_valid_o
 add wave -noupdate -group {BRANCH UNIT} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/cdb_data_i
 add wave -noupdate -group {BRANCH UNIT} -expand /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/cdb_data_o
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_valid_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_ready_o
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_branch_type_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_rs1_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_rs2_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_imm_value_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_dest_rob_idx_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_curr_pc_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_pred_target_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_pred_taken_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/cdb_ready_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/cdb_valid_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/cdb_valid_o
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/cdb_data_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/cdb_data_o
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_valid_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_ready_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_valid_o
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_ready_o
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_entry_idx_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_res_mis_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_res_taken_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_res_target_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_except_raised_i
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_entry_idx_o
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_rs1_o
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_rs2_o
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_imm_o
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_curr_pc_o
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_pred_target_o
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_pred_taken_o
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_branch_type_o
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} -expand -subitemconfig {{/tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/data[0]} -expand} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/data
-add wave -noupdate -group {BRANCH UNIT} -group {BRANCH RS} -expand /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/curr_state
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_valid_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_ready_o
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_branch_type_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} -expand /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_rs1_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} -expand /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_rs2_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_imm_value_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_dest_rob_idx_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_curr_pc_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_pred_target_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/issue_pred_taken_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/cdb_ready_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/cdb_valid_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/cdb_valid_o
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/cdb_data_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/cdb_data_o
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_valid_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_ready_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_valid_o
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_ready_o
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_res_mis_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_res_taken_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_res_target_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_except_raised_i
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_rs1_o
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_rs2_o
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_imm_o
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_curr_pc_o
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_pred_target_o
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_pred_taken_o
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/bu_branch_type_o
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/data
+add wave -noupdate -group {BRANCH UNIT} -expand -group {BRANCH RS} -expand /tb_bare/u_datapath/u_backend/u_exec_stage/u_branch_unit/u_branch_rs/curr_state
 add wave -noupdate -group CDB /tb_bare/u_datapath/u_backend/u_cdb/max_prio_valid_i
 add wave -noupdate -group CDB /tb_bare/u_datapath/u_backend/u_cdb/max_prio_ready_o
 add wave -noupdate -group CDB /tb_bare/u_datapath/u_backend/u_cdb/max_prio_data_i
@@ -492,7 +481,7 @@ add wave -noupdate -group {MEM EMU} /tb_bare/u_memory_bare_emu/data_pipe_valid
 add wave -noupdate -group {MEM EMU} /tb_bare/u_memory_bare_emu/ins_pipe_reg
 add wave -noupdate -group {MEM EMU} /tb_bare/u_memory_bare_emu/data_pipe_reg
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {39880 ns} 0}
+WaveRestoreCursors {{Cursor 1} {0 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 197
 configure wave -valuecolwidth 154
@@ -508,4 +497,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {38959 ns} {40647 ns}
+WaveRestoreZoom {0 ns} {1688 ns}

@@ -66,7 +66,6 @@ module datapath #(
   // ---------
   // FRONT-END
   // ---------
-
   fetch_stage #(
       .HLEN             (HLEN                   ),
       .BTB_BITS         (BTB_BITS               ),
@@ -100,7 +99,6 @@ module datapath #(
   // --------
   // BACK-END
   // --------
-
   backend u_backend (
       .clk_i                (clk_i),
       .rst_n_i              (rst_n_i),
@@ -134,7 +132,6 @@ module datapath #(
   // -----------------
   // OUTPUT EVALUATION
   // -----------------
-
   // Memory misprediction flush
   assign mem_flush_o = be_fe_mis_flush;
 

@@ -77,7 +77,7 @@ module branch_unit
 
     // Branch logic output register
     typedef struct packed {
-        logic [$clog2(RS_DEPTH)-1:0]    entry_idx;
+        logic [$clog2(RS_DEPTH)-1:0]    rob_idx;
         logic                           res_mispredicted;
         logic                           res_taken;
         logic [XLEN-1:0]                res_target;
@@ -128,7 +128,7 @@ module branch_unit
 
     // Branch logic output register
     // NOTE: skipped by default, since it's likely not on the critical path
-    assign  bu_outreg_in.entry_idx          = rs_bu_entry_idx;
+    assign  bu_outreg_in.rob_idx            = rs_bu_entry_idx;
     assign  bu_outreg_in.res_mispredicted   = res_mispredicted;
     assign  bu_outreg_in.res_taken          = res_taken;
     assign  bu_outreg_in.res_target         = res_target;
@@ -178,14 +178,14 @@ module branch_unit
         .bu_ready_i           (bu_rs_ready                    ),
         .bu_valid_o           (rs_bu_valid                    ),
         .bu_ready_o           (rs_bu_ready                    ),
-        .bu_entry_idx_i       (bu_outreg_out.entry_idx        ),
+        .bu_rob_idx_i         (bu_outreg_out.rob_idx          ),
         .bu_res_mis_i         (bu_outreg_out.res_mispredicted ),
         .bu_res_taken_i       (bu_outreg_out.res_taken        ),
         .bu_res_target_i      (bu_outreg_out.res_target       ),
 `ifndef LEN5_C_EN
         .bu_except_raised_i   (bu_outreg_out.except_raised    ),
 `endif /* LEN5_C_EN */
-        .bu_entry_idx_o       (rs_bu_entry_idx                ),
+        .bu_rob_idx_o         (rs_bu_entry_idx                ),
         .bu_rs1_o             (rs_bu_rs1                      ),
         .bu_rs2_o             (rs_bu_rs2                      ),
         .bu_imm_o             (rs_bu_imm                      ),

@@ -336,10 +336,13 @@ package expipe_pkg;
         ARITH_S_HALT           // for debug
     } arith_state_t;
 
-    /* Branch unit operations */
-    typedef enum logic [2:0] {
+    /* Arithmetic unit operations */
+    typedef enum logic [3:0] {
         ARITH_OP_NONE,
         ARITH_OP_INSERT,
+        ARITH_OP_INSERT_RS12,
+        ARITH_OP_INSERT_RS1,
+        ARITH_OP_INSERT_RS2,
         ARITH_OP_SAVE_RS12,
         ARITH_OP_SAVE_RS1,
         ARITH_OP_SAVE_RS2,
@@ -381,9 +384,12 @@ package expipe_pkg;
     } bu_data_t;
 
     /* Branch unit operations */
-    typedef enum logic [2:0] {
+    typedef enum logic [3:0] {
         BU_OP_NONE,
         BU_OP_INSERT,
+        BU_OP_INSERT_RS12,
+        BU_OP_INSERT_RS1,
+        BU_OP_INSERT_RS2,
         BU_OP_SAVE_RS12,
         BU_OP_SAVE_RS1,
         BU_OP_SAVE_RS2,

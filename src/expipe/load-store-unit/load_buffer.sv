@@ -76,15 +76,6 @@ module load_buffer #(
     output  logic                       mem_ready_o,
     output  mem_req_t                   mem_req_o,
     input   mem_ans_t                   mem_ans_i
-
-    /* Store buffer (store-to-load forwarding) */ /* TODO */
-    // input   logic [STBUFF_TAG_W-1:0]  sb_pending_cnt_i,   // number of uncommitted store instructions
-    // input   logic                       sb_committing_i,    // a store is committing
-    // input   logic                       sb_hit_i,           // store data can be forwarded
-    // input   logic [XLEN-1:0]            sb_value_i,         // store value
-    // output  logic [XLEN-1:0]            sb_addr_o,          // load address
-    // output  ldst_width_t                 sb_type_o,          // load type
-    // output  logic [STBUFF_TAG_W:0]    sb_older_cnt_o,     // nummber of older store instructions
 );
 
     // INTERNAL SIGNALS

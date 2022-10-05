@@ -34,7 +34,7 @@ module branch_rs
     /* Issue Stage */
     input   logic                   issue_valid_i,
     output  logic                   issue_ready_o,
-    input   branch_ctl_t           issue_branch_type_i,
+    input   branch_ctl_t            issue_branch_type_i,
     input   op_data_t               issue_rs1_i,
     input   op_data_t               issue_rs2_i,
     input   logic [XLEN-1:0]        issue_imm_value_i,
@@ -55,28 +55,27 @@ module branch_rs
     input   logic                   bu_ready_i,
     output  logic                   bu_valid_o,
     output  logic                   bu_ready_o,
-    input   logic [RS_IDX_LEN-1:0]  bu_entry_idx_i,
+    input   rob_idx_t               bu_rob_idx_i,
     input   logic                   bu_res_mis_i,   // mispredcition result
     input   logic                   bu_res_taken_i, // branch outcome
     input   logic [XLEN-1:0]        bu_res_target_i, // computed branch target address
 `ifndef LEN5_C_EN
     input   logic                   bu_except_raised_i,
 `endif /* LEN5_C_EN */
-    output  logic [RS_IDX_LEN-1:0]  bu_entry_idx_o,
+    output  rob_idx_t               bu_rob_idx_o,
     output  logic [XLEN-1:0]        bu_rs1_o,
     output  logic [XLEN-1:0]        bu_rs2_o,
     output  logic [XLEN-1:0]        bu_imm_o,
     output  logic [XLEN-1:0]        bu_curr_pc_o,
     output  logic [XLEN-1:0]        bu_pred_target_o,
     output  logic                   bu_pred_taken_o,
-    output  branch_ctl_t           bu_branch_type_o
+    output  branch_ctl_t            bu_branch_type_o
 );
     // INTERNAL SIGNALS
     // ----------------
 
     // New, execution, and CDB write pointers
     logic [RS_IDX_LEN-1:0]  new_idx, ex_idx, cdb_idx;
-    logic                   new_idx_valid, ex_idx_valid, cdb_idx_valid;
     logic                   empty[DEPTH], ready_ex[DEPTH], ready_cdb[DEPTH];
     
     // Branch reservation station data
@@ -84,8 +83,9 @@ module branch_rs
     bu_state_t              curr_state[DEPTH], next_state[DEPTH];
 
     // Reservation station control
-    logic                   insert, remove, save_rs, ex_accepted, save_res;
-    logic                   match_rs1[DEPTH], match_rs2[DEPTH];
+    logic                   insert, remove, ex_accepted, save_res;
+    logic                   fwd_rs1[DEPTH], fwd_rs2[DEPTH];
+    logic                   insert_rs1, insert_rs2;
     bu_op_t                 bu_op[DEPTH];
 
     // Ready signals for the selectors
@@ -104,15 +104,16 @@ module branch_rs
     // Control signals
     assign  insert      = issue_valid_i & issue_ready_o;
     assign  remove      = cdb_valid_o & cdb_ready_i;
-    assign  save_rs     = cdb_valid_i;
     assign  ex_accepted = bu_valid_o & bu_ready_i;
     assign  save_res    = bu_valid_i & bu_ready_o;
 
-    // Matching operands tags
-    always_comb begin : p_match_rs
+    // Operands forwarding control
+    always_comb begin : p_fwd_rs
+        insert_rs1      = cdb_valid_i & (cdb_data_i.rob_idx == issue_rs1_i.rob_idx);
+        insert_rs2      = cdb_valid_i & (cdb_data_i.rob_idx == issue_rs2_i.rob_idx);
         foreach (data[i]) begin
-            match_rs1[i]    = (cdb_data_i.rob_idx == data[i].rs1_rob_idx);
-            match_rs2[i]    = (cdb_data_i.rob_idx == data[i].rs2_rob_idx);
+            fwd_rs1[i]  = cdb_valid_i & (cdb_data_i.rob_idx == data[i].rs1_rob_idx);
+            fwd_rs2[i]  = cdb_valid_i & (cdb_data_i.rob_idx == data[i].rs2_rob_idx);
         end
     end
 
@@ -126,50 +127,65 @@ module branch_rs
             case (curr_state[i])
                 BU_S_EMPTY: begin // insert a new instruction
                     if (insert && new_idx == i) begin
-                        bu_op[i]        = BU_OP_INSERT;
-                        if (issue_rs1_i.ready && issue_rs2_i.ready)
+                        if (issue_rs1_i.ready && issue_rs2_i.ready) begin
                             next_state[i]   = BU_S_EX_REQ;
-                        else if (!issue_rs1_i.ready && issue_rs2_i.ready)
-                            next_state[i]   = BU_S_RS1_PENDING;
-                        else if (issue_rs1_i.ready && !issue_rs2_i.ready)
-                            next_state[i]   = BU_S_RS2_PENDING;
-                        else
-                            next_state[i]   = BU_S_RS12_PENDING;
-                    end else 
-                        next_state[i] = BU_S_EMPTY; 
+                            bu_op[i]        = BU_OP_INSERT;
+                        end else if (!issue_rs1_i.ready && issue_rs2_i.ready) begin
+                            if (insert_rs1) begin
+                                next_state[i]   = BU_S_EX_REQ;
+                                bu_op[i]        = BU_OP_INSERT_RS1;
+                            end else begin
+                                next_state[i]   = BU_S_RS1_PENDING;
+                                bu_op[i]        = BU_OP_INSERT;
+                            end
+                        end else if (issue_rs1_i.ready && !issue_rs2_i.ready) begin
+                            if (insert_rs2) begin
+                                next_state[i]   = BU_S_EX_REQ;
+                                bu_op[i]        = BU_OP_INSERT_RS2;
+                            end else begin
+                                next_state[i]   = BU_S_RS2_PENDING;
+                                bu_op[i]        = BU_OP_INSERT;
+                            end
+                        end else begin
+                            if (insert_rs1 & insert_rs2) begin
+                                next_state[i]   = BU_S_EX_REQ;
+                                bu_op[i]        = BU_OP_INSERT_RS12;
+                            end else begin
+                                next_state[i]   = BU_S_RS12_PENDING;
+                                bu_op[i]        = BU_OP_INSERT;
+                            end
+                        end
+                    end else    next_state[i]   = BU_S_EMPTY; 
                 end
                 BU_S_RS12_PENDING: begin // save rs1 and/or rs2 value from CDB
-                    if (save_rs) begin
-                        if (match_rs1[i] && match_rs2[i]) begin
-                            bu_op[i]        = BU_OP_SAVE_RS12;
-                            next_state[i]   = BU_S_EX_REQ;
-                        end else if (match_rs1[i]) begin
-                            bu_op[i]        = BU_OP_SAVE_RS1;
-                            next_state[i]   = BU_S_RS2_PENDING;
-                        end else if (match_rs2[i]) begin
-                            bu_op[i]        = BU_OP_SAVE_RS2;
-                            next_state[i]   = BU_S_RS1_PENDING;
-                        end else 
-                            next_state[i]   = BU_S_RS12_PENDING;
+                    if (fwd_rs1[i] && fwd_rs2[i]) begin
+                        bu_op[i]        = BU_OP_SAVE_RS12;
+                        next_state[i]   = BU_S_EX_REQ;
+                    end else if (fwd_rs1[i]) begin
+                        bu_op[i]        = BU_OP_SAVE_RS1;
+                        next_state[i]   = BU_S_RS2_PENDING;
+                    end else if (fwd_rs2[i]) begin
+                        bu_op[i]        = BU_OP_SAVE_RS2;
+                        next_state[i]   = BU_S_RS1_PENDING;
                     end else 
                         next_state[i]   = BU_S_RS12_PENDING;
                 end
                 BU_S_RS1_PENDING: begin // save rs2 value from CDB
-                    if (save_rs && match_rs1[i]) begin
+                    if (fwd_rs1[i]) begin
                         bu_op[i]        = BU_OP_SAVE_RS1;
                         next_state[i]   = BU_S_EX_REQ;
                     end else
                         next_state[i]   = BU_S_RS1_PENDING;
                 end
                 BU_S_RS2_PENDING: begin // save rs2 value from CDB
-                    if (save_rs && match_rs2[i]) begin
+                    if (fwd_rs2[i]) begin
                         bu_op[i]        = BU_OP_SAVE_RS2;
                         next_state[i]   = BU_S_EX_REQ;
                     end else
                         next_state[i]   = BU_S_RS2_PENDING;
                 end
                 BU_S_EX_REQ: begin // request branch resolution to branch logic
-                    if (save_res && bu_entry_idx_i == i) begin
+                    if (save_res && bu_rob_idx_i == data[i].dest_rob_idx) begin
                         bu_op[i]        = BU_OP_SAVE_RES;
                         next_state[i]   = BU_S_COMPLETED;
                     end else if (ex_accepted && ex_idx == i)
@@ -178,7 +194,7 @@ module branch_rs
                         next_state[i]   = BU_S_EX_REQ;
                 end
                 BU_S_EX_WAIT: begin // wait for execution completion
-                    if (save_res && bu_entry_idx_i == i) begin
+                    if (save_res && bu_rob_idx_i == data[i].dest_rob_idx) begin
                         bu_op[i]        = BU_OP_SAVE_RES;
                         next_state[i]   = BU_S_COMPLETED;
                     end else
@@ -205,11 +221,7 @@ module branch_rs
     // ------------------
     // BRANCH UNIT BUFFER
     // ------------------
-    // NOTE: operations priority:
-    // 1) insert a new instruction
-    // 2) remove a completed instruction
-    // 3) update the result
-    // 4) update rs1 and/or rs2
+    // Branch buffer update
     always_ff @( posedge clk_i or negedge rst_n_i ) begin : p_bu_update
         if (!rst_n_i) begin
             foreach (data[i]) begin
@@ -226,6 +238,42 @@ module branch_rs
                         data[i].rs1_value           <= issue_rs1_i.value;
                         data[i].rs2_rob_idx         <= issue_rs2_i.rob_idx;
                         data[i].rs2_value           <= issue_rs2_i.value;
+                        data[i].imm_value           <= issue_imm_value_i;
+                        data[i].dest_rob_idx        <= issue_dest_rob_idx_i;
+                        data[i].target              <= issue_pred_target_i;
+                        data[i].taken               <= issue_pred_taken_i;
+                    end
+                    BU_OP_INSERT_RS12: begin
+                        data[i].branch_type         <= issue_branch_type_i;
+                        data[i].curr_pc             <= issue_curr_pc_i;
+                        data[i].rs1_rob_idx         <= issue_rs1_i.rob_idx;
+                        data[i].rs1_value           <= cdb_data_i.res_value;
+                        data[i].rs2_rob_idx         <= issue_rs2_i.rob_idx;
+                        data[i].rs2_value           <= cdb_data_i.res_value;
+                        data[i].imm_value           <= issue_imm_value_i;
+                        data[i].dest_rob_idx        <= issue_dest_rob_idx_i;
+                        data[i].target              <= issue_pred_target_i;
+                        data[i].taken               <= issue_pred_taken_i;
+                    end
+                    BU_OP_INSERT_RS1: begin
+                        data[i].branch_type         <= issue_branch_type_i;
+                        data[i].curr_pc             <= issue_curr_pc_i;
+                        data[i].rs1_rob_idx         <= issue_rs1_i.rob_idx;
+                        data[i].rs1_value           <= cdb_data_i.res_value;
+                        data[i].rs2_rob_idx         <= issue_rs2_i.rob_idx;
+                        data[i].rs2_value           <= issue_rs2_i.value;
+                        data[i].imm_value           <= issue_imm_value_i;
+                        data[i].dest_rob_idx        <= issue_dest_rob_idx_i;
+                        data[i].target              <= issue_pred_target_i;
+                        data[i].taken               <= issue_pred_taken_i;
+                    end
+                    BU_OP_INSERT_RS2: begin
+                        data[i].branch_type         <= issue_branch_type_i;
+                        data[i].curr_pc             <= issue_curr_pc_i;
+                        data[i].rs1_rob_idx         <= issue_rs1_i.rob_idx;
+                        data[i].rs1_value           <= issue_rs1_i.value;
+                        data[i].rs2_rob_idx         <= issue_rs2_i.rob_idx;
+                        data[i].rs2_value           <= cdb_data_i.res_value;
                         data[i].imm_value           <= issue_imm_value_i;
                         data[i].dest_rob_idx        <= issue_dest_rob_idx_i;
                         data[i].target              <= issue_pred_target_i;
@@ -285,7 +333,7 @@ module branch_rs
     assign  bu_pred_target_o = data[ex_idx].target;
     assign  bu_pred_taken_o  = data[ex_idx].taken;
     assign  bu_branch_type_o = data[ex_idx].branch_type;
-    assign  bu_entry_idx_o   = ex_idx;
+    assign  bu_rob_idx_o     = data[ex_idx].dest_rob_idx;
 
     // ---------------
     // ENTRY SELECTORS
