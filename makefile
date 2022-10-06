@@ -37,7 +37,7 @@ CUSTOM_SRCS 	?=	$(shell find $(CUSTOM_SRC_DIR) -type f -name '*.sv')
 endif
 
 # LEN5 test files
-SW_DIR			:= $(ROOT)/sw
+SW_DIR			:= $(ROOT)/len5-software
 TEST_DIR 		:= $(SW_DIR)/test-programs
 TEST_SRCS		:= $(shell find $(TEST_DIR)/src -name '*.c' -or -name '*.s')
 TESTS			:= $(addprefix tests/,$(basename $(notdir $(TEST_SRCS))))
@@ -135,11 +135,11 @@ $(VWORK): | .check-vlog
 .PHONY: test-files
 test-files:
 	@echo "## Compiling LEN5 test files"
-	$(MAKE) -C $(SW_DIR) all
+	$(MAKE) BUILD_DIR=$(SW_BUILD_DIR) -C $(SW_DIR) all
 .PHONY: $(TESTS)
 $(TESTS):
 	@echo "## Compiling test '$@'..."
-	$(MAKE) -C $(SW_DIR) $@
+	$(MAKE) BUILD_DIR=$(SW_BUILD_DIR) -C $(SW_DIR) $@
 
 .PHONY: print-tests
 print-tests:
