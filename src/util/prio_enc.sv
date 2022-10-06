@@ -12,24 +12,33 @@
 // Author: Michele Caon
 // Date: 22/10/2019
 
-// NOTE: Synopsys should be able to synthesize a performance optimised priority encoder from simple behavioural code
+// NOTE: Synopsys should be able to synthesize a performance-optimised priority encoder from simple behavioural code
 
-module prio_enc #(N = 8)
-(
+module prio_enc #(
+    parameter   N = 8
+) (
     input   logic                   lines_i[N],
     output  logic [$clog2(N)-1:0]   enc_o,
     output  logic                   valid_o
 );
-    // The priority decreases with the input index: lines_i[0] has the highest priority and lines_i[N] the lowest
-    always_comb begin
-        enc_o = 0;
-        valid_o = 1'b0;
-        
-        for (int i = N - 1; i >= 0; i = i-1) begin
-            if (lines_i[i]) begin
-                enc_o       = i[$clog2(N)-1:0];
-                valid_o     = 1'b1;
-            end 
+    generate
+        // If there's only one input, the index is always 0
+        if (N == 1) begin: l_prio_enc_gen
+            assign  valid_o = lines_i[0];
+            assign  enc_o   = 0;
+        end else begin: l_prio_enc_gen
+            // The priority decreases with the input index: lines_i[0] has the highest priority and lines_i[N] the lowest
+            always_comb begin : prio_enc_logic
+                enc_o = 0;
+                valid_o = 1'b0;
+                
+                for (int i = N - 1; i >= 0; i = i-1) begin
+                    if (lines_i[i]) begin
+                        enc_o       = i[$clog2(N)-1:0];
+                        valid_o     = 1'b1;
+                    end 
+                end
+            end
         end
-    end 
+    endgenerate
 endmodule

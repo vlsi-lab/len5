@@ -188,7 +188,7 @@ module backend (
     logic [XLEN-1:0]            csr_comm_data;
     logic                       csr_comm_acc_exc;
     csr_mtvec_t                 csr_comm_mtvec;
-    logic                       comm_csr_comm_insn;
+    comm_csr_instr_t            comm_csr_comm_insn;
     logic                       comm_csr_comm_jb;
     csr_op_t                    comm_csr_op;
     logic [FUNCT3_LEN-1:0]      comm_csr_funct3;
@@ -200,7 +200,8 @@ module backend (
 
     // Commit Logic <--> others
     // ------------------------
-    logic                       mis_flush; // flush on misprediction
+    logic                       mis_flush;      // flush on misprediction
+    logic                       except_flush;   // flush on exception
 
     // -------
     // MODULES
@@ -378,7 +379,8 @@ module backend (
     (
         .clk_i                      (clk_i                  ),
         .rst_n_i                    (rst_n_i                ),
-        .flush_i                    (mis_flush              ),
+        .mis_flush_i                (mis_flush              ),
+        .except_flush_i             (except_flush           ),
 
         .issue_valid_i              (il_ex_valid            ),
         .issue_ready_o              (ex_issue_ready         ),
@@ -441,9 +443,9 @@ module backend (
         .rst_n_i                (rst_n_i                    ),
         
         .mis_flush_o            (mis_flush                  ),
+        .except_flush_o         (except_flush               ),
         
         .fe_ready_i             (fetch_ready_i              ),
-        .fe_bpu_flush_o         (fetch_bpu_flush_o          ),
         .fe_res_valid_o         (fetch_res_valid_o          ),
         .fe_res_o               (fetch_res_o                ),
         .fe_except_raised_o     (fetch_except_raised_o      ),
@@ -487,7 +489,6 @@ module backend (
         .csr_acc_exc_i          (csr_comm_acc_exc           ),
         .csr_mtvec_i            (csr_comm_mtvec             ),
         .csr_comm_insn_o        (comm_csr_comm_insn         ),
-        .csr_comm_jb_o          (comm_csr_comm_jb           ),
         .csr_op_o               (comm_csr_op                ),
         .csr_funct3_o           (comm_csr_funct3            ),
         .csr_addr_o             (comm_csr_addr              ),
@@ -505,7 +506,6 @@ module backend (
         .rst_n_i            (rst_n_i              ),
         .valid_i            (comm_csr_valid       ),
         .comm_insn_i        (comm_csr_comm_insn   ),
-        .comm_jb_i          (comm_csr_comm_jb     ),
         .comm_op_i          (comm_csr_op          ),
         .funct3_i           (comm_csr_funct3      ),
         .addr_i             (comm_csr_addr        ),
@@ -527,7 +527,8 @@ module backend (
     // OUTPUT EVALUATION
     // -----------------
     
-    // Fetch stage and memory flush on misprediction
+    // Fetch stage and memory flush
     assign  fetch_mis_flush_o   = mis_flush;
+    assign  fetch_bpu_flush_o   = except_flush;
 
 endmodule

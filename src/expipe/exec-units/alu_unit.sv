@@ -52,11 +52,11 @@ module alu_unit
     logic                   alu_rs_ready;
 
     // Data from/to the execution unit
-    logic [$clog2(RS_DEPTH)-1:0] rs_alu_rob_idx;
+    rob_idx_t               rs_alu_rob_idx;
     logic [EU_CTL_LEN-1:0]  rs_alu_ctl;
     logic [XLEN-1:0]        rs_alu_rs1_value;
     logic [XLEN-1:0]        rs_alu_rs2_value;
-    logic [$clog2(RS_DEPTH)-1:0] alu_rs_rob_idx;
+    rob_idx_t               alu_rs_rob_idx;
     logic [XLEN-1:0]        alu_rs_result;
     logic                   alu_rs_except_raised;
     except_code_t           alu_rs_except_code;

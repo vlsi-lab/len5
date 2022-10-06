@@ -61,8 +61,9 @@ module commit_decoder
                 `OPCODE_OP,
                 `OPCODE_OP_32,
                 `OPCODE_LUI,
-                `OPCODE_AUIPC,
-                `OPCODE_LOAD:       comm_type_normal    = COMM_TYPE_INT_RF;
+                `OPCODE_AUIPC:      comm_type_normal    = COMM_TYPE_INT_RF;
+                
+                `OPCODE_LOAD:       comm_type_normal    = COMM_TYPE_LOAD;
 
                 // Store instructions
                 // ------------------

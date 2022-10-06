@@ -31,7 +31,8 @@ module load_store_unit #(
 ) (
     input   logic                       clk_i,
     input   logic                       rst_n_i,
-    input   logic                       flush_i,
+    input   logic                       mis_flush_i,
+    input   logic                       except_flush_i,
 
     /* Issue stage */
     input   logic                       issue_lb_valid_i,
@@ -66,15 +67,17 @@ module load_store_unit #(
     output  mem_req_t                   mem_req_o,
     input   mem_ans_t                   mem_ans_i
 );
+    localparam  ST_IDX_W = $clog2(SB_DEPTH);
+    localparam  L0_TAG_W = XLEN-ST_IDX_W;
 
     // INTERNAL SIGNALS
     // ----------------
 
     // Load buffer <--> store buffer
     logic                       sb_lb_latest_valid;
-    logic [STBUFF_TAG_W-1:0]    sb_lb_latest_tag;
+    logic [STBUFF_TAG_W-1:0]    sb_lb_latest_idx;
     logic                       sb_lb_oldest_completed;
-    logic [STBUFF_TAG_W-1:0]    sb_lb_oldest_tag;
+    logic [STBUFF_TAG_W-1:0]    sb_lb_oldest_idx;
 
     // Load/store buffer <--> address adder arbiter
     logic           lb_adderarb_valid, sb_adderarb_valid;
@@ -91,6 +94,22 @@ module load_store_unit #(
     logic           adder_adderarb_ready;
     adder_req_t     adderarb_adder_req;
 
+    // Load-store buffers <--> level-zero cache control
+    `ifdef LEN5_STORE_LOAD_FWD_EN
+    logic                   sb_l0_valid;   
+    logic [XLEN-1:0]        sb_l0_addr;    
+    logic [ST_IDX_W-1:0]    sb_l0_idx;     
+    logic [L0_TAG_W-1:0]    sb_l0_tag;
+    logic                   sb_l0_cached;  
+    ldst_width_t            sb_l0_width;   
+    logic [XLEN-1:0]        sb_l0_value;   
+    logic [XLEN-1:0]        lb_l0_addr;    
+    ldst_width_t            lb_l0_width;   
+    logic [ST_IDX_W-1:0]    l0_sb_idx;
+    logic                   l0_lb_valid;   
+    logic [XLEN-1:0]        l0_lb_value;  
+    `endif /* LEN5_STORE_LOAD_FWD_EN */
+
     // Load/store buffer <--> memory arbiter
     logic           lb_memarb_valid, sb_memarb_valid;
     logic           lb_memarb_ready, sb_memarb_ready;
@@ -98,17 +117,18 @@ module load_store_unit #(
     logic           memarb_lb_valid, memarb_sb_valid;
     logic           memarb_lb_ready, memarb_sb_ready;
 
-    // ----------------------
-    // LOAD AND STORE BUFFERS
-    // ----------------------
+    // --------------
+    // LSU SUBSYSTEMS
+    // --------------
 
-    // Load buffer
+    // LOAD BUFFER
+    // -----------
     load_buffer #(
         .DEPTH (LB_DEPTH )
     ) u_load_buffer (
     	.clk_i                      (clk_i                  ),
         .rst_n_i                    (rst_n_i                ),
-        .flush_i                    (flush_i                ),
+        .flush_i                    (mis_flush_i                ),
         .issue_valid_i              (issue_lb_valid_i       ),
         .issue_ready_o              (issue_lb_ready_o       ),
         .issue_type_i               (issue_type_i           ),
@@ -121,15 +141,19 @@ module load_store_unit #(
         .cdb_data_i                 (cdb_data_i             ),
         .cdb_data_o                 (cdb_lb_data_o          ),
         .sb_latest_valid_i          (sb_lb_latest_valid     ),
-        .sb_latest_tag_i            (sb_lb_latest_tag       ),
+        .sb_latest_idx_i            (sb_lb_latest_idx       ),
         .sb_oldest_completed_i      (sb_lb_oldest_completed ),
-        .sb_oldest_tag_i            (sb_lb_oldest_tag       ),
+        .sb_oldest_idx_i            (sb_lb_oldest_idx       ),
         .adder_valid_i              (adderarb_lb_valid      ),
         .adder_ready_i              (adderarb_lb_ready      ),
         .adder_valid_o              (lb_adderarb_valid      ),
         .adder_ready_o              (lb_adderarb_ready      ),
         .adder_ans_i                (adder_lsb_ans          ),
         .adder_req_o                (lb_adderarb_req        ),
+    `ifdef LEN5_STORE_LOAD_FWD_EN
+        .l0_valid_i                 (l0_lb_valid            ),
+        .l0_value_i                 (l0_lb_value            ),
+    `endif /* LEN5_STORE_LOAD_FWD_EN */
         .mem_valid_i                (memarb_lb_valid        ),
         .mem_ready_i                (memarb_lb_ready        ),
         .mem_valid_o                (lb_memarb_valid        ),
@@ -138,13 +162,14 @@ module load_store_unit #(
         .mem_ans_i                  (mem_ans_i              )
     );
     
-    // Store buffer
+    // STORE BUFFER
+    // ------------
     store_buffer #(
         .DEPTH (SB_DEPTH )
     ) u_store_buffer(
     	.clk_i                  (clk_i                  ),
         .rst_n_i                (rst_n_i                ),
-        .flush_i                (flush_i                ),
+        .flush_i                (mis_flush_i            ),
         .issue_valid_i          (issue_sb_valid_i       ),
         .issue_ready_o          (issue_sb_ready_o       ),
         .issue_type_i           (issue_type_i           ),
@@ -160,15 +185,22 @@ module load_store_unit #(
         .cdb_data_i             (cdb_data_i             ),
         .cdb_data_o             (cdb_sb_data_o          ),
         .lb_latest_valid_o      (sb_lb_latest_valid     ),
-        .lb_latest_tag_o        (sb_lb_latest_tag       ),
+        .lb_latest_idx_o        (sb_lb_latest_idx       ),
         .lb_oldest_completed_o  (sb_lb_oldest_completed ),
-        .lb_oldest_tag_o        (sb_lb_oldest_tag       ),
+        .lb_oldest_idx_o        (sb_lb_oldest_idx       ),
         .adder_valid_i          (adderarb_sb_valid      ),
         .adder_ready_i          (adderarb_sb_ready      ),
         .adder_valid_o          (sb_adderarb_valid      ),
         .adder_ready_o          (sb_adderarb_ready      ),
         .adder_ans_i            (adder_lsb_ans          ),
         .adder_req_o            (sb_adderarb_req        ),
+    `ifdef LEN5_STORE_LOAD_FWD_EN
+        .l0_idx_i               (l0_sb_idx              ),
+        .l0_tag_o               (sb_l0_tag              ),
+        .l0_cached_o            (sb_l0_cached           ),
+        .l0_width_o             (sb_l0_width            ),
+        .l0_value_o             (sb_l0_value            ),
+    `endif /* LEN5_STORE_LOAD_FWD_EN */
         .mem_valid_i            (memarb_sb_valid        ),
         .mem_ready_i            (memarb_sb_ready        ),
         .mem_valid_o            (sb_memarb_valid        ),
@@ -177,14 +209,13 @@ module load_store_unit #(
         .mem_ans_i              (mem_ans_i              )
     );
     
-    // -------------
     // ADDRESS ADDER
     // -------------
     // NOTE: shared between load and store buffers
     address_adder u_address_adder(
     	.clk_i   (clk_i                ),
         .rst_n_i (rst_n_i              ),
-        .flush_i (flush_i              ),
+        .flush_i (mis_flush_i          ),
         .valid_i (adderarb_adder_valid ),
         .ready_i (adderarb_adder_ready ),
         .valid_o (adder_adderarb_valid ),
@@ -193,12 +224,38 @@ module load_store_unit #(
         .ans_o   (adder_lsb_ans        )
     );
 
-    // --------------
+    // LEVEL-ZERO CACHE CONTROL
+    // ------------------------
+    `ifdef LEN5_STORE_LOAD_FWD_EN
+    assign  sb_l0_valid     = sb_memarb_valid & memarb_sb_ready;
+    assign  sb_l0_addr      = sb_memarb_req.addr;
+    assign  sb_l0_idx       = sb_memarb_req.tag;
+    assign  lb_l0_addr      = lb_memarb_req.addr;
+    assign  lb_l0_width     = lb_memarb_req.ls_type;
+    l0_cache #(
+        .STBUFF_DEPTH (SB_DEPTH     )
+    ) u_l0_cache (
+    	.clk_i          (clk_i          ),
+        .rst_n_i        (rst_n_i        ),
+        .flush_i        (except_flush_i ),
+        .st_valid_i     (sb_l0_valid    ),
+        .st_addr_i      (sb_l0_addr     ),
+        .st_idx_i       (sb_l0_idx      ),
+        .st_tag_i       (sb_l0_tag      ),
+        .st_cached_i    (sb_l0_cached   ),
+        .st_width_i     (sb_l0_width    ),
+        .st_value_i     (sb_l0_value    ),
+        .ld_addr_i      (lb_l0_addr     ),
+        .ld_width_i     (lb_l0_width    ),
+        .st_idx_o       (l0_sb_idx      ),
+        .ld_valid_o     (l0_lb_valid    ),
+        .ld_value_o     (l0_lb_value    )
+    );
+    `endif /* LEN5_STORE_LOAD_FWD_EN */
+
     // MEMORY ARBITER
     // --------------
     `ifdef ENABLE_STORE_PRIO_2WAY_ARBITER
-    // The store buffer, connected to valid_i[0] is given higher priority than the load buffer. This should increase the hit ratio of the store to load forwarding. However, it increases the load execution latency. Depending on the scenario, performance may be better or worse than the fair arbiter.
-
     prio_2way_arbiter #(
         .DATA_T (mem_req_t)
     ) u_mem_arbiter	(
@@ -251,9 +308,8 @@ module load_store_unit #(
         end
     end
 
-    // --------------------------------
-    // VIRTUAL ADDRESS ADDER HS ARBITER
-    // --------------------------------
+    // ADDRESS ADDER ARBITER
+    // ---------------------
     `ifdef ENABLE_STORE_PRIO_2WAY_ARBITER
     // The store buffer, connected to valid_i[0] is given higher priority than the load buffer. This should increase the hit ratio of the store to load forwarding. However, it increases the load execution latency. Depending on the scenario, performance may be better or worse than the fair arbiter.
 

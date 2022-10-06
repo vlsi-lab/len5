@@ -32,12 +32,12 @@ module commit_stage (
 	input   logic                       clk_i,
     input   logic                       rst_n_i,
 
-    // Misprediction flush signal
-    output  logic                       mis_flush_o, // flush after misprediction
+    // Flush signal
+    output  logic                       mis_flush_o,    // flush after misprediction
+    output  logic                       except_flush_o, // flush after exception
 
     // Data to frontend
     input   logic                       fe_ready_i,
-    output  logic                       fe_bpu_flush_o, // flush the Branch Prediction Unit internal structures
     output  logic                       fe_res_valid_o,
     output  resolution_t                fe_res_o,
     output  logic                       fe_except_raised_o,
@@ -85,9 +85,8 @@ module commit_stage (
     output  logic                       csr_valid_o,
     input   csr_t                       csr_data_i,
     input   logic                       csr_acc_exc_i,      // CSR illegal instruction or access permission denied
-    input   csr_mtvec_t                 csr_mtvec_i,    // mtvec data 
-    output  logic                       csr_comm_insn_o, // an instruction is committing
-    output  logic                       csr_comm_jb_o,   // a jump/branch instruction is committing
+    input   csr_mtvec_t                 csr_mtvec_i,        // mtvec data 
+    output  comm_csr_instr_t            csr_comm_insn_o,    // committing instruction type
     output  csr_op_t                    csr_op_o,
     output  logic [FUNCT3_LEN-1:0]      csr_funct3_o,
     output  logic [CSR_ADDR_LEN-1:0]    csr_addr_o,
@@ -154,6 +153,7 @@ module commit_stage (
     // commit CU <--> others
     logic                       cu_csr_override;
     logic                       cu_mis_flush;
+    logic                       cu_except_flush;
     logic                       cu_jb_instr;
 
     // In-flight jump/branch instructions counter
@@ -336,9 +336,9 @@ module commit_stage (
         .csr_addr_o         (cu_csr_addr            ),
         .fe_ready_i         (fe_ready_i             ),
         .fe_res_valid_o     (fe_res_valid_o         ),
-        .fe_bpu_flush_o     (fe_bpu_flush_o         ),
         .fe_except_raised_o (fe_except_raised_o     ),
         .mis_flush_o        (cu_mis_flush           ),
+        .except_flush_o     (cu_except_flush        ),
         .issue_resume_o     (issue_resume_o         )
     );
 
@@ -454,7 +454,6 @@ module commit_stage (
     assign  rd_value_o          = rd_value;
 
     // Data to CSRs
-    assign  csr_comm_jb_o       = cu_jb_instr;
     assign  csr_funct3_o        = comm_reg_data.data.instruction.i.funct3;
     assign  csr_addr_o          = csr_addr;
     assign  csr_rs1_idx_o       = comm_reg_data.data.instruction.r.rs1;
@@ -464,6 +463,7 @@ module commit_stage (
 
     // Data to others
     assign  mis_flush_o         = cu_mis_flush;
+    assign  except_flush_o      = cu_except_flush;
     
     // ----------
     // ASSERTIONS
@@ -483,5 +483,12 @@ module commit_stage (
             fe_except_pc_o == ((comm_reg_data.data.except_code << 2) + (csr_mtvec_i.base << 2))
     endproperty
     a_except: assert property (p_except);
+    // Detect deadlock (watchdog timer)
+    property p_watchdog;
+        @(posedge clk_i) disable iff (!rst_n_i)
+        u_commit_cu.curr_state == u_commit_cu.IDLE |-> ##[1:100]
+            u_commit_cu.curr_state != u_commit_cu.IDLE
+    endproperty
+    a_watchdog: assert property (p_watchdog) else `uvm_fatal("COMMIT CU", $sformatf("IDLE timeout | pc: %h | instr: %h", comm_reg_data.data.instr_pc, comm_reg_data.data.instruction.raw));
     `endif // SYNTHESIS
 endmodule

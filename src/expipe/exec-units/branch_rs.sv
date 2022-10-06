@@ -109,8 +109,6 @@ module branch_rs
 
     // Operands forwarding control
     always_comb begin : p_fwd_rs
-        insert_rs1      = cdb_valid_i & (cdb_data_i.rob_idx == issue_rs1_i.rob_idx);
-        insert_rs2      = cdb_valid_i & (cdb_data_i.rob_idx == issue_rs2_i.rob_idx);
         foreach (data[i]) begin
             fwd_rs1[i]  = cdb_valid_i & (cdb_data_i.rob_idx == data[i].rs1_rob_idx);
             fwd_rs2[i]  = cdb_valid_i & (cdb_data_i.rob_idx == data[i].rs2_rob_idx);
@@ -128,32 +126,17 @@ module branch_rs
                 BU_S_EMPTY: begin // insert a new instruction
                     if (insert && new_idx == i) begin
                         if (issue_rs1_i.ready && issue_rs2_i.ready) begin
-                            next_state[i]   = BU_S_EX_REQ;
-                            bu_op[i]        = BU_OP_INSERT;
+                            next_state[i]       = BU_S_EX_REQ;
+                            bu_op[i]            = BU_OP_INSERT;
                         end else if (!issue_rs1_i.ready && issue_rs2_i.ready) begin
-                            if (insert_rs1) begin
-                                next_state[i]   = BU_S_EX_REQ;
-                                bu_op[i]        = BU_OP_INSERT_RS1;
-                            end else begin
-                                next_state[i]   = BU_S_RS1_PENDING;
-                                bu_op[i]        = BU_OP_INSERT;
-                            end
+                            next_state[i]       = BU_S_RS1_PENDING;
+                            bu_op[i]            = BU_OP_INSERT;
                         end else if (issue_rs1_i.ready && !issue_rs2_i.ready) begin
-                            if (insert_rs2) begin
-                                next_state[i]   = BU_S_EX_REQ;
-                                bu_op[i]        = BU_OP_INSERT_RS2;
-                            end else begin
-                                next_state[i]   = BU_S_RS2_PENDING;
-                                bu_op[i]        = BU_OP_INSERT;
-                            end
+                            next_state[i]       = BU_S_RS2_PENDING;
+                            bu_op[i]            = BU_OP_INSERT;
                         end else begin
-                            if (insert_rs1 & insert_rs2) begin
-                                next_state[i]   = BU_S_EX_REQ;
-                                bu_op[i]        = BU_OP_INSERT_RS12;
-                            end else begin
-                                next_state[i]   = BU_S_RS12_PENDING;
-                                bu_op[i]        = BU_OP_INSERT;
-                            end
+                            next_state[i]       = BU_S_RS12_PENDING;
+                            bu_op[i]            = BU_OP_INSERT;
                         end
                     end else    next_state[i]   = BU_S_EMPTY; 
                 end
@@ -238,42 +221,6 @@ module branch_rs
                         data[i].rs1_value           <= issue_rs1_i.value;
                         data[i].rs2_rob_idx         <= issue_rs2_i.rob_idx;
                         data[i].rs2_value           <= issue_rs2_i.value;
-                        data[i].imm_value           <= issue_imm_value_i;
-                        data[i].dest_rob_idx        <= issue_dest_rob_idx_i;
-                        data[i].target              <= issue_pred_target_i;
-                        data[i].taken               <= issue_pred_taken_i;
-                    end
-                    BU_OP_INSERT_RS12: begin
-                        data[i].branch_type         <= issue_branch_type_i;
-                        data[i].curr_pc             <= issue_curr_pc_i;
-                        data[i].rs1_rob_idx         <= issue_rs1_i.rob_idx;
-                        data[i].rs1_value           <= cdb_data_i.res_value;
-                        data[i].rs2_rob_idx         <= issue_rs2_i.rob_idx;
-                        data[i].rs2_value           <= cdb_data_i.res_value;
-                        data[i].imm_value           <= issue_imm_value_i;
-                        data[i].dest_rob_idx        <= issue_dest_rob_idx_i;
-                        data[i].target              <= issue_pred_target_i;
-                        data[i].taken               <= issue_pred_taken_i;
-                    end
-                    BU_OP_INSERT_RS1: begin
-                        data[i].branch_type         <= issue_branch_type_i;
-                        data[i].curr_pc             <= issue_curr_pc_i;
-                        data[i].rs1_rob_idx         <= issue_rs1_i.rob_idx;
-                        data[i].rs1_value           <= cdb_data_i.res_value;
-                        data[i].rs2_rob_idx         <= issue_rs2_i.rob_idx;
-                        data[i].rs2_value           <= issue_rs2_i.value;
-                        data[i].imm_value           <= issue_imm_value_i;
-                        data[i].dest_rob_idx        <= issue_dest_rob_idx_i;
-                        data[i].target              <= issue_pred_target_i;
-                        data[i].taken               <= issue_pred_taken_i;
-                    end
-                    BU_OP_INSERT_RS2: begin
-                        data[i].branch_type         <= issue_branch_type_i;
-                        data[i].curr_pc             <= issue_curr_pc_i;
-                        data[i].rs1_rob_idx         <= issue_rs1_i.rob_idx;
-                        data[i].rs1_value           <= issue_rs1_i.value;
-                        data[i].rs2_rob_idx         <= issue_rs2_i.rob_idx;
-                        data[i].rs2_value           <= cdb_data_i.res_value;
                         data[i].imm_value           <= issue_imm_value_i;
                         data[i].dest_rob_idx        <= issue_dest_rob_idx_i;
                         data[i].target              <= issue_pred_target_i;

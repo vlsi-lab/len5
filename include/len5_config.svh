@@ -23,12 +23,21 @@
 `define BOOT_VM_MODE BARE // BARE|SV39|SV48
 
 // Boot program counter
-`define BOOT_PC 'h10000
+`define BOOT_PC 64'h10000
 
-// Serial interface base address
+// MEMORY-MAPPED DEVICES
+// ---------------------
+
+// Address mask for memory-mapped devices
+// This mask defines the address range that is reserved to memory-mapped
+// devices. Store-to-load forwarding (see below) in this region is not 
+// performed.
+`define MMAP_MASK 64'h000000000000ffff // 64kiB by default
+
+// TB Serial interface base address
 `define SERIAL_ADDR 'h100
 
-// Exit register address (stop the simulation when written)
+// TB exit register address (stop the simulation when written)
 `define EXIT_ADDR 'h200
 
 // MEMORY EMULATOR PARAMETERS
@@ -37,9 +46,12 @@
 // Raise access fault on load from empty (uninitialized) memory location
 //`define MEM_EMU_RAISE_READ_ACCESS_FAULT
 
+// Skip instruction and/or data output registers
+`define MEM_EMU_SKIP_INSTR_OUT_REG
+`define MEM_EMU_SKIP_DATA_OUT_REG
+
 // FRONTEND PARAMETERS
 // -------------------
-
 // BPU g-share predictor global history length
 `define BPU_HLEN 4
 
@@ -87,9 +99,22 @@
 // Commit Stage
 `define SKIP_COMMIT_SPILL_CELL      // directly connect the commit CU to the ROB output
 
-// ------------------
-// EXTENSION SWITCHES
-// ------------------
+// -----------------
+// FEATURES SWITCHES
+// -----------------
+
+// Enable store-to-load forwarding
+// -------------------------------
+// This switch instantiates a small cache with the same size as store buffer
+// inside the Load-Store Unit. This cache records the store buffer entry
+// containing the latest instruction that wrote a certain memory location.
+// When a load instruction accesses the same location, the forwarding of the
+// stored result is attempted. 
+// IMPORTANT: this feature breaks reads from memory-mapped devices, therefore
+// it is only applied to memory addresses outside of the region masked by
+// 'MMAP_MASK' (defined above).
+`define LEN5_STORE_LOAD_FWD_EN
+`define ST2LD_FWD_MASK ~`MMAP_MASK
 
 // Enable C extension
 // ------------------
@@ -110,9 +135,6 @@
 
 // Reservation stations
 // --------------------
-// Enable age-based selectors in the reservation station. If not defined, simple fixed priority encoders will be used instead. This should lead to worse performance in terms of latency (and possibly throughput with certain code sequences) while reducing area and power consumption
-//`define ENABLE_AGE_BASED_SELECTOR
-
 // If defined, the arbiters of the shared virtual address adder, the DTLB and the DCACHE will give the highest priority to the store buffer in case of conflict. This might slightly increase the forwarding hit ration from the store buffer to the load buffer, while decreasing the latency of loads execution. 
 `define ENABLE_STORE_PRIO_2WAY_ARBITER
 
@@ -121,8 +143,26 @@
 // word/halfword/byte from it the fetched doubleword.
 //`define ONLY_DOUBLEWORD_MEM_ACCESSES
 
+// CSRs
+// ----
+// If defined, instantiate additional performance counters (mcycle and 
+// minstret are always instantiated). See 'csrs.sv' to see what counters are
+// available in LEN5.
+`define LEN5_CSR_HPMCOUNTERS_EN
+
 //////////////////////////////////////////////////////////////////////////////
 // CONSTRUCT PARAMETERS FROM DEFINES
+
+`ifdef MEM_EMU_SKIP_INSTR_OUT_REG
+localparam  MEM_EMU_SKIP_INSTR_OUT_REG = 1;
+`else
+localparam  MEM_EMU_SKIP_INSTR_OUT_REG = 0;
+`endif /* MEM_EMU_SKIP_INSTR_OUT_REG */
+`ifdef MEM_EMU_SKIP_DATA_OUT_REG
+localparam  MEM_EMU_SKIP_DATA_OUT_REG = 1;
+`else
+localparam  MEM_EMU_SKIP_DATA_OUT_REG = 0;
+`endif /* MEM_EMU_SKIP_DATA_OUT_REG */
 
 `ifdef SKIP_FETCH_MEMIF_REQ_SPILL_CELL
 localparam  FETCH_REQ_SPILL_SKIP = 1;

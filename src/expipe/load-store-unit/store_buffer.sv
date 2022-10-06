@@ -23,7 +23,6 @@ import uvm_pkg::*;
 
 import len5_pkg::XLEN;
 import len5_pkg::except_code_t;
-import len5_pkg::STBUFF_TAG_W;
 import expipe_pkg::*;
 import memory_pkg::*;
 
@@ -34,7 +33,9 @@ import memory_pkg::*;
  *          to be directly connected to a memory module.
  */
 module store_buffer #(
-    parameter DEPTH = 4
+    parameter   DEPTH = 4,
+    localparam  IDX_W = $clog2(DEPTH),
+    localparam  L0_TAG_W = XLEN-IDX_W
 ) (
     input   logic                       clk_i,
     input   logic                       rst_n_i,
@@ -70,9 +71,18 @@ module store_buffer #(
 
     /* Load buffer (for load-after-store dependencies) */
     output  logic                       lb_latest_valid_o,      // the latest store tag is valid
-    output  logic [STBUFF_TAG_W-1:0]    lb_latest_tag_o,        // tag of the latest store
+    output  logic [IDX_W-1:0]           lb_latest_idx_o,        // tag of the latest store
     output  logic                       lb_oldest_completed_o,  // the oldest store has completed 
-    output  logic [STBUFF_TAG_W-1:0]    lb_oldest_tag_o,        // tag of the oldest active store
+    output  logic [IDX_W-1:0]           lb_oldest_idx_o,        // tag of the oldest active store
+
+    /* Level-zero cache control (store-to-load forwarding) */
+    `ifdef LEN5_STORE_LOAD_FWD_EN
+    input   logic [IDX_W-1:0]           l0_idx_i,       // requested entry
+    output  logic [L0_TAG_W-1:0]        l0_tag_o,       // cached store tag
+    output  logic                       l0_cached_o,    // the entry is cached
+    output  ldst_width_t                l0_width_o,     // cached value width
+    output  logic [XLEN-1:0]            l0_value_o,     // cached value
+    `endif /* LEN5_STORE_LOAD_FWD_EN */
 
     /* Memory system */
     input   logic                       mem_valid_i,
@@ -81,30 +91,21 @@ module store_buffer #(
     output  logic                       mem_ready_o,
     output  mem_req_t                   mem_req_o,
     input   mem_ans_t                   mem_ans_i
-
-    /* Load buffer (store-to-load forwarding) */ /* TODO */
-    // input   logic [XLEN-1:0]            lb_addr_i,          // load address
-    // input   ldst_width_t                 lb_type_i,          // load type
-    // input   logic [STBUFF_TAG_W:0]    lb_older_cnt_i,     // nummber of older store instructions
-    // output  logic [STBUFF_TAG_W-1:0]  lb_pending_cnt_o,   // number of uncommitted store instructions
-    // output  logic                       lb_committing_o,    // a store is committing
-    // output  logic                       lb_hit_o,           // store data can be forwarded
-    // output  logic [XLEN-1:0]            lb_value_o,         // store value
 );
 
     // INTERNAL SIGNALS
     // ----------------
 
     // Head, tail, and address calculation counters
-    logic [$clog2(DEPTH)-1:0]   head_idx, tail_idx, addr_idx, mem_idx;
+    logic [IDX_W-1:0]           head_idx, tail_idx, addr_idx, mem_idx;
     logic                       head_cnt_en, tail_cnt_en, addr_cnt_en, mem_cnt_en;
     logic                       head_cnt_clr, tail_cnt_clr, addr_cnt_clr, mem_cnt_clr;
 
     // Generic status signals
-    logic           empty;  // the load buffer is empty
+    logic               empty;  // the load buffer is empty
 
-    // Latest store tag
-    logic [$clog2(DEPTH)-1:0]   latest_tag;
+    // Latest store idx
+    logic [IDX_W-1:0]   latest_idx;
 
     // Load buffer data
     sb_data_t       data[DEPTH];
@@ -150,7 +151,7 @@ module store_buffer #(
     // reaches the head of the ROB.
     assign  spec_store_exec = data[head_idx].dest_rob_idx == comm_rob_head_idx_i;
 
-    // Matching operands tags
+    // Matching operands idxs
     always_comb begin : p_match_rs
         foreach (data[i]) begin
             match_rs1[i]    = (cdb_data_i.rob_idx == data[i].rs1_rob_idx);
@@ -166,6 +167,22 @@ module store_buffer #(
 
         foreach (curr_state[i]) begin
             case (curr_state[i])
+            `ifdef LEN5_STORE_LOAD_FWD_EN
+                STORE_S_CACHED: begin // push
+                    if (push && tail_idx == i) begin
+                        sb_op[i]        = STORE_OP_PUSH;
+                        if (issue_rs1_i.ready && issue_rs2_i.ready)
+                            next_state[i]   = STORE_S_ADDR_REQ;
+                        else if (!issue_rs1_i.ready && issue_rs2_i.ready)
+                            next_state[i]   = STORE_S_RS1_PENDING;
+                        else if (issue_rs1_i.ready && !issue_rs2_i.ready)
+                            next_state[i]   = STORE_S_RS2_PENDING;
+                        else
+                            next_state[i]   = STORE_S_RS12_PENDING;
+                    end else 
+                        next_state[i] = STORE_S_CACHED; 
+                end
+            `endif /* LEN5_STORE_LOAD_FWD_EN */
                 STORE_S_EMPTY: begin // push
                     if (push && tail_idx == i) begin
                         sb_op[i]        = STORE_OP_PUSH;
@@ -260,7 +277,11 @@ module store_buffer #(
                 end
                 STORE_S_COMPLETED: begin
                     if (pop && head_idx == i)
+                    `ifdef LEN5_STORE_LOAD_FWD_EN
+                        next_state[i]   = STORE_S_CACHED;
+                    `else
                         next_state[i]   = STORE_S_EMPTY;
+                    `endif /* LEN5_STORE_LOAD_FWD_EN */
                     else 
                         next_state[i]   = STORE_S_COMPLETED;
                 end
@@ -272,20 +293,17 @@ module store_buffer #(
     // State update
     always_ff @( posedge clk_i or negedge rst_n_i ) begin : p_state_update
         if (!rst_n_i) foreach (curr_state[i]) curr_state[i] <= STORE_S_EMPTY;
+    `ifdef LEN5_STORE_LOAD_FWD_EN
+        else if (flush_i) foreach (curr_state[i]) curr_state[i] <= (!data[i].speculative && curr_state[i] == STORE_S_CACHED) ? STORE_S_CACHED : STORE_S_EMPTY;
+    `else
         else if (flush_i) foreach (curr_state[i]) curr_state[i] <= STORE_S_EMPTY;
+    `endif /* LEN5_STORE_LOAD_FWD_EN */
         else curr_state <= next_state;
     end
 
     // ------------------
     // LOAD BUFFER UPDATE
     // ------------------
-
-    // NOTE: operations priority:
-    // 1) push
-    // 2) pop
-    // 3) update memory value
-    // 4) update address
-    // 5) update rs1 (from CDB)
     always_ff @( posedge clk_i or negedge rst_n_i ) begin : p_lb_update
         if (!rst_n_i) begin
             foreach (data[i]) begin
@@ -331,19 +349,22 @@ module store_buffer #(
         end
     end
 
-    // Latest store instruction tag update
-    always_ff @( posedge clk_i or negedge rst_n_i ) begin : latest_tag_reg
-        if (!rst_n_i)       latest_tag  <= '0;
-        else if (flush_i)   latest_tag  <= '0;
-        else if (push)      latest_tag  <= tail_idx;
+    // Latest store instruction idx update
+    always_ff @( posedge clk_i or negedge rst_n_i ) begin : latest_idx_reg
+        if (!rst_n_i)       latest_idx  <= '0;
+        else if (flush_i)   latest_idx  <= '0;
+        else if (push)      latest_idx  <= tail_idx;
     end
 
     // -----------------
     // OUTPUT EVALUATION
     // -----------------
-
     /* Issue stage */
+    `ifdef LEN5_STORE_LOAD_FWD_EN
+    assign  issue_ready_o  = (curr_state[tail_idx] == STORE_S_EMPTY) | (curr_state[tail_idx] == STORE_S_CACHED);
+    `else
     assign  issue_ready_o  = curr_state[tail_idx] == STORE_S_EMPTY;
+    `endif /* LEN5_STORE_LOAD_FWD_EN */
     
     /* CDB */
     // NOTE: save memory address in result field for exception handling (mtval)
@@ -365,9 +386,17 @@ module store_buffer #(
 
     /* Load buffer */
     assign  lb_latest_valid_o       = !empty;
-    assign  lb_latest_tag_o         = latest_tag;
+    assign  lb_latest_tag_o         = latest_idx;
     assign  lb_oldest_completed_o   = mem_done;
     assign  lb_oldest_tag_o         = mem_ans_i.tag;
+
+    /* Level-zero cache */
+    `ifdef LEN5_STORE_LOAD_FWD_EN
+    assign  l0_tag_o        = data[l0_idx_i].imm_addr_value[XLEN-1-:L0_TAG_W];
+    assign  l0_cached_o     = curr_state[l0_idx_i] == STORE_S_CACHED | curr_state[l0_idx_i] == STORE_S_COMPLETED;
+    assign  l0_width_o      = data[l0_idx_i].store_type;
+    assign  l0_value_o      = data[l0_idx_i].rs2_value;
+    `endif /* LEN5_STORE_LOAD_FWD_EN */
 
     /* Memory system */
     assign  mem_valid_o         = curr_state[mem_idx] == STORE_S_MEM_REQ;

@@ -174,24 +174,24 @@ package len5_pkg;
     localparam FREG_IDX_LEN = $clog2(FREG_NUM); // Floating point register file address width
 
     // ISSUE QUEUE
-    localparam IQ_DEPTH = 4; // number of entries in the issue queue. This may or may not be a power of 2 (power of 2 recommended)
+    localparam IQ_DEPTH = 2; // number of entries in the issue queue. This may or may not be a power of 2 (power of 2 recommended)
 
     // LOAD/STORE UNIT
     localparam LDBUFF_DEPTH = 4; // number of entries in the load buffer
-    localparam STBUFF_DEPTH = 8; // number of entries in the store buffer
+    localparam STBUFF_DEPTH = 4; // number of entries in the store buffer
     localparam LDBUFF_TAG_W = $clog2(LDBUFF_DEPTH); // load buffer address width
     localparam STBUFF_TAG_W = $clog2(STBUFF_DEPTH); // store buffer address width
     localparam BUFF_IDX_LEN = (LDBUFF_TAG_W > STBUFF_TAG_W) ? (LDBUFF_TAG_W) : (STBUFF_TAG_W); // the largest of the two. Useful when comparing indexes from both
 
     // ROB
-    localparam ROB_DEPTH = 4; // Number of entries in the ROB. This also tells the number of instruction that coexist in the execution pipeline at the same time
+    localparam ROB_DEPTH = 8; // Number of entries in the ROB. This also tells the number of instruction that coexist in the execution pipeline at the same time
 
     // RESERVATION STATIONS
     localparam ALU_RS_DEPTH     = 4;
-    localparam MULT_RS_DEPTH    = 4;
-    localparam DIV_RS_DEPTH     = 4;
+    localparam MULT_RS_DEPTH    = 2;
+    localparam DIV_RS_DEPTH     = 2;
     localparam DIV_PIPE_DEPTH   = 8;
-    localparam FPU_RS_DEPTH     = 4;
+    localparam FPU_RS_DEPTH     = 2;
     localparam BU_RS_DEPTH      = 4;
 
 endpackage

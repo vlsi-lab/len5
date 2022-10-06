@@ -94,9 +94,7 @@ module arith_rs
     logic                   fwd_rs1_eu[DEPTH], fwd_rs2_eu[DEPTH];
     logic                   fwd_rs1_cdb[DEPTH], fwd_rs2_cdb[DEPTH];
     logic                   fwd_rs1[DEPTH], fwd_rs2[DEPTH];
-    logic                   insert_rs1_eu, insert_rs2_eu;
-    logic                   insert_rs1_cdb, insert_rs2_cdb;
-    logic                   insert_rs1, insert_rs2;
+    logic                   insert_fwd_rs1, insert_fwd_rs2;
     arith_op_t              arith_op[DEPTH];
 
     // Ready signals for the selectors
@@ -120,12 +118,8 @@ module arith_rs
 
     // Forward operands flags
     always_comb begin : p_fwd_rs
-        insert_rs1_eu   = eu_valid_i & (eu_rob_idx_i == issue_rs1_i.rob_idx);
-        insert_rs2_eu   = eu_valid_i & (eu_rob_idx_i == issue_rs2_i.rob_idx);
-        insert_rs1_cdb  = cdb_valid_i & (cdb_data_i.rob_idx == issue_rs1_i.rob_idx);
-        insert_rs2_cdb  = cdb_valid_i & (cdb_data_i.rob_idx == issue_rs2_i.rob_idx);
-        insert_rs1      = insert_rs1_eu | insert_rs1_cdb;
-        insert_rs2      = insert_rs2_eu | insert_rs2_cdb;
+        insert_fwd_rs1  = eu_valid_i & (eu_rob_idx_i == issue_rs1_i.rob_idx);
+        insert_fwd_rs2  = eu_valid_i & (eu_rob_idx_i == issue_rs2_i.rob_idx);
         foreach (data[i]) begin
             fwd_rs1_eu[i]   = eu_valid_i & (eu_rob_idx_i == data[i].rs1_rob_idx);
             fwd_rs2_eu[i]   = eu_valid_i & (eu_rob_idx_i == data[i].rs2_rob_idx);
@@ -150,7 +144,7 @@ module arith_rs
                             next_state[i]   = ARITH_S_EX_REQ;
                             arith_op[i]     = ARITH_OP_INSERT;
                         end else if (!issue_rs1_i.ready && issue_rs2_i.ready) begin
-                            if (insert_rs1) begin
+                            if (insert_fwd_rs1) begin
                                 next_state[i]   = ARITH_S_EX_REQ;
                                 arith_op[i]     = ARITH_OP_INSERT_RS1;
                             end else begin
@@ -158,7 +152,7 @@ module arith_rs
                                 arith_op[i]     = ARITH_OP_INSERT;
                             end
                         end else if (issue_rs1_i.ready && !issue_rs2_i.ready) begin
-                            if (insert_rs2) begin
+                            if (insert_fwd_rs2) begin
                                 next_state[i]   = ARITH_S_EX_REQ;
                                 arith_op[i]     = ARITH_OP_INSERT_RS2;
                             end else begin
@@ -166,7 +160,7 @@ module arith_rs
                                 arith_op[i]     = ARITH_OP_INSERT;
                             end
                         end else begin
-                            if (insert_rs1 & insert_rs2) begin
+                            if (insert_fwd_rs1 & insert_fwd_rs2) begin
                                 next_state[i]   = ARITH_S_EX_REQ;
                                 arith_op[i]     = ARITH_OP_INSERT_RS12;
                             end else begin
@@ -260,27 +254,15 @@ module arith_rs
                     ARITH_OP_INSERT_RS12: begin
                         data[i].eu_ctl              <= issue_eu_ctl_i;
                         data[i].rs1_rob_idx         <= issue_rs1_i.rob_idx;
-                        if (insert_rs1_eu) begin
-                            data[i].rs1_value       <= eu_result_i;
-                        end else begin
-                            data[i].rs1_value       <= cdb_data_i.res_value;
-                        end
+                        data[i].rs1_value           <= eu_result_i;
                         data[i].rs2_rob_idx         <= issue_rs2_i.rob_idx;
-                        if (insert_rs2_eu) begin
-                            data[i].rs2_value       <= eu_result_i;
-                        end else begin
-                            data[i].rs2_value       <= cdb_data_i.res_value;
-                        end
+                        data[i].rs2_value           <= eu_result_i;
                         data[i].dest_rob_idx        <= issue_dest_rob_idx_i;
                     end
                     ARITH_OP_INSERT_RS1: begin
                         data[i].eu_ctl              <= issue_eu_ctl_i;
                         data[i].rs1_rob_idx         <= issue_rs1_i.rob_idx;
-                        if (insert_rs1_eu) begin
-                            data[i].rs1_value       <= eu_result_i;
-                        end else begin
-                            data[i].rs1_value       <= cdb_data_i.res_value;
-                        end
+                        data[i].rs1_value           <= eu_result_i;
                         data[i].rs2_rob_idx         <= issue_rs2_i.rob_idx;
                         data[i].rs2_value           <= issue_rs2_i.value;
                         data[i].dest_rob_idx        <= issue_dest_rob_idx_i;
@@ -290,11 +272,7 @@ module arith_rs
                         data[i].rs1_rob_idx         <= issue_rs1_i.rob_idx;
                         data[i].rs1_value           <= issue_rs1_i.value;
                         data[i].rs2_rob_idx         <= issue_rs2_i.rob_idx;
-                        if (insert_rs2_eu) begin
-                            data[i].rs2_value       <= eu_result_i;
-                        end else begin
-                            data[i].rs2_value       <= cdb_data_i.res_value;
-                        end
+                        data[i].rs2_value           <= eu_result_i;
                         data[i].dest_rob_idx        <= issue_dest_rob_idx_i;
                     end
                     ARITH_OP_SAVE_RS12: begin

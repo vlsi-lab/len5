@@ -312,6 +312,7 @@ module issue_decoder (
     always_comb begin : alu_ctl_dec
         alu_ctl_except  = 1'b0;
         alu_ctl         = ALU_ADD;
+        alu32_ctl       = ALU_ADDW;
         unique case (instruction_i.r.funct3)
             `FUNCT3_ADD: begin
                 if (instruction_i.r.funct7 == `FUNCT7_SUB && 

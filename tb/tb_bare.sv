@@ -39,8 +39,8 @@ module tb_bare;
     localparam string MEM_DUMP_FILE = "mem_dump.txt";
     localparam  MEM_DUMP_T          = 0; // memory dump period (in cycles, 0 to disable)
     localparam  MEM_PIPE_NUM        = 0; // memory latency
-    localparam  MEM_SKIP_INS_REG    = 1; // skip instruction output register
-    localparam  MEM_SKIP_DATA_REG   = 1; // skip data output register
+    localparam  MEM_SKIP_INS_REG    = MEM_EMU_SKIP_INSTR_OUT_REG; // skip instruction output register
+    localparam  MEM_SKIP_DATA_REG   = MEM_EMU_SKIP_DATA_OUT_REG;  // skip data output register
 
     // Datapath configuration
     // NOTE: the memory can accept a number of outstanding requests equal to
@@ -141,11 +141,22 @@ module tb_bare;
                 @(posedge tb_stop);
                 repeat (10) @(posedge clk);
                 `uvm_info("TB", "Stopping simulation", UVM_INFO);
-                `uvm_info("TB", $sformatf("- current TB cycle:                  %0d", curr_cycle), UVM_INFO);
-                `uvm_info("TB", $sformatf("- total CPU cycles:                  %0d", u_datapath.u_backend.u_csrs.mcycle), UVM_INFO);
-                `uvm_info("TB", $sformatf("- retired instructions:              %0d", u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
-                `uvm_info("TB", $sformatf("- retired branch/jump instructions:  %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter3, real'(u_datapath.u_backend.u_csrs.hpmcounter3) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
-                `uvm_info("TB", $sformatf("- average IPC:                       %0.2f", real'(u_datapath.u_backend.u_csrs.minstret) / curr_cycle), UVM_INFO);
+                `uvm_info("TB", "EXECUTION REPORT", UVM_INFO);
+            `ifndef LEN5_CSR_HPMCOUNTERS_EN
+                `uvm_info("TB", "NOTE: extra performance counters not available since 'LEN5_CSR_HPMCOUNTERS_EN' is not defined", UVM_MEDIUM);
+            `endif /* LEN5_CSR_HPMCOUNTERS_EN */
+                `uvm_info("TB", $sformatf("- current TB cycle:                      %0d", curr_cycle), UVM_INFO);
+                `uvm_info("TB", $sformatf("- total CPU cycles:                      %0d", u_datapath.u_backend.u_csrs.mcycle), UVM_INFO);
+                `uvm_info("TB", $sformatf("- retired instructions:                  %0d", u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+            `ifdef LEN5_CSR_HPMCOUNTERS_EN
+                `uvm_info("TB", $sformatf("  > retired branch/jump instructions:    %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4, real'(u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+                `uvm_info("TB", $sformatf("    + jumps:                             %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter3, real'(u_datapath.u_backend.u_csrs.hpmcounter3) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+                `uvm_info("TB", $sformatf("    + branches:                          %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter4, real'(u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+                `uvm_info("TB", $sformatf("  > retired load/store instructions:     %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6, real'(u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+                `uvm_info("TB", $sformatf("    + loads:                             %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter5, real'(u_datapath.u_backend.u_csrs.hpmcounter5) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+                `uvm_info("TB", $sformatf("    + stores:                            %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter6, real'(u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+            `endif /* LEN5_CSR_HPMCOUNTERS_EN */
+                `uvm_info("TB", $sformatf("- average IPC:                           %0.2f", real'(u_datapath.u_backend.u_csrs.minstret) / curr_cycle), UVM_INFO);
                 $stop;
             end
         join

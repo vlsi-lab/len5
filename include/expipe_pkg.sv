@@ -384,12 +384,9 @@ package expipe_pkg;
     } bu_data_t;
 
     /* Branch unit operations */
-    typedef enum logic [3:0] {
+    typedef enum logic [2:0] {
         BU_OP_NONE,
         BU_OP_INSERT,
-        BU_OP_INSERT_RS12,
-        BU_OP_INSERT_RS1,
-        BU_OP_INSERT_RS2,
         BU_OP_SAVE_RS12,
         BU_OP_SAVE_RS1,
         BU_OP_SAVE_RS2,
@@ -435,6 +432,7 @@ package expipe_pkg;
         LOAD_OP_SAVE_RS1,
         LOAD_OP_SAVE_ADDR,
         LOAD_OP_ADDR_EXCEPT,
+        LOAD_OP_SAVE_CACHED,
         LOAD_OP_SAVE_MEM,
         LOAD_OP_MEM_EXCEPT
     } lb_op_t;
@@ -454,6 +452,7 @@ package expipe_pkg;
         STORE_S_MEM_REQ,
         STORE_S_MEM_WAIT,
         STORE_S_COMPLETED,
+        STORE_S_CACHED,
         STORE_S_HALT    // for debug
     } sb_state_t;
 
@@ -469,7 +468,6 @@ package expipe_pkg;
         logic [XLEN-1:0]            imm_addr_value; // immediate offset, then replaced with resulting address
         logic                       except_raised;
         except_code_t               except_code;
-        logic [XLEN-1:0]            value;
     } sb_data_t;
 
     /* Store instruction command */
@@ -516,6 +514,7 @@ package expipe_pkg;
         COMM_TYPE_NONE,     // no data to commit (e.g., nops)
         COMM_TYPE_INT_RF,   // commit to integer register file
         COMM_TYPE_FP_RF,    // commit to floating-point register file
+        COMM_TYPE_LOAD,     // commit load instructions
         COMM_TYPE_STORE,    // commit store instructions
         COMM_TYPE_BRANCH,   // commit branch instructions
         COMM_TYPE_JUMP,     // commit jump-and-link instructions
@@ -545,6 +544,17 @@ package expipe_pkg;
         COMM_CSR_SEL_INT,       // select interrupt data
         COMM_CSR_SEL_ZERO       // 'h0
     } comm_csr_sel_t;
+
+    // CSR committing instruction type (for performance counters)
+    typedef enum logic [2:0] {
+        COMM_CSR_INSTR_TYPE_NONE,   // not committing any instruction
+        COMM_CSR_INSTR_TYPE_INT,    // committing generic integer instruction
+        COMM_CSR_INSTR_TYPE_LOAD,   // committing load instruction
+        COMM_CSR_INSTR_TYPE_STORE,  // committing store instruction
+        COMM_CSR_INSTR_TYPE_JUMP,   // committing jump instruction
+        COMM_CSR_INSTR_TYPE_BRANCH, // committing branch instruction
+        COMM_CSR_INSTR_TYPE_OTHER   // committing other instruction type
+    } comm_csr_instr_t;
 
 endpackage
 

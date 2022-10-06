@@ -26,7 +26,8 @@ module exec_stage
     // Clock, reset, and flush
     input   logic                       clk_i,
     input   logic                       rst_n_i,
-    input   logic                       flush_i,
+    input   logic                       mis_flush_i,
+    input   logic                       except_flush_i,
 
     // ISSUE STAGE
     input   logic                       issue_valid_i [0:EU_N-1], // valid to each RS
@@ -75,7 +76,8 @@ module exec_stage
     ) u_load_store_unit (
     	.clk_i                          (clk_i                          ),
         .rst_n_i                        (rst_n_i                        ),
-        .flush_i                        (flush_i                        ),
+        .mis_flush_i                    (mis_flush_i                    ),
+        .except_flush_i                 (except_flush_i                 ),
         .issue_lb_valid_i               (issue_valid_i[EU_LOAD_BUFFER]  ),
         .issue_sb_valid_i               (issue_valid_i[EU_STORE_BUFFER] ),
         .issue_lb_ready_o               (issue_ready_o[EU_LOAD_BUFFER]  ),
@@ -108,24 +110,24 @@ module exec_stage
     // -----------
     branch_unit #(.RS_DEPTH (BU_RS_DEPTH)) u_branch_unit
     (
-        .clk_i                      (clk_i),
-        .rst_n_i                    (rst_n_i),
-        .flush_i                    (flush_i),
-        .issue_valid_i              (issue_valid_i[EU_BRANCH_UNIT]),
-        .issue_ready_o              (issue_ready_o[EU_BRANCH_UNIT]),
-        .issue_branch_type_i        (issue_eu_ctl_i.bu),
-        .issue_rs1_i                (issue_rs1_i),
-        .issue_rs2_i                (issue_rs2_i),
-        .issue_imm_value_i          (issue_imm_value_i),
-        .issue_dest_rob_idx_i       (issue_rob_idx_i),
-        .issue_curr_pc_i            (issue_curr_pc_i),
-        .issue_pred_target_i        (issue_pred_target_i),
-        .issue_pred_taken_i         (issue_pred_taken_i),
-        .cdb_ready_i                (cdb_ready_i[EU_BRANCH_UNIT]),
-        .cdb_valid_i                (cdb_valid_i),
-        .cdb_valid_o                (cdb_valid_o[EU_BRANCH_UNIT]),
-        .cdb_data_i                 (cdb_data_i),
-        .cdb_data_o                 (cdb_data_o[EU_BRANCH_UNIT])
+        .clk_i                      (clk_i                          ),
+        .rst_n_i                    (rst_n_i                        ),
+        .flush_i                    (mis_flush_i                    ),
+        .issue_valid_i              (issue_valid_i[EU_BRANCH_UNIT]  ),
+        .issue_ready_o              (issue_ready_o[EU_BRANCH_UNIT]  ),
+        .issue_branch_type_i        (issue_eu_ctl_i.bu              ),
+        .issue_rs1_i                (issue_rs1_i                    ),
+        .issue_rs2_i                (issue_rs2_i                    ),
+        .issue_imm_value_i          (issue_imm_value_i              ),
+        .issue_dest_rob_idx_i       (issue_rob_idx_i                ),
+        .issue_curr_pc_i            (issue_curr_pc_i                ),
+        .issue_pred_target_i        (issue_pred_target_i            ),
+        .issue_pred_taken_i         (issue_pred_taken_i             ),
+        .cdb_ready_i                (cdb_ready_i[EU_BRANCH_UNIT]    ),
+        .cdb_valid_i                (cdb_valid_i                    ),
+        .cdb_valid_o                (cdb_valid_o[EU_BRANCH_UNIT]    ),
+        .cdb_data_i                 (cdb_data_i                     ),
+        .cdb_data_o                 (cdb_data_o[EU_BRANCH_UNIT]     )
     );
 
     // ------------------------
@@ -138,7 +140,7 @@ module exec_stage
     (
         .clk_i                  (clk_i                      ),
         .rst_n_i                (rst_n_i                    ),
-        .flush_i                (flush_i                    ),
+        .flush_i                (mis_flush_i                ),
         .issue_valid_i          (issue_valid_i[EU_INT_ALU]  ),
         .issue_ready_o          (issue_ready_o[EU_INT_ALU]  ),
         .issue_eu_ctl_i         (issue_eu_ctl_i.alu         ),
@@ -161,7 +163,7 @@ module exec_stage
     ) u_mult_unit (
         .clk_i                  (clk_i                      ),
         .rst_n_i                (rst_n_i                    ),
-        .flush_i                (flush_i                    ),
+        .flush_i                (mis_flush_i                ),
         .issue_valid_i          (issue_valid_i[EU_INT_MULT] ),
         .issue_ready_o          (issue_ready_o[EU_INT_MULT] ),
         .issue_eu_ctl_i         (issue_eu_ctl_i.mult        ),
@@ -184,7 +186,7 @@ module exec_stage
     ) u_div_unit (
         .clk_i                  (clk_i                     ),
         .rst_n_i                (rst_n_i                   ),
-        .flush_i                (flush_i                   ),
+        .flush_i                (mis_flush_i               ),
         .issue_valid_i          (issue_valid_i[EU_INT_DIV] ),
         .issue_ready_o          (issue_ready_o[EU_INT_DIV] ),
         .issue_eu_ctl_i         (issue_eu_ctl_i.div        ),
@@ -208,7 +210,7 @@ module exec_stage
     (
         .clk_i                  (clk_i),
         .rst_n_i                (rst_n_i),
-        .flush_i                (flush_i),
+        .flush_i                (mis_flush_i),
         .issue_valid_i          (issue_valid_i[EU_FPU]),
         .issue_ready_o          (issue_ready_o[EU_FPU]),
         .eu_ctl_i               (issue_eu_ctl_i[FPU_CTL_LEN-1:0]),

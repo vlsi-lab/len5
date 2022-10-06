@@ -29,7 +29,7 @@ module branch_unit
     // Issue Stage
     input   logic                           issue_valid_i,
     output  logic                           issue_ready_o,
-    input   branch_ctl_t                   issue_branch_type_i,
+    input   branch_ctl_t                    issue_branch_type_i,
     input   op_data_t                       issue_rs1_i,
     input   op_data_t                       issue_rs2_i,
     input   logic [XLEN-1:0]                issue_imm_value_i,
@@ -53,14 +53,14 @@ module branch_unit
     logic [XLEN-1:0]    rs_bu_curr_pc;
     logic [XLEN-1:0]    rs_bu_pred_target;
     logic               rs_bu_pred_taken;
-    branch_ctl_t       rs_bu_branch_type;
+    branch_ctl_t        rs_bu_branch_type;
 
     // Beanch logic <--> Reservation Station
-    logic                           bu_rs_ready;
-    logic                           bu_rs_valid;
-    logic                           rs_bu_valid;
-    logic                           rs_bu_ready;
-    logic [$clog2(RS_DEPTH)-1:0]    rs_bu_entry_idx;
+    logic       bu_rs_ready;
+    logic       bu_rs_valid;
+    logic       rs_bu_valid;
+    logic       rs_bu_ready;
+    rob_idx_t   rs_bu_rob_idx;
 
     // Branch logic
     logic                   res_taken;
@@ -77,12 +77,12 @@ module branch_unit
 
     // Branch logic output register
     typedef struct packed {
-        logic [$clog2(RS_DEPTH)-1:0]    rob_idx;
-        logic                           res_mispredicted;
-        logic                           res_taken;
-        logic [XLEN-1:0]                res_target;
+        rob_idx_t           rob_idx;
+        logic               res_mispredicted;
+        logic               res_taken;
+        logic [XLEN-1:0]    res_target;
 `ifndef LEN5_C_EN
-        logic                           except_raised;
+        logic               except_raised;
 `endif /* LEN5_C_EN */
     } bu_out_reg_t;
     bu_out_reg_t            bu_outreg_in, bu_outreg_out;
@@ -128,7 +128,7 @@ module branch_unit
 
     // Branch logic output register
     // NOTE: skipped by default, since it's likely not on the critical path
-    assign  bu_outreg_in.rob_idx            = rs_bu_entry_idx;
+    assign  bu_outreg_in.rob_idx            = rs_bu_rob_idx;
     assign  bu_outreg_in.res_mispredicted   = res_mispredicted;
     assign  bu_outreg_in.res_taken          = res_taken;
     assign  bu_outreg_in.res_target         = res_target;
@@ -185,7 +185,7 @@ module branch_unit
 `ifndef LEN5_C_EN
         .bu_except_raised_i   (bu_outreg_out.except_raised    ),
 `endif /* LEN5_C_EN */
-        .bu_rob_idx_o         (rs_bu_entry_idx                ),
+        .bu_rob_idx_o         (rs_bu_rob_idx                  ),
         .bu_rs1_o             (rs_bu_rs1                      ),
         .bu_rs2_o             (rs_bu_rs2                      ),
         .bu_imm_o             (rs_bu_imm                      ),

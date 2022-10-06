@@ -35,8 +35,7 @@ module csrs (
     input   logic                       valid_i,
 
     // Control from commit logic
-    input   logic                       comm_insn_i,    // an instruction is committing
-    input   logic                       comm_jb_i,      // a branch or jump instruction is committing
+    input   comm_csr_instr_t            comm_insn_i,    // committing instruction type
     input   csr_op_t                    comm_op_i,
     input   logic [FUNCT3_LEN-1:0]      funct3_i,
 
@@ -75,7 +74,12 @@ logic                   inv_op_exc;     // invalid operation (from funct3)
 // Performance counters control
 logic                   mcycle_load;
 logic                   minstret_load;
+`ifdef LEN5_CSR_HPMCOUNTERS_EN
 logic                   hpmcounter3_load;
+logic                   hpmcounter4_load;
+logic                   hpmcounter5_load;
+logic                   hpmcounter6_load;
+`endif /* LEN5_CSR_HPMCOUNTERS_EN */
 
 // ------------------------
 // PROCESSOR EXECUTION MODE
@@ -107,7 +111,12 @@ csr_mcycle_t        mcycle;
 csr_minstret_t      minstret;
 csr_mcounteren_t    mcounteren;
 csr_mcountinhibit_t mcountinhibit;
-csr_hpmcounter_t    hpmcounter3;    // counts retired jump/branch instr
+`ifdef LEN5_CSR_HPMCOUNTERS_EN
+csr_hpmcounter_t    hpmcounter3;    // counts retired jump instr
+csr_hpmcounter_t    hpmcounter4;    // counts retired branch instr
+csr_hpmcounter_t    hpmcounter5;    // counts retired load instr
+csr_hpmcounter_t    hpmcounter6;    // counts retired store instr
+`endif /* LEN5_CSR_HPMCOUNTERS_EN */
 // MSCRATCH
 csr_mscratch_t      mscratch;
 // MEPC
@@ -202,8 +211,12 @@ assign  mstatus.uie          = 1'b0;
 assign  mcounteren           = {32{1'b1}};
 
 // MCOUNTINHIBIT
-// NOTE: only mcycle, minstret, and hpmcounter3 are enabled
-assign  mcountinhibit        = {{28{1'b1}}, 4'b0000};
+// NOTE: only mcycle, minstret, and hpmcounter3/4 are enabled
+`ifdef LEN5_CSR_HPMCOUNTERS_EN
+assign  mcountinhibit        = {{25{1'b1}}, 7'b0000000};
+`else
+assign  mcountinhibit        = {{29{1'b1}}, 3'b000};
+`endif /* LEN5_CSR_HPMCOUNTERS_EN */
 
 // --------
 // CSR READ
@@ -253,6 +266,20 @@ always_comb begin : csr_read
             `CSR_ADDR_MINSTRET: begin
                 csr_rd_val  = minstret;
             end
+        `ifdef LEN5_CSR_HPMCOUNTERS_EN
+            `CSR_ADDR_HPMCOUNTER3: begin
+                csr_rd_val  = hpmcounter3;
+            end
+            `CSR_ADDR_HPMCOUNTER4: begin
+                csr_rd_val  = hpmcounter4;
+            end
+            `CSR_ADDR_HPMCOUNTER5: begin
+                csr_rd_val  = hpmcounter5;
+            end
+            `CSR_ADDR_HPMCOUNTER6: begin
+                csr_rd_val  = hpmcounter6;
+            end
+        `endif /* LEN5_CSR_HPMCOUNTERS_EN */
             `CSR_ADDR_MCOUNTEREN: begin
                 csr_rd_val  = mcounteren;
             end
@@ -358,12 +385,22 @@ end
 always_comb begin : perf_counters_ctl
     mcycle_load         = 1'b0;
     minstret_load       = 1'b0;
+`ifdef LEN5_CSR_HPMCOUNTERS_EN
     hpmcounter3_load    = 1'b0;
+    hpmcounter4_load    = 1'b0;
+    hpmcounter5_load    = 1'b0;
+    hpmcounter6_load    = 1'b0;
+`endif /* LEN5_CSR_HPMCOUNTERS_EN */
     if (csr_wr_en) begin
         unique case (addr_i)
             `CSR_ADDR_MCYCLE:       mcycle_load         = 1'b1;
             `CSR_ADDR_MINSTRET:     minstret_load       = 1'b1;
+        `ifdef LEN5_CSR_HPMCOUNTERS_EN
             `CSR_ADDR_HPMCOUNTER3:  hpmcounter3_load    = 1'b1;
+            `CSR_ADDR_HPMCOUNTER4:  hpmcounter4_load    = 1'b1;
+            `CSR_ADDR_HPMCOUNTER5:  hpmcounter5_load    = 1'b1;
+            `CSR_ADDR_HPMCOUNTER6:  hpmcounter6_load    = 1'b1;
+        `endif /* LEN5_CSR_HPMCOUNTERS_EN */
             default:;
         endcase
     end
@@ -373,7 +410,12 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : perf_counters
     if (!rst_n_i) begin
         mcycle      <= 'h0;
         minstret    <= 'h0;
+    `ifdef LEN5_CSR_HPMCOUNTERS_EN
         hpmcounter3 <= 'h0;
+        hpmcounter4 <= 'h0;
+        hpmcounter5 <= 'h0;
+        hpmcounter6 <= 'h0;
+    `endif /* LEN5_CSR_HPMCOUNTERS_EN */
     end else begin
         // mcycle
         if (mcycle_load)
@@ -383,13 +425,30 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : perf_counters
         // minstret
         if (minstret_load)
             minstret    <= csr_wr_val;
-        else if (comm_insn_i & !mcountinhibit[2])
+        else if (comm_insn_i != COMM_CSR_INSTR_TYPE_NONE && !mcountinhibit[2])
             minstret    <= minstret + 1;
-        // hpmcounter3 (retired jump or branches)
+    `ifdef LEN5_CSR_HPMCOUNTERS_EN
+        // hpmcounter3 (retired jumps)
         if (hpmcounter3_load)
             hpmcounter3 <= csr_wr_val;
-        else if (comm_jb_i & !mcountinhibit[3])
+        else if (comm_insn_i == COMM_CSR_INSTR_TYPE_JUMP && !mcountinhibit[3])
             hpmcounter3 <= hpmcounter3 + 1;
+        // hpmcounter4 (retired branches)
+        if (hpmcounter4_load)
+            hpmcounter4 <= csr_wr_val;
+        else if (comm_insn_i == COMM_CSR_INSTR_TYPE_BRANCH && !mcountinhibit[4])
+            hpmcounter4 <= hpmcounter4 + 1;
+        // hpmcounter5 (retired loads)
+        if (hpmcounter5_load)
+            hpmcounter5 <= csr_wr_val;
+        else if (comm_insn_i == COMM_CSR_INSTR_TYPE_LOAD && !mcountinhibit[5])
+            hpmcounter5 <= hpmcounter5 + 1;
+        // hpmcounter6 (retired stores)
+        if (hpmcounter6_load)
+            hpmcounter6 <= csr_wr_val;
+        else if (comm_insn_i == COMM_CSR_INSTR_TYPE_STORE && !mcountinhibit[6])
+            hpmcounter6 <= hpmcounter6 + 1;
+    `endif /* LEN5_CSR_HPMCOUNTERS_EN */
     end
 end
 

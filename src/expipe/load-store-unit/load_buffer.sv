@@ -34,7 +34,8 @@ import memory_pkg::*;;
  *          to be directly connected to a memory module.
  */
 module load_buffer #(
-    parameter DEPTH = 4
+    parameter   DEPTH = 4,
+    localparam  IDX_W = $clog2(DEPTH)
 ) (
     input   logic                       clk_i,
     input   logic                       rst_n_i,
@@ -65,9 +66,15 @@ module load_buffer #(
 
     /* Store buffer */
     input   logic                       sb_latest_valid_i,
-    input   logic [STBUFF_TAG_W-1:0]    sb_latest_tag_i,
+    input   logic [STBUFF_TAG_W-1:0]    sb_latest_idx_i,
     input   logic                       sb_oldest_completed_i,
-    input   logic [STBUFF_TAG_W-1:0]    sb_oldest_tag_i,
+    input   logic [STBUFF_TAG_W-1:0]    sb_oldest_idx_i,
+
+    /* Level-zero cache */
+    `ifdef LEN5_STORE_LOAD_FWD_EN
+    input   logic                       l0_valid_i,
+    input   [XLEN-1:0]                  l0_value_i,
+    `endif /* LEN5_STORE_LOAD_FWD_EN */
 
     /* Memory system */
     input   logic                       mem_valid_i,
@@ -82,9 +89,9 @@ module load_buffer #(
     // ----------------
 
     // Head, tail, and address calculation counters
-    logic [$clog2(DEPTH)-1:0]   head_idx, tail_idx, addr_idx, mem_idx;
-    logic                       head_cnt_en, tail_cnt_en, addr_cnt_en, mem_cnt_en;
-    logic                       head_cnt_clr, tail_cnt_clr, addr_cnt_clr, mem_cnt_clr;
+    logic [IDX_W-1:0]   head_idx, tail_idx, addr_idx, mem_idx;
+    logic               head_cnt_en, tail_cnt_en, addr_cnt_en, mem_cnt_en;
+    logic               head_cnt_clr, tail_cnt_clr, addr_cnt_clr, mem_cnt_clr;
 
     // Load buffer data
     lb_data_t       data[DEPTH];
@@ -97,7 +104,7 @@ module load_buffer #(
     // Load-after-store tracking
     logic                       store_dep_set[DEPTH], store_dep_clr[DEPTH];
     logic                       store_dep[DEPTH];
-    logic [STBUFF_TAG_W-1:0]    store_dep_tag[DEPTH];
+    logic [STBUFF_TAG_W-1:0]    store_dep_idx[DEPTH];
 
     // Byte selector/sign extender
 `ifdef ONLY_DOUBLEWORD_MEM_ACCESSES
@@ -118,7 +125,7 @@ module load_buffer #(
     assign  mem_accepted    = mem_valid_o & mem_ready_i;
     assign  save_mem        = mem_valid_i & mem_ready_o;
   
-    // Counters control
+    // Counters clear
     assign  head_cnt_clr    = flush_i;
     assign  tail_cnt_clr    = flush_i;
     assign  addr_cnt_clr    = flush_i;
@@ -126,7 +133,11 @@ module load_buffer #(
     assign  head_cnt_en     = pop;
     assign  tail_cnt_en     = push;
     assign  addr_cnt_en     = addr_accepted;
+`ifdef LEN5_STORE_LOAD_FWD_EN
+    assign  mem_cnt_en      = mem_accepted | (lb_op[mem_idx] == LOAD_OP_SAVE_CACHED);
+`else
     assign  mem_cnt_en      = mem_accepted;
+`endif /* LEN5_STORE_LOAD_FWD_EN */
 
     // State progression
     // NOTE: Mealy to avoid sampling useless data
@@ -190,6 +201,12 @@ module load_buffer #(
                     end
                 end
                 LOAD_S_MEM_REQ: begin // save memory value (from memory)
+                `ifdef LEN5_STORE_LOAD_FWD_EN
+                    if (l0_valid_i && mem_idx == i) begin
+                        lb_op[i]        = LOAD_OP_SAVE_CACHED;
+                        next_state[i]   = LOAD_S_COMPLETED;
+                    end else
+                `endif /* LEN5_STORE_LOAD_FWD_EN */
                     if (save_mem && mem_ans_i.tag == i) begin
                         if (mem_ans_i.except_raised) begin
                             lb_op[i]    = LOAD_OP_MEM_EXCEPT;
@@ -240,7 +257,7 @@ module load_buffer #(
     always_comb begin : store_dep_ctl
         foreach (store_dep[i]) begin
             store_dep_set[i]    = push & (tail_idx == i) & sb_latest_valid_i;
-            store_dep_clr[i]    = sb_oldest_completed_i & (sb_oldest_tag_i == store_dep_tag[i]);
+            store_dep_clr[i]    = sb_oldest_completed_i & (sb_oldest_idx_i == store_dep_idx[i]);
         end
     end
 
@@ -286,6 +303,11 @@ module load_buffer #(
                     LOAD_OP_SAVE_MEM: begin // save loaded value
                         data[i].value               <= read_data;
                     end
+                `ifdef LEN5_STORE_LOAD_FWD_EN
+                    LOAD_OP_SAVE_CACHED: begin // save cached store value
+                        data[i].value               <= l0_value_i;
+                    end
+                `endif /* LEN5_STORE_LOAD_FWD_EN */
                     LOAD_OP_MEM_EXCEPT: begin // save faulting mem. address
                         data[i].value               <= data[i].imm_addr_value;
                         data[i].except_raised       <= mem_ans_i.except_raised;
@@ -303,12 +325,12 @@ module load_buffer #(
             always_ff @( posedge clk_i or negedge rst_n_i ) begin : store_dep_reg
                 if (!rst_n_i) begin
                     store_dep[i]        <= 1'b0;
-                    store_dep_tag[i]    <= '0;
+                    store_dep_idx[i]    <= '0;
                 end else if (flush_i) begin 
                     store_dep[i]        <= 1'b0;
                 end else if (store_dep_set[i]) begin
                     store_dep[i]        <= 1'b1;
-                    store_dep_tag[i]    <= sb_latest_tag_i;
+                    store_dep_idx[i]    <= sb_latest_idx_i;
                 end else if (store_dep_clr[i]) begin
                     store_dep[i]        <= 1'b0;
                 end
@@ -341,7 +363,11 @@ module load_buffer #(
     assign adder_req_o.offs        = data[addr_idx].imm_addr_value;
 
     /* Memory system */
+    `ifdef LEN5_STORE_LOAD_FWD_EN
+    assign mem_valid_o         = ~l0_valid_i & (curr_state[mem_idx] == LOAD_S_MEM_REQ);
+    `else
     assign mem_valid_o         = curr_state[mem_idx] == LOAD_S_MEM_REQ;
+    `endif /* LEN5_STORE_LOAD_FWD_EN */
     assign mem_ready_o         = 1'b1;
     assign mem_req_o.tag       = mem_idx;
     assign mem_req_o.acc_type  = MEM_ACC_LD;

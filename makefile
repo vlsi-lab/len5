@@ -30,7 +30,7 @@ TB_SRCS 		:= 	$(ROOT)/tb/tb_with_l2cemu.sv \
 					$(ROOT)/tb/memory/cache_L2_system_emulator.sv \
 					$(ROOT)/tb/memory/memory_if.sv \
 					$(ROOT)/tb/memory/memory_bare_emu.sv
-TB_INCS			:= 	$(shell find $(ROOT)/src/ $(ROOT)/include/ $(ROOT)/tb/ -type f -name "*.svh")
+TB_INCS			:= 	$(shell find $(ROOT)/tb/ -type f -name "*.svh")
 ifdef CUSTOM_SRC_DIR
 CUSTOM_PKGS		?= 	$(shell grep --include=\*.sv -rlE "^package \w+;" $(CUSTOM_SRC_DIR))
 CUSTOM_SRCS 	?=	$(shell find $(CUSTOM_SRC_DIR) -type f -name '*.sv')
@@ -86,7 +86,7 @@ $(HW_BUILD_DIR)/.cache/pkg_list.f: $(PKG_SRCS) | $(HW_BUILD_DIR)/.cache
 # Modules
 .PHONY: modules
 modules: $(HW_BUILD_DIR)/.cache/.mod_done
-$(HW_BUILD_DIR)/.cache/.mod_done : $(HW_BUILD_DIR)/.cache/src_list.f $(HW_INCS) $(HW_BUILD_DIR)/.cache/.pkg_done | .check-vlog
+$(HW_BUILD_DIR)/.cache/.mod_done : $(HW_BUILD_DIR)/.cache/src_list.f $(HW_BUILD_DIR)/.cache/.pkg_done $(HW_INCS) | .check-vlog
 	@echo "## Compiling LEN5 modules..."
 	$(VLOG) $(MODULE_OPT) -F $<
 	touch $@
@@ -97,7 +97,7 @@ $(HW_BUILD_DIR)/.cache/src_list.f: $(MODULES_SRCS) | $(HW_BUILD_DIR)/.cache
 # Testbench
 .PHONY: tb
 tb: $(HW_BUILD_DIR)/.cache/.tb_done
-$(HW_BUILD_DIR)/.cache/.tb_done: $(HW_BUILD_DIR)/.cache/tb_list.f $(TB_INCS) $(HW_BUILD_DIR)/.cache/.mod_done | .check-vlog
+$(HW_BUILD_DIR)/.cache/.tb_done: $(HW_BUILD_DIR)/.cache/tb_list.f $(TB_INCS) $(HW_BUILD_DIR)/.cache/.mod_done $(HW_INCS) | .check-vlog
 	@echo "## Compiling LEN5 testbench..."
 	$(VLOG) $(MODULE_OPT) -F $<
 	touch $@
@@ -108,7 +108,7 @@ $(HW_BUILD_DIR)/.cache/tb_list.f: $(TB_SRCS) | $(HW_BUILD_DIR)/.cache
 # Custom files
 .PHONY: custom-src
 custom-src: $(HW_BUILD_DIR)/.cache/.custom_done 
-$(HW_BUILD_DIR)/.cache/.custom_done: $(HW_BUILD_DIR)/.cache/custom_list.f $(HW_BUILD_DIR)/.cache/.pkg_done | .check-vlog
+$(HW_BUILD_DIR)/.cache/.custom_done: $(HW_BUILD_DIR)/.cache/custom_list.f $(HW_BUILD_DIR)/.cache/.pkg_done $(HW_INCS) | .check-vlog
 	@echo "## Compiling custom modules..."
 	$(VLOG) $(MODULE_OPT) -F $<
 	touch $@

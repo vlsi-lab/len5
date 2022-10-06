@@ -285,7 +285,7 @@ module issue_stage
     // ISSUE CU
     // --------
     // Handshaking signals arbiter
-    assign  il_cu_ex_ready  = ex_ready_i[id_assigned_eu] | ireg_data_in.skip_eu;
+    assign  il_cu_ex_ready  = ex_ready_i[ireg_data_out.assigned_eu] | ireg_data_out.skip_eu;
 
     // CU
     issue_cu u_issue_cu(
