@@ -135,6 +135,7 @@ module commit_stage (
     // Committing instruction register
     logic                       comm_reg_en, comm_reg_clr;
     inreg_data_t                comm_reg_data;
+    csr_op_t                    comm_reg_csr_op;
     logic                       comm_reg_valid;
 
     // Commit adder
@@ -278,14 +279,17 @@ module commit_stage (
     always_ff @( posedge clk_i or negedge rst_n_i ) begin : comm_reg
         if (!rst_n_i) begin
             comm_reg_data   <= 'h0;
+            comm_reg_csr_op <= CSR_OP_CSRRW;
             comm_reg_valid  <= 1'b0;
         end
         else if (comm_reg_clr) begin
             comm_reg_data   <= 'h0;
+            comm_reg_csr_op <= CSR_OP_CSRRW;
             comm_reg_valid  <= 1'b0;
         end
         else if (comm_reg_en) begin
             comm_reg_data   <= inreg_data_out;
+            comm_reg_csr_op <= cd_csr_op;
             comm_reg_valid  <= inreg_cu_valid;
         end
     end
@@ -411,7 +415,7 @@ module commit_stage (
             end
         endcase
     end
-    assign  csr_op_o    = (cu_csr_override) ? CSR_OP_SYSTEM : cd_csr_op;
+    assign  csr_op_o    = (cu_csr_override) ? CSR_OP_SYSTEM : comm_reg_csr_op;
 
     // Jump/branch in-flight instructions counter
     // ------------------------------------------

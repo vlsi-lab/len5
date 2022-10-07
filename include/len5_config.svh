@@ -113,7 +113,7 @@
 // IMPORTANT: this feature breaks reads from memory-mapped devices, therefore
 // it is only applied to memory addresses outside of the region masked by
 // 'MMAP_MASK' (defined above).
-`define LEN5_STORE_LOAD_FWD_EN
+// `define LEN5_STORE_LOAD_FWD_EN
 `define ST2LD_FWD_MASK ~`MMAP_MASK
 
 // Enable C extension

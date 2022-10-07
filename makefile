@@ -39,7 +39,7 @@ endif
 # LEN5 test files
 SW_DIR			:= $(ROOT)/len5-software
 TEST_DIR 		:= $(SW_DIR)/test-programs
-TEST_SRCS		:= $(shell find $(TEST_DIR)/src -name '*.c' -or -name '*.s')
+TEST_SRCS		:= $(shell grep -rlE '(int|void)[ ]+main[ ]*\(.*\)|main:' $(TEST_DIR)/src/)
 TESTS			:= $(addprefix tests/,$(basename $(notdir $(TEST_SRCS))))
 
 # vlog options
@@ -143,8 +143,7 @@ $(TESTS):
 
 .PHONY: print-tests
 print-tests:
-	@printf -- "Available tests:\n"
-	@printf -- "> %s\n" $(TESTS:tests/%=%)
+	$(MAKE) -C $(SW_DIR) print-tests
 
 # Directories
 # -----------
@@ -157,7 +156,7 @@ $(BUILD_DIR) $(HW_BUILD_DIR) $(HW_BUILD_DIR)/.cache:
 clean:
 	if [ -d $(VWORK) ]; then vdel -lib $(VWORK) -all; fi
 	$(RM) -r $(HW_BUILD_DIR)
-	$(MAKE) -C $(SW_DIR) clean
+	$(MAKE) BUILD_DIR=$(SW_BUILD_DIR) -C $(SW_DIR) clean
 
 .PHONY: clean-all
 clean-all:
@@ -173,5 +172,3 @@ clean-all:
 	@echo
 	@echo "Source files:"
 	@printf ' - %s\n' $(MODULES_SRCS)
-	@echo "Test programs:"
-	@printf ' - %s\n' $(TEST_SRCS)
