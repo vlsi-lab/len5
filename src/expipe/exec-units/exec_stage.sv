@@ -17,6 +17,7 @@
 
 import len5_pkg::*;
 import expipe_pkg::*;
+import fetch_pkg::resolution_t;
 import memory_pkg::mem_req_t;
 import memory_pkg::mem_ans_t;
 import csr_pkg::SATP_MODE_LEN;
@@ -29,6 +30,11 @@ module exec_stage
     input   logic                       mis_flush_i,
     input   logic                       except_flush_i,
 
+    // Fetch stage
+    input   logic                       fe_ready_i,
+    output  logic                       fe_res_valid_o,
+    output  resolution_t                fe_res_o,
+
     // ISSUE STAGE
     input   logic                       issue_valid_i [0:EU_N-1], // valid to each RS
     output  logic                       issue_ready_o [0:EU_N-1], // ready from each RS
@@ -40,6 +46,7 @@ module exec_stage
     input   logic [XLEN-1:0]            issue_curr_pc_i,    // the PC of the current issuing instr (branches only)
     input   logic [XLEN-1:0]            issue_pred_target_i,// the predicted target of the current issuing instr (branches only)
     input   logic                       issue_pred_taken_i, // the predicted taken bit of the current issuing instr (branches only)
+    output  logic                       issue_mis_o,
 
     // COMMON DATA BUS (CDB)
     input   logic [0:EU_N-1]            cdb_ready_i, // from the CDB arbiter
@@ -113,6 +120,9 @@ module exec_stage
         .clk_i                      (clk_i                          ),
         .rst_n_i                    (rst_n_i                        ),
         .flush_i                    (mis_flush_i                    ),
+        .fe_ready_i                 (fe_ready_i                     ),
+        .fe_res_valid_o             (fe_res_valid_o                 ),
+        .fe_res_o                   (fe_res_o                       ),
         .issue_valid_i              (issue_valid_i[EU_BRANCH_UNIT]  ),
         .issue_ready_o              (issue_ready_o[EU_BRANCH_UNIT]  ),
         .issue_branch_type_i        (issue_eu_ctl_i.bu              ),
@@ -123,6 +133,7 @@ module exec_stage
         .issue_curr_pc_i            (issue_curr_pc_i                ),
         .issue_pred_target_i        (issue_pred_target_i            ),
         .issue_pred_taken_i         (issue_pred_taken_i             ),
+        .issue_mis_o                (issue_mis_o                    ),
         .cdb_ready_i                (cdb_ready_i[EU_BRANCH_UNIT]    ),
         .cdb_valid_i                (cdb_valid_i                    ),
         .cdb_valid_o                (cdb_valid_o[EU_BRANCH_UNIT]    ),

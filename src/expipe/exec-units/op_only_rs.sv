@@ -220,7 +220,6 @@ module op_only_rs
     // To the CDB
     assign cdb_data_o.rob_idx       = rs_data[head_idx].dest_idx;
     assign cdb_data_o.res_value     = rs_data[head_idx].rs1_value; // for CSR instructions
-    assign cdb_data_o.res_aux       = '0;
     assign cdb_data_o.except_raised = 1'b0; // no exception can be raised  (Wrong, First check the Missp if ok then cheeck address misaglined)
     assign cdb_data_o.except_code   = E_UNKNOWN;
 

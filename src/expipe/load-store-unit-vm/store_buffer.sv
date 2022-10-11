@@ -866,7 +866,6 @@ module store_buffer
     // TO THE CDB
     assign cdb_data_o.rob_idx       = sb_data[cdb_req_idx].dest_idx;
     assign cdb_data_o.res_value     = sb_data[cdb_req_idx].rs2_value;   // (RS2 READ PORT 4)
-    assign cdb_data_o.res_aux       = '0;
     assign cdb_data_o.except_raised = sb_data[cdb_req_idx].except_raised;
     assign cdb_data_o.except_code   = sb_data[cdb_req_idx].except_code;
     

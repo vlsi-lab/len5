@@ -57,8 +57,7 @@ module branch_rs
     output  logic                   bu_ready_o,
     input   rob_idx_t               bu_rob_idx_i,
     input   logic                   bu_res_mis_i,   // mispredcition result
-    input   logic                   bu_res_taken_i, // branch outcome
-    input   logic [XLEN-1:0]        bu_res_target_i, // computed branch target address
+    input   logic [XLEN-1:0]        bu_link_addr_i, // computed link address
 `ifndef LEN5_C_EN
     input   logic                   bu_except_raised_i,
 `endif /* LEN5_C_EN */
@@ -74,38 +73,39 @@ module branch_rs
     // INTERNAL SIGNALS
     // ----------------
 
-    // New, execution, and CDB write pointers
-    logic [RS_IDX_LEN-1:0]  new_idx, ex_idx, cdb_idx;
-    logic                   empty[DEPTH], ready_ex[DEPTH], ready_cdb[DEPTH];
+    // Head, tail, and execution counters
+    logic                   head_cnt_en, head_cnt_clr;
+    logic                   tail_cnt_en, tail_cnt_clr;
+    logic                   ex_cnt_en, ex_cnt_clr;
+    logic [RS_IDX_LEN-1:0]  tail_idx, ex_idx, head_idx;
     
     // Branch reservation station data
     bu_data_t               data[DEPTH];
     bu_state_t              curr_state[DEPTH], next_state[DEPTH];
 
     // Reservation station control
-    logic                   insert, remove, ex_accepted, save_res;
+    logic                   push, pop, ex_accepted, save_res;
     logic                   fwd_rs1[DEPTH], fwd_rs2[DEPTH];
     logic                   insert_rs1, insert_rs2;
     bu_op_t                 bu_op[DEPTH];
-
-    // Ready signals for the selectors
-    always_comb begin : p_enc_signals
-        foreach (curr_state[i]) begin
-            empty[i]        = curr_state[i] == BU_S_EMPTY;
-            ready_ex[i]     = curr_state[i] == BU_S_EX_REQ;
-            ready_cdb[i]    = curr_state[i] == BU_S_COMPLETED;
-        end        
-    end
 
     // -------------------------------
     // BRANCH UNIT BUFFER CONTROL UNIT
     // -------------------------------
 
-    // Control signals
-    assign  insert      = issue_valid_i & issue_ready_o;
-    assign  remove      = cdb_valid_o & cdb_ready_i;
+    // Buffer control
+    assign  push        = issue_valid_i & issue_ready_o;
+    assign  pop         = cdb_valid_o & cdb_ready_i;
     assign  ex_accepted = bu_valid_o & bu_ready_i;
     assign  save_res    = bu_valid_i & bu_ready_o;
+
+    // Counters control
+    assign  head_cnt_clr    = flush_i;
+    assign  tail_cnt_clr    = flush_i;
+    assign  ex_cnt_clr      = flush_i;
+    assign  head_cnt_en     = pop;
+    assign  tail_cnt_en     = push;
+    assign  ex_cnt_en       = ex_accepted;
 
     // Operands forwarding control
     always_comb begin : p_fwd_rs
@@ -123,8 +123,8 @@ module branch_rs
 
         foreach (curr_state[i]) begin
             case (curr_state[i])
-                BU_S_EMPTY: begin // insert a new instruction
-                    if (insert && new_idx == i) begin
+                BU_S_EMPTY: begin // push a new instruction
+                    if (push && tail_idx == i) begin
                         if (issue_rs1_i.ready && issue_rs2_i.ready) begin
                             next_state[i]       = BU_S_EX_REQ;
                             bu_op[i]            = BU_OP_INSERT;
@@ -184,7 +184,7 @@ module branch_rs
                         next_state[i]   = BU_S_EX_WAIT;
                 end
                 BU_S_COMPLETED: begin
-                    if (remove && cdb_idx == i)
+                    if (pop && head_idx == i)
                         next_state[i]   = BU_S_EMPTY;
                     else 
                         next_state[i]   = BU_S_COMPLETED;
@@ -223,7 +223,7 @@ module branch_rs
                         data[i].rs2_value           <= issue_rs2_i.value;
                         data[i].imm_value           <= issue_imm_value_i;
                         data[i].dest_rob_idx        <= issue_dest_rob_idx_i;
-                        data[i].target              <= issue_pred_target_i;
+                        data[i].target_link         <= issue_pred_target_i;
                         data[i].taken               <= issue_pred_taken_i;
                     end
                     BU_OP_SAVE_RS12: begin
@@ -237,8 +237,7 @@ module branch_rs
                         data[i].rs2_value           <= cdb_data_i.res_value;
                     end
                     BU_OP_SAVE_RES: begin
-                        data[i].target              <= bu_res_target_i;
-                        data[i].taken               <= bu_res_taken_i;
+                        data[i].target_link         <= bu_link_addr_i;
                         data[i].mispredicted        <= bu_res_mis_i;
                     `ifndef LEN5_C_EN
                         data[i].except_raised       <= bu_except_raised_i;
@@ -255,20 +254,18 @@ module branch_rs
     // -----------------
 
     /* Issue Stage */
-    assign  issue_ready_o   = curr_state[new_idx] == BU_S_EMPTY;
+    assign  issue_ready_o   = curr_state[tail_idx] == BU_S_EMPTY;
 
     /* CDB */
-    assign  cdb_valid_o                         = curr_state[cdb_idx] == BU_S_COMPLETED;
-    assign  cdb_data_o.rob_idx                  = data[cdb_idx].dest_rob_idx;
-    assign  cdb_data_o.res_value                = data[cdb_idx].target;
-    assign  cdb_data_o.res_aux.jb.mispredicted  = data[cdb_idx].mispredicted;
-    assign  cdb_data_o.res_aux.jb.taken         = data[cdb_idx].taken;
+    assign  cdb_valid_o                         = curr_state[head_idx] == BU_S_COMPLETED;
+    assign  cdb_data_o.rob_idx                  = data[head_idx].dest_rob_idx;
+    assign  cdb_data_o.res_value                = data[head_idx].target_link;
 `ifndef LEN5_C_EN
-    assign  cdb_data_o.except_raised            = data[cdb_idx].except_raised;
+    assign  cdb_data_o.except_raised            = data[head_idx].except_raised;
 `else
     assign  cdb_data_o.except_raised            = 1'b0;
 `endif /* LEN5_C_EN */
-    assign  cdb_data_o.except_code              = E_I_ADDR_MISALIGNED;
+    assign  cdb_data_o.except_code              = (data[head_idx].mispredicted) ? E_MISPREDICTION : E_I_ADDR_MISALIGNED;
 
     /* Branch Unit logic */
     assign  bu_valid_o       = curr_state[ex_idx] == BU_S_EX_REQ;
@@ -277,37 +274,49 @@ module branch_rs
     assign  bu_rs2_o         = data[ex_idx].rs2_value;
     assign  bu_imm_o         = data[ex_idx].imm_value;
     assign  bu_curr_pc_o     = data[ex_idx].curr_pc;
-    assign  bu_pred_target_o = data[ex_idx].target;
+    assign  bu_pred_target_o = data[ex_idx].target_link;
     assign  bu_pred_taken_o  = data[ex_idx].taken;
     assign  bu_branch_type_o = data[ex_idx].branch_type;
     assign  bu_rob_idx_o     = data[ex_idx].dest_rob_idx;
 
-    // ---------------
-    // ENTRY SELECTORS
-    // ---------------
+    // --------
+    // COUNTERS
+    // --------
 
-    // New entry
-    prio_enc #(.N(DEPTH)) new_sel
-    (
-        .lines_i    (empty         ),
-        .enc_o      (new_idx       ),
-        .valid_o    ()
+    // Head counter pointing to the oldest branch/jump instruction
+    modn_counter #(
+        .N (DEPTH)
+    ) u_head_counter (
+    	.clk_i   (clk_i         ),
+        .rst_n_i (rst_n_i       ),
+        .en_i    (head_cnt_en   ),
+        .clr_i   (head_cnt_clr  ),
+        .count_o (head_idx      ),
+        .tc_o    () // not needed
     );
 
-    // Execution
-    prio_enc #(.N(DEPTH)) ex_sel
-    (
-        .lines_i    (ready_ex      ),
-        .enc_o      (ex_idx        ),
-        .valid_o    ()
+    // Tail counter pointing to the first empty entry
+    modn_counter #(
+        .N (DEPTH)
+    ) u_tail_counter (
+    	.clk_i   (clk_i         ),
+        .rst_n_i (rst_n_i       ),
+        .en_i    (tail_cnt_en   ),
+        .clr_i   (tail_cnt_clr  ),
+        .count_o (tail_idx      ),
+        .tc_o    () // not needed
     );
 
-    // CDB access
-    prio_enc #(.N(DEPTH)) cdb_sel
-    (
-        .lines_i    (ready_cdb     ),
-        .enc_o      (cdb_idx       ),
-        .valid_o    ()
+    // Execution counter pointing to the executing branch/jump instruction
+    modn_counter #(
+        .N (DEPTH)
+    ) u_addr_counter (
+    	.clk_i   (clk_i      ),
+        .rst_n_i (rst_n_i    ),
+        .en_i    (ex_cnt_en  ),
+        .clr_i   (ex_cnt_clr ),
+        .count_o (ex_idx     ),
+        .tc_o    () // not needed
     );
 
     // ----------

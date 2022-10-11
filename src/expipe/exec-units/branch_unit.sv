@@ -16,15 +16,20 @@
 
 import len5_pkg::*;
 import expipe_pkg::*;
+import fetch_pkg::resolution_t;
 
 module branch_unit 
 #(
     RS_DEPTH = 4  // must be a power of 2
-)
-(
+) (
     input   logic                           clk_i,
     input   logic                           rst_n_i,
     input   logic                           flush_i,
+
+    // Frontend
+    input   logic                           fe_ready_i,
+    output  logic                           fe_res_valid_o,
+    output  resolution_t                    fe_res_o,
 
     // Issue Stage
     input   logic                           issue_valid_i,
@@ -37,6 +42,7 @@ module branch_unit
     input   logic [XLEN-1:0]                issue_curr_pc_i,
     input   logic [XLEN-1:0]                issue_pred_target_i,
     input   logic                           issue_pred_taken_i,
+    output  logic                           issue_mis_o,
 
     // CDB 
     input   logic                           cdb_ready_i,
@@ -44,6 +50,7 @@ module branch_unit
     output  logic                           cdb_valid_o,
     input   cdb_data_t                      cdb_data_i,
     output  cdb_data_t                      cdb_data_o
+
 );
 
     // Data from/to the execution unit
@@ -67,6 +74,7 @@ module branch_unit
     logic                   wrong_taken;
     logic                   wrong_target;
     logic                   res_mispredicted;
+    logic [XLEN-1:0]        link_addr;
     logic [XLEN-1:0]        res_target;
     logic [XLEN-1:0]        adder_op;
     logic [XLEN-1:0]        adder_out;
@@ -80,18 +88,23 @@ module branch_unit
         rob_idx_t           rob_idx;
         logic               res_mispredicted;
         logic               res_taken;
-        logic [XLEN-1:0]    res_target;
+        logic [XLEN-1:0]    link_addr;
 `ifndef LEN5_C_EN
         logic               except_raised;
 `endif /* LEN5_C_EN */
     } bu_out_reg_t;
     bu_out_reg_t            bu_outreg_in, bu_outreg_out;
 
+    // Resolution register
+    logic                   res_reg_en;
+    resolution_t            res_d;
+
     // ------------
     // BRANCH LOGIC
     // ------------
 
-    // Branch taken detection logic
+    // Branch taken detection
+    // ----------------------
     always_comb begin
         case (rs_bu_branch_type)
         BEQ:      res_taken = (rs_bu_rs1 == rs_bu_rs2);
@@ -106,14 +119,20 @@ module branch_unit
         endcase
     end
     
-    // Target adder and operand MUX
+    // Branch target computation
+    // -------------------------
     // NOTE: set the target LSB to zero as per JAL/JALR specs
     assign  adder_op    = (rs_bu_branch_type == JALR) ? rs_bu_rs1 : rs_bu_curr_pc;
     assign  adder_out   = rs_bu_imm + adder_op;
     assign  res_lsb     = (rs_bu_branch_type == JALR) ? 1'b0 : adder_out[0];
     assign  res_target  = {adder_out[XLEN-1:1], res_lsb};
 
-    // Misprediction logic
+    // Link address adder
+    // --------------------
+    assign  link_addr   = rs_bu_curr_pc + (ILEN >> 3);
+
+    // Prediction check
+    // ----------------
     assign  wrong_target        = rs_bu_pred_target != res_target;
     assign  wrong_taken         = rs_bu_pred_taken != res_taken;
     assign  res_mispredicted    = wrong_taken | (rs_bu_pred_taken & wrong_target);
@@ -127,11 +146,11 @@ module branch_unit
 `endif /* LEN5_C_EN */
 
     // Branch logic output register
-    // NOTE: skipped by default, since it's likely not on the critical path
+    // ----------------------------
     assign  bu_outreg_in.rob_idx            = rs_bu_rob_idx;
     assign  bu_outreg_in.res_mispredicted   = res_mispredicted;
     assign  bu_outreg_in.res_taken          = res_taken;
-    assign  bu_outreg_in.res_target         = res_target;
+    assign  bu_outreg_in.link_addr          = link_addr;
 `ifndef LEN5_C_EN
     assign  bu_outreg_in.except_raised      = except_raised;
 `endif /* LEN5_C_EN */
@@ -148,6 +167,34 @@ module branch_unit
         .ready_o (bu_rs_ready   ),
         .data_i  (bu_outreg_in  ),
         .data_o  (bu_outreg_out )
+    );
+
+    // Resolution register
+    // -------------------
+    always_ff @( posedge clk_i or negedge rst_n_i ) begin : res_reg
+        if (!rst_n_i)           res_d   <= '0;
+        else if (flush_i)       res_d   <= '0;
+        else if (res_reg_en) begin
+            res_d.pc            <= rs_bu_curr_pc;
+            res_d.target        <= res_target;
+            res_d.taken         <= res_taken;
+            res_d.mispredict    <= res_mispredicted;
+        end
+    end
+
+    // -------------------
+    // BRANCH CONTROL UNIT
+    // -------------------
+    branch_cu u_branch_cu(
+    	.clk_i           (clk_i            ),
+        .rst_n_i         (rst_n_i          ),
+        .flush_i         (flush_i          ),
+        .valid_i         (rs_bu_valid      ),
+        .misprediction_i (res_mispredicted ),
+        .issue_mis_o     (issue_mis_o      ),
+        .fe_ready_i      (fe_ready_i       ),
+        .fe_res_valid_o  (fe_res_valid_o   ),
+        .bu_mis_reg_en_o (bu_mis_reg_en_o  )
     );
 
     // -------------------------------
@@ -180,8 +227,7 @@ module branch_unit
         .bu_ready_o           (rs_bu_ready                    ),
         .bu_rob_idx_i         (bu_outreg_out.rob_idx          ),
         .bu_res_mis_i         (bu_outreg_out.res_mispredicted ),
-        .bu_res_taken_i       (bu_outreg_out.res_taken        ),
-        .bu_res_target_i      (bu_outreg_out.res_target       ),
+        .bu_link_addr_i       (bu_outreg_out.link_addr        ),
 `ifndef LEN5_C_EN
         .bu_except_raised_i   (bu_outreg_out.except_raised    ),
 `endif /* LEN5_C_EN */
@@ -194,5 +240,10 @@ module branch_unit
         .bu_pred_taken_o      (rs_bu_pred_taken               ),
         .bu_branch_type_o     (rs_bu_branch_type              )
     );
+
+    // -----------------
+    // OUTPUT EVALUATION
+    // -----------------
+    assign  fe_res_o    = res_d;
 
 endmodule

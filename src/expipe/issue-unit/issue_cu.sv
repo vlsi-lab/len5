@@ -33,6 +33,7 @@ module issue_cu (
     // Issue stage <--> CU
     input   issue_type_t    issue_type_i,       // type of operation needed
     input   logic           issue_rs1_ready_i,  // for CSR instructions
+    output  logic           issue_mis_flush_o,  // flush issue
     output  logic           issue_reg_en_o,
     output  logic           issue_res_ready_o,
     output  logic           issue_res_sel_rs1_o,
@@ -40,6 +41,7 @@ module issue_cu (
 
     // Execution stage <--> CU
     input   logic           ex_ready_i,
+    input   logic           ex_mis_i,
     output  logic           ex_valid_o,
     output  logic           int_regstat_valid_o,
 `ifdef LEN5_FP_EN
@@ -70,10 +72,9 @@ module issue_cu (
         S_ISSUE_CSR,        // issue CSR instr. and stall (disable speculation)
         S_ISSUE_EXCEPT,     // notify exception to commit and stall
         S_FETCH_EXCEPT,     // notify exception to commit and stall
+        S_FLUSH,            // flush the issue stage (e.g., after mispred.)
         S_STALL,            // wait for the resume signal from commit
-        S_WFI,              // wait for interrupt (TODO)
-
-        S_HALT              // dead-end state (for debug)
+        S_WFI               // wait for interrupt (TODO)
     } cu_state_t;
     cu_state_t      curr_state, v_next_state, next_state;
 
@@ -94,6 +95,8 @@ module issue_cu (
     always_comb begin : cu_next_state
         if (iq_except_raised_i) begin
             v_next_state    = S_FETCH_EXCEPT;
+        end else if (ex_mis_i) begin
+            v_next_state    = S_FLUSH;
         end else begin
             case (issue_type_i)
                 ISSUE_TYPE_NONE:    v_next_state    = S_ISSUE_NONE;
@@ -194,12 +197,12 @@ module issue_cu (
                 if (!comm_ready_i)  next_state  = S_FETCH_EXCEPT;
                 else                next_state  = S_STALL;
             end
+            S_FLUSH:                next_state  = S_STALL;
             S_STALL: begin
                 if (comm_resume_i)  next_state  = v_next_state;
                 else                next_state  = S_STALL;
             end
             S_WFI:                  next_state  = S_WFI; // TODO: implement interrupts
-            S_HALT:                 next_state  = S_HALT;
 
             default:                next_state  = S_RESET;
         endcase
@@ -213,6 +216,7 @@ module issue_cu (
     always_comb begin : cu_out_eval
         // Default values
         iq_ready_o              = 1'b0;
+        issue_mis_flush_o       = 1'b0;
         issue_reg_en_o          = 1'b0;
         issue_res_ready_o       = 1'b0;
         issue_res_sel_rs1_o     = 1'b0;
@@ -299,10 +303,11 @@ module issue_cu (
                 issue_fetch_except_o    = 1'b1;
                 issue_reg_en_o          = comm_ready_i;
             end
+            S_FLUSH: begin
+                issue_mis_flush_o       = 1'b1;
+            end
             S_STALL:;
             S_WFI:;
-
-            S_HALT:;
             default:; // use default values
         endcase
     end

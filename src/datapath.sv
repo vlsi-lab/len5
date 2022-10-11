@@ -19,7 +19,7 @@ import csr_pkg::csr_priv_t;
 
 module datapath #(
     parameter FETCH_MEMIF_FIFO_DEPTH = 2,
-    parameter BOOT_PC = BOOT_PC
+    parameter BOOT_PC = '0
 ) (
     // Clock and reset
     input logic clk_i,

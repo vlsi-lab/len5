@@ -132,6 +132,7 @@ module backend (
     // Issue stage <--> execution units
     // --------------------------------
     logic                       ex_issue_ready [0:EU_N-1];
+    logic                       ex_issue_mis;
     logic                       il_ex_valid [0:EU_N-1];
     logic [MAX_EU_CTL_LEN-1:0]  issue_ex_eu_ctl;
     op_data_t                   issue_ex_rs1;
@@ -218,7 +219,7 @@ module backend (
     (
         .clk_i                          (clk_i                      ),
         .rst_n_i                        (rst_n_i                    ),
-        .flush_i                        (mis_flush                  ),
+        .flush_i                        (except_flush               ),
 
         .fetch_valid_i                  (fetch_valid_i              ),
         .fetch_ready_o                  (fetch_ready_o              ),
@@ -262,6 +263,7 @@ module backend (
     `endif /* LEN5_FP_EN */
 
         .ex_ready_i                     (ex_issue_ready             ),
+        .ex_mis_i                       (ex_issue_mis               ),
         .ex_valid_o                     (il_ex_valid                ),
         .ex_eu_ctl_o                    (issue_ex_eu_ctl            ),
         .ex_rs1_o                       (issue_ex_rs1               ),
@@ -382,6 +384,10 @@ module backend (
         .mis_flush_i                (mis_flush              ),
         .except_flush_i             (except_flush           ),
 
+        .fetch_ready_i              (fetch_ready_i          ),
+        .fetch_res_valid_o          (fetch_res_valid_o      ),
+        .fetch_res_o                (fetch_res_o            ),
+
         .issue_valid_i              (il_ex_valid            ),
         .issue_ready_o              (ex_issue_ready         ),
         .issue_eu_ctl_i             (issue_ex_eu_ctl        ),
@@ -392,6 +398,7 @@ module backend (
         .issue_curr_pc_i            (issue_ex_curr_pc       ),
         .issue_pred_target_i        (issue_ex_pred_target   ),
         .issue_pred_taken_i         (issue_ex_pred_taken    ),
+        .issue_mis_o                (ex_issue_mis           ),
 
         .cdb_ready_i                (cdb_ex_ready           ),
         .cdb_valid_i                (cdb_others_valid       ), 
@@ -446,8 +453,6 @@ module backend (
         .except_flush_o         (except_flush               ),
         
         .fe_ready_i             (fetch_ready_i              ),
-        .fe_res_valid_o         (fetch_res_valid_o          ),
-        .fe_res_o               (fetch_res_o                ),
         .fe_except_raised_o     (fetch_except_raised_o      ),
         .fe_except_pc_o         (fetch_except_pc_o          ),
         

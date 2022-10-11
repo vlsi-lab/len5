@@ -38,8 +38,6 @@ module commit_stage (
 
     // Data to frontend
     input   logic                       fe_ready_i,
-    output  logic                       fe_res_valid_o,
-    output  resolution_t                fe_res_o,
     output  logic                       fe_except_raised_o,
     output  logic [XLEN-1:0]            fe_except_pc_o,
 
@@ -139,7 +137,7 @@ module commit_stage (
     logic                       comm_reg_valid;
 
     // Commit adder
-    logic [XLEN-1:0]            adder_a, adder_b, adder_out;
+    logic [XLEN-1:0]            adder_op, adder_out;
 
     // rd MUX
     comm_rd_sel_t               cu_rd_sel;
@@ -309,7 +307,7 @@ module commit_stage (
     //       logic input register (spill cell). Since its output will only be
     //       available the next cycle, the instruction is buffered inside the
     //       'comm_reg' register above. 
-    assign inreg_cu_mispredicted    = inreg_data_out.data.res_aux.jb.mispredicted;
+    assign inreg_cu_mispredicted    = inreg_data_out.data.except_code == E_MISPREDICTION;
 
     commit_cu u_commit_cu (
         .clk_i              (clk_i                  ),
@@ -339,46 +337,22 @@ module commit_stage (
         .csr_comm_insn_o    (csr_comm_insn_o        ),
         .csr_addr_o         (cu_csr_addr            ),
         .fe_ready_i         (fe_ready_i             ),
-        .fe_res_valid_o     (fe_res_valid_o         ),
         .fe_except_raised_o (fe_except_raised_o     ),
         .mis_flush_o        (cu_mis_flush           ),
         .except_flush_o     (cu_except_flush        ),
         .issue_resume_o     (issue_resume_o         )
     );
 
-    // Commit adder
-    // ------------
-
-    // Commit adder operand MUX's
-    always_comb begin : comm_adder_mux
-        case (cu_rd_sel)
-            COMM_RD_SEL_LINK: begin // compute link address
-                adder_a     = comm_reg_data.data.instr_pc;
-                adder_b     = ILEN >> 3;
-            end
-            COMM_RD_SEL_EXCEPT: begin // compute exception PC
-                adder_a     = {csr_mtvec_i.base, 2'b00}; // exc. vector base address
-                adder_b     = (csr_mtvec_i.mode == 0) ? 'h0 : {{(XLEN-2-EXCEPT_TYPE_LEN){1'b0}}, comm_reg_data.data.except_code, 2'b00};
-            end
-            COMM_RD_SEL_CSR: begin
-                adder_a     = csr_data_i;
-                adder_b     = 'h0;
-            end
-            default: begin
-                adder_a     = 'h0;
-                adder_b     = 'h0;
-            end
-        endcase
-    end
-
-    // Commit adder output
-    assign  adder_out   = adder_a + adder_b;
+    // Exception adder
+    // ---------------
+    // NOTE: may be replaced with an or if mtvec.base is aligned to 64 bytes
+    assign  adder_op    = (csr_mtvec_i.mode == 0) ? 'h0 : {{(XLEN-2-EXCEPT_TYPE_LEN){1'b0}}, comm_reg_data.data.except_code, 2'b00};
+    assign  adder_out   = {csr_mtvec_i.base, 2'b00} + adder_op;
 
     // rd MUX
     // ------
     always_comb begin : rd_value_mux
         case (cu_rd_sel)
-            COMM_RD_SEL_LINK:   rd_value    = adder_out;
             COMM_RD_SEL_EXCEPT: rd_value    = adder_out;
             COMM_RD_SEL_CSR:    rd_value    = csr_data_i;
             default:            rd_value    = comm_reg_data.data.res_value;
@@ -439,10 +413,6 @@ module commit_stage (
     // -----------------
 
     // Data to front-end
-    assign  fe_res_o.pc         = comm_reg_data.data.instr_pc;
-    assign  fe_res_o.target     = comm_reg_data.data.res_value;  // computed target address
-    assign  fe_res_o.taken      = comm_reg_data.data.res_aux.jb.taken;
-    assign  fe_res_o.mispredict = comm_reg_data.data.res_aux.jb.mispredicted;
     assign  fe_except_pc_o      = adder_out;
 
     assign  rs_head_idx_o       = rob_reg_head_idx;

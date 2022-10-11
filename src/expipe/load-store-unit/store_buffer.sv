@@ -371,7 +371,6 @@ module store_buffer #(
     assign  cdb_valid_o              = curr_state[head_idx] == STORE_S_COMPLETED;
     assign  cdb_data_o.rob_idx       = data[head_idx].dest_rob_idx;
     assign  cdb_data_o.res_value     = data[head_idx].imm_addr_value;
-    assign  cdb_data_o.res_aux       = data[head_idx].rs2_value;
     assign  cdb_data_o.except_raised = data[head_idx].except_raised;
     assign  cdb_data_o.except_code   = data[head_idx].except_code;
 

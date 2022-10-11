@@ -323,7 +323,6 @@ module arith_rs
     assign  cdb_valid_o                         = curr_state[cdb_idx] == ARITH_S_COMPLETED;
     assign  cdb_data_o.rob_idx                  = data[cdb_idx].dest_rob_idx;
     assign  cdb_data_o.res_value                = data[cdb_idx].res_value;
-    assign  cdb_data_o.res_aux                  = '0;
     assign  cdb_data_o.except_raised            = data[cdb_idx].except_raised;
     assign  cdb_data_o.except_code              = data[cdb_idx].except_code;
 

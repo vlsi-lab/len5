@@ -80,6 +80,7 @@ module issue_stage
 
 	// Execution pipeline
     input   logic                   ex_ready_i [0:EU_N-1],  // ready signal from each reservation station
+    input   logic                   ex_mis_i,               // misprediction from the branch unit
     output  logic                   ex_valid_o [0:EU_N-1],  // valid signal to each reservation station
     output  eu_ctl_t                ex_eu_ctl_o,            // controls for the associated EU
     output  op_data_t               ex_rs1_o,
@@ -156,6 +157,8 @@ module issue_stage
 
     // Issue logic <--> CU
     logic               iq_cu_valid;
+    logic               iq_flush;
+    logic               cu_il_flush;
     logic               cu_il_res_ready;
     logic               cu_il_res_sel_rs1;
     logic               cu_il_sel_fetch_except;
@@ -181,12 +184,13 @@ module issue_stage
     // ISSUE FIFO QUEUE
     // ----------------
     // Assemble new queue entry with the data from the fetch unit
-    assign new_instr.curr_pc        = fetch_curr_pc_i;
-    assign new_instr.instruction    = fetch_instr_i;
-    assign new_instr.pred_target    = fetch_pred_target_i;
-    assign new_instr.pred_taken     = fetch_pred_taken_i;
-    assign new_instr.except_raised  = fetch_except_raised_i;
-    assign new_instr.except_code    = fetch_except_code_i;
+    assign  iq_flush                = flush_i | cu_il_flush;
+    assign  new_instr.curr_pc       = fetch_curr_pc_i;
+    assign  new_instr.instruction   = fetch_instr_i;
+    assign  new_instr.pred_target   = fetch_pred_target_i;
+    assign  new_instr.pred_taken    = fetch_pred_taken_i;
+    assign  new_instr.except_raised = fetch_except_raised_i;
+    assign  new_instr.except_code   = fetch_except_code_i;
 
     fifo #(
         .DATA_T (iq_entry_t ),
@@ -195,7 +199,7 @@ module issue_stage
     u_issue_fifo (
     	.clk_i   (clk_i         ),
         .rst_n_i (rst_n_i       ),
-        .flush_i (flush_i       ),
+        .flush_i (iq_flush      ),
         .valid_i (fetch_valid_i ),
         .ready_i (cu_iq_ready   ),
         .valid_o (iq_cu_valid   ),
@@ -275,7 +279,7 @@ module issue_stage
     always_ff @( posedge clk_i or negedge rst_n_i ) begin : issue_reg
         if (!rst_n_i) begin
             ireg_data_out  <= '0;
-        end else if (flush_i) begin
+        end else if (flush_i || cu_il_flush) begin
             ireg_data_out  <= '0;
         end else if (cu_ireg_en) begin
             ireg_data_out  <= ireg_data_in;
@@ -297,11 +301,13 @@ module issue_stage
         .iq_except_raised_i   (iq_cu_except_raised    ),
         .issue_type_i         (id_cu_issue_type       ),
         .issue_rs1_ready_i    (rs1_ready              ),
+        .issue_mis_flush_o    (cu_il_flush            ),
         .issue_reg_en_o       (cu_ireg_en             ),
         .issue_res_ready_o    (cu_il_res_ready        ),
         .issue_res_sel_rs1_o  (cu_il_res_sel_rs1      ),
         .issue_fetch_except_o (cu_il_sel_fetch_except ),
         .ex_ready_i           (il_cu_ex_ready         ),
+        .ex_mis_i             (ex_mis_i               ),
         .ex_valid_o           (cu_il_ex_valid         ),
         .int_regstat_valid_o  (int_regstat_valid_o    ),
     `ifdef LEN5_FP_EN
@@ -477,7 +483,6 @@ module issue_stage
     assign  comm_data_o.instr_pc        = ireg_data_out.curr_pc;
     assign  comm_data_o.res_ready       = cu_il_res_ready;
     assign  comm_data_o.res_value       = (cu_il_res_sel_rs1) ? rs1_value : ireg_data_out.imm_value;
-    assign  comm_data_o.res_aux         = '0;
     assign  comm_data_o.rd_idx          = ireg_data_out.rd_idx;
     assign  comm_data_o.except_raised   = ireg_data_out.except_raised;
     assign  comm_data_o.except_code     = ireg_data_out.except_code;

@@ -732,7 +732,6 @@ module load_buffer
     // TO THE CDB
     assign cdb_data_o.rob_idx       = lb_data[cdb_req_idx].dest_idx;
     assign cdb_data_o.res_value     = lb_data[cdb_req_idx].ld_value;
-    assign cdb_data_o.res_aux       = '0;
     assign cdb_data_o.except_raised = lb_data[cdb_req_idx].except_raised;
     assign cdb_data_o.except_code   = lb_data[cdb_req_idx].except_code;
 

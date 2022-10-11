@@ -132,22 +132,25 @@ package len5_pkg;
 
     // This are the LSBs of the entire exception codes defined by the specs. This are used in the execution pipeline to save area. This code can be directly appended when writing mcause/scause CSRs during exception handling
     typedef enum logic [EXCEPT_TYPE_LEN-1:0] {
-        E_I_ADDR_MISALIGNED   = 'h0,
-        E_I_ACCESS_FAULT      = 'h1,
-        E_ILLEGAL_INSTRUCTION = 'h2,
-        E_BREAKPOINT          = 'h3,
-        E_LD_ADDR_MISALIGNED  = 'h4,
-        E_LD_ACCESS_FAULT     = 'h5,
-        E_ST_ADDR_MISALIGNED  = 'h6,
-        E_ST_ACCESS_FAULT     = 'h7,
-        E_ENV_CALL_UMODE      = 'h8,
-        E_ENV_CALL_SMODE      = 'h9,
-        E_ENV_CALL_MMODE      = 'hb,
-        E_INSTR_PAGE_FAULT    = 'hc,
-        E_LD_PAGE_FAULT       = 'hd,
-        E_ST_PAGE_FAULT       = 'hf,
+        // Standard
+        E_I_ADDR_MISALIGNED   = 'h00,
+        E_I_ACCESS_FAULT      = 'h01,
+        E_ILLEGAL_INSTRUCTION = 'h02,
+        E_BREAKPOINT          = 'h03,
+        E_LD_ADDR_MISALIGNED  = 'h04,
+        E_LD_ACCESS_FAULT     = 'h05,
+        E_ST_ADDR_MISALIGNED  = 'h06,
+        E_ST_ACCESS_FAULT     = 'h07,
+        E_ENV_CALL_UMODE      = 'h08,
+        E_ENV_CALL_SMODE      = 'h09,
+        E_ENV_CALL_MMODE      = 'h0b,
+        E_INSTR_PAGE_FAULT    = 'h0c,
+        E_LD_PAGE_FAULT       = 'h0d,
+        E_ST_PAGE_FAULT       = 'h0f,
         
-        E_UNKNOWN             = 'ha // reserved code 10, used for debugging
+        // Custom (for the commit unit)
+        E_MISPREDICTION       = 'h18, // branch or jump mispredicted
+        E_UNKNOWN             = 'h1f  // used for debugging
     } except_code_t;
 
     // --------------

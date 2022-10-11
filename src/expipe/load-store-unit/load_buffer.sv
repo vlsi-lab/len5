@@ -349,7 +349,6 @@ module load_buffer #(
     assign cdb_valid_o              = curr_state[head_idx] == LOAD_S_COMPLETED;
     assign cdb_data_o.rob_idx       = data[head_idx].dest_rob_idx;
     assign cdb_data_o.res_value     = data[head_idx].value;
-    assign cdb_data_o.res_aux       = '0;
     assign cdb_data_o.except_raised = data[head_idx].except_raised;
     assign cdb_data_o.except_code   = data[head_idx].except_code;
 

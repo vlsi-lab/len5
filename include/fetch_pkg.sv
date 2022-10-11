@@ -49,9 +49,9 @@ package fetch_pkg;
     // resolution structure
     typedef struct packed {
         logic [XLEN-1:0]  pc;
-        logic [XLEN-1:0]  target;
-        logic             taken;
         logic             mispredict;
+        logic             taken;
+        logic [XLEN-1:0]  target;
     } resolution_t;
 
     // Memory interface answer spill cell data type

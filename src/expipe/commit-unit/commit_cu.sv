@@ -70,7 +70,6 @@ module commit_cu (
 
     // CU <--> others
     input   logic                   fe_ready_i,
-    output  logic                   fe_res_valid_o,
     output  logic                   fe_except_raised_o,
     output  logic                   mis_flush_o,    // flush after misprediction
     output  logic                   except_flush_o, // flush after exception
@@ -92,7 +91,6 @@ module commit_cu (
         COMMIT_JUMP_MIS,    // flush the pipeline after misprediction
         COMMIT_BRANCH,      // commit correctly predicted branch instructions
         COMMIT_BRANCH_MIS,  // handle branch misprediction
-        MIS_LOAD_PC,        // load correct PC after misprediction
         COMMIT_CSR,         // commit to CSRs
         COMMIT_FENCE,       // commit fence instructions
         COMMIT_ECALL,       // commit ECALL instructions
@@ -207,19 +205,14 @@ module commit_cu (
                 else            next_state  = IDLE;
             end
             // Commit jump with mispredition
-            COMMIT_JUMP_MIS:    next_state  = MIS_LOAD_PC;
+            COMMIT_JUMP_MIS:    next_state  = IDLE;
             // Correctly predicted branch: just commit
             COMMIT_BRANCH: begin
                 if (valid_i)    next_state  = v_next_state;
                 else            next_state  = IDLE;
             end
             // Flush the in-flight instructions
-            COMMIT_BRANCH_MIS:  next_state  = MIS_LOAD_PC;
-            // Load the correct PC and restart execution
-            MIS_LOAD_PC: begin
-                if (fe_ready_i) next_state  = CLEAR_COMM_REG;
-                else            next_state  = MIS_LOAD_PC;
-            end
+            COMMIT_BRANCH_MIS:  next_state  = IDLE;
             // Atomically read and write CSRs
             COMMIT_CSR:         next_state  = IDLE;
             /* TODO: properly handle the following instructions */
@@ -292,7 +285,6 @@ module commit_cu (
         sb_exec_store_o     = 1'b0;
         csr_valid_o         = 1'b0;
         csr_comm_insn_o     = COMM_CSR_INSTR_TYPE_NONE;
-        fe_res_valid_o      = 1'b0; // must be asserted for exactly one cycle
         fe_except_raised_o  = 1'b0;
         mis_flush_o         = 1'b0;
         except_flush_o      = 1'b0;
@@ -342,33 +334,30 @@ module commit_cu (
                 int_rs_valid_o      = 1'b1;
                 int_rf_valid_o      = 1'b1;
                 comm_reg_en_o       = 1'b1;
-                fe_res_valid_o      = 1'b1;
-                comm_rd_sel_o       = COMM_RD_SEL_LINK;
                 comm_jb_instr_o     = 1'b1;
                 csr_comm_insn_o     = COMM_CSR_INSTR_TYPE_JUMP;
             end
             COMMIT_JUMP_MIS: begin
                 int_rs_valid_o      = 1'b1;
                 int_rf_valid_o      = 1'b1;
+                comm_reg_clr_o      = 1'b1;
                 mis_flush_o         = 1'b1;
-                comm_rd_sel_o       = COMM_RD_SEL_LINK;
                 comm_jb_instr_o     = 1'b1;
                 csr_comm_insn_o     = COMM_CSR_INSTR_TYPE_JUMP;
+                issue_resume_o      = 1'b1;
             end
             COMMIT_BRANCH: begin
                 ready_o             = 1'b1;
                 comm_reg_en_o       = 1'b1;
-                fe_res_valid_o      = 1'b1;
                 comm_jb_instr_o     = 1'b1;
                 csr_comm_insn_o     = COMM_CSR_INSTR_TYPE_BRANCH;
             end
             COMMIT_BRANCH_MIS: begin
                 mis_flush_o         = 1'b1;
+                comm_reg_clr_o      = 1'b1;
                 comm_jb_instr_o     = 1'b1;
                 csr_comm_insn_o     = COMM_CSR_INSTR_TYPE_BRANCH;
-            end
-            MIS_LOAD_PC: begin
-                fe_res_valid_o      = 1'b1;
+                issue_resume_o      = 1'b1;
             end
             CLEAR_COMM_REG: begin
                 comm_reg_clr_o      = 1'b1;

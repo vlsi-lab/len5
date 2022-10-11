@@ -123,7 +123,6 @@ package expipe_pkg;
         logic [XLEN-1:0]            instr_pc;       // the program counter of the instruction
         logic                       res_ready;      // the result of the instruction is ready
         logic [XLEN-1:0]            res_value;      // the value of the result (from the EU)
-        res_aux_t                   res_aux;        // result auxiliary data
         logic [REG_IDX_LEN-1:0]     rd_idx;         // the destination register (rd)
         logic                       except_raised;  // an exception has been raised
         except_code_t               except_code;    // the exception code
@@ -136,7 +135,6 @@ package expipe_pkg;
     typedef struct packed {
         rob_idx_t                   rob_idx;
         logic [XLEN-1:0]            res_value;
-        res_aux_t                   res_aux;
         logic                       except_raised;
         except_code_t               except_code;
     } cdb_data_t;
@@ -375,7 +373,7 @@ package expipe_pkg;
         logic [XLEN-1:0]        rs2_value;          // The value of the second operand
         logic [XLEN-1:0]        imm_value;          // Immediate value
         rob_idx_t               dest_rob_idx;       // The entry of the ROB where the result will be stored
-        logic [XLEN-1:0]        target;
+        logic [XLEN-1:0]        target_link;        // predicted target, then link address
         logic                   taken;
         logic                   mispredicted;
     `ifndef LEN5_C_EN
@@ -530,7 +528,6 @@ package expipe_pkg;
     // rd MUX and adder control
     typedef enum logic [1:0] {
         COMM_RD_SEL_RES,    // rd = instruction result
-        COMM_RD_SEL_LINK,   // rd = instruction PC + 4
         COMM_RD_SEL_EXCEPT, // rd = irq address (or base if no vectored mode)
         COMM_RD_SEL_CSR     // rd = CSR data
     } comm_rd_sel_t;
