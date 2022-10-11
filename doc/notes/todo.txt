@@ -1,4 +1,6 @@
 [x] Force load-after-store ordering
-[ ] Implement store-to-load forwarding
+[X] Implement store-to-load forwarding
+
+[ ] JUMPS STORE THE *TARGET ADDRESS* ON THE CDB INSTEAD OF THE VALUE FOR RD (PC+4). THIS BREAKS DEPENDENCIES, AS THE WRONG VALUE IS FORWARDED TO OTHER INSTRUCTIONS.
 [ ] Test with more comprehensive code (benchmarks?)
 [ ] Add C extension support
