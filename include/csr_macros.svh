@@ -63,7 +63,7 @@
 `define CSR_ADDR_STVAL      12'h143
 `define CSR_ADDR_SIP        12'h144
 // SUPERVISOR PROTECTION AND TRANSLATION
-`define   CSR_ADDR_SATP       12'h180
+`define CSR_ADDR_SATP       12'h180
 
 // MACHINE
 // -------

@@ -69,7 +69,6 @@ logic   [XLEN-1:0]      uimm_zext;
 
 // CSR access exception
 logic                   inv_acc_exc;    // invalid CSR address or no write permission
-logic                   inv_op_exc;     // invalid operation (from funct3)
 
 // Performance counters control
 logic                   mcycle_load;
@@ -140,11 +139,11 @@ always_comb begin : csr_rdwr_ctl
             csr_rd_en   = valid_i & (rd_idx_i != 0);
             csr_wr_en   = valid_i;
         end
-        CSR_OP_CSRRS, CSR_OP_CSRRC, CSR_OP_CSRRC, CSR_OP_CSRRCI: begin
+        CSR_OP_CSRRS, CSR_OP_CSRRSI, CSR_OP_CSRRC, CSR_OP_CSRRCI: begin
             csr_rd_en   = valid_i;
             csr_wr_en   = valid_i & (rs1_idx_i != 0);
         end
-        CSR_OP_SYSTEM, CSR_OP_SYSTEM: begin
+        CSR_OP_SYSTEM: begin
             csr_wr_en   = 1'b1; // write CSR unconditionally
         end
         default:; // use default values
@@ -225,6 +224,7 @@ assign  mcountinhibit        = {{29{1'b1}}, 3'b000};
 // Read the requested value if a valid request is received
 always_comb begin : csr_read
     csr_rd_val      = '0;   // default value
+    inv_acc_exc     = 1'b0;
 
     // Read the target CSR
     if (csr_rd_en)  begin
@@ -234,30 +234,37 @@ always_comb begin : csr_read
             // misa
             `CSR_ADDR_MISA: begin
                 if (priv_mode >= PRIV_MODE_M)   csr_rd_val  = misa;
+                else                            inv_acc_exc = 1'b1;
             end
             // mvendorid
             `CSR_ADDR_MVENDORID: begin
                 if (priv_mode >= PRIV_MODE_M)   csr_rd_val  = mvendorid;
+                else                            inv_acc_exc = 1'b1;
             end
             // marchid
             `CSR_ADDR_MARCHID: begin
                 if (priv_mode >= PRIV_MODE_M)   csr_rd_val  = marchid;
+                else                            inv_acc_exc = 1'b1;
             end
             // mimpid
             `CSR_ADDR_MIMPID: begin
                 if (priv_mode >= PRIV_MODE_M)   csr_rd_val  = mimpid;
+                else                            inv_acc_exc = 1'b1;
             end
             // mhartid
             `CSR_ADDR_MHARTID: begin
                 if (priv_mode >= PRIV_MODE_M)   csr_rd_val  = mhartid;
+                else                            inv_acc_exc = 1'b1;
             end
             // mstatus
             `CSR_ADDR_MSTATUS: begin
                 if (priv_mode >= PRIV_MODE_M)   csr_rd_val  = mstatus;
+                else                            inv_acc_exc = 1'b1;
             end
             // mtvec
             `CSR_ADDR_MTVEC: begin
                 if (priv_mode >= PRIV_MODE_M)   csr_rd_val  = mtvec;
+                else                            inv_acc_exc = 1'b1;
             end
             // Performance counters (also accessible in user-mode)
             `CSR_ADDR_MCYCLE: begin
@@ -295,7 +302,7 @@ always_comb begin : csr_read
             `CSR_ADDR_MTVAL: begin
                 if (priv_mode >= PRIV_MODE_M)   csr_rd_val  = mtval;
             end
-            default:; // use default read value
+            default:    inv_acc_exc = 1'b1;
         endcase
     end
 end
@@ -452,67 +459,6 @@ always_ff @( posedge clk_i or negedge rst_n_i ) begin : perf_counters
     end
 end
 
-// ------------------
-// EXCEPTION HANDLING
-// ------------------
-
-// Invalid opcode
-always_comb begin : exc_handling
-    if (valid_i) begin
-        case (funct3_i)
-            `FUNCT3_CSRRW,
-            `FUNCT3_CSRRS,
-            `FUNCT3_CSRRC,
-            `FUNCT3_CSRRWI, 
-            `FUNCT3_CSRRSI,
-            `FUNCT3_CSRRCI: inv_op_exc = 1'b0;
-
-            default:        inv_op_exc = 1'b1;
-        endcase
-    end else    inv_op_exc = 1'b0;
-
-    // Invalid access (CSR address or no write permission)
-    if (valid_i) begin
-        case (addr_i)
-            // fcsr (no access restrictions)
-        `ifdef LEN5_FP_EN
-            `CSR_ADDR_FFLAGS,
-            `CSR_ADDR_FRM,
-            `CSR_ADDR_FCSR, 
-        `endif /* LEN5_FP_EN */
-            `CSR_ADDR_SATP,
-            `CSR_ADDR_MTVEC: inv_acc_exc = 1'b0;
-            
-            // Invalid address
-            default:        inv_acc_exc = 1'b1;
-        endcase
-    end else    inv_acc_exc = 1'b0;
-end
-
-// ----------------
-// OUTPUT REGISTERS
-// ----------------
-
-/*
- * NOTE: CSRs are accessed in a single read-modify-write operation. Therefore,
- * the current value of the selected CSR is accessed on the first negative clock
- * edge, before the current value is modified.
- */
-
-// CSR data
-// --------
-always_ff @( negedge clk_i or negedge rst_n_i ) begin : csr_out_reg
-    if (!rst_n_i)       data_o <= '0;
-    else                data_o <= csr_rd_val;
-end
-
-// CSR access exception
-// --------------------
-always_ff @( negedge clk_i or negedge rst_n_i ) begin : csr_exc_reg
-    if (!rst_n_i)       acc_exc_o <= 1'b0;
-    else if (valid_i)   acc_exc_o <= inv_acc_exc | inv_op_exc;
-end
-
 // -----------
 // OUTPUT DATA
 // -----------
@@ -525,6 +471,8 @@ assign  fpu_frm_o       = fcsr.frm;
 assign  priv_mode_o     = priv_mode;
 
 // Data to commit logic
+assign  acc_exc_o       = inv_acc_exc;
+assign  data_o          = csr_rd_val;
 assign  mtvec_o         = mtvec;
 
 endmodule

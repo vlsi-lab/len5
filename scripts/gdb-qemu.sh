@@ -117,6 +117,7 @@ fi
 echo "\
 target remote :1234
 layout asm
+layout regs
 break _start
 break main
 continue

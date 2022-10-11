@@ -1,0 +1,3 @@
+[submodule "len5-software"]
+	path = len5-software
+	url = https://git.vlsilab.polito.it/risc-v/len5/len5-software
