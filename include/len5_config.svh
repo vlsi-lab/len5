@@ -113,8 +113,7 @@
 // IMPORTANT: this feature breaks reads from memory-mapped devices, therefore
 // it is only applied to memory addresses outside of the region masked by
 // 'MMAP_MASK' (defined above).
-// `define LEN5_STORE_LOAD_FWD_EN
-`define ST2LD_FWD_MASK ~`MMAP_MASK
+`define LEN5_STORE_LOAD_FWD_EN
 
 // Enable C extension
 // ------------------
@@ -151,8 +150,10 @@
 `define LEN5_CSR_HPMCOUNTERS_EN
 
 //////////////////////////////////////////////////////////////////////////////
-// CONSTRUCT PARAMETERS FROM DEFINES
+// OTHER DEFINES
+`define ST2LD_FWD_MASK ~`MMAP_MASK
 
+// CONSTRUCT PARAMETERS FROM DEFINES
 `ifdef MEM_EMU_SKIP_INSTR_OUT_REG
 localparam  MEM_EMU_SKIP_INSTR_OUT_REG = 1;
 `else

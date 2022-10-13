@@ -33,10 +33,11 @@ module branch_cu (
     // INTERNAL SIGNALS
     // ----------------
     // CU state
-    typedef enum logic [1:0] {
+    typedef enum logic [2:0] {
         IDLE,
         UPD_FE,
         MIS,
+        MIS_LOAD_PC,
         STALL
     } cu_state_t;
     cu_state_t  curr_state, next_state;
@@ -64,12 +65,13 @@ module branch_cu (
                 else
                     next_state  = IDLE;
             end
-            MIS: begin  // notify the frontend
-                if (fe_ready_i)         next_state  = STALL;
-                else                    next_state  = MIS;
+            MIS:                next_state  = MIS_LOAD_PC;
+            MIS_LOAD_PC: begin
+                if (fe_ready_i) next_state  = STALL;
+                else            next_state  = MIS_LOAD_PC;
             end
-            STALL:                      next_state  = STALL; // until flush
-            default:                    next_state  = IDLE;
+            STALL:              next_state  = STALL; // until flush
+            default:            next_state  = IDLE;
         endcase
     end
 
@@ -84,11 +86,14 @@ module branch_cu (
                 bu_mis_reg_en_o = 1'b1;
             end
             UPD_FE: begin
+                bu_mis_reg_en_o = 1'b1;
                 fe_res_valid_o  = 1'b1;
             end
             MIS: begin
-                fe_res_valid_o  = 1'b1;
                 issue_mis_o     = 1'b1;
+            end
+            MIS_LOAD_PC: begin
+                fe_res_valid_o  = 1'b1;
             end
             STALL:; // use default values
             default:; // use default values
@@ -108,8 +113,11 @@ module branch_cu (
     `ifndef SYNTHESIS
     property p_fe_valid;
         @(posedge clk_i) disable iff (!rst_n_i)
-        misprediction_i |-> ##1
-            fe_res_valid_o
+        sync_accept_on(flush_i)
+        (curr_state == IDLE || curr_state == UPD_FE) && valid_i && misprediction_i |-> ##1
+            fe_res_valid_o |-> ##[0:10]
+            fe_ready_i |-> ##1
+            !fe_res_valid_o
     endproperty
     a_fe_valid: assert property (p_fe_valid);
     property p_wait_flush;

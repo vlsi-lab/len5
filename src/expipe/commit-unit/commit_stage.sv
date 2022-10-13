@@ -33,7 +33,7 @@ module commit_stage (
     input   logic                       rst_n_i,
 
     // Flush signal
-    output  logic                       mis_flush_o,    // flush after misprediction
+    output  logic                       ex_mis_flush_o,    // flush after misprediction
     output  logic                       except_flush_o, // flush after exception
 
     // Data to frontend
@@ -338,7 +338,7 @@ module commit_stage (
         .csr_addr_o         (cu_csr_addr            ),
         .fe_ready_i         (fe_ready_i             ),
         .fe_except_raised_o (fe_except_raised_o     ),
-        .mis_flush_o        (cu_mis_flush           ),
+        .ex_mis_flush_o     (cu_mis_flush           ),
         .except_flush_o     (cu_except_flush        ),
         .issue_resume_o     (issue_resume_o         )
     );
@@ -393,7 +393,7 @@ module commit_stage (
 
     // Jump/branch in-flight instructions counter
     // ------------------------------------------
-    assign  jb_instr_cnt_en     = issue_jb_instr_i ^ cu_jb_instr; 
+    assign  jb_instr_cnt_en     = (issue_jb_instr_i & issue_ready_o) ^ cu_jb_instr; 
     assign  jb_instr_cnt_clr    = cu_mis_flush;
     assign  jb_instr_cnt_up     = issue_jb_instr_i;
     updown_counter #(
@@ -436,7 +436,7 @@ module commit_stage (
     assign  csr_rd_idx_o        = comm_reg_data.data.rd_idx;
 
     // Data to others
-    assign  mis_flush_o         = cu_mis_flush;
+    assign  ex_mis_flush_o      = cu_mis_flush;
     assign  except_flush_o      = cu_except_flush;
     
     // ----------
@@ -445,7 +445,7 @@ module commit_stage (
     `ifndef SYNTHESIS
     property p_no_except;
         @(posedge clk_i) disable iff (!rst_n_i)
-        mis_flush_o |=>
+        ex_mis_flush_o |=>
             !fe_except_raised_o
     endproperty
     a_no_except: assert property (p_no_except)
@@ -463,6 +463,15 @@ module commit_stage (
         u_commit_cu.curr_state == u_commit_cu.IDLE |-> ##[1:100]
             u_commit_cu.curr_state != u_commit_cu.IDLE
     endproperty
+    // The number of jump/branch instructions must never overflow
+    property p_jb_instr;
+        @(posedge clk_i) disable iff (!rst_n_i)
+        sync_accept_on(ex_mis_flush_o | except_flush_o)
+        jb_instr_cnt_en |-> ##1
+            (jb_instr_cnt == $past(jb_instr_cnt) - 1) || 
+            (jb_instr_cnt == $past(jb_instr_cnt) + 1)
+    endproperty
+    a_jb_instr: assert property (p_jb_instr);
     a_watchdog: assert property (p_watchdog) else `uvm_fatal("COMMIT CU", $sformatf("IDLE timeout | pc: %h | instr: %h", comm_reg_data.data.instr_pc, comm_reg_data.data.instruction.raw));
     `endif // SYNTHESIS
 endmodule

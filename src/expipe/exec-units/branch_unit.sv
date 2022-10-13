@@ -96,7 +96,7 @@ module branch_unit
     bu_out_reg_t            bu_outreg_in, bu_outreg_out;
 
     // Resolution register
-    logic                   res_reg_en;
+    logic                   cu_res_reg_en;
     resolution_t            res_d;
 
     // ------------
@@ -174,7 +174,7 @@ module branch_unit
     always_ff @( posedge clk_i or negedge rst_n_i ) begin : res_reg
         if (!rst_n_i)           res_d   <= '0;
         else if (flush_i)       res_d   <= '0;
-        else if (res_reg_en) begin
+        else if (cu_res_reg_en) begin
             res_d.pc            <= rs_bu_curr_pc;
             res_d.target        <= res_target;
             res_d.taken         <= res_taken;
@@ -191,10 +191,10 @@ module branch_unit
         .flush_i         (flush_i          ),
         .valid_i         (rs_bu_valid      ),
         .misprediction_i (res_mispredicted ),
-        .issue_mis_o     (issue_mis_o      ),
         .fe_ready_i      (fe_ready_i       ),
+        .issue_mis_o     (issue_mis_o      ),
         .fe_res_valid_o  (fe_res_valid_o   ),
-        .bu_mis_reg_en_o (bu_mis_reg_en_o  )
+        .bu_mis_reg_en_o (cu_res_reg_en    )
     );
 
     // -------------------------------

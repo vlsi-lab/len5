@@ -313,7 +313,7 @@ if [ $REMOTE_EXEC -ne 0 -a $FORCE_LOCAL_EXEC -eq 0 ]; then
 
     # Copy files to remote server
     log "Copying LEN5 files to '%s'..." "$REMOTE_HOST"
-    rsync -e "ssh $SSH_OPT" $RSYNC_OPT --relative $LEN5_ROOT_DIR/./{include,src,tb,scripts,sw,sim,syn,makefile} $REMOTE_USER@$REMOTE_HOST:$REMOTE_ROOT_DIR/
+    rsync -e "ssh $SSH_OPT" $RSYNC_OPT --relative $LEN5_ROOT_DIR/./{include,src,tb,scripts,len5-software,sim,syn,makefile} $REMOTE_USER@$REMOTE_HOST:$REMOTE_ROOT_DIR/
     [ $? -ne 0 ] && err "!!! ERROR while copying LEN5 source files..."
 
     # Pass options to remote script

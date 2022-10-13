@@ -41,6 +41,7 @@ module issue_stage
     input   logic                   fetch_pred_taken_i,
     input   logic                   fetch_except_raised_i,
     input   except_code_t           fetch_except_code_i,
+    output  logic                   fetch_mis_flush_o,
 
     // Integer register status register
     output  logic                   int_regstat_valid_o,
@@ -128,7 +129,7 @@ module issue_stage
     iq_entry_t          iq_data_out;
 
     // Issuing instruction registers
-    logic               cu_ireg_en;
+    logic               ireg_en;
     issue_reg_t         ireg_data_in, ireg_data_out;
 
     // Issue decoderc <--> issue stage
@@ -158,7 +159,7 @@ module issue_stage
     // Issue logic <--> CU
     logic               iq_cu_valid;
     logic               iq_flush;
-    logic               cu_il_flush;
+    logic               cu_mis_flush;
     logic               cu_il_res_ready;
     logic               cu_il_res_sel_rs1;
     logic               cu_il_sel_fetch_except;
@@ -177,14 +178,14 @@ module issue_stage
     // MODULES
     // -------
     //                              /  ISSUE REGISTER  \
-    // fetch stage > ISSUE QUEUE > {   ISSUE DECODER    } > execution/commit stage
+    // fetch stage > ISSUE QUEUE > {   ISSUE DECODER    } > execution/commit
     //                              \     ISSUE CU     /
     //                               \ OPERANDS FETCH /
 
     // ISSUE FIFO QUEUE
     // ----------------
     // Assemble new queue entry with the data from the fetch unit
-    assign  iq_flush                = flush_i | cu_il_flush;
+    assign  iq_flush                = flush_i | cu_mis_flush;
     assign  new_instr.curr_pc       = fetch_curr_pc_i;
     assign  new_instr.instruction   = fetch_instr_i;
     assign  new_instr.pred_target   = fetch_pred_target_i;
@@ -256,6 +257,9 @@ module issue_stage
 
     // ISSUING INSTRUCTION REGISTER
     // ----------------------------
+    // Enable when the CU accepts a valid instruction
+    assign  ireg_en     = iq_cu_valid & cu_iq_ready;
+
     // Input data from issue queue and decoder
     assign  ireg_data_in.curr_pc        = iq_data_out.curr_pc;
     assign  ireg_data_in.instr          = iq_data_out.instruction;
@@ -279,9 +283,9 @@ module issue_stage
     always_ff @( posedge clk_i or negedge rst_n_i ) begin : issue_reg
         if (!rst_n_i) begin
             ireg_data_out  <= '0;
-        end else if (flush_i || cu_il_flush) begin
+        end else if (flush_i || cu_mis_flush) begin
             ireg_data_out  <= '0;
-        end else if (cu_ireg_en) begin
+        end else if (ireg_en) begin
             ireg_data_out  <= ireg_data_in;
         end
     end
@@ -296,13 +300,12 @@ module issue_stage
     	.clk_i                (clk_i                  ),
         .rst_n_i              (rst_n_i                ),
         .flush_i              (flush_i                ),
+        .mis_flush_o          (cu_mis_flush           ),
         .iq_valid_i           (iq_cu_valid            ),
         .iq_ready_o           (cu_iq_ready            ),
         .iq_except_raised_i   (iq_cu_except_raised    ),
         .issue_type_i         (id_cu_issue_type       ),
         .issue_rs1_ready_i    (rs1_ready              ),
-        .issue_mis_flush_o    (cu_il_flush            ),
-        .issue_reg_en_o       (cu_ireg_en             ),
         .issue_res_ready_o    (cu_il_res_ready        ),
         .issue_res_sel_rs1_o  (cu_il_res_sel_rs1      ),
         .issue_fetch_except_o (cu_il_sel_fetch_except ),
@@ -440,6 +443,9 @@ module issue_stage
     // -----------------
     // OUTPUT EVALUATION
     // -----------------
+
+    // Fetch stage
+    assign  fetch_mis_flush_o       = cu_mis_flush;
 
     // Data to integer register status register
     assign  int_regstat_rd_idx_o    = ireg_data_out.rd_idx;

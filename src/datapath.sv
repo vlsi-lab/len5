@@ -56,12 +56,12 @@ module datapath #(
   logic                    fe_be_except_raised;
   except_code_t            fe_be_except_code;
   logic                    be_fe_mis_flush;
-  logic                    be_fe_bpu_flush;
+  logic                    be_fe_except_flush;
   logic                    be_fe_res_valid;
   resolution_t             be_fe_res;
   logic                    be_fe_except_raised;
   logic         [XLEN-1:0] be_fe_except_pc;
-  logic                    fe_be_comm_ready;
+  logic                    fe_be_bu_ready;
 
   // ---------
   // FRONT-END
@@ -73,54 +73,54 @@ module datapath #(
       .INIT_C2B         (INIT_C2B               ),
       .MEMIF_FIFO_DEPTH (FETCH_MEMIF_FIFO_DEPTH )
   ) u_fetch_stage (
-      .clk_i                (clk_i),
-      .rst_n_i              (rst_n_i),
-      .flush_i              (be_fe_mis_flush),
-      .flush_bpu_i          (be_fe_bpu_flush),
-      .mem_valid_i          (ins_mem_valid_i),
-      .mem_ready_i          (ins_mem_ready_i),
-      .mem_valid_o          (ins_mem_valid_o),
-      .mem_ready_o          (ins_mem_ready_o),
-      .mem_ans_i            (ins_mem_ans_i),
-      .mem_req_o            (ins_mem_req_o),
-      .issue_ready_i        (be_fe_ready),
-      .issue_valid_o        (fe_be_valid),
-      .issue_instr_o        (fe_be_instr),
-      .issue_pred_o         (fe_be_pred),
-      .issue_except_raised_o(fe_be_except_raised),
-      .issue_except_code_o  (fe_be_except_code),
-      .comm_except_raised_i (be_fe_except_raised),
-      .comm_except_pc_i     (be_fe_except_pc),
-      .comm_res_valid_i     (be_fe_res_valid),
-      .comm_res_i           (be_fe_res),
-      .comm_ready_o         (fe_be_comm_ready)
+      .clk_i                (clk_i               ),
+      .rst_n_i              (rst_n_i             ),
+      .flush_i              (be_fe_mis_flush     ),
+      .flush_bpu_i          (be_fe_except_flush  ),
+      .mem_valid_i          (ins_mem_valid_i     ),
+      .mem_ready_i          (ins_mem_ready_i     ),
+      .mem_valid_o          (ins_mem_valid_o     ),
+      .mem_ready_o          (ins_mem_ready_o     ),
+      .mem_ans_i            (ins_mem_ans_i       ),
+      .mem_req_o            (ins_mem_req_o       ),
+      .issue_ready_i        (be_fe_ready         ),
+      .issue_valid_o        (fe_be_valid         ),
+      .issue_instr_o        (fe_be_instr         ),
+      .issue_pred_o         (fe_be_pred          ),
+      .issue_except_raised_o(fe_be_except_raised ),
+      .issue_except_code_o  (fe_be_except_code   ),
+      .bu_res_valid_i       (be_fe_res_valid     ),
+      .bu_res_i             (be_fe_res           ),
+      .bu_ready_o           (fe_be_bu_ready      ),
+      .comm_except_raised_i (be_fe_except_raised ),
+      .comm_except_pc_i     (be_fe_except_pc     )
   );
 
   // --------
   // BACK-END
   // --------
   backend u_backend (
-      .clk_i                (clk_i),
-      .rst_n_i              (rst_n_i),
-      .fetch_valid_i        (fe_be_valid),
-      .fetch_ready_i        (fe_be_comm_ready),
-      .fetch_ready_o        (be_fe_ready),
-      .fetch_instr_i        (fe_be_instr),
-      .fetch_pred_i         (fe_be_pred),
-      .fetch_except_raised_i(fe_be_except_raised),
-      .fetch_except_code_i  (fe_be_except_code),
-      .fetch_mis_flush_o    (be_fe_mis_flush),
-      .fetch_bpu_flush_o    (be_fe_bpu_flush),
-      .fetch_res_valid_o    (be_fe_res_valid),
-      .fetch_res_o          (be_fe_res),
-      .fetch_except_raised_o(be_fe_except_raised),
-      .fetch_except_pc_o    (be_fe_except_pc),
-      .mem_valid_i          (data_mem_valid_i),
-      .mem_ready_i          (data_mem_ready_i),
-      .mem_valid_o          (data_mem_valid_o),
-      .mem_ready_o          (data_mem_ready_o),
-      .mem_req_o            (data_mem_req_o),
-      .mem_ans_i            (data_mem_ans_i)
+      .clk_i                (clk_i               ),
+      .rst_n_i              (rst_n_i             ),
+      .fetch_valid_i        (fe_be_valid         ),
+      .fetch_ready_i        (fe_be_bu_ready      ),
+      .fetch_ready_o        (be_fe_ready         ),
+      .fetch_instr_i        (fe_be_instr         ),
+      .fetch_pred_i         (fe_be_pred          ),
+      .fetch_except_raised_i(fe_be_except_raised ),
+      .fetch_except_code_i  (fe_be_except_code   ),
+      .fetch_mis_flush_o    (be_fe_mis_flush     ),
+      .fetch_except_flush_o (be_fe_except_flush  ),
+      .fetch_res_valid_o    (be_fe_res_valid     ),
+      .fetch_res_o          (be_fe_res           ),
+      .fetch_except_raised_o(be_fe_except_raised ),
+      .fetch_except_pc_o    (be_fe_except_pc     ),
+      .mem_valid_i          (data_mem_valid_i    ),
+      .mem_ready_i          (data_mem_ready_i    ),
+      .mem_valid_o          (data_mem_valid_o    ),
+      .mem_ready_o          (data_mem_ready_o    ),
+      .mem_req_o            (data_mem_req_o      ),
+      .mem_ans_i            (data_mem_ans_i      )
   );
 
   // -------------

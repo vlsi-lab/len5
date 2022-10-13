@@ -64,15 +64,15 @@ module commit_cu (
 
     // CU <--> CSRs
     output  logic                   csr_valid_o,
-    output  logic                   csr_override_o,     // unconditionally access requested CSR
+    output  logic                   csr_override_o,     // unconditionally access the requested CSR
     output  comm_csr_instr_t        csr_comm_insn_o,    // committing instruction type
     output  logic[CSR_ADDR_LEN-1:0] csr_addr_o,
 
     // CU <--> others
     input   logic                   fe_ready_i,
     output  logic                   fe_except_raised_o,
-    output  logic                   mis_flush_o,    // flush after misprediction
-    output  logic                   except_flush_o, // flush after exception
+    output  logic                   ex_mis_flush_o, // flush execution pipeline after misprediction
+    output  logic                   except_flush_o, // flush everything after exception
     output  logic                   issue_resume_o  // resume after stall
 );
 
@@ -286,7 +286,7 @@ module commit_cu (
         csr_valid_o         = 1'b0;
         csr_comm_insn_o     = COMM_CSR_INSTR_TYPE_NONE;
         fe_except_raised_o  = 1'b0;
-        mis_flush_o         = 1'b0;
+        ex_mis_flush_o      = 1'b0;
         except_flush_o      = 1'b0;
         issue_resume_o      = 1'b0;
 
@@ -341,7 +341,7 @@ module commit_cu (
                 int_rs_valid_o      = 1'b1;
                 int_rf_valid_o      = 1'b1;
                 comm_reg_clr_o      = 1'b1;
-                mis_flush_o         = 1'b1;
+                ex_mis_flush_o      = 1'b1;
                 comm_jb_instr_o     = 1'b1;
                 csr_comm_insn_o     = COMM_CSR_INSTR_TYPE_JUMP;
                 issue_resume_o      = 1'b1;
@@ -353,7 +353,7 @@ module commit_cu (
                 csr_comm_insn_o     = COMM_CSR_INSTR_TYPE_BRANCH;
             end
             COMMIT_BRANCH_MIS: begin
-                mis_flush_o         = 1'b1;
+                ex_mis_flush_o      = 1'b1;
                 comm_reg_clr_o      = 1'b1;
                 comm_jb_instr_o     = 1'b1;
                 csr_comm_insn_o     = COMM_CSR_INSTR_TYPE_BRANCH;
@@ -393,7 +393,7 @@ module commit_cu (
             end
             COMMIT_EBREAK: begin
                 comm_reg_en_o       = 1'b1;
-                mis_flush_o         = 1'b1;
+                ex_mis_flush_o      = 1'b1;
                 csr_comm_insn_o     = COMM_CSR_INSTR_TYPE_OTHER;
             end
             COMMIT_MRET: begin // read mepc
@@ -401,7 +401,7 @@ module commit_cu (
                 csr_addr_o          = `CSR_ADDR_MEPC;
                 comm_csr_sel_o      = COMM_CSR_SEL_ZERO;
                 comm_reg_en_o       = 1'b1;
-                mis_flush_o         = 1'b1;
+                ex_mis_flush_o      = 1'b1;
                 except_flush_o      = 1'b1; // also flush relevant data
                 csr_comm_insn_o     = COMM_CSR_INSTR_TYPE_OTHER;
             end
@@ -421,7 +421,7 @@ module commit_cu (
                 csr_override_o      = 1'b1;
                 csr_addr_o          = `CSR_ADDR_MEPC;
                 comm_csr_sel_o      = COMM_CSR_SEL_PC;
-                mis_flush_o         = 1'b1;
+                ex_mis_flush_o      = 1'b1;
                 except_flush_o      = 1'b1;
             end
             EXCEPT_WRITE_CODE: begin

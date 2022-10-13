@@ -24,8 +24,8 @@ module bpu #(
     input   logic             rst_n_i,
     input   logic             flush_i,
     input   logic [XLEN-1:0]  curr_pc_i,
-    input   logic             comm_res_valid_i,
-    input   resolution_t      comm_res_i,
+    input   logic             bu_res_valid_i,
+    input   resolution_t      bu_res_i,
 
     output  prediction_t      pred_o
 );
@@ -43,8 +43,8 @@ module bpu #(
         .rst_n_i        (rst_n_i          ),
         .flush_i        (flush_i          ),
         .curr_pc_i      (curr_pc_i        ),
-        .res_valid_i    (comm_res_valid_i ),
-        .res_i          (comm_res_i       ),
+        .res_valid_i    (bu_res_valid_i   ),
+        .res_i          (bu_res_i         ),
         .taken_o        (gshare_taken     )
     );
 
@@ -56,14 +56,14 @@ module bpu #(
         .curr_pc_i        (curr_pc_i      ),
         .valid_i          (btb_update     ),
         .del_entry_i      (btb_del_entry  ),
-        .res_i            (comm_res_i     ),
+        .res_i            (bu_res_i       ),
         .hit_o            (btb_hit        ),
         .target_o         (btb_target     )
     );
     
     // Assignments
-    assign btb_update     = comm_res_valid_i;
-    assign btb_del_entry  = comm_res_i.mispredict & ~comm_res_i.taken; // Why delete?
+    assign btb_update     = bu_res_valid_i;
+    assign btb_del_entry  = bu_res_i.mispredict & ~bu_res_i.taken; // Why delete?
     assign pred_o.pc      = curr_pc_i;
     assign pred_o.taken   = gshare_taken & btb_hit;
     assign pred_o.target  = {btb_target, 2'b00};

@@ -51,7 +51,7 @@ module store_buffer #(
     input   rob_idx_t                   issue_dest_rob_idx_i,
 
     /* Commit stage */
-    input   logic                       comm_spec_instr_i, // there are older jump/branch in-fligh instructions
+    input   logic                       comm_spec_instr_i,  // there are older jump/branch in-fligh instructions
     input   rob_idx_t                   comm_rob_head_idx_i,
 
     /* Common data bus (CDB) */

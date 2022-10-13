@@ -23,13 +23,13 @@ module pc_gen
     input   logic             rst_n_i,
     input   logic             comm_except_raised_i,
     input   logic [XLEN-1:0]  comm_except_pc_i,
-    input   logic             comm_res_valid_i,
-    input   resolution_t      comm_res_i,
+    input   logic             bu_res_valid_i,
+    input   resolution_t      bu_res_i,
     input   prediction_t      pred_i,
     input   logic             mem_ready_i,
 
     output  logic             valid_o,
-    output  logic             comm_ready_o,
+    output  logic             bu_ready_o,
     output  logic [XLEN-1:0]  pc_o
 );
     
@@ -42,7 +42,7 @@ module pc_gen
     // -------------------
 
     // Mux + adder
-    assign add_pc = (comm_res_valid_i && comm_res_i.mispredict) ? comm_res_i.pc : pc_o;
+    assign add_pc = (bu_res_valid_i && bu_res_i.mispredict) ? bu_res_i.pc : pc_o;
     assign adder_out = add_pc + (ILEN >> 3);
 
     // Priority list for choosing the next PC value:
@@ -53,9 +53,9 @@ module pc_gen
     always_comb begin: pc_priority_enc
         if (comm_except_raised_i) begin
             next_pc = comm_except_pc_i;
-        end else if (comm_res_valid_i && comm_res_i.mispredict) begin
-            if (comm_res_i.taken) begin
-                next_pc = comm_res_i.target;
+        end else if (bu_res_valid_i && bu_res_i.mispredict) begin
+            if (bu_res_i.taken) begin
+                next_pc = bu_res_i.target;
             end else begin
                 next_pc = adder_out;
             end
@@ -76,6 +76,6 @@ module pc_gen
     end: pc_reg
 
     // Output valid and ready
-    assign  valid_o         = rst_n_i & !(comm_res_valid_i & comm_res_i.mispredict) & !comm_except_raised_i;
-    assign  comm_ready_o    = mem_ready_i;
+    assign  valid_o     = rst_n_i & !(bu_res_valid_i & bu_res_i.mispredict) & !comm_except_raised_i;
+    assign  bu_ready_o  = mem_ready_i;
 endmodule

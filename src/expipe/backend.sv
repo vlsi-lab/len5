@@ -36,7 +36,7 @@ module backend (
     input   logic                   fetch_except_raised_i,
     input   except_code_t           fetch_except_code_i,
     output  logic                   fetch_mis_flush_o,
-    output  logic                   fetch_bpu_flush_o,
+    output  logic                   fetch_except_flush_o,
     output  logic                   fetch_res_valid_o,
     output  resolution_t            fetch_res_o,
     output  logic                   fetch_except_raised_o,
@@ -201,7 +201,7 @@ module backend (
 
     // Commit Logic <--> others
     // ------------------------
-    logic                       mis_flush;      // flush on misprediction
+    logic                       ex_mis_flush;   // flush on misprediction
     logic                       except_flush;   // flush on exception
 
     // -------
@@ -229,6 +229,7 @@ module backend (
         .fetch_pred_taken_i             (fetch_pred_i.taken         ),
         .fetch_except_raised_i          (fetch_except_raised_i      ),
         .fetch_except_code_i            (fetch_except_code_i        ),
+        .fetch_mis_flush_o              (fetch_mis_flush_o          ),
 
         .int_regstat_valid_o            (il_int_regstat_valid       ),
         .int_regstat_rs1_busy_i         (int_regstat_il_rs1_busy    ),
@@ -300,7 +301,7 @@ module backend (
     (
         .clk_i                  (clk_i                      ),
         .rst_n_i                (rst_n_i                    ),
-        .flush_i                (mis_flush                  ),
+        .flush_i                (ex_mis_flush               ),
         .issue_valid_i          (il_int_regstat_valid       ),
         .issue_rd_idx_i         (il_int_regstat_rd_idx      ),
         .issue_rob_idx_i        (il_int_regstat_rob_idx     ),
@@ -381,12 +382,12 @@ module backend (
     (
         .clk_i                      (clk_i                  ),
         .rst_n_i                    (rst_n_i                ),
-        .mis_flush_i                (mis_flush              ),
+        .mis_flush_i                (ex_mis_flush           ),
         .except_flush_i             (except_flush           ),
 
-        .fetch_ready_i              (fetch_ready_i          ),
-        .fetch_res_valid_o          (fetch_res_valid_o      ),
-        .fetch_res_o                (fetch_res_o            ),
+        .fe_ready_i                 (fetch_ready_i          ),
+        .fe_res_valid_o             (fetch_res_valid_o      ),
+        .fe_res_o                   (fetch_res_o            ),
 
         .issue_valid_i              (il_ex_valid            ),
         .issue_ready_o              (ex_issue_ready         ),
@@ -426,7 +427,7 @@ module backend (
     (
         .clk_i                  (clk_i                  ),
         .rst_n_i                (rst_n_i                ),
-        .flush_i                (mis_flush              ),
+        .flush_i                (ex_mis_flush           ),
         .max_prio_valid_i       (ex_cdb_valid[0]        ),
         .max_prio_ready_o       (cdb_ex_ready[0]        ),
         .max_prio_data_i        (ex_cdb_data[0]         ),
@@ -449,7 +450,7 @@ module backend (
         .clk_i                  (clk_i                      ),
         .rst_n_i                (rst_n_i                    ),
         
-        .mis_flush_o            (mis_flush                  ),
+        .ex_mis_flush_o         (ex_mis_flush               ),
         .except_flush_o         (except_flush               ),
         
         .fe_ready_i             (fetch_ready_i              ),
@@ -533,7 +534,6 @@ module backend (
     // -----------------
     
     // Fetch stage and memory flush
-    assign  fetch_mis_flush_o   = mis_flush;
-    assign  fetch_bpu_flush_o   = except_flush;
+    assign  fetch_except_flush_o    = except_flush;
 
 endmodule

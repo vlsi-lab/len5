@@ -45,13 +45,14 @@ module fetch_stage #(
     output  logic               issue_except_raised_o,
     output  except_code_t       issue_except_code_o,
 
+    // From branch unit
+    output  logic               bu_ready_o,
+    input   logic               bu_res_valid_i,
+    input   resolution_t        bu_res_i,
 
     // From commit unit
-    input   logic               comm_res_valid_i,
-    input   resolution_t        comm_res_i,
     input   logic               comm_except_raised_i,
-    input   logic [XLEN-1:0]    comm_except_pc_i,
-    output  logic               comm_ready_o
+    input   logic [XLEN-1:0]    comm_except_pc_i
 );
 
     // INTERNAL SIGNALS
@@ -89,8 +90,8 @@ module fetch_stage #(
         .rst_n_i          (rst_n_i          ),
         .flush_i          (flush_bpu_i      ),
         .curr_pc_i        (curr_pc          ),
-        .comm_res_valid_i (comm_res_valid_i ),
-        .comm_res_i       (comm_res_i       ),
+        .bu_res_valid_i   (bu_res_valid_i   ),
+        .bu_res_i         (bu_res_i         ),
         .pred_o           (curr_pred        )
     );
 
@@ -103,12 +104,12 @@ module fetch_stage #(
         .rst_n_i              (rst_n_i              ),
         .comm_except_raised_i (comm_except_raised_i ),
         .comm_except_pc_i     (comm_except_pc_i     ),
-        .comm_res_valid_i     (comm_res_valid_i     ),
-        .comm_res_i           (comm_res_i           ),
+        .bu_res_valid_i       (bu_res_valid_i       ),
+        .bu_res_i             (bu_res_i             ),
         .pred_i               (curr_pred            ),
         .mem_ready_i          (memif_pcgen_ready    ),
         .valid_o              (pcgen_memif_valid    ),
-        .comm_ready_o         (comm_ready_o         ),
+        .bu_ready_o           (bu_ready_o           ),
         .pc_o                 (curr_pc              )
     );
 

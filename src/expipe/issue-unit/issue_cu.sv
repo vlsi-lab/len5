@@ -25,6 +25,9 @@ module issue_cu (
     input   logic           rst_n_i,
     input   logic           flush_i,
 
+    // CU <--> others
+    output  logic           mis_flush_o,        // flush issue and fetch stage
+
     // Issue queue <--> CU
     input   logic           iq_valid_i,
     output  logic           iq_ready_o,
@@ -33,8 +36,6 @@ module issue_cu (
     // Issue stage <--> CU
     input   issue_type_t    issue_type_i,       // type of operation needed
     input   logic           issue_rs1_ready_i,  // for CSR instructions
-    output  logic           issue_mis_flush_o,  // flush issue
-    output  logic           issue_reg_en_o,
     output  logic           issue_res_ready_o,
     output  logic           issue_res_sel_rs1_o,
     output  logic           issue_fetch_except_o,
@@ -76,10 +77,13 @@ module issue_cu (
         S_STALL,            // wait for the resume signal from commit
         S_WFI               // wait for interrupt (TODO)
     } cu_state_t;
-    cu_state_t      curr_state, v_next_state, next_state;
+    cu_state_t      curr_state, v_next_state, e_next_state, next_state;
 
     // Execution/commit stage ready
     logic           downstream_ready;
+
+    // Exceptional state request
+    logic           except_state_req;
 
     // ------------
     // CONTROL UNIT
@@ -92,7 +96,7 @@ module issue_cu (
     assign  downstream_ready    = ex_ready_i & comm_ready_i;
 
     // Next state on valid instruction
-    always_comb begin : cu_next_state
+    always_comb begin : cu_v_next_state
         if (iq_except_raised_i) begin
             v_next_state    = S_FETCH_EXCEPT;
         end else if (ex_mis_i) begin
@@ -113,6 +117,18 @@ module issue_cu (
                 default:            v_next_state    = S_RESET;
             endcase
         end
+    end
+
+    // Next state on special cases
+    // Exceptional states are handled with priority to the oldest event:
+    // 1) Flush from the commit stage (e.g., on exception)
+    // 2) Branch/jump misprediction from the execution stage
+    // 3) Exception during instruction fetch
+    assign  except_state_req    = flush_i | ex_mis_i | iq_except_raised_i;
+    always_comb begin : cu_e_next_state
+        if (flush_i)        e_next_state    = S_IDLE;
+        else if (ex_mis_i)  e_next_state    = S_FLUSH;
+        else                e_next_state    = S_FETCH_EXCEPT;
     end
 
     // State progression
@@ -199,8 +215,12 @@ module issue_cu (
             end
             S_FLUSH:                next_state  = S_STALL;
             S_STALL: begin
-                if (comm_resume_i)  next_state  = v_next_state;
-                else                next_state  = S_STALL;
+                if (comm_resume_i && iq_valid_i)  
+                    next_state  = v_next_state;
+                else if (comm_resume_i)
+                    next_state  = S_IDLE;
+                else
+                    next_state  = S_STALL;
             end
             S_WFI:                  next_state  = S_WFI; // TODO: implement interrupts
 
@@ -216,8 +236,7 @@ module issue_cu (
     always_comb begin : cu_out_eval
         // Default values
         iq_ready_o              = 1'b0;
-        issue_mis_flush_o       = 1'b0;
-        issue_reg_en_o          = 1'b0;
+        mis_flush_o             = 1'b0;
         issue_res_ready_o       = 1'b0;
         issue_res_sel_rs1_o     = 1'b0;
         issue_fetch_except_o    = 1'b0;
@@ -233,25 +252,21 @@ module issue_cu (
             S_RESET:; // use default values
             S_IDLE: begin
                 iq_ready_o              = 1'b1;
-                issue_reg_en_o          = 1'b1;
             end 
             S_ISSUE_NONE: begin
                 comm_valid_o            = 1'b1;
                 iq_ready_o              = comm_ready_i;
-                issue_reg_en_o          = comm_ready_i;
                 issue_res_ready_o       = 1'b1;
             end
             S_ISSUE_INT: begin
                 ex_valid_o              = downstream_ready;
                 comm_valid_o            = downstream_ready;
                 iq_ready_o              = downstream_ready;
-                issue_reg_en_o          = downstream_ready;
                 int_regstat_valid_o     = downstream_ready;
             end
             S_ISSUE_LUI: begin
                 comm_valid_o            = 1'b1;
                 iq_ready_o              = comm_ready_i;
-                issue_reg_en_o          = comm_ready_i;
                 issue_res_ready_o       = 1'b1;
                 int_regstat_valid_o     = comm_ready_i;
             end
@@ -259,28 +274,24 @@ module issue_cu (
                 ex_valid_o              = downstream_ready;
                 comm_valid_o            = downstream_ready;
                 iq_ready_o              = downstream_ready;
-                issue_reg_en_o          = downstream_ready;
             end
             S_ISSUE_BRANCH: begin
                 ex_valid_o              = downstream_ready;
                 comm_valid_o            = downstream_ready;
-                comm_jb_instr_o         = 1'b1;
+                comm_jb_instr_o         = downstream_ready;
                 iq_ready_o              = downstream_ready;
-                issue_reg_en_o          = downstream_ready;
             end
             S_ISSUE_JUMP: begin
                 ex_valid_o              = downstream_ready;
                 comm_valid_o            = downstream_ready;
-                comm_jb_instr_o         = 1'b1;
+                comm_jb_instr_o         = downstream_ready;
                 iq_ready_o              = downstream_ready;
-                issue_reg_en_o          = downstream_ready;
                 int_regstat_valid_o     = downstream_ready;
             end
             S_ISSUE_FP: begin
                 ex_valid_o              = downstream_ready;
                 comm_valid_o            = downstream_ready;
                 iq_ready_o              = downstream_ready;
-                issue_reg_en_o          = downstream_ready;
             `ifdef LEN5_FP_EN
                 fp_regstat_valid_o      = downstream_ready;
             `endif /* LEN5_FP_EN */
@@ -291,22 +302,20 @@ module issue_cu (
                 int_regstat_valid_o     = comm_ready_i;
                 issue_res_ready_o       = 1'b1;
                 issue_res_sel_rs1_o     = 1'b1;
-                iq_ready_o              = comm_ready_i;
-                issue_reg_en_o          = comm_ready_i;
             end
             S_ISSUE_EXCEPT: begin
                 comm_valid_o            = 1'b1;
-                issue_reg_en_o          = comm_ready_i;
             end
             S_FETCH_EXCEPT: begin
                 comm_valid_o            = 1'b1;
                 issue_fetch_except_o    = 1'b1;
-                issue_reg_en_o          = comm_ready_i;
             end
             S_FLUSH: begin
-                issue_mis_flush_o       = 1'b1;
+                mis_flush_o             = 1'b1;
             end
-            S_STALL:;
+            S_STALL: begin
+                iq_ready_o              = comm_resume_i;
+            end
             S_WFI:;
             default:; // use default values
         endcase
@@ -314,9 +323,9 @@ module issue_cu (
 
     // State update
     always_ff @( posedge clk_i or negedge rst_n_i ) begin : cu_state_upd
-        if (!rst_n_i)       curr_state  <= S_RESET;
-        else if (flush_i)   curr_state  <= S_IDLE;
-        else                curr_state  <= next_state;
+        if (!rst_n_i)               curr_state  <= S_RESET;
+        else if (except_state_req)  curr_state  <= e_next_state;
+        else                        curr_state  <= next_state;
     end
 
     // ----------

@@ -56,8 +56,8 @@ module tb_bare;
     string      mem_file = "memory.mem";
 
     // Number of cycles to simulate
-    longint unsigned num_cycles = 0;    // 0: no boundary
-    longint unsigned curr_cycle = 0;
+    longint unsigned    num_cycles = 0;    // 0: no boundary
+    longint unsigned    curr_cycle = 0;
 
     // Clock and reset
     logic       clk, rst_n;
@@ -67,6 +67,11 @@ module tb_bare;
 
     // Serial monitor string
     string      serial_str;
+
+    // Mmeory monitor
+    longint unsigned    num_instr_loads = 0;
+    longint unsigned    num_data_loads  = 0;
+    longint unsigned    num_data_stores = 0;
 
     // Mmeory Emulator <--> Datapath
     logic       ins_mem_dp_valid;
@@ -141,27 +146,34 @@ module tb_bare;
                 @(posedge tb_stop);
                 repeat (10) @(posedge clk);
                 `uvm_info("TB", "Stopping simulation", UVM_INFO);
-                `uvm_info("TB", "EXECUTION REPORT", UVM_INFO);
-            `ifndef LEN5_CSR_HPMCOUNTERS_EN
-                `uvm_info("TB", "NOTE: extra performance counters not available since 'LEN5_CSR_HPMCOUNTERS_EN' is not defined", UVM_MEDIUM);
-            `endif /* LEN5_CSR_HPMCOUNTERS_EN */
-                `uvm_info("TB", $sformatf("- current TB cycle:                      %0d", curr_cycle), UVM_INFO);
-                `uvm_info("TB", $sformatf("- total CPU cycles:                      %0d", u_datapath.u_backend.u_csrs.mcycle), UVM_INFO);
-                `uvm_info("TB", $sformatf("- retired instructions:                  %0d", u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
-            `ifdef LEN5_CSR_HPMCOUNTERS_EN
-                `uvm_info("TB", $sformatf("  > retired branch/jump instructions:    %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4, real'(u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
-                `uvm_info("TB", $sformatf("    + jumps:                             %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter3, real'(u_datapath.u_backend.u_csrs.hpmcounter3) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
-                `uvm_info("TB", $sformatf("    + branches:                          %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter4, real'(u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
-                `uvm_info("TB", $sformatf("  > retired load/store instructions:     %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6, real'(u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
-                `uvm_info("TB", $sformatf("    + loads:                             %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter5, real'(u_datapath.u_backend.u_csrs.hpmcounter5) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
-                `uvm_info("TB", $sformatf("    + stores:                            %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter6, real'(u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
-            `endif /* LEN5_CSR_HPMCOUNTERS_EN */
-                `uvm_info("TB", $sformatf("- average IPC:                           %0.2f", real'(u_datapath.u_backend.u_csrs.minstret) / curr_cycle), UVM_INFO);
+                printReport();
                 $stop;
             end
         join
     end
     always #5 clk   = ~clk;
+
+    // Memory monitor
+    // --------------
+    // Track the number of issued memory requests
+    always_ff @( posedge clk ) begin : mem_monitor
+        if (dp_data_mem_valid && data_mem_dp_ready) begin
+            case (dp_data_mem_req.acc_type)
+                MEM_ACC_LD:     num_data_loads++;
+                MEM_ACC_ST:     num_data_stores++;
+                default: begin
+                    `uvm_error("TB MEM MONITOR", $sformatf("Detected invalid data memory request at 0x%h", dp_data_mem_req.addr));
+                end
+            endcase
+        end
+        if (dp_ins_mem_valid && ins_mem_dp_ready) begin
+            if (dp_ins_mem_req.acc_type == MEM_ACC_INSTR) begin
+                num_instr_loads++;
+            end else begin
+                `uvm_error("TB MEM MONITOR", $sformatf("Detected invalid instruction memory request at 0x%h", dp_data_mem_req.addr));
+            end
+        end
+    end
 
     // Serial monitor
     // --------------
@@ -255,5 +267,35 @@ module tb_bare;
         .data_req_i      (dp_data_mem_req   ),
         .data_ans_o      (data_mem_dp_ans   )
     );
+    
+    // ---------
+    // FUNCTIONS
+    // ---------
+
+    // Print simulation report
+    function void printReport();
+        automatic longint unsigned  num_mem_requests    = num_instr_loads + num_data_loads + num_data_stores;
+
+    `uvm_info("TB REPORT", "EXECUTION REPORT", UVM_INFO);
+    `ifndef LEN5_CSR_HPMCOUNTERS_EN
+        `uvm_info("TB REPORT", "NOTE: extra performance counters not available since 'LEN5_CSR_HPMCOUNTERS_EN' is not defined", UVM_MEDIUM);
+    `endif /* LEN5_CSR_HPMCOUNTERS_EN */
+        `uvm_info("TB REPORT", $sformatf("- current TB cycle:                      %0d", curr_cycle), UVM_INFO);
+        `uvm_info("TB REPORT", $sformatf("- total CPU cycles:                      %0d", u_datapath.u_backend.u_csrs.mcycle), UVM_INFO);
+        `uvm_info("TB REPORT", $sformatf("- retired instructions:                  %0d", u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+    `ifdef LEN5_CSR_HPMCOUNTERS_EN
+        `uvm_info("TB REPORT", $sformatf("  > retired branch/jump instructions:    %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4, real'(u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+        `uvm_info("TB REPORT", $sformatf("    + jumps:                             %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter3, real'(u_datapath.u_backend.u_csrs.hpmcounter3) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+        `uvm_info("TB REPORT", $sformatf("    + branches:                          %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter4, real'(u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+        `uvm_info("TB REPORT", $sformatf("  > retired load/store instructions:     %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6, real'(u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+        `uvm_info("TB REPORT", $sformatf("    + loads:                             %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter5, real'(u_datapath.u_backend.u_csrs.hpmcounter5) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+        `uvm_info("TB REPORT", $sformatf("    + stores:                            %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter6, real'(u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
+    `endif /* LEN5_CSR_HPMCOUNTERS_EN */
+        `uvm_info("TB REPORT", $sformatf("- average IPC:                           %0.2f", real'(u_datapath.u_backend.u_csrs.minstret) / curr_cycle), UVM_INFO);
+        `uvm_info("TB REPORT", $sformatf("- memory requests:                       %0d", num_data_loads + num_data_stores + num_instr_loads), UVM_INFO);
+        `uvm_info("TB REPORT", $sformatf("  > load instr. memory requests:         %0d (%0.2f%%)", num_instr_loads, real'(num_instr_loads) * 100 / num_mem_requests), UVM_INFO);
+        `uvm_info("TB REPORT", $sformatf("  > load data memory requests :          %0d (%0.2f%%)", num_data_loads, real'(num_data_loads) * 100 / num_mem_requests), UVM_INFO);
+        `uvm_info("TB REPORT", $sformatf("  > store data memory requests :         %0d (%0.2f%%)", num_data_stores, real'(num_data_stores) * 100 / num_mem_requests), UVM_INFO);
+    endfunction: printReport
 
 endmodule
