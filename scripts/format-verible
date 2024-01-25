@@ -1,0 +1,17 @@
+#!/bin/bash
+
+#find include src -name '*obi.sv*' | xargs verible-verilog-lint
+find include src -name '*.sv*' | xargs verible-verilog-format --inplace --column_limit 150 2> /dev/zero
+
+
+#set -e
+#ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+#
+#if command -v verible-verilog-format &> /dev/null
+#then
+#find rtl/ bhv/ -not -path "*rtl/vendor*" \
+#    -name '*.sv' | \
+#    xargs verible-verilog-format --inplace 2> /dev/zero
+#else
+#echo "verible-verilog-format not available!"
+#fi

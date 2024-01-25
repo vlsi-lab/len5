@@ -1,0 +1,53 @@
+CAPI=2:
+# Copyright 2024 POLITO
+# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+name: "vlsi:polito:len5_top"
+description: "LEN5: out-of-order superscalar CPU"
+
+filesets:
+  files_rtl:
+    files:
+    - rtl/datapath.sv
+    file_type : systemVerilogSource
+    depend:
+    - vlsi:polito:len5_packages
+    - vlsi:polito:len5_common
+    - vlsi:polito:len5_frontend
+    - vlsi:polito:len5_expipe
+    - vlsi:polito:len5_memory
+  
+  tb_bare_rtl:
+    files:
+    - tb/tb_with_l2cemu.sv
+    - tb/memory/cache_L2_system_emulator.sv
+    - tb/memory/memory_if.sv
+    - tb/memory/memory_class.svh
+    - tb/memory/memory_bare_emu.sv
+    - tb/tb_bare.sv
+    file_type : systemVerilogSource
+
+targets:
+  default: &default_target
+    filesets:
+    - files_rtl
+    toplevel: [datapath]  
+
+  sim: 
+    <<: *default_target
+    default_tool: modelsim
+    filesets_append:
+    - tb_bare_rtl
+    toplevel: [tb_bare]
+    tools:
+      modelsim:
+        vlog_options:
+        - -override_timescale 1ns/1ps
+        - -suppress vlog-2583
+        - -suppress vlog-2577
+        - -pedanticerrors
+        - -define MODELSIM
+        - -svinputport=compat
+        - -hazards
+        - -vmake 
