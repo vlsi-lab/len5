@@ -95,7 +95,7 @@ module tb_bare;
     // --------------------------------------
     initial begin
         // Set the memory file path
-        if ($value$plusargs("MEM_FILE=%s", mem_file)) begin
+        if ($value$plusargs("=%s", mem_file)) begin
             `uvm_info("CMDLINE", "Updated memory file", UVM_HIGH);
         end
         
@@ -128,7 +128,7 @@ module tb_bare;
     initial begin
         clk         = 1'b1;
         rst_n       = 1'b0;
-        
+
         #10 rst_n = 1'b1;
 
         fork
@@ -224,7 +224,7 @@ module tb_bare;
         .FETCH_MEMIF_FIFO_DEPTH (FETCH_MEMIF_FIFO_DEPTH ),
         .BOOT_PC                (FETCH_BOOT_PC)
     ) u_datapath (
-    	.clk_i            (clk               ),
+        .clk_i            (clk               ),
         .rst_n_i          (rst_n             ),
         .mem_flush_o      (dp_mem_flush      ),
         .ins_mem_valid_i  (ins_mem_dp_valid  ),

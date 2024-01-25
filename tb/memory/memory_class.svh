@@ -21,7 +21,7 @@ import uvm_pkg::*;
 
 class memory_class #(
     parameter WWIDTH = 32,
-    parameter AWIDTH = 64    
+    parameter AWIDTH = 64
 );
     // PROPERTIES
     // ----------
@@ -74,7 +74,6 @@ class memory_class #(
     // Load memory wrapper
     function int LoadMem(string file = this.memory_file_path, logic [AWIDTH-1:0] offs = 0);
         string  ext =  file.substr(file.len()-3, file.len()-1);
-        
         // Choose the memory load method based on the file extension
         if (!ext.compare("txt") || !ext.compare("hex")) begin
             return this.LoadMemTxt(file);
@@ -100,7 +99,7 @@ class memory_class #(
             end
             addr += ret_code;
         end while (ret_code != 0);
-        
+
         // Close the memory file
         this.CloseMemFile();
 
@@ -288,7 +287,7 @@ class memory_class #(
         // Replace the requested byte in memory
         this.mem[addr]   = data;
     endfunction: WriteB
-    
+
     // Write a halfword
     function int WriteHW(logic [AWIDTH-1:0] addr, logic [HWWIDTH-1:0] data);
         logic [AWIDTH-1:0]  baddr; // word address

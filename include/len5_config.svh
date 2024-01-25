@@ -88,16 +88,16 @@
 // ------------------
 
 // ALU
-`define SKIP_ALU_SPILL_CELL         // make the ALU fully combinational
+`define SKIP_ALU_SPILL_CELL // make the ALU fully combinational
 
 // Branch Unit
-`define SKIP_BU_ADDER_SPILL_CELL    // make the target address adder fully combinational
+`define SKIP_BU_ADDER_SPILL_CELL // make the target address adder fully combinational
 
 // Load-store Unit
-`define SKIP_LSU_ADDER_SPILL_CELL   // make address adder fully combinational
+`define SKIP_LSU_ADDER_SPILL_CELL // make address adder fully combinational
 
 // Commit Stage
-`define SKIP_COMMIT_SPILL_CELL      // directly connect the commit CU to the ROB output
+`define SKIP_COMMIT_SPILL_CELL // directly connect the commit CU to the ROB output
 
 // -----------------
 // FEATURES SWITCHES
@@ -155,50 +155,50 @@
 
 // CONSTRUCT PARAMETERS FROM DEFINES
 `ifdef MEM_EMU_SKIP_INSTR_OUT_REG
-localparam  MEM_EMU_SKIP_INSTR_OUT_REG = 1;
+localparam MEM_EMU_SKIP_INSTR_OUT_REG = 1;
 `else
-localparam  MEM_EMU_SKIP_INSTR_OUT_REG = 0;
-`endif /* MEM_EMU_SKIP_INSTR_OUT_REG */
+localparam MEM_EMU_SKIP_INSTR_OUT_REG = 0;
+`endif  /* MEM_EMU_SKIP_INSTR_OUT_REG */
 `ifdef MEM_EMU_SKIP_DATA_OUT_REG
-localparam  MEM_EMU_SKIP_DATA_OUT_REG = 1;
+localparam MEM_EMU_SKIP_DATA_OUT_REG = 1;
 `else
-localparam  MEM_EMU_SKIP_DATA_OUT_REG = 0;
-`endif /* MEM_EMU_SKIP_DATA_OUT_REG */
+localparam MEM_EMU_SKIP_DATA_OUT_REG = 0;
+`endif  /* MEM_EMU_SKIP_DATA_OUT_REG */
 
 `ifdef SKIP_FETCH_MEMIF_REQ_SPILL_CELL
-localparam  FETCH_REQ_SPILL_SKIP = 1;
+localparam FETCH_REQ_SPILL_SKIP = 1;
 `else
-localparam  FETCH_REQ_SPILL_SKIP = 0;
-`endif /* SKIP_FETCH_MEMIF_REQ_SPILL_CELL */
+localparam FETCH_REQ_SPILL_SKIP = 0;
+`endif  /* SKIP_FETCH_MEMIF_REQ_SPILL_CELL */
 `ifdef SKIP_FETCH_MEMIF_ANS_SPILL_CELL
 
-localparam  FETCH_ANS_SPILL_SKIP = 1;
+localparam FETCH_ANS_SPILL_SKIP = 1;
 `else
-localparam  FETCH_ANS_SPILL_SKIP = 0;
-`endif /* SKIP_FETCH_MEMIF_ANS_SPILL_CELL */
+localparam FETCH_ANS_SPILL_SKIP = 0;
+`endif  /* SKIP_FETCH_MEMIF_ANS_SPILL_CELL */
 
 `ifdef SKIP_ALU_SPILL_CELL
 localparam ALU_SPILL_SKIP = 1;
 `else
 localparam ALU_SPILL_SKIP = 0;
-`endif /* SKIP_ALU_SPILL_CELL */
+`endif  /* SKIP_ALU_SPILL_CELL */
 
 `ifdef SKIP_BU_ADDER_SPILL_CELL
 localparam BU_SPILL_SKIP = 1;
 `else
 localparam BU_SPILL_SKIP = 0;
-`endif /* SKIP_BU_ADDER_SPILL_CELL */
+`endif  /* SKIP_BU_ADDER_SPILL_CELL */
 
 `ifdef SKIP_LSU_ADDER_SPILL_CELL
 localparam LSU_SPILL_SKIP = 1;
 `else
 localparam LSU_SPILL_SKIP = 0;
-`endif /* SKIP_LSU_ADDER_SPILL_CELL */
+`endif  /* SKIP_LSU_ADDER_SPILL_CELL */
 
 `ifdef SKIP_COMMIT_SPILL_CELL
 localparam COMMIT_SPILL_SKIP = 1;
 `else
 localparam COMMIT_SPILL_SKIP = 0;
-`endif /* SKIP_COMMIT_SPILL_CELL */
+`endif  /* SKIP_COMMIT_SPILL_CELL */
 
-`endif /* LEN5_CONFIG_ */
+`endif  /* LEN5_CONFIG_ */

@@ -1,0 +1,26 @@
+CAPI=2:
+# Copyright 2024 POLITO
+# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+name: "vlsi:polito:len5_frontend"
+description: " LEN5 CPU frontend components"
+
+filesets:
+ frontend_rtl:
+   depend:
+    - vlsi:polito:len5_packages
+   files:
+    - pc_gen.sv 
+    - fetch_mem_if.sv 
+    - fetch_stage.sv 
+    - bpu.sv 
+    - btb.sv 
+    - gshare.sv 
+    - ras.sv
+   file_type: systemVerilogSource
+
+targets:
+    default:
+        filesets:
+        - frontend_rtl

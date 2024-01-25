@@ -1,0 +1,95 @@
+CAPI=2:
+# Copyright 2024 POLITO
+# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+name: "vlsi:polito:len5_expipe"
+description: " LEN5 CPU execution pipeline components"
+
+filesets:
+ register_rtl:
+   depend:
+    - vlsi:polito:len5_packages
+   files:
+    - register-file/fp_regstat.sv
+    - register-file/fp_rf.sv
+    - register-file/int_regstat.sv
+    - register-file/int_rf.sv
+    - register-file/csrs.sv
+   file_type : systemVerilogSource
+    
+ cdb_rtl:
+   depend:
+    - vlsi:polito:len5_packages
+   files:
+    - cdb/cdb_arbiter.sv
+    - cdb/cdb.sv
+   file_type : systemVerilogSource
+
+ commit_unit_rtl:
+   depend:
+    - vlsi:polito:len5_packages
+    - vlsi:polito:len5_frontend
+   files:
+    - commit-unit/commit_decoder.sv 
+    - commit-unit/commit_stage.sv 
+    - commit-unit/rob.sv
+    - commit-unit/commit_cu.sv 
+   file_type : systemVerilogSource
+
+ exec_units_rtl:  
+   depend:
+    - vlsi:polito:len5_packages
+   files:
+    - exec-units/alu_unit.sv
+    - exec-units/alu.sv
+    - exec-units/arith_rs.sv
+    - exec-units/branch_cu.sv
+    - exec-units/branch_rs.sv
+    - exec-units/branch_unit.sv
+    - exec-units/div_unit.sv
+    - exec-units/div.sv
+    - exec-units/exec_stage.sv
+    - exec-units/mult_unit.sv
+    - exec-units/mult.sv
+    - exec-units/op_only_rs.sv
+    - exec-units/op_only_unit.sv
+   file_type : systemVerilogSource
+
+ issue_unit_rtl:
+   depend:
+    - vlsi:polito:len5_packages
+   files:
+    - issue-unit/issue_cu.sv
+    - issue-unit/issue_decoder.sv
+    - issue-unit/issue_queue.sv
+    - issue-unit/issue_stage.sv
+   file_type : systemVerilogSource
+
+ load_store_unit_rtl:
+   depend:
+    - vlsi:polito:len5_packages
+   files:
+    - load-store-unit/address_adder.sv
+    - load-store-unit/l0_cache.sv
+    - load-store-unit/load_buffer.sv
+    - load-store-unit/store_buffer.sv
+    - load-store-unit/load_store_unit.sv
+    - backend.sv
+   file_type : systemVerilogSource
+
+targets:
+    default:
+        filesets:
+        - cdb_rtl
+        - commit_unit_rtl
+        - exec_units_rtl
+        - issue_unit_rtl
+        - load_store_unit_rtl
+        - register_rtl
+
+
+   
+    
+    
+

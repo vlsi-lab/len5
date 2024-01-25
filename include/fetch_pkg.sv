@@ -19,67 +19,75 @@
 `include "len5_config.svh"
 
 package fetch_pkg;
-    import len5_pkg::XLEN;
-    import len5_pkg::ILEN;
-    import len5_pkg::except_code_t;
+  import len5_pkg::XLEN;
+  import len5_pkg::ILEN;
+  import len5_pkg::except_code_t;
 
-    // ----------
-    // DATA TYPES
-    // ----------
+  // ----------
+  // DATA TYPES
+  // ----------
 
-    // G-share predictor counter values
-    typedef enum logic [1:0] { // 2-bit counter
-        SNT,    // strong not-taken
-        WNT,    // weak not-taken
-        WT,     // weak taken
-        ST      // strong taken
-    } c2b_t;
+  // G-share predictor counter values
+  typedef enum logic [1:0] {  // 2-bit counter
+    SNT,  // strong not-taken
+    WNT,  // weak not-taken
+    WT,   // weak taken
+    ST    // strong taken
+  } c2b_t;
 
-    // instruction selector enums
-    typedef enum logic [1:0] { current_pc = 'h0, prev_pc = 'h1, line_pc = 'h2 } pc_src_t;
-    typedef enum logic [1:0] { cache_out = 'h0, line_reg = 'h1, line_bak = 'h2 } line_src_t;
+  // instruction selector enums
+  typedef enum logic [1:0] {
+    current_pc = 'h0,
+    prev_pc = 'h1,
+    line_pc = 'h2
+  } pc_src_t;
+  typedef enum logic [1:0] {
+    cache_out = 'h0,
+    line_reg  = 'h1,
+    line_bak  = 'h2
+  } line_src_t;
 
-    // prediction structure
-    typedef struct packed {
-        logic [XLEN-1:0]  pc;
-        logic [XLEN-1:0]  target;
-        logic             taken;
-    } prediction_t;
+  // prediction structure
+  typedef struct packed {
+    logic [XLEN-1:0] pc;
+    logic [XLEN-1:0] target;
+    logic            taken;
+  } prediction_t;
 
-    // resolution structure
-    typedef struct packed {
-        logic [XLEN-1:0]  pc;
-        logic             mispredict;
-        logic             taken;
-        logic [XLEN-1:0]  target;
-    } resolution_t;
+  // resolution structure
+  typedef struct packed {
+    logic [XLEN-1:0] pc;
+    logic            mispredict;
+    logic            taken;
+    logic [XLEN-1:0] target;
+  } resolution_t;
 
-    // Memory interface answer spill cell data type
-    typedef struct packed {
-        logic [XLEN-1:0]    instr;
-        prediction_t        pred_data;
-        logic               except_raised;
-        except_code_t       except_code;
-    } mem_if_ans_reg_t;
+  // Memory interface answer spill cell data type
+  typedef struct packed {
+    logic [XLEN-1:0] instr;
+    prediction_t     pred_data;
+    logic            except_raised;
+    except_code_t    except_code;
+  } mem_if_ans_reg_t;
 
-    // ----------
-    // PARAMETERS
-    // ----------
+  // ----------
+  // PARAMETERS
+  // ----------
 
-    // Instruction address offset
-    localparam  OFFSET = $clog2(ILEN/8); // 2 LSB of addresses are always 0, so no use in using them for indexing
+  // Instruction address offset
+  localparam OFFSET = $clog2(ILEN / 8);  // 2 LSB of addresses are always 0, so no use in using them for indexing
 
-    // Boot program counter
-    localparam logic [XLEN-1:0] BOOT_PC = `BOOT_PC;
+  // Boot program counter
+  localparam logic [XLEN-1:0] BOOT_PC = `BOOT_PC;
 
-    // g-share branch predictor history length and counters intial value
-    localparam       HLEN     = `BPU_HLEN;
-    localparam c2b_t INIT_C2B = `BPU_INIT_C2B;
+  // g-share branch predictor history length and counters intial value
+  localparam HLEN = `BPU_HLEN;
+  localparam c2b_t INIT_C2B = `BPU_INIT_C2B;
 
-    // Branch target buffer bits 
-    localparam  BTB_BITS = `BPU_BTB_BITS;
+  // Branch target buffer bits 
+  localparam BTB_BITS = `BPU_BTB_BITS;
 
 endpackage
 
-`endif /* FETCH_PKG_SVH_ */
+`endif  /* FETCH_PKG_SVH_ */
 
