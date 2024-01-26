@@ -1,0 +1,17 @@
+## files ##
+# temp tilde files
+*~
+
+# compilation outputs #
+*.o
+*.hex
+*.elf
+*.bin
+*.dis
+
+## private folders ##
+private/
+build/
+
+## Visual Studio Code settings
+.vscode/

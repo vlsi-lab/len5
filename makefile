@@ -38,12 +38,12 @@ questasim-sim:
 
 app-helloworld:
 	@echo "## Building helloworld application"
-	$(MAKE) -C len5-software applications/hello_world/hello_world.hex  TARGET=$(TARGET)
+	$(MAKE) -C sw applications/hello_world/hello_world.hex  TARGET=$(TARGET)
 
 run-helloworld-questasim: questasim-sim app-helloworld
 	@echo "## Running helloworld application"
 	cd ./build/vlsi_polito_len5_top_0/sim-modelsim; \
-	make run PLUSARGS="c firmware=../../../len5-software/applications/hello_world.hex"; \
+	make run PLUSARGS="c firmware=../../../sw/applications/hello_world.hex"; \
 	cd ../../..;
 
 ########################################################################
