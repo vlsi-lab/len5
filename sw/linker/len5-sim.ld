@@ -10,7 +10,7 @@ OUTPUT_FORMAT("elf64-littleriscv", "elf64-littleriscv",
 	      "elf64-littleriscv")
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
-/* >>> CUSTOM START <<< */
+
 /* Simulation memory layout */
 MEMORY
 {
@@ -19,86 +19,38 @@ MEMORY
   ROM (rx)  : ORIGIN = 0x0, LENGTH = 8M
   RAM (!rx) : ORIGIN = (ORIGIN(ROM) + LENGTH(ROM)), LENGTH = 128M
 }
-/* >>>  CUSTOM END  <<< */
-SEARCH_DIR("/opt/riscv/riscv64-unknown-elf/lib");
+
 SECTIONS
 {
-  /* >>> CUSTOM START <<< */
   /* Boot program counter (fixed entry point). The initial part of the ROM is
      used to store interrupt and exception vectors. */
-  PROVIDE(__boot_pc = 0x10000);
+  PROVIDE(__boot_address = 0x180);
+
   /* Define stack and heap size (used by custom crt0.s) */
-  PROVIDE(__stack_size = 8M);
-  PROVIDE(__heap_size = 64M);
-  /* >>>  CUSTOM END  <<< */
+  __stack_size = DEFINED(__stack_size) ? __stack_size : 64K;
+  PROVIDE(__stack_size = __stack_size);
+  __heap_size = DEFINED(__heap_size) ? __heap_size : 128K;
+  PROVIDE(__heap_size = __heap_size);
+
   /* Read-only sections, merged into text segment: */
   PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x10000)); . = SEGMENT_START("text-segment", 0x10000) + SIZEOF_HEADERS;
 
-  /* >>> CUSTOM START <<< */
   /* Interrupts and exceptions vector table (64 jump instructions) */
-  .irq_vector_table (ORIGIN(ROM)):
+  .vectors (ORIGIN(ROM)):
   {
     . = ALIGN(4); /* per specs */
     PROVIDE (__vector_start = .);
-    KEEP (*(.irq_vector_table));
+    KEEP (*(.vectors));
   } > ROM
-  /* >>>  CUSTOM END  <<< */
 
-  /* DYNAMIC LINKING START */
-  .interp         : { *(.interp) }
-  .note.gnu.build-id  : { *(.note.gnu.build-id) }
-  .hash           : { *(.hash) }
-  .gnu.hash       : { *(.gnu.hash) }
-  .dynsym         : { *(.dynsym) }
-  .dynstr         : { *(.dynstr) }
-  .gnu.version    : { *(.gnu.version) }
-  .gnu.version_d  : { *(.gnu.version_d) }
-  .gnu.version_r  : { *(.gnu.version_r) }
-  .rela.dyn       :
-    {
-      *(.rela.init)
-      *(.rela.text .rela.text.* .rela.gnu.linkonce.t.*)
-      *(.rela.fini)
-      *(.rela.rodata .rela.rodata.* .rela.gnu.linkonce.r.*)
-      *(.rela.data .rela.data.* .rela.gnu.linkonce.d.*)
-      *(.rela.tdata .rela.tdata.* .rela.gnu.linkonce.td.*)
-      *(.rela.tbss .rela.tbss.* .rela.gnu.linkonce.tb.*)
-      *(.rela.ctors)
-      *(.rela.dtors)
-      *(.rela.got)
-      *(.rela.sdata .rela.sdata.* .rela.gnu.linkonce.s.*)
-      *(.rela.sbss .rela.sbss.* .rela.gnu.linkonce.sb.*)
-      *(.rela.sdata2 .rela.sdata2.* .rela.gnu.linkonce.s2.*)
-      *(.rela.sbss2 .rela.sbss2.* .rela.gnu.linkonce.sb2.*)
-      *(.rela.bss .rela.bss.* .rela.gnu.linkonce.b.*)
-      *(.rela.ifunc)
-    }
-  .rela.plt       :
-    {
-      *(.rela.plt)
-      PROVIDE_HIDDEN (__rela_iplt_start = .);
-      *(.rela.iplt)
-      PROVIDE_HIDDEN (__rela_iplt_end = .);
-    }
-  /* DYNAMIC LINKING END */
-  
-  /* >>> CUSTOM START <<< */
-  /* Initialization (at fixed address) */
-  .init (__boot_pc):
+  /* Initialization (crt0) */
+  .init (__boot_address):
   {
     KEEP (*(SORT_NONE(.init)));
     KEEP (*(.text.start)) /* custom crt0 */
   } > ROM
-  /* Original code below */
-  /* .init           :
-  {
-    KEEP (*(SORT_NONE(.init)))
-  } */  
-  /* >>>  CUSTOM END  <<< */
 
-  /* DYNAMIC LINKING START */
-  .plt            : { *(.plt) *(.iplt) }
-  /* DYNAMIC LINKING END */
+  /* The program code and other data */
   .text           :
   {
     *(.text.unlikely .text.*_unlikely .text.unlikely.*)
@@ -110,20 +62,20 @@ SECTIONS
     /* .gnu.warning sections are handled specially by elf.em.  */
     *(.gnu.warning)
   } > ROM
+
+  /* Not used by RISC-V */
   .fini           :
   {
     KEEP (*(SORT_NONE(.fini)))
   } > ROM
+
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);
+
   .rodata         : { *(.rodata .rodata.* .gnu.linkonce.r.*) } > ROM
   .rodata1        : { *(.rodata1) } > ROM
-  .sdata2         :
-  {
-    *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
-  } > ROM
-  .sbss2          : { *(.sbss2 .sbss2.* .gnu.linkonce.sb2.*) } > ROM
+
   .eh_frame_hdr   : { *(.eh_frame_hdr) *(.eh_frame_entry .eh_frame_entry.*) } > ROM
   .eh_frame       : ONLY_IF_RO { KEEP (*(.eh_frame)) *(.eh_frame.*) } > ROM
   .gcc_except_table   : ONLY_IF_RO { *(.gcc_except_table .gcc_except_table.*) } > ROM
@@ -138,6 +90,7 @@ SECTIONS
   .gnu_extab      : ONLY_IF_RW { *(.gnu_extab) } > RAM
   .gcc_except_table   : ONLY_IF_RW { *(.gcc_except_table .gcc_except_table.*) } > RAM
   .exception_ranges   : ONLY_IF_RW { *(.exception_ranges*) } > RAM
+  
   /* Thread Local Storage sections  */
   .tdata	  :
    {
@@ -145,6 +98,8 @@ SECTIONS
      *(.tdata .tdata.* .gnu.linkonce.td.*)
    } > RAM
   .tbss		  : { *(.tbss .tbss.* .gnu.linkonce.tb.*) *(.tcommon) } > RAM
+  
+  /* Initialization and termination routines */
   .preinit_array    :
   {
     PROVIDE_HIDDEN (__preinit_array_start = .);
@@ -185,7 +140,7 @@ SECTIONS
     KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o ) .ctors))
     KEEP (*(SORT(.ctors.*)))
     KEEP (*(.ctors))
-  } > RAM
+  } > ROM
   .dtors          :
   {
     KEEP (*crtbegin.o(.dtors))
@@ -193,11 +148,11 @@ SECTIONS
     KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o ) .dtors))
     KEEP (*(SORT(.dtors.*)))
     KEEP (*(.dtors))
-  } > RAM
-  .jcr            : { KEEP (*(.jcr)) } > RAM
-  .data.rel.ro : { *(.data.rel.ro.local* .gnu.linkonce.d.rel.ro.local.*) *(.data.rel.ro .data.rel.ro.* .gnu.linkonce.d.rel.ro.*) } > RAM
-  .dynamic        : { *(.dynamic) } > RAM
+  } > ROM
+
   . = DATA_SEGMENT_RELRO_END (0, .);
+
+  /* Data sections for initialized data */
   .data           :
   {
     __DATA_BEGIN__ = .;
@@ -205,7 +160,7 @@ SECTIONS
     SORT(CONSTRUCTORS)
   } > RAM
   .data1          : { *(.data1) } > RAM
-  .got            : { *(.got.plt) *(.igot.plt) *(.got) *(.igot) } > RAM
+
   /* We want the small data sections together, so single-instruction offsets
      can access them all, and initialized data all before uninitialized, so
      we can shorten the on-disk segment size.  */
@@ -218,6 +173,8 @@ SECTIONS
   _edata = .; PROVIDE (edata = .);
   . = .;
 
+  /* Zero-initialized sections */
+  __bss_start = .;
   .sbss           :
   {
     *(.dynsbss)
@@ -240,12 +197,15 @@ SECTIONS
   . = SEGMENT_START("ldata-segment", .);
   . = ALIGN(64 / 8);
   __BSS_END__ = .;
-    __global_pointer$ = MIN(__SDATA_BEGIN__ + 0x800,
-		            MAX(__DATA_BEGIN__ + 0x800, __BSS_END__ - 0x800));
+  __bss_end = .;
+
+  /* The compiler uses this to access data in the .sdata, .data, .sbss and .bss
+     sections with fewer instructions (relaxation). This reduces code size. */
+  __global_pointer$ = MIN(__SDATA_BEGIN__ + 0x800,
+          MAX(__DATA_BEGIN__ + 0x800, __BSS_END__ - 0x800));
   _end = .; PROVIDE (end = .);
   . = DATA_SEGMENT_END (.);
 
-  /* >>> CUSTOM START <<< */
   /* Heap (grows up) */
   .heap   :
   {
@@ -253,14 +213,15 @@ SECTIONS
     . = __heap_size;
     PROVIDE (__heap_top = .);
   } > RAM
+
   /* Stack (grows down) */
   .stack  : ALIGN(16)
   {
     PROVIDE (__stack_bottom = .);
     . = __stack_size;
+    PROVIDE (_sp = .);
     PROVIDE (__stack_top = .);
   } > RAM
-  /* >>>  CUSTOM END  <<< */
 
   /* Stabs debugging sections.  */
   .stab          0 : { *(.stab) }

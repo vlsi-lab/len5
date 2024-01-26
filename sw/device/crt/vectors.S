@@ -15,7 +15,7 @@
 * limitations under the License.
 */
 
-.section .irq_vector_table, "ax"
+.section .vectors, "ax"
 .option norvc
 vector_table:
     j sw_irq_handler  	# all sync. exceptions, plus user-SW interrupt

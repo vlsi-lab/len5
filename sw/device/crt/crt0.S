@@ -18,7 +18,7 @@
 #include "len5_switches.h"
 
 # Bare-metal entry point
-.section .text.start, "ax"
+.section .text.start
 .global _start
 _start:
     .cfi_startproc
@@ -31,22 +31,22 @@ _start:
     .option pop
 
     # Initialize stack pointer
-    la sp, __stack_top # provided by linker script
+    la sp, _sp # provided by linker script
     mv  s0, sp # s0 = sp
 
-    # Setup 'mtvec' CSR to vectored exception mode
-    la a0, __vector_start # base address, provided by linker script 
-    addi a0, a0, 0x1 # a0 = a0 | 0x1 (enable vectored mode)
-    csrw mtvec, a0
-
     # Clear the bss segment
-    la a0, _edata # bss sections begin (from linker script)
-    la a2, _end # bss sections end (from linker script)
+    la a0, __bss_start # bss sections begin (from linker script)
+    la a2, __bss_end # bss sections end (from linker script)
     sub a2, a2, a0 # a2 = a2 - a0
     li a1, 0 # a1 = 0
     call memset
 
-    # Ctors and dtors
+    # Setup 'mtvec' CSR to vectored exception mode
+    la a0, __vector_start # base address, provided by linker script 
+    ori a0, a0, 0x1 # a0 = a0 | 0x1 (enable vectored mode)
+    csrw mtvec, a0
+
+    # Constructors and destructors
 #ifndef LEN5_SKIP_CRT0_LIBC_INIT_ARRAY
     la a0, __libc_fini_array # register global termination functions
     call atexit # to be called upon exit
@@ -65,7 +65,8 @@ _start:
 
 .global _init
 .global _fini
+/* These don't have to do anything since we use init_array/fini_array */
 _init:
+    ret
 _fini:
-    /* These don't have to do anything since we use init_array/fini_array */
 	ret

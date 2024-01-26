@@ -46,6 +46,11 @@ static char *brk = __heap_bottom;
 
 // FUNCTION DEFINITIONS
 // --------------------
+void unimplemented_syscall(void)
+{
+    const char *msg = "Unimplemented system call!\n";
+    _write(STDOUT_FILENO, msg, sizeof(msg));
+}
 
 int _access(const char *file, int mode)
 {
@@ -274,8 +279,10 @@ ssize_t _write(int handle, const char *data, size_t size)
     const char *end_data = data + size;
 
     // Skip files other than STDOUT
-    if (handle != STDOUT)
+    if (handle != STDOUT) {
+        errno = ENOSYS;
         return -1;
+    }
 
     while (data != end_data)
         serial_write(*data++);

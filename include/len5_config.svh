@@ -23,7 +23,7 @@
 `define BOOT_VM_MODE BARE // BARE|SV39|SV48
 
 // Boot program counter
-`define BOOT_PC 64'h10000
+`define BOOT_PC 64'h180
 
 // MEMORY-MAPPED DEVICES
 // ---------------------
