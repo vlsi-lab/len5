@@ -60,7 +60,7 @@ module datapath #(
 
     // Interrupt inputs ---> Not implemented
     input  logic [31:0] irq_i,      // CLINT interrupts + CLINT extension interrupts
-    output logic        irq_ack_o,  // 
+    output logic        irq_ack_o,  //
     output logic [ 4:0] irq_id_o,
 
     // CPU Control Signals ---> Not implemented
@@ -102,11 +102,11 @@ module datapath #(
       .rst_n_i              (rst_n_i),
       .flush_i              (be_fe_mis_flush),
       .flush_bpu_i          (be_fe_except_flush),
-      .instr_mem_valid_i    (instr_mem_rvalid_i),
-      .instr_mem_ready_i    (instr_mem_gnt_i),
-      .instr_mem_ready_o    (instr_mem_rready_o),
-      .instr_mem_valid_o    (instr_mem_req_o),
-      .instr_mem_we_o       (instr_mem_we_o),
+      .instr_valid_i        (instr_rvalid_i),
+      .instr_ready_i        (instr_gnt_i),
+      .instr_ready_o        (instr_rready_o),
+      .instr_valid_o        (instr_req_o),
+      .instr_we_o           (instr_we_o),
       .instr_rdata_i        (instr_rdata_i),
       .instr_addr_o         (instr_addr_o),
       .instr_tag_o          (instr_tag_o),

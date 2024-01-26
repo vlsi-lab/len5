@@ -42,11 +42,11 @@ module fetch_mem_if #(
     output except_code_t issue_except_code_o,
 
     // Memory
-    input  logic                            instr_mem_valid_i,
-    input  logic                            instr_mem_ready_i,
-    output logic                            instr_mem_ready_o,
-    output logic                            instr_mem_valid_o,
-    output logic                            instr_mem_we_o,
+    input  logic                            instr_valid_i,
+    input  logic                            instr_ready_i,
+    output logic                            instr_ready_o,
+    output logic                            instr_valid_o,
+    output logic                            instr_we_o,
     input  logic         [        XLEN-1:0] instr_rdata_i,          // old: ins_mem_ans_i.value
     input  logic         [BUFF_IDX_LEN-1:0] instr_tag_i,            // old: ins_mem_ans_i.tag
     output logic         [        XLEN-1:0] instr_addr_o,           // old: ins_mem_req_o.addr
@@ -87,8 +87,8 @@ module fetch_mem_if #(
       .rst_n_i(rst_n_i),
       .flush_i(flush_i),
       .valid_i(fetch_valid_i),
-      .ready_i(instr_mem_ready_i),
-      .valid_o(instr_mem_valid_o),
+      .ready_i(instr_ready_i),
+      .valid_o(instr_valid_o),
       .ready_o(fetch_ready_o),
       .data_i (fetch_pred_i),
       .data_o (req_reg_out)
@@ -98,8 +98,8 @@ module fetch_mem_if #(
   // -----------------
   // Holds branch prediction data while the current instruction is fetched
   // from the memory
-  assign pred_fifo_push = instr_mem_valid_o & instr_mem_ready_i;
-  assign pred_fifo_pop  = instr_mem_valid_i & instr_mem_ready_o;
+  assign pred_fifo_push = instr_valid_o & instr_ready_i;
+  assign pred_fifo_pop  = instr_valid_i & instr_ready_o;
   fifo_nohs #(
       .DATA_T(prediction_t),
       .DEPTH (MAX_MEM_OUTSTANDING_REQUESTS)
@@ -129,10 +129,10 @@ module fetch_mem_if #(
       .clk_i  (clk_i),
       .rst_n_i(rst_n_i),
       .flush_i(flush_i),
-      .valid_i(instr_mem_valid_i),
+      .valid_i(instr_valid_i),
       .ready_i(issue_ready_i),
       .valid_o(issue_valid_o),
-      .ready_o(instr_mem_ready_o),
+      .ready_o(instr_ready_o),
       .data_i (ans_reg_in),
       .data_o (ans_reg_out)
   );
@@ -145,7 +145,7 @@ module fetch_mem_if #(
   assign instr_tag_o           = '0;
   assign instr_addr_o          = req_reg_out.pc;
   assign instr_except_raised   = '0;
-  assign instr_mem_we_o        = 1'b0;
+  assign instr_we_o        = 1'b0;
 
   // Fetched instruction
   assign issue_instr_o.raw     = ans_reg_out.instr;

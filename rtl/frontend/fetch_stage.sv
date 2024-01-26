@@ -30,11 +30,11 @@ module fetch_stage #(
     input logic flush_bpu_i,
 
     // From/to memory
-    input  logic                            instr_mem_valid_i,
-    input  logic                            instr_mem_ready_i,
-    output logic                            instr_mem_ready_o,
-    output logic                            instr_mem_valid_o,
-    output logic                            instr_mem_we_o,
+    input  logic                            instr_valid_i,
+    input  logic                            instr_ready_i,
+    output logic                            instr_ready_o,
+    output logic                            instr_valid_o,
+    output logic                            instr_we_o,
     input  logic         [        XLEN-1:0] instr_rdata_i,        // old: ins_mem_ans_i.value
     input  logic         [BUFF_IDX_LEN-1:0] instr_tag_i,          // old: ins_mem_ans_i.tag
     output logic         [        XLEN-1:0] instr_addr_o,         // old: ins_mem_req_o.addr
@@ -135,11 +135,11 @@ module fetch_stage #(
       .issue_pred_o         (issue_pred_o),
       .issue_except_raised_o(issue_except_raised_o),
       .issue_except_code_o  (issue_except_code_o),
-      .instr_mem_valid_i    (instr_mem_valid_i),
-      .instr_mem_ready_i    (instr_mem_ready_i),
-      .instr_mem_ready_o    (instr_mem_ready_o),
-      .instr_mem_valid_o    (instr_mem_valid_o),
-      .instr_mem_we_o       (instr_mem_we_o),
+      .instr_valid_i        (instr_valid_i),
+      .instr_ready_i        (instr_ready_i),
+      .instr_ready_o        (instr_ready_o),
+      .instr_valid_o        (instr_valid_o),
+      .instr_we_o           (instr_we_o),
       .instr_rdata_i        (instr_rdata_i),
       .instr_tag_i          (instr_tag_i),
       .instr_addr_o         (instr_addr_o),
