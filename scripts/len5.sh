@@ -95,7 +95,7 @@ print_usage() {
     printf -- "-x:      launch simulation with GUI (ignores '-o').\n"
     printf -- "-o:      remove '-voptargs=+acc' from simulation options.\n"
     printf -- "-p FILE: pass '-do FILE' to the simulator AFTER the 'run' command.\n"
-    printf -- "-v LVL:  set UVM verbosity level to NUM (accepted: [0:5])"
+    printf -- "-v LVL:  set logging verbosity level to NUM (accepted: [0:5])"
     printf -- "\n"
     printf -- "Synthesis:\n"
     printf -- "-S:      launch synthesis after compilation (implies 'r').\n"
@@ -242,8 +242,8 @@ while getopts ':hB:g:rLR:dDb:atnf:l:isTm:W:N:xop:v:S' opt; do
         p) # pass '-do FILE' to the simulator AFTER the 'run' command
             POST_SIM_SCRIPT="$OPTARG"
             ;;
-        v) # Set UVM verbosity level [0:5]
-            UVM_VERBOSITY=$OPTARG
+        v) # Set verbosity level [0:5]
+            VERBOSITY=$OPTARG
             ;;
         S) #Launch synthesis script
             LAUNCH_SYN=1
@@ -365,7 +365,7 @@ to_run_script "$HEADER_MSG"
 to_run_script "$CMD_LINE_MSG"
 
 # Get other arguments
-if [ $# -gt 0 ]; then 
+if [ $# -gt 0 ]; then
     CUSTOM_SRC=1
     INPUT_DIR=$1
     if [ $# -gt 1 ]; then
@@ -424,14 +424,14 @@ fi
 if [ $LAUNCH_SYN -ne 0 ]; then
     log "Launching synthesis..."
     $SYN_SCRIPT
-    if [ $? -ne 0 ]; then 
+    if [ $? -ne 0 ]; then
         err "!!! ERROR while synthesizing the design"
     fi
     clean_up
     exit 0
 fi
 
-# Launch simulation 
+# Launch simulation
 # -----------------
 
 # Get the module name
@@ -441,24 +441,24 @@ TOP_MODULE=${TOP_MODULE%.*}
 # Run the simulation
 log "Launching simulation of top module '%s'..." "$TOP_MODULE"
 
-# Set UVM verbosity macro
-case $UVM_VERBOSITY in
-    0) UVM_VERBOSITY=UVM_NONE;;
-    1) UVM_VERBOSITY=UVM_LOW;;
-    2) UVM_VERBOSITY=UVM_MEDIUM;;
-    3) UVM_VERBOSITY=UVM_HIGH;;
-    4) UVM_VERBOSITY=UVM_FULL;;
-    5) UVM_VERBOSITY=UVM_DEBUG;;
-    *) UVM_VERBOSITY=UVM_MEDIUM;;
+# Set verbosity macro
+case $VERBOSITY in
+    0) VERBOSITY=LOG_NONE;;
+    1) VERBOSITY=LOG_LOW;;
+    2) VERBOSITY=LOG_MEDIUM;;
+    3) VERBOSITY=LOG_HIGH;;
+    4) VERBOSITY=LOG_FULL;;
+    5) VERBOSITY=LOG_DEBUG;;
+    *) VERBOSITY=LOG_MEDIUM;;
 esac
-SIM_OPT="$SIM_OPT +UVM_VERBOSITY=$UVM_VERBOSITY"
+SIM_OPT="$SIM_OPT +VERBOSITY=$VERBOSITY"
 
 # Assemble the simulation script
 log "- assembling simulation script '%s'..." "${SIM_MACRO}"
-if [ $VSIM_GUI -ne 0 ]; then 
+if [ $VSIM_GUI -ne 0 ]; then
     SIM_OPT="-gui $SIM_OPT"
     VSIM_DISABLE_OPT=1
-else 
+else
     SIM_OPT="-c $SIM_OPT"
 fi
 [ $VSIM_DISABLE_OPT -ne 0 ] && SIM_OPT="-voptargs=+acc $SIM_OPT"
@@ -493,7 +493,7 @@ log "- starting simulation..."
 to_run_script "cd $BUILD_DIR"
 cd $HW_BUILD_DIR
 run_and_log vsim -work $VLIB_PATH $SIM_OPT -do $SIM_MACRO ${TOP_MODULE}
-if [ $? -ne 0 ]; then 
+if [ $? -ne 0 ]; then
     err "!!! ERROR while simulating the design"
 fi
 cd $LEN5_ROOT_DIR

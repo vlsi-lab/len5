@@ -23,7 +23,7 @@ import len5_pkg::ILEN;
 import len5_pkg::OPCODE_LEN;
 import len5_pkg::instr_t;
 
-module commit_decoder 
+module commit_decoder
 (
     // Data from the commit logic
     input   instr_t         instruction_i,
@@ -62,7 +62,7 @@ module commit_decoder
                 `OPCODE_OP_32,
                 `OPCODE_LUI,
                 `OPCODE_AUIPC:      comm_type_normal    = COMM_TYPE_INT_RF;
-                
+
                 `OPCODE_LOAD:       comm_type_normal    = COMM_TYPE_LOAD;
 
                 // Store instructions
@@ -70,10 +70,10 @@ module commit_decoder
                 `OPCODE_STORE:      comm_type_normal    = COMM_TYPE_STORE;
 
                 // Jump instructions
-                // ----------------- 
+                // -----------------
                 `OPCODE_JAL,
                 `OPCODE_JALR:       comm_type_normal    = COMM_TYPE_JUMP;
-                
+
                 // Branch instructions
                 // -------------------
                 `OPCODE_BRANCH:     comm_type_normal    = COMM_TYPE_BRANCH;
@@ -149,5 +149,5 @@ module commit_decoder
     // -----------------
     // Commit type MUX
     assign  comm_type_o = (sel_system_dec) ? comm_type_system : comm_type_normal;
-    
+
 endmodule

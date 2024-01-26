@@ -21,11 +21,9 @@ PROJECT  ?= hello_world
 
 ifndef CONDA_DEFAULT_ENV
 $(info USING VENV)
-FUSESOC = $(PWD)/$(VENV)/fusesoc
 PYTHON  = $(PWD)/$(VENV)/python
 else
 $(info USING MINICONDA $(CONDA_DEFAULT_ENV))
-FUSESOC := $(shell which fusesoc)
 PYTHON  := $(shell which python)
 endif
 
@@ -33,13 +31,27 @@ endif
 # ----- TARGETS ----- #
 #######################
 
+# HDL source
+# ----------
+# Format code
+.PHONY: format
+format: | .check-fusesoc
+	@echo "## Formatting RTL code..."
+	fusesoc run --no-export --target format polito:len5:len5
+
+# Static analysis
+.PHONY: lint
+lint: | .check-fusesoc
+	@echo "## Running static analysis..."
+	fusesoc run --no-export --target lint polito:len5:len5
+
 # RTL simulation
 # --------------
 # QuestaSim
 .PHONY: questasim-sim
-questasim-sim: 
+questasim-sim: | .check-fusesoc
 	@echo "## Running simulation with QuestaSim"
-	$(FUSESOC) --cores-root . run --no-export --target=sim --tool=modelsim $(FUSESOC_FLAGS) --setup --build vlsi:polito:len5_top | tee builsim.log	
+	$(FUSESOC) run --no-export --target=sim --tool=modelsim $(FUSESOC_FLAGS) --setup --build polito:len5:len5 2>&1 | tee builsim.log
 
 # Verilator
 # TODO: add verilator support to .core files
@@ -60,14 +72,21 @@ app-helloworld:
 
 # Compile example applicationa and run RTL simulation
 .PHONY: app-helloworld-questasim
-run-helloworld-questasim: questasim-sim app-helloworld
+run-helloworld-questasim: questasim-sim app-helloworld | .check-fusesoc
 	@echo "## Running helloworld application"
-	cd ./build/vlsi_polito_len5_top_0/sim-modelsim; \
+	cd ./build/vlsi_polito_len5_0/sim-modelsim; \
 	make run PLUSARGS="c firmware=../../../sw/applications/hello_world.hex"; \
 	cd ../../..;
 
 # Utilities
 # ---------
+# Check if fusesoc is available
+.PHONY: .check-fusesoc
+.check-fusesoc:
+	@if [ ! `which fusesoc` ]; then \
+	printf -- "### ERROR: 'fusesoc' is not in PATH. Is the correct conda environment active?\n" >&2; \
+	exit 1; fi
+
 # Create new directories
 %/:
 	mkdir -p $@

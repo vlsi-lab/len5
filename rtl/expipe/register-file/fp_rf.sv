@@ -22,22 +22,22 @@ import len5_pkg::FREG_IDX_LEN;
 import expipe_pkg::*;
 
 module fp_rf (
-    input logic clk_i,
-    input logic rst_n_i,
+  input logic clk_i,
+  input logic rst_n_i,
 
-    // Handshake from the commit logic 
-    input logic comm_valid_i,
-    // output  logic                       comm_ready_o,
+  // Handshake from the commit logic
+  input logic comm_valid_i,
+  // output  logic                       comm_ready_o,
 
-    // Data from the commit logic (result write port)
-    input logic [FREG_IDX_LEN-1:0] comm_rd_idx_i,
-    input logic [        XLEN-1:0] comm_rd_value_i,
+  // Data from the commit logic (result write port)
+  input logic [FREG_IDX_LEN-1:0] comm_rd_idx_i,
+  input logic [        XLEN-1:0] comm_rd_value_i,
 
-    // Data to the issue stage (operands read ports)
-    input  logic [FREG_IDX_LEN-1:0] issue_rs1_idx_i,
-    input  logic [FREG_IDX_LEN-1:0] issue_rs2_idx_i,
-    output logic [        XLEN-1:0] issue_rs1_value_o,
-    output logic [        XLEN-1:0] issue_rs2_value_o
+  // Data to the issue stage (operands read ports)
+  input  logic [FREG_IDX_LEN-1:0] issue_rs1_idx_i,
+  input  logic [FREG_IDX_LEN-1:0] issue_rs2_idx_i,
+  output logic [        XLEN-1:0] issue_rs1_value_o,
+  output logic [        XLEN-1:0] issue_rs2_value_o
 );
 
   // DEFINITIONS

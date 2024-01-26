@@ -14,7 +14,7 @@ ENTRY(_start)
 /* Simulation memory layout */
 MEMORY
 {
-  /* The testbench uses associative arrays, the memory is not allocated unless 
+  /* The testbench uses associative arrays, the memory is not allocated unless
   needed. */
   ROM (rx)  : ORIGIN = 0x0, LENGTH = 8M
   RAM (!rx) : ORIGIN = (ORIGIN(ROM) + LENGTH(ROM)), LENGTH = 128M
@@ -90,7 +90,7 @@ SECTIONS
   .gnu_extab      : ONLY_IF_RW { *(.gnu_extab) } > RAM
   .gcc_except_table   : ONLY_IF_RW { *(.gcc_except_table .gcc_except_table.*) } > RAM
   .exception_ranges   : ONLY_IF_RW { *(.exception_ranges*) } > RAM
-  
+
   /* Thread Local Storage sections  */
   .tdata	  :
    {
@@ -98,7 +98,7 @@ SECTIONS
      *(.tdata .tdata.* .gnu.linkonce.td.*)
    } > RAM
   .tbss		  : { *(.tbss .tbss.* .gnu.linkonce.tb.*) *(.tcommon) } > RAM
-  
+
   /* Initialization and termination routines */
   .preinit_array    :
   {

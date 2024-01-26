@@ -13,17 +13,17 @@
 // Date: 17/10/2019
 
 module modn_counter #(
-    N = 16
+  parameter int unsigned N = 16
 ) (
-    // Input signals 
-    input logic clk_i,
-    input logic rst_n_i,  // Asynchronous reset
-    input logic en_i,
-    input logic clr_i,    // Synchronous clear
+  // Input signals
+  input logic clk_i,
+  input logic rst_n_i,  // Asynchronous reset
+  input logic en_i,
+  input logic clr_i,    // Synchronous clear
 
-    // Output signals 
-    output logic [$clog2(N)-1:0] count_o,  // Counter value 
-    output logic tc_o  // Terminal count: '1' when count_o = N-1
+  // Output signals
+  output logic [$clog2(N)-1:0] count_o,  // Counter value
+  output logic                 tc_o      // Terminal count: '1' when count_o = N-1
 );
 
   // Terminal count

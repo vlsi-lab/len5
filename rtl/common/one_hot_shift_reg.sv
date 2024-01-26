@@ -16,12 +16,12 @@
 import memory_pkg::*;
 
 module one_hot_shift_reg #(
-    REG_LEN = 2
+  parameter int unsigned REG_LEN = 2
 ) (
-    input  logic               clk_i,
-    input  logic               rst_ni,
-    input  logic               update_i,
-    output logic [REG_LEN-1:0] output_o
+  input  logic               clk_i,
+  input  logic               rst_ni,
+  input  logic               update_i,
+  output logic [REG_LEN-1:0] output_o
 );
 
   logic [REG_LEN-1:0] reg_d, reg_q;

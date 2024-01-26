@@ -27,7 +27,7 @@ _start:
     # Initialize global pointer
     .option push
     .option norelax
-    la gp, __global_pointer$ # 
+    la gp, __global_pointer$ #
     .option pop
 
     # Initialize stack pointer
@@ -42,7 +42,7 @@ _start:
     call memset
 
     # Setup 'mtvec' CSR to vectored exception mode
-    la a0, __vector_start # base address, provided by linker script 
+    la a0, __vector_start # base address, provided by linker script
     ori a0, a0, 0x1 # a0 = a0 | 0x1 (enable vectored mode)
     csrw mtvec, a0
 
@@ -59,7 +59,7 @@ _start:
     li a2, 0 # a2 = 0 (envp = NULL)
     call main  # jump to main and save position to ra
     tail exit
-    
+
     .cfi_endproc
     .end
 

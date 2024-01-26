@@ -12,48 +12,42 @@
 // Author: Michele Caon
 // Date: 17/08/2022
 
-/* Include UVM macros */
-`ifndef SYNTHESIS
-`include "uvm_macros.svh"
-import uvm_pkg::*;
-`endif
-
 import expipe_pkg::*;
 
 module issue_cu (
-    input logic clk_i,
-    input logic rst_n_i,
-    input logic flush_i,
+  input logic clk_i,
+  input logic rst_n_i,
+  input logic flush_i,
 
-    // CU <--> others
-    output logic mis_flush_o,  // flush issue and fetch stage
+  // CU <--> others
+  output logic mis_flush_o,  // flush issue and fetch stage
 
-    // Issue queue <--> CU
-    input  logic iq_valid_i,
-    output logic iq_ready_o,
-    input  logic iq_except_raised_i,
+  // Issue queue <--> CU
+  input  logic iq_valid_i,
+  output logic iq_ready_o,
+  input  logic iq_except_raised_i,
 
-    // Issue stage <--> CU
-    input  issue_type_t issue_type_i,         // type of operation needed
-    input  logic        issue_rs1_ready_i,    // for CSR instructions
-    output logic        issue_res_ready_o,
-    output logic        issue_res_sel_rs1_o,
-    output logic        issue_fetch_except_o,
+  // Issue stage <--> CU
+  input  issue_type_t issue_type_i,         // type of operation needed
+  input  logic        issue_rs1_ready_i,    // for CSR instructions
+  output logic        issue_res_ready_o,
+  output logic        issue_res_sel_rs1_o,
+  output logic        issue_fetch_except_o,
 
-    // Execution stage <--> CU
-    input  logic ex_ready_i,
-    input  logic ex_mis_i,
-    output logic ex_valid_o,
-    output logic int_regstat_valid_o,
+  // Execution stage <--> CU
+  input  logic ex_ready_i,
+  input  logic ex_mis_i,
+  output logic ex_valid_o,
+  output logic int_regstat_valid_o,
 `ifdef LEN5_FP_EN
-    output logic fp_regstat_valid_o,
+  output logic fp_regstat_valid_o,
 `endif  /* LEN5_FP_EN */
 
-    // Commit stage <--> CU
-    input  logic comm_ready_i,
-    output logic comm_valid_o,
-    input  logic comm_resume_i,
-    output logic comm_jb_instr_o
+  // Commit stage <--> CU
+  input  logic comm_ready_i,
+  output logic comm_valid_o,
+  input  logic comm_resume_i,
+  output logic comm_jb_instr_o
 );
   // INTERNAL SIGNALS
   // ----------------
@@ -307,14 +301,14 @@ module issue_cu (
   // ----------
 `ifndef SYNTHESIS
   always @(posedge clk_i) begin
-    `uvm_info("ISSUE CU", $sformatf(
+    $display($sformatf(
               "valid_i: %b | commit ready: %b | ex. ready: %d | type: %s | state: %s",
               iq_valid_i,
               comm_ready_i,
               ex_ready_i,
               issue_type_i.name(),
               curr_state.name()
-              ), UVM_DEBUG)
+              ))
   end
 `endif  /* SYNTHESIS */
 endmodule

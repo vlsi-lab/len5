@@ -19,22 +19,22 @@ import fetch_pkg::*;
 
 /* verilator lint_off BLKLOOPINIT */
 module btb #(
-    parameter BTB_BITS = 4
+  parameter int unsigned BTB_BITS = 4
 ) (
-    input logic                   clk_i,
-    input logic                   rst_n_i,
-    input logic                   flush_i,
-    input logic        [XLEN-1:0] curr_pc_i,
-    input logic                   valid_i,
-    input logic                   del_entry_i,
-    input resolution_t            res_i,
+  input logic                   clk_i,
+  input logic                   rst_n_i,
+  input logic                   flush_i,
+  input logic        [XLEN-1:0] curr_pc_i,
+  input logic                   valid_i,
+  input logic                   del_entry_i,
+  input resolution_t            res_i,
 
-    output logic                   hit_o,
-    output logic [XLEN-OFFSET-1:0] target_o
+  output logic                   hit_o,
+  output logic [XLEN-OFFSET-1:0] target_o
 );
 
   // Definitions
-  localparam BTB_ROWS = 1 << BTB_BITS;
+  localparam int unsigned BTB_ROWS = 1 << BTB_BITS;
 
   struct packed {
     logic                            valid;
@@ -62,8 +62,8 @@ module btb #(
       if (del_entry_i) begin
         btb_d[addr_w] = '0;
       end else begin
-        btb_d[addr_w].valid = 1'b1;
-        btb_d[addr_w].tag = tag_w;
+        btb_d[addr_w].valid  = 1'b1;
+        btb_d[addr_w].tag    = tag_w;
         btb_d[addr_w].target = res_i.target[XLEN-1:OFFSET];
       end
     end
@@ -82,10 +82,10 @@ module btb #(
   end
 
   // Read
-  assign addr_r = curr_pc_i[BTB_BITS+OFFSET-1:OFFSET];
-  assign tag_r = curr_pc_i[XLEN-1:BTB_BITS+OFFSET];
+  assign addr_r   = curr_pc_i[BTB_BITS+OFFSET-1:OFFSET];
+  assign tag_r    = curr_pc_i[XLEN-1:BTB_BITS+OFFSET];
 
-  assign hit_o = btb_q[addr_r].valid & (btb_q[addr_r].tag == tag_r);
+  assign hit_o    = btb_q[addr_r].valid & (btb_q[addr_r].tag == tag_r);
   assign target_o = btb_q[addr_r].target;
 
 endmodule

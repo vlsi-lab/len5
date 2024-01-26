@@ -13,36 +13,36 @@
 // Date: 17/08/2022
 
 /**
- * @brief	FIFO without handshaking
+ * @brief FIFO without handshaking
  *
- * @details	FIFO buffer without valid/ready interface. The push/pop operations
+ * @details FIFO buffer without valid/ready interface. The push/pop operations
  *          are externally controlled through dedicated signals. No check is
  *          performed on the push operation: if the FIFO is full, the oldest
  *          data is overwritten, so choose the FIFO size carefully.
  */
 
 module fifo_nohs #(
-    parameter type DATA_T = logic [7:0],
-    parameter int  DEPTH  = 2
+  parameter type DATA_T = logic [7:0],
+  parameter int  DEPTH  = 2
 ) (
-    /* Clock and reset */
-    input logic clk_i,
-    input logic rst_n_i,
-    input logic flush_i,
+  /* Clock and reset */
+  input logic clk_i,
+  input logic rst_n_i,
+  input logic flush_i,
 
-    /* Control */
-    input logic push_i,
-    input logic pop_i,
+  /* Control */
+  input logic push_i,
+  input logic pop_i,
 
-    /* Data */
-    input  DATA_T data_i,
-    output DATA_T data_o
+  /* Data */
+  input  DATA_T data_i,
+  output DATA_T data_o
 );
   // Skip if 0-deep
   generate
-    if (DEPTH == 0) begin : l_skip_fifo
+    if (DEPTH == 0) begin : gen_skip_fifo
       assign data_o = data_i;
-    end else begin : l_fifo
+    end else begin : gen_fifo
       // INTERNAL SIGNALS
       // ----------------
 
@@ -98,25 +98,25 @@ module fifo_nohs #(
       // ----------------------
 
       modn_counter #(
-          .N(DEPTH)
+        .N(DEPTH)
       ) u_head_counter (
-          .clk_i  (clk_i),
-          .rst_n_i(rst_n_i),
-          .en_i   (head_cnt_en),
-          .clr_i  (head_cnt_clr),
-          .count_o(head_cnt),
-          .tc_o   ()               // not needed
+        .clk_i  (clk_i),
+        .rst_n_i(rst_n_i),
+        .en_i   (head_cnt_en),
+        .clr_i  (head_cnt_clr),
+        .count_o(head_cnt),
+        .tc_o   ()               // not needed
       );
 
       modn_counter #(
-          .N(DEPTH)
+        .N(DEPTH)
       ) u_tail_counter (
-          .clk_i  (clk_i),
-          .rst_n_i(rst_n_i),
-          .en_i   (tail_cnt_en),
-          .clr_i  (tail_cnt_clr),
-          .count_o(tail_cnt),
-          .tc_o   ()               // not needed
+        .clk_i  (clk_i),
+        .rst_n_i(rst_n_i),
+        .en_i   (tail_cnt_en),
+        .clr_i  (tail_cnt_clr),
+        .count_o(tail_cnt),
+        .tc_o   ()               // not needed
       );
 
       // --------------

@@ -15,7 +15,7 @@ Both low-level software and code examples are included. In particular:
 A RISC-V toolchain supporting the `rv64i` instruction set architecture (ISA) and the `lp64` application binary interface (ABI) shall be available in the `PATH`.
 
 ### Test programs
-The included [`makefile`](makefile) builds a list of tests based on the basename of the source code found in `test-programs/src`. Each `test` gets compiled and linked into a LEN5 and a QEMU ELF executables. Both executables are then stripped and copied to a raw memory image that can be loaded into the main memory and executed. The [LEN5](https://git.vlsilab.polito.it/risc-v/len5/len5-core-active) repository contains the necessary scripts to automatically compile a `test` and execute and simulate it on LEN5 using Modelsim or QuestaSim. 
+The included [`makefile`](makefile) builds a list of tests based on the basename of the source code found in `test-programs/src`. Each `test` gets compiled and linked into a LEN5 and a QEMU ELF executables. Both executables are then stripped and copied to a raw memory image that can be loaded into the main memory and executed. The [LEN5](https://git.vlsilab.polito.it/risc-v/len5/len5-core-active) repository contains the necessary scripts to automatically compile a `test` and execute and simulate it on LEN5 using Modelsim or QuestaSim.
 
 When called without arguments, `make` will build the low-level support software and _all_ the test programs found inside `test-programs/src`.
 

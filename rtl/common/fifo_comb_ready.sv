@@ -13,31 +13,31 @@
 // Date: 12/07/2022
 
 /**
- * @brief	FIFO queue with combinational output ready
+ * @brief FIFO queue with combinational output ready
  *
- * @details	FIFO queue handled with head and tail counters. The output ready
- *          signal depends on the input ready signal, therefore possibly 
+ * @details FIFO queue handled with head and tail counters. The output ready
+ *          signal depends on the input ready signal, therefore possibly
  *          increasing the critical path. Use with caution.
  */
 
 module fifo_comb_ready #(
-    parameter type DATA_T = logic [8:0],
-    parameter int  DEPTH  = 4
+  parameter type DATA_T = logic [8:0],
+  parameter int  DEPTH  = 4
 ) (
-    /* Clock and reset */
-    input logic clk_i,
-    input logic rst_n_i,
-    input logic flush_i,
+  /* Clock and reset */
+  input logic clk_i,
+  input logic rst_n_i,
+  input logic flush_i,
 
-    /* Handshaking */
-    input  logic valid_i,  // from upstream hardware
-    input  logic ready_i,  // from downstream hardware
-    output logic valid_o,  // to downstream hardware
-    output logic ready_o,  // to upstream hardware
+  /* Handshaking */
+  input  logic valid_i,  // from upstream hardware
+  input  logic ready_i,  // from downstream hardware
+  output logic valid_o,  // to downstream hardware
+  output logic ready_o,  // to upstream hardware
 
-    /* Data */
-    input  DATA_T data_i,
-    output DATA_T data_o
+  /* Data */
+  input  DATA_T data_i,
+  output DATA_T data_o
 );
 
   // INTERNAL SIGNALS
@@ -60,25 +60,25 @@ module fifo_comb_ready #(
   // ----------------------
 
   modn_counter #(
-      .N(DEPTH)
+    .N(DEPTH)
   ) u_head_counter (
-      .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
-      .en_i   (head_cnt_en),
-      .clr_i  (head_cnt_clr),
-      .count_o(head_cnt),
-      .tc_o   ()               // not needed
+    .clk_i  (clk_i),
+    .rst_n_i(rst_n_i),
+    .en_i   (head_cnt_en),
+    .clr_i  (head_cnt_clr),
+    .count_o(head_cnt),
+    .tc_o   ()               // not needed
   );
 
   modn_counter #(
-      .N(DEPTH)
+    .N(DEPTH)
   ) u_tail_counter (
-      .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
-      .en_i   (tail_cnt_en),
-      .clr_i  (tail_cnt_clr),
-      .count_o(tail_cnt),
-      .tc_o   ()               // not needed
+    .clk_i  (clk_i),
+    .rst_n_i(rst_n_i),
+    .en_i   (tail_cnt_en),
+    .clr_i  (tail_cnt_clr),
+    .count_o(tail_cnt),
+    .tc_o   ()               // not needed
   );
 
   // -----------------

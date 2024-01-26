@@ -16,30 +16,30 @@ import len5_pkg::*;
 import expipe_pkg::*;
 
 module alu #(
-    parameter SKIP_REG = 0,  // make the ALU fully combinational
+  parameter SKIP_REG = 0,  // make the ALU fully combinational
 
-    // EU-specific parameters
-    parameter EU_CTL_LEN = 4
+  // EU-specific parameters
+  parameter EU_CTL_LEN = 4
 ) (
-    input logic clk_i,
-    input logic rst_n_i,
-    input logic flush_i,
+  input logic clk_i,
+  input logic rst_n_i,
+  input logic flush_i,
 
-    // Handshake from/to the reservation station unit
-    input  logic valid_i,
-    input  logic ready_i,
-    output logic valid_o,
-    output logic ready_o,
+  // Handshake from/to the reservation station unit
+  input  logic valid_i,
+  input  logic ready_i,
+  output logic valid_o,
+  output logic ready_o,
 
-    // Data from/to the reservation station unit
-    input  logic         [EU_CTL_LEN-1:0] ctl_i,
-    input  rob_idx_t                      rob_idx_i,
-    input  logic         [      XLEN-1:0] rs1_i,
-    input  logic         [      XLEN-1:0] rs2_i,
-    output rob_idx_t                      rob_idx_o,
-    output logic         [      XLEN-1:0] result_o,
-    output logic                          except_raised_o,
-    output except_code_t                  except_code_o
+  // Data from/to the reservation station unit
+  input  logic         [EU_CTL_LEN-1:0] ctl_i,
+  input  rob_idx_t                      rob_idx_i,
+  input  logic         [      XLEN-1:0] rs1_i,
+  input  logic         [      XLEN-1:0] rs2_i,
+  output rob_idx_t                      rob_idx_o,
+  output logic         [      XLEN-1:0] result_o,
+  output logic                          except_raised_o,
+  output except_code_t                  except_code_o
 );
 
   // ALU output
@@ -104,18 +104,18 @@ module alu #(
 
   // Output register
   spill_cell_flush #(
-      .DATA_T(out_reg_data_t),
-      .SKIP  (SKIP_REG)
+    .DATA_T(out_reg_data_t),
+    .SKIP  (SKIP_REG)
   ) u_out_reg (
-      .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
-      .flush_i(flush_i),
-      .valid_i(valid_i),
-      .ready_i(ready_i),
-      .valid_o(valid_o),
-      .ready_o(ready_o),
-      .data_i (out_reg_data_in),
-      .data_o (out_reg_data_out)
+    .clk_i  (clk_i),
+    .rst_n_i(rst_n_i),
+    .flush_i(flush_i),
+    .valid_i(valid_i),
+    .ready_i(ready_i),
+    .valid_o(valid_o),
+    .ready_o(ready_o),
+    .data_i (out_reg_data_in),
+    .data_o (out_reg_data_out)
   );
 
   // Exception handling

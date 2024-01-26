@@ -17,17 +17,17 @@ import fetch_pkg::*;
 
 /* verilator lint_off BLKLOOPINIT */
 module gshare #(
-    parameter       HLEN     = 4,
-    parameter c2b_t INIT_C2B = WNT
+  parameter       HLEN     = 4,
+  parameter c2b_t INIT_C2B = WNT
 ) (
-    input logic                   clk_i,
-    input logic                   rst_n_i,
-    input logic                   flush_i,
-    input logic        [XLEN-1:0] curr_pc_i,
-    input logic                   res_valid_i,
-    input resolution_t            res_i,
+  input logic                   clk_i,
+  input logic                   rst_n_i,
+  input logic                   flush_i,
+  input logic        [XLEN-1:0] curr_pc_i,
+  input logic                   res_valid_i,
+  input resolution_t            res_i,
 
-    output logic taken_o
+  output logic taken_o
 );
   // Parameters
   localparam PHT_ROWS = 1 << HLEN;

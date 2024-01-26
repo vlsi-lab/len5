@@ -13,18 +13,18 @@
 // Date: 19/08/2022
 
 module updown_counter #(
-    W = 4  // number of bits
+  parameter int unsigned W = 4  // number of bits
 ) (
-    // Input signals 
-    input logic clk_i,
-    input logic rst_n_i,  // Asynchronous reset
-    input logic en_i,
-    input logic clr_i,    // Synchronous clear
-    input logic up_dn_i,  // 1: up, 0: down
+  // Input signals
+  input logic clk_i,
+  input logic rst_n_i,  // Asynchronous reset
+  input logic en_i,
+  input logic clr_i,    // Synchronous clear
+  input logic up_dn_i,  // 1: up, 0: down
 
-    // Output signals 
-    output logic [W-1:0] count_o,
-    output logic         tc_o      // Terminal count: '1' when count_o = 2^W-1
+  // Output signals
+  output logic [W-1:0] count_o,
+  output logic         tc_o      // Terminal count: '1' when count_o = 2^W-1
 );
 
   // Terminal count
@@ -35,7 +35,7 @@ module updown_counter #(
     if (!rst_n_i) begin
       count_o <= 0;  // Asynchronous reset
     end else if (clr_i) begin
-      count_o <= 0;  // Synchronous clear 
+      count_o <= 0;  // Synchronous clear
     end else if (en_i) begin
       if (up_dn_i) count_o <= count_o + 1;
       else count_o <= count_o - 1;

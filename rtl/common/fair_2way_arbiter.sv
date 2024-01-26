@@ -13,23 +13,23 @@
 // Date: 29/10/2019
 
 module fair_2way_arbiter #(
-    parameter type DATA_T
+  parameter type DATA_T
 ) (
-    input logic clk_i,
-    input logic rst_n_i,
+  input logic clk_i,
+  input logic rst_n_i,
 
-    // Handshaking
-    input  logic valid_a_i,
-    input  logic valid_b_i,
-    input  logic ready_i,
-    output logic valid_o,
-    output logic ready_a_o,
-    output logic ready_b_o,
+  // Handshaking
+  input  logic valid_a_i,
+  input  logic valid_b_i,
+  input  logic ready_i,
+  output logic valid_o,
+  output logic ready_a_o,
+  output logic ready_b_o,
 
-    // Data
-    input  DATA_T data_a_i,
-    input  DATA_T data_b_i,
-    output DATA_T data_o
+  // Data
+  input  DATA_T data_a_i,
+  input  DATA_T data_b_i,
+  output DATA_T data_o
 );
   // DEFINITIONS
   logic last_served_a;

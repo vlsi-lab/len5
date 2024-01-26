@@ -12,61 +12,55 @@
 // Author: Michele Caon
 // Date: 08/11/2019
 
-// Import UVM report macros
-`ifndef SYNTHESIS
-`include "uvm_macros.svh"
-import uvm_pkg::*;
-`endif
-
 import len5_pkg::*;
 import expipe_pkg::*;
 
 module branch_rs #(
-    parameter DEPTH = 4,  // must be a power of 2
-    localparam RS_IDX_LEN = $clog2(DEPTH)
+  parameter DEPTH = 4,  // must be a power of 2
+  localparam RS_IDX_LEN = $clog2(DEPTH)
 ) (
-    input logic clk_i,
-    input logic rst_n_i,
-    input logic flush_i,
+  input logic clk_i,
+  input logic rst_n_i,
+  input logic flush_i,
 
-    /* Issue Stage */
-    input  logic                   issue_valid_i,
-    output logic                   issue_ready_o,
-    input  branch_ctl_t            issue_branch_type_i,
-    input  op_data_t               issue_rs1_i,
-    input  op_data_t               issue_rs2_i,
-    input  logic        [XLEN-1:0] issue_imm_value_i,
-    input  rob_idx_t               issue_dest_rob_idx_i,
-    input  logic        [XLEN-1:0] issue_curr_pc_i,
-    input  logic        [XLEN-1:0] issue_pred_target_i,
-    input  logic                   issue_pred_taken_i,
+  /* Issue Stage */
+  input  logic                   issue_valid_i,
+  output logic                   issue_ready_o,
+  input  branch_ctl_t            issue_branch_type_i,
+  input  op_data_t               issue_rs1_i,
+  input  op_data_t               issue_rs2_i,
+  input  logic        [XLEN-1:0] issue_imm_value_i,
+  input  rob_idx_t               issue_dest_rob_idx_i,
+  input  logic        [XLEN-1:0] issue_curr_pc_i,
+  input  logic        [XLEN-1:0] issue_pred_target_i,
+  input  logic                   issue_pred_taken_i,
 
-    /* Common Data Bus (CDB) */
-    input  logic      cdb_ready_i,
-    input  logic      cdb_valid_i,  // to know if the CDB is carrying valid data
-    output logic      cdb_valid_o,
-    input  cdb_data_t cdb_data_i,
-    output cdb_data_t cdb_data_o,
+  /* Common Data Bus (CDB) */
+  input  logic      cdb_ready_i,
+  input  logic      cdb_valid_i,  // to know if the CDB is carrying valid data
+  output logic      cdb_valid_o,
+  input  cdb_data_t cdb_data_i,
+  output cdb_data_t cdb_data_o,
 
-    /* Branch unit */
-    input  logic                   bu_valid_i,
-    input  logic                   bu_ready_i,
-    output logic                   bu_valid_o,
-    output logic                   bu_ready_o,
-    input  rob_idx_t               bu_rob_idx_i,
-    input  logic                   bu_res_mis_i,        // mispredcition result
-    input  logic        [XLEN-1:0] bu_link_addr_i,      // computed link address
+  /* Branch unit */
+  input  logic                   bu_valid_i,
+  input  logic                   bu_ready_i,
+  output logic                   bu_valid_o,
+  output logic                   bu_ready_o,
+  input  rob_idx_t               bu_rob_idx_i,
+  input  logic                   bu_res_mis_i,        // mispredcition result
+  input  logic        [XLEN-1:0] bu_link_addr_i,      // computed link address
 `ifndef LEN5_C_EN
-    input  logic                   bu_except_raised_i,
+  input  logic                   bu_except_raised_i,
 `endif  /* LEN5_C_EN */
-    output rob_idx_t               bu_rob_idx_o,
-    output logic        [XLEN-1:0] bu_rs1_o,
-    output logic        [XLEN-1:0] bu_rs2_o,
-    output logic        [XLEN-1:0] bu_imm_o,
-    output logic        [XLEN-1:0] bu_curr_pc_o,
-    output logic        [XLEN-1:0] bu_pred_target_o,
-    output logic                   bu_pred_taken_o,
-    output branch_ctl_t            bu_branch_type_o
+  output rob_idx_t               bu_rob_idx_o,
+  output logic        [XLEN-1:0] bu_rs1_o,
+  output logic        [XLEN-1:0] bu_rs2_o,
+  output logic        [XLEN-1:0] bu_imm_o,
+  output logic        [XLEN-1:0] bu_curr_pc_o,
+  output logic        [XLEN-1:0] bu_pred_target_o,
+  output logic                   bu_pred_taken_o,
+  output branch_ctl_t            bu_branch_type_o
 );
   // INTERNAL SIGNALS
   // ----------------
@@ -258,16 +252,16 @@ module branch_rs #(
   assign cdb_data_o.except_code = (data[head_idx].mispredicted) ? E_MISPREDICTION : E_I_ADDR_MISALIGNED;
 
   /* Branch Unit logic */
-  assign bu_valid_o             = curr_state[ex_idx] == BU_S_EX_REQ;
-  assign bu_ready_o             = 1'b1;
-  assign bu_rs1_o               = data[ex_idx].rs1_value;
-  assign bu_rs2_o               = data[ex_idx].rs2_value;
-  assign bu_imm_o               = data[ex_idx].imm_value;
-  assign bu_curr_pc_o           = data[ex_idx].curr_pc;
-  assign bu_pred_target_o       = data[ex_idx].target_link;
-  assign bu_pred_taken_o        = data[ex_idx].taken;
-  assign bu_branch_type_o       = data[ex_idx].branch_type;
-  assign bu_rob_idx_o           = data[ex_idx].dest_rob_idx;
+  assign bu_valid_o = curr_state[ex_idx] == BU_S_EX_REQ;
+  assign bu_ready_o = 1'b1;
+  assign bu_rs1_o = data[ex_idx].rs1_value;
+  assign bu_rs2_o = data[ex_idx].rs2_value;
+  assign bu_imm_o = data[ex_idx].imm_value;
+  assign bu_curr_pc_o = data[ex_idx].curr_pc;
+  assign bu_pred_target_o = data[ex_idx].target_link;
+  assign bu_pred_taken_o = data[ex_idx].taken;
+  assign bu_branch_type_o = data[ex_idx].branch_type;
+  assign bu_rob_idx_o = data[ex_idx].dest_rob_idx;
 
   // --------
   // COUNTERS
@@ -275,38 +269,38 @@ module branch_rs #(
 
   // Head counter pointing to the oldest branch/jump instruction
   modn_counter #(
-      .N(DEPTH)
+    .N(DEPTH)
   ) u_head_counter (
-      .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
-      .en_i   (head_cnt_en),
-      .clr_i  (head_cnt_clr),
-      .count_o(head_idx),
-      .tc_o   ()               // not needed
+    .clk_i  (clk_i),
+    .rst_n_i(rst_n_i),
+    .en_i   (head_cnt_en),
+    .clr_i  (head_cnt_clr),
+    .count_o(head_idx),
+    .tc_o   ()               // not needed
   );
 
   // Tail counter pointing to the first empty entry
   modn_counter #(
-      .N(DEPTH)
+    .N(DEPTH)
   ) u_tail_counter (
-      .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
-      .en_i   (tail_cnt_en),
-      .clr_i  (tail_cnt_clr),
-      .count_o(tail_idx),
-      .tc_o   ()               // not needed
+    .clk_i  (clk_i),
+    .rst_n_i(rst_n_i),
+    .en_i   (tail_cnt_en),
+    .clr_i  (tail_cnt_clr),
+    .count_o(tail_idx),
+    .tc_o   ()               // not needed
   );
 
   // Execution counter pointing to the executing branch/jump instruction
   modn_counter #(
-      .N(DEPTH)
+    .N(DEPTH)
   ) u_addr_counter (
-      .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
-      .en_i   (ex_cnt_en),
-      .clr_i  (ex_cnt_clr),
-      .count_o(ex_idx),
-      .tc_o   ()             // not needed
+    .clk_i  (clk_i),
+    .rst_n_i(rst_n_i),
+    .en_i   (ex_cnt_en),
+    .clr_i  (ex_cnt_clr),
+    .count_o(ex_idx),
+    .tc_o   ()             // not needed
   );
 
   // ----------

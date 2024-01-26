@@ -87,7 +87,7 @@ module updateL2_block
       end
       StWaitingBuf: begin
         state_d = (wbb_empty_i) ? StDone : StWaitingBuf;
-      end      
+      end
       StDone: begin
         state_d = StIdle;
         done    = 1'b1;

@@ -12,11 +12,8 @@
 // Author: Michele Caon
 // Date: 27/10/2019
 
-// LEN5 compilation switches
-`include "len5_config.svh"
-
+import len5_config_pkg::*;
 import expipe_pkg::*;
-
 import memory_pkg::*;
 import len5_pkg::*;
 import csr_pkg::satp_mode_t;
@@ -66,7 +63,7 @@ module load_store_unit (
     output logic     cl_sb_sb_head_completed_o,
     output rob_idx_t cl_sb_sb_head_rob_idx_o,
 
-    // Hanshake from/to the CDB 
+    // Hanshake from/to the CDB
     input  logic cdb_lb_valid_i,
     input  logic cdb_sb_valid_i,
     input  logic cdb_lb_ready_i,
@@ -336,7 +333,7 @@ module load_store_unit (
       .vfwd_older_stores_o (vfwd_older_stores),
       .pfwd_older_stores_o (pfwd_older_stores),
 
-      // Hanshake from/to the CDB 
+      // Hanshake from/to the CDB
       .cdb_ready_i(cdb_lb_ready_i),
       .cdb_valid_i(cdb_lb_valid_i),
       .cdb_valid_o(lb_cdb_valid_o),
@@ -446,7 +443,7 @@ module load_store_unit (
       .cl_sb_head_completed_o(cl_sb_sb_head_completed_o),
       .cl_sb_head_rob_idx_o  (cl_sb_sb_head_rob_idx_o),
 
-      // Hanshake from/to the CDB 
+      // Hanshake from/to the CDB
       .cdb_ready_i(cdb_sb_ready_i),
       .cdb_valid_i(cdb_sb_valid_i),
       .cdb_valid_o(sb_cdb_valid_o),

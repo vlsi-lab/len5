@@ -86,7 +86,7 @@ if [ $RUN_ONLY -ne 0 ]; then
         256M \
         -kernel \
         $EXEC_FILE
-    
+
     exit 0
 fi
 

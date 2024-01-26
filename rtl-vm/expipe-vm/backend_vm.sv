@@ -12,9 +12,7 @@
 // Author: Michele Caon
 // Date: 17/11/2021
 
-// LEN5 compilation switches
-`include "len5_config.svh"
-
+import len5_config_pkg::*;
 import len5_pkg::*;
 import expipe_pkg::*;
 import csr_pkg::FCSR_FRM_LEN;

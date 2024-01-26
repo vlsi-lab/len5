@@ -12,7 +12,7 @@
 // Author: Michele Caon
 // Date: 05/10/2022
 
-`include "len5_config.svh"
+import len5_config_pkg::*;
 import len5_pkg::*;
 import expipe_pkg::ldst_width_t;
 
@@ -21,32 +21,32 @@ import expipe_pkg::ldst_width_t;
  *
  * @details	This module implements a small cache that records the store buffer
  *          entry containing the latest store instruction that wrote a certain
- *          memory location. When a load on the same address occurs (provided 
- *          that the address is not masked), the store value is forwarded to 
+ *          memory location. When a load on the same address occurs (provided
+ *          that the address is not masked), the store value is forwarded to
  *          the load without accessing the memory.
  */
 module l0_cache #(
-    parameter  STBUFF_DEPTH,
-    localparam ST_IDX_W     = $clog2(STBUFF_DEPTH),
-    localparam TAG_W        = XLEN - ST_IDX_W
+  parameter  STBUFF_DEPTH,
+  localparam ST_IDX_W     = $clog2(STBUFF_DEPTH),
+  localparam TAG_W        = XLEN - ST_IDX_W
 ) (
-    input  logic                       clk_i,
-    input  logic                       rst_n_i,
-    input  logic                       flush_i,      // flush after exception
-    input  logic                       st_valid_i,   // store instruction valid
-    input  logic        [    XLEN-1:0] st_addr_i,    // store address
-    input  logic        [ST_IDX_W-1:0] st_idx_i,     // store buffer index
-    input  logic        [   TAG_W-1:0] st_tag_i,     // cache store tag
-    input  logic                       st_cached_i,  // the store instruction is cached
-    input  ldst_width_t                st_width_i,   // cached store width
-    input  logic        [    XLEN-1:0] st_value_i,   // cached store value
-    input  logic        [    XLEN-1:0] ld_addr_i,    // load address
-    input  ldst_width_t                ld_width_i,   // load width
-    output logic        [ST_IDX_W-1:0] st_idx_o,     // store buffer tag
-    output logic                       ld_valid_o,   // forwarding succeeded
-    output logic        [    XLEN-1:0] ld_value_o    // cached value
+  input  logic                       clk_i,
+  input  logic                       rst_n_i,
+  input  logic                       flush_i,      // flush after exception
+  input  logic                       st_valid_i,   // store instruction valid
+  input  logic        [    XLEN-1:0] st_addr_i,    // store address
+  input  logic        [ST_IDX_W-1:0] st_idx_i,     // store buffer index
+  input  logic        [   TAG_W-1:0] st_tag_i,     // cache store tag
+  input  logic                       st_cached_i,  // the store instruction is cached
+  input  ldst_width_t                st_width_i,   // cached store width
+  input  logic        [    XLEN-1:0] st_value_i,   // cached store value
+  input  logic        [    XLEN-1:0] ld_addr_i,    // load address
+  input  ldst_width_t                ld_width_i,   // load width
+  output logic        [ST_IDX_W-1:0] st_idx_o,     // store buffer tag
+  output logic                       ld_valid_o,   // forwarding succeeded
+  output logic        [    XLEN-1:0] ld_value_o    // cached value
 );
-  // INTERNAL SIGNALS 
+  // INTERNAL SIGNALS
   // ----------------
   // Cache data
   typedef struct packed {

@@ -7,7 +7,7 @@ import csr_pkg::*;
 
 module DP_M_tb;
 
-// To the main control 
+// To the main control
     logic    main_cu_stall_o;
 
     logic clk_i;
@@ -30,7 +30,7 @@ module DP_M_tb;
    	logic                 abort_i;
    	logic                 clr_l1tlb_mshr_i;
    	logic                 clr_l2tlb_mshr_i;
-   	logic                 clear_dmshr_dregs_i; 
+   	logic                 clear_dmshr_dregs_i;
 
 	// Update Block <-> d-Cache Updating Unit
   	logic                 synch_l1dc_l2c_i;
@@ -54,7 +54,7 @@ module DP_M_tb;
   	tlb_flush_e           L2TLB_flush_type_i;
   	asid_t                flush_asid_i;
  	vpn_t                 flush_page_i;
-	
+
   	// L2 Cache Arbiter <-> L2 Cache Emulator
 	l2arb_l2c_req_t       l2arb_l2c_req_o;
   	logic                 l2c_l2arb_req_rdy_i;
@@ -76,11 +76,11 @@ initial begin
     except_code_i = E_I_ACCESS_FAULT;
   	except_i  = 0;
   	except_pc_i = 'd0;
-	
+
 	abort_i  = 0;
    	clr_l1tlb_mshr_i  = 0;
    	clr_l2tlb_mshr_i  = 0;
-   	clear_dmshr_dregs_i  = 0; 
+   	clear_dmshr_dregs_i  = 0;
 	synch_l1dc_l2c_i  = 0;
 
 	vmem_on_i  = 0;
@@ -96,7 +96,7 @@ initial begin
   	L2TLB_flush_type_i  = NoFlush;
   	flush_asid_i  = 'd0;
  	flush_page_i  = 'd0;
-	
+
   	l2c_l2arb_req_rdy_i  = 0;
   	l2c_l2arb_ans_i  = 0;
 
@@ -129,7 +129,7 @@ Data_path_memory u_Data_path_memory
 	.abort_i(abort_i),
    	.clr_l1tlb_mshr_i(clr_l1tlb_mshr_i),
    	.clr_l2tlb_mshr_i(clr_l2tlb_mshr_i),
-   	.clear_dmshr_dregs_i(clear_dmshr_dregs_i), 
+   	.clear_dmshr_dregs_i(clear_dmshr_dregs_i),
 	.synch_l1dc_l2c_i(synch_l1dc_l2c_i),
   	.l2c_update_done_o(l2c_update_done_o),
 	.vmem_on_i(vmem_on_i),
@@ -148,8 +148,8 @@ Data_path_memory u_Data_path_memory
  	.l2arb_l2c_req_o(l2arb_l2c_req_o),
   	.l2c_l2arb_req_rdy_i(l2c_l2arb_req_rdy_i),
   	.l2c_l2arb_ans_i(l2c_l2arb_ans_i),
-  	.l2arb_l2c_ans_rdy_o(l2arb_l2c_ans_rdy_o) 
+  	.l2arb_l2c_ans_rdy_o(l2arb_l2c_ans_rdy_o)
 );
 
-    
+
 endmodule

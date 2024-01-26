@@ -12,12 +12,6 @@
 // Author: Michele Caon
 // Date: 29/10/2019
 
-// Import UVM report macros
-`ifndef SYNTHESIS
-`include "uvm_macros.svh"
-import uvm_pkg::*;
-`endif
-
 import len5_pkg::XLEN;
 import expipe_pkg::*;
 
@@ -108,7 +102,7 @@ module vaddr_adder #(
       SV48:    pfault_except = (vaddr_o[63:48] != {16{vaddr_o[47]}}) ? (1'b1) : (1'b0);
       default: pfault_except = 1'b0;
     endcase
-    // Check if the address is naturally aligned according to the type of load/store. If not, an ADDRESS MISALIGNED exception must be raised. 
+    // Check if the address is naturally aligned according to the type of load/store. If not, an ADDRESS MISALIGNED exception must be raised.
     case (ldst_type)
       LS_HALFWORD, LS_HALFWORD_U: align_except = (vaddr_o[0]) ? (1'b1) : (1'b0);
       LS_WORD, LS_WORD_U:         align_except = (vaddr_o[1:0] != 2'b00) ? (1'b1) : (1'b0);
@@ -138,23 +132,23 @@ module vaddr_adder #(
     case (vm_mode)
       SV39:
       assert (vaddr_o[63:39] == {25{vaddr_o[38]}})
-      else `uvm_error("EXCEPTION", $sformatf("MSBs [63:39] of virtual address are different from bit 38 while paging mode is %s", vm_mode_e.name()))
+      else `$error($sformatf("MSBs [63:39] of virtual address are different from bit 38 while paging mode is %s", vm_mode_e.name()))
       SV48:
       assert (vaddr_o[63:48] == {16{vaddr_o[47]}})
-      else `uvm_error("EXCEPTION", $sformatf("MSBs [63:48] of virtual address are different from bit 47 while paging mode is %s", vm_mode_e.name()))
+      else `$error($sformatf("MSBs [63:48] of virtual address are different from bit 47 while paging mode is %s", vm_mode_e.name()))
       default: ;
     endcase
     // Warn when virtual address is misaligned
     case (ldst_type)
       LS_HALFWORD, LS_HALFWORD_U:
       assert (!vaddr_o[0])
-      else `uvm_error("ALIGNMENT", $sformatf("Instruction of type HALFWORD has misaligned address \'%h\'", vaddr_o))
+      else `$error($sformatf("Instruction of type HALFWORD has misaligned address \'%h\'", vaddr_o))
       LS_WORD, LS_WORD_U:
       assert (vaddr_o[1:0] == 2'b00)
-      else `uvm_error("ALIGNMENT", $sformatf("Instruction of type WORD has misaligned address \'%h\'", vaddr_o))
+      else `$error($sformatf("Instruction of type WORD has misaligned address \'%h\'", vaddr_o))
       LS_DOUBLEWORD:
       assert (vaddr_o[2:0] == 3'b000)
-      else `uvm_error("ALIGNMENT", $sformatf("Instruction of type DOUBLEWORD has misaligned address \'%h\'", vaddr_o))
+      else `$error($sformatf("Instruction of type DOUBLEWORD has misaligned address \'%h\'", vaddr_o))
       default: ;
     endcase
   end

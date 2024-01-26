@@ -12,18 +12,10 @@
 // Author: Michele Caon
 // Date: 13/11/2019
 
-// LEN5 compilation switches
-`include "len5_config.svh"
-
-// Import UVM report macros
-`ifndef SYNTHESIS
-`include "uvm_macros.svh"
-import uvm_pkg::*;
-`endif
-
 /* Include instruction macros */
 `include "instr_macros.svh"
 
+import len5_config_pkg::*;
 import len5_pkg::*;
 import expipe_pkg::*;
 import memory_pkg::*;
@@ -64,7 +56,7 @@ module issue_decoder (
     issue_type_t    issue_type;
     issue_eu_t      assigned_eu;
     eu_ctl_t        eu_ctl;
-    logic           rs1_req; 
+    logic           rs1_req;
     logic           rs1_is_pc;      // for AUIPC
     logic           rs2_req;
     logic           rs2_is_imm;     // for i-type ALU instr
@@ -77,7 +69,7 @@ module issue_decoder (
 
     // Exception control
     except_code_t   system_except_code;
-    
+
     // EU control decoders
     logic           alu_ctl_except;
     alu_ctl_t       alu_ctl, alu32_ctl;
@@ -101,7 +93,7 @@ module issue_decoder (
     // OPCODE decoder
     // --------------
     always_comb begin: instr_format_logic
-        // DEFAULT VALUES 
+        // DEFAULT VALUES
         dec_sel                     = ISSUE_DEC_SEL_MAIN;
         op_sel_32                   = 1'b0;
         issue_type                  = ISSUE_TYPE_NONE;
@@ -270,32 +262,32 @@ module issue_decoder (
         `ifdef LEN5_A_EN
         // TODO: add atomic instructions
             `OPCODE_AMO: begin
-                
+
             end
         `endif /* LEN5_A_EN */
         `ifdef LEN5_FP_EN
             // Add floating-point support
             `OPCODE_LOAD_FP: begin
-                
+
             end
             `OPCODE_STORE_FP: begin
-                
+
             end
             `OPCODE_OP_FP: begin
-                
+
             end
             `OPCODE_FMADD: begin
-                
+
             end
             `OPCODE_FNMADD: begin
-                
+
             end
             `OPCODE_FMSUB: begin
-                
+
             end
             `OPCODE_FNMSUB: begin
-                
-            end: 
+
+            end:
         `endif /* LEN5_FP_EN */
             default: begin
                 skip_eu                     = 1'b1;
@@ -315,7 +307,7 @@ module issue_decoder (
         alu32_ctl       = ALU_ADDW;
         unique case (instruction_i.r.funct3)
             `FUNCT3_ADD: begin
-                if (instruction_i.r.funct7 == `FUNCT7_SUB && 
+                if (instruction_i.r.funct7 == `FUNCT7_SUB &&
                     instruction_i.r.opcode[5]) begin
                     alu_ctl     = ALU_SUB;
                     alu32_ctl   = ALU_SUBW;
@@ -328,7 +320,7 @@ module issue_decoder (
                 alu_ctl     = ALU_SLL;
                 alu32_ctl   = ALU_SLLW;
             end
-            `FUNCT3_SLT: begin 
+            `FUNCT3_SLT: begin
                 alu_ctl     = ALU_SLT;
                 alu32_ctl   = ALU_SLT;
             end
@@ -450,7 +442,7 @@ module issue_decoder (
         endcase
     end
 `endif /* LEN5_M_EN */
-    
+
     // Decoder MUX
     // -----------
     always_comb begin : dec_mux
@@ -526,5 +518,5 @@ module issue_decoder (
     `ifndef SYNTHESIS
     /* Assertions here */
     `endif
-    
+
 endmodule

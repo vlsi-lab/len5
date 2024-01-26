@@ -23,39 +23,39 @@ import expipe_pkg::*;
  *          updates from the CDB.
  */
 module rob #(
-    parameter int DEPTH = 4
+  parameter int DEPTH = 4
 ) (
-    /* Clock and reset */
-    input logic clk_i,
-    input logic rst_n_i,
-    input logic flush_i,
+  /* Clock and reset */
+  input logic clk_i,
+  input logic rst_n_i,
+  input logic flush_i,
 
-    /* Issue stage */
-    input  logic       issue_valid_i,        // from upstream hardware
-    output logic       issue_ready_o,        // to upstream hardware
-    input  rob_entry_t issue_data_i,
-    output rob_idx_t   issue_tail_idx_o,     // the ROB entry where the new instruction is being allocated
-    input  rob_idx_t   issue_rs1_rob_idx_i,
-    input  rob_idx_t   issue_rs2_rob_idx_i,
+  /* Issue stage */
+  input logic issue_valid_i,  // from upstream hardware
+  output logic issue_ready_o,  // to upstream hardware
+  input rob_entry_t issue_data_i,
+  output rob_idx_t issue_tail_idx_o,  // the ROB entry where the new instruction is being allocated
+  input rob_idx_t issue_rs1_rob_idx_i,
+  input rob_idx_t issue_rs2_rob_idx_i,
 
-    /* Operands forwarding logic */
-    output logic            opfwd_rs1_valid_o,
-    output logic            opfwd_rs1_ready_o,
-    output logic [XLEN-1:0] opfwd_rs1_value_o,
-    output logic            opfwd_rs2_valid_o,
-    output logic            opfwd_rs2_ready_o,
-    output logic [XLEN-1:0] opfwd_rs2_value_o,
+  /* Operands forwarding logic */
+  output logic            opfwd_rs1_valid_o,
+  output logic            opfwd_rs1_ready_o,
+  output logic [XLEN-1:0] opfwd_rs1_value_o,
+  output logic            opfwd_rs2_valid_o,
+  output logic            opfwd_rs2_ready_o,
+  output logic [XLEN-1:0] opfwd_rs2_value_o,
 
-    /* Commit stage */
-    output logic       comm_valid_o,    // to downstream hardware
-    input  logic       comm_ready_i,    // from downstream hardware
-    output rob_entry_t comm_data_o,
-    output rob_idx_t   comm_head_idx_o, // ROB head idx to update register status
+  /* Commit stage */
+  output logic       comm_valid_o,    // to downstream hardware
+  input  logic       comm_ready_i,    // from downstream hardware
+  output rob_entry_t comm_data_o,
+  output rob_idx_t   comm_head_idx_o, // ROB head idx to update register status
 
-    /* Common data bus (CDB) */
-    input  logic      cdb_valid_i,
-    input  cdb_data_t cdb_data_i,
-    output logic      cdb_ready_o
+  /* Common data bus (CDB) */
+  input  logic      cdb_valid_i,
+  input  cdb_data_t cdb_data_i,
+  output logic      cdb_ready_o
 );
 
   // INTERNAL SIGNALS
@@ -127,25 +127,25 @@ module rob #(
   // ----------------------
 
   modn_counter #(
-      .N(DEPTH)
+    .N(DEPTH)
   ) u_head_counter (
-      .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
-      .en_i   (head_cnt_en),
-      .clr_i  (head_cnt_clr),
-      .count_o(head_idx),
-      .tc_o   ()               // not needed
+    .clk_i  (clk_i),
+    .rst_n_i(rst_n_i),
+    .en_i   (head_cnt_en),
+    .clr_i  (head_cnt_clr),
+    .count_o(head_idx),
+    .tc_o   ()               // not needed
   );
 
   modn_counter #(
-      .N(DEPTH)
+    .N(DEPTH)
   ) u_tail_counter (
-      .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
-      .en_i   (tail_cnt_en),
-      .clr_i  (tail_cnt_clr),
-      .count_o(tail_idx),
-      .tc_o   ()               // not needed
+    .clk_i  (clk_i),
+    .rst_n_i(rst_n_i),
+    .en_i   (tail_cnt_en),
+    .clr_i  (tail_cnt_clr),
+    .count_o(tail_idx),
+    .tc_o   ()               // not needed
   );
 
   // --------------

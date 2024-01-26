@@ -16,33 +16,33 @@ import expipe_pkg::*;
 import len5_pkg::XLEN;
 
 module cdb (
-    input logic clk_i,
-    input logic rst_n_i,
-    input logic flush_i,
+  input logic clk_i,
+  input logic rst_n_i,
+  input logic flush_i,
 
-    // Handshake from/to the maximum priority EU
-    input  logic max_prio_valid_i,
-    output logic max_prio_ready_o,
+  // Handshake from/to the maximum priority EU
+  input  logic max_prio_valid_i,
+  output logic max_prio_ready_o,
 
-    // Data from the maximum priority EU
-    input cdb_data_t max_prio_data_i,
+  // Data from the maximum priority EU
+  input cdb_data_t max_prio_data_i,
 
-    // Handshake from/to the reservation stations
-    input  logic [0:EU_N-2] rs_valid_i,
-    output logic [0:EU_N-2] rs_ready_o,
+  // Handshake from/to the reservation stations
+  input  logic [0:EU_N-2] rs_valid_i,
+  output logic [0:EU_N-2] rs_ready_o,
 
-    // Data from the reservation stations or issue queue.
-    input cdb_data_t [0:EU_N-2] rs_data_i,
+  // Data from the reservation stations or issue queue.
+  input cdb_data_t [0:EU_N-2] rs_data_i,
 
-    // Handshake from/to the ROB
-    input logic rob_ready_i,
+  // Handshake from/to the ROB
+  input logic rob_ready_i,
 
-    // Output valid and data (to multiple units)
-    output logic      valid_o,
-    output cdb_data_t data_o
+  // Output valid and data (to multiple units)
+  output logic      valid_o,
+  output cdb_data_t data_o
 );
 
-  // DEFINITIONS  
+  // DEFINITIONS
   logic                         rob_valid_k;
 
   // CDB MUX
@@ -56,25 +56,25 @@ module cdb (
   // CDB ARBITER
   // -----------
   cdb_arbiter u_cdb_arbiter (
-      .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
-      .flush_i(flush_i),
+    .clk_i  (clk_i),
+    .rst_n_i(rst_n_i),
+    .flush_i(flush_i),
 
-      // Handshake from/to the maximum priority unit
-      .max_prio_valid_i(max_prio_valid_i),
-      .max_prio_ready_o(max_prio_ready_o),
+    // Handshake from/to the maximum priority unit
+    .max_prio_valid_i(max_prio_valid_i),
+    .max_prio_ready_o(max_prio_ready_o),
 
-      // Handshake from/to the units
-      .valid_i(rs_valid_i),
-      .ready_o(rs_ready_o),
+    // Handshake from/to the units
+    .valid_i(rs_valid_i),
+    .ready_o(rs_ready_o),
 
-      // Handshake from/to the ROB
-      .rob_ready_i(rob_ready_i),
-      .rob_valid_o(valid_o),
+    // Handshake from/to the ROB
+    .rob_ready_i(rob_ready_i),
+    .rob_valid_o(valid_o),
 
-      // Served unit
-      .served_max_prio_o(served_max_prio),
-      .served_o         (served)
+    // Served unit
+    .served_max_prio_o(served_max_prio),
+    .served_o         (served)
   );
 
   // --------------

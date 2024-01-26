@@ -99,7 +99,7 @@ module icache_ifc (
         end
       end
 
-      // This state removes the need for read_req_i to 
+      // This state removes the need for read_req_i to
       // remain active until the handshake occurs.
       ADDR_BUSY: begin
         if (addr_ready_i) begin
@@ -144,7 +144,7 @@ module icache_ifc (
         addr_sel = 'b0;
       end
 
-      // This state removes the need for read_req_i to 
+      // This state removes the need for read_req_i to
       // remain active until the handshake occurs.
       ADDR_BUSY: begin
         // Moore output

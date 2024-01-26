@@ -1,0 +1,4 @@
+# Parameter style
+waive --rule=parameter-name-style --location="../../../rtl/packages"
+waive --rule=line-length --location="../../../rtl/packages/memory_pkg.sv"
+waive --rule=struct-union-name-style --location="../../../rtl/packages/memory_pkg.sv"

@@ -15,26 +15,26 @@
 // -------------
 // SPILL CELL CU
 // -------------
-// Controls a couple of registers based on handshaking signals. When the 
+// Controls a couple of registers based on handshaking signals. When the
 // downstream hardware is not ready, buffer input data on a spill register
 // and lower the output ready for the upstream hardware in the next cycle.
 
 module spill_cell_flush_cu (
-    // Clock, reset, and flush
-    input logic clk_i,
-    input logic rst_n_i,
-    input logic flush_i,
+  // Clock, reset, and flush
+  input logic clk_i,
+  input logic rst_n_i,
+  input logic flush_i,
 
-    // Handshaking signals
-    input  logic valid_i,  // from upstream hardware
-    input  logic ready_i,  // from downstream hardware
-    output logic valid_o,  // from downstream hardware
-    output logic ready_o,  // from upstream hardware
+  // Handshaking signals
+  input  logic valid_i,  // from upstream hardware
+  input  logic ready_i,  // from downstream hardware
+  output logic valid_o,  // from downstream hardware
+  output logic ready_o,  // from upstream hardware
 
-    // Output control signals
-    output logic a_en_o,  // enable for the first register
-    output logic b_en_o,  // enable for the second (spill) register
-    output logic b_sel_o  // for register MUX
+  // Output control signals
+  output logic a_en_o,  // enable for the first register
+  output logic b_en_o,  // enable for the second (spill) register
+  output logic b_sel_o  // for register MUX
 );
 
   // ----------------
@@ -90,7 +90,7 @@ module spill_cell_flush_cu (
       end
 
       // Both A and B registers are full (active data in A)
-      // Once the downstream hardware can accept the data in A, store 
+      // Once the downstream hardware can accept the data in A, store
       // new incoming data in B and select it for the next cycle.
       AB_FULL_SEL_A: begin
         if (ready_i) next_state = B_FULL;
@@ -98,7 +98,7 @@ module spill_cell_flush_cu (
       end
 
       // Both A and B registers are full (active data in B)
-      // Once the downstream hardware can accept the data in B, store 
+      // Once the downstream hardware can accept the data in B, store
       // new incoming data in A and select it for the next cycle.
       AB_FULL_SEL_B: begin
         if (ready_i) next_state = A_FULL;

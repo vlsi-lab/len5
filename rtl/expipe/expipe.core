@@ -3,13 +3,13 @@ CAPI=2:
 # Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-name: "vlsi:polito:len5_expipe"
+name: "polito:len5:expipe:0.1.0"
 description: " LEN5 CPU execution pipeline components"
 
 filesets:
- register_rtl:
+ rf-rtl:
    depend:
-    - vlsi:polito:len5_packages
+    - polito:len5:packages
    files:
     - register-file/fp_regstat.sv
     - register-file/fp_rf.sv
@@ -17,29 +17,29 @@ filesets:
     - register-file/int_rf.sv
     - register-file/csrs.sv
    file_type : systemVerilogSource
-    
- cdb_rtl:
+
+ cdb-rtl:
    depend:
-    - vlsi:polito:len5_packages
+    - polito:len5:packages
    files:
     - cdb/cdb_arbiter.sv
     - cdb/cdb.sv
    file_type : systemVerilogSource
 
- commit_unit_rtl:
+ commit-rtl:
    depend:
-    - vlsi:polito:len5_packages
-    - vlsi:polito:len5_frontend
+    - polito:len5:packages
+    - polito:len5:frontend
    files:
-    - commit-unit/commit_decoder.sv 
-    - commit-unit/commit_stage.sv 
+    - commit-unit/commit_decoder.sv
+    - commit-unit/commit_stage.sv
     - commit-unit/rob.sv
-    - commit-unit/commit_cu.sv 
+    - commit-unit/commit_cu.sv
    file_type : systemVerilogSource
 
- exec_units_rtl:  
+ exec-rtl:
    depend:
-    - vlsi:polito:len5_packages
+    - polito:len5:packages
    files:
     - exec-units/alu_unit.sv
     - exec-units/alu.sv
@@ -56,9 +56,9 @@ filesets:
     - exec-units/op_only_unit.sv
    file_type : systemVerilogSource
 
- issue_unit_rtl:
+ issue-rtl:
    depend:
-    - vlsi:polito:len5_packages
+    - polito:len5:packages
    files:
     - issue-unit/issue_cu.sv
     - issue-unit/issue_decoder.sv
@@ -66,9 +66,9 @@ filesets:
     - issue-unit/issue_stage.sv
    file_type : systemVerilogSource
 
- load_store_unit_rtl:
+ lsu-rtl:
    depend:
-    - vlsi:polito:len5_packages
+    - polito:len5:packages
    files:
     - load-store-unit/address_adder.sv
     - load-store-unit/l0_cache.sv
@@ -81,15 +81,15 @@ filesets:
 targets:
     default:
         filesets:
-        - cdb_rtl
-        - commit_unit_rtl
-        - exec_units_rtl
-        - issue_unit_rtl
-        - load_store_unit_rtl
-        - register_rtl
+        - cdb-rtl
+        - commit-rtl
+        - exec-rtl
+        - issue-rtl
+        - lsu-rtl
+        - rf-rtl
 
 
-   
-    
-    
+
+
+
 

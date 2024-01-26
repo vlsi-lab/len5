@@ -12,15 +12,7 @@
 // Author: Michele Caon
 // Date: 27/10/2019
 
-// LEN5 compilation switches
-`include "len5_config.svh"
-
-// Import UVM report macros
-`ifndef SYNTHESIS
-`include "uvm_macros.svh"
-import uvm_pkg::*;
-`endif
-
+import len5_config_pkg::*;
 import len5_pkg::XLEN;
 import len5_pkg::STBUFF_DEPTH;
 
@@ -125,7 +117,7 @@ module store_buffer (
     output logic cl_sb_head_completed_o,
     output rob_idx_t cl_sb_head_rob_idx_o,
 
-    // Hanshake from/to the CDB 
+    // Hanshake from/to the CDB
     input  logic cdb_ready_i,
     input  logic cdb_valid_i,  // to know if the CDB is carrying valid data
     output logic cdb_valid_o,
@@ -156,7 +148,7 @@ module store_buffer (
   // Store buffer data structure
   sb_entry_t sb_data[0:STBUFF_DEPTH-1];
 
-  // Status signals 
+  // Status signals
   logic [STBUFF_DEPTH-1:0] valid_a, busy_a, rs1_ready_a, vaddr_ready_a, paddr_ready_a, except_raised_a, completed_a;
 `ifdef ENABLE_AGE_BASED_SELECTOR
   rob_idx_t entry_age_a[0:STBUFF_DEPTH-1];
@@ -230,9 +222,9 @@ module store_buffer (
 
     // Head and tail counters control
     head_cnt_en         = 1'b0;
-    head_cnt_clr        = flush_i;  // clear when flushing 
+    head_cnt_clr        = flush_i;  // clear when flushing
     tail_cnt_en         = 1'b0;
-    tail_cnt_clr        = flush_i;  // clear when flushing 
+    tail_cnt_clr        = flush_i;  // clear when flushing
 
     // --------
     // REQUESTS
@@ -282,7 +274,7 @@ module store_buffer (
     end
 
     // POP INSTRUCTION
-    // The head instruction can be popped if it's completed and its also at the head of the ROB. This corresponds to the instruction commit. 
+    // The head instruction can be popped if it's completed and its also at the head of the ROB. This corresponds to the instruction commit.
     if (cl_pop_store_i) begin
       sb_pop = 1'b1;
       head_cnt_en = 1'b1;
@@ -810,7 +802,7 @@ module store_buffer (
   // CDB SELECTOR
   // ------------
 `ifdef ENABLE_AGE_BASED_SELECTOR
-  // Stores access the CDB only to signal occurred exceptions to the ROB. Exceptions can be raised during the address translation or during the TLB access. 
+  // Stores access the CDB only to signal occurred exceptions to the ROB. Exceptions can be raised during the address translation or during the TLB access.
   age_based_sel #(
       .N(STBUFF_DEPTH),
       .AGE_LEN(ROB_IDX_LEN)
@@ -847,7 +839,7 @@ module store_buffer (
   assign dtlb_vaddr_o = sb_data[dtlb_req_idx].vaddr[VADDR_LEN-1:PAGE_OFFSET_LEN];  // (VADDR READ PORT 1)
   assign dtlb_idx_o = dtlb_req_idx;
 
-  // TO THE D$ 
+  // TO THE D$
   assign dcache_isstore_o = 1'b1;  // the instruction is a store
   assign dcache_paddr_o = paddr_a[sb_head_idx];  // (PADDR READ PORT 1)
   assign dcache_value_o = sb_data[sb_head_idx].rs2_value;  // (RS2 READ PORT 1)
@@ -886,11 +878,11 @@ module store_buffer (
   always @(negedge clk_i) begin
     // Notice when the load buffer is full
     assert (valid_a !== '1)
-    else `uvm_info("BUFFSIZE", $sformatf("Store buffer full (%0d entries): you might want to increase its depth", STBUFF_DEPTH), UVM_HIGH)
+    else $display($sformatf("Store buffer full (%0d entries): you might want to increase its depth", STBUFF_DEPTH));
     foreach (sb_data[i]) begin
       // Check if the correct order of operations is respected
       assert (sb_data[i].except_code != E_UNKNOWN)
-      else `uvm_error("EXCEPTION", $sformatf("Store buffer entry %4d has encountered an unknown exception", i))
+      else `$error($sformatf("Store buffer entry %4d has encountered an unknown exception", i))
     end
   end
 `endif

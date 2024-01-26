@@ -39,7 +39,7 @@ module ptw_MMU (
     input  logic         [PPN_LEN-1:0] csr_root_ppn_i      // the root ppn
 );
 
-  // Signlas 
+  // Signlas
   ptw_mmuc_req_t   ptw_mmuc_req_o;  // first two VPNs
   ptw_mmuc_write_t ptw_mmuc_write_o;  // info for mmu_cache lines replacement
   logic            mmuc_flush_o;  // flush the mmuc

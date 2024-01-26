@@ -1,0 +1,126 @@
+CAPI=2:
+# Copyright 2024 POLITO
+# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# File: heeperator.core
+# Author: Mattia Mirigaldi, Michele Caon
+# Date: 24/01/2024
+# Description: LEN5 top-level core file
+
+name: "polito:len5:len5:0.1.0"
+description: "LEN5: out-of-order superscalar CPU"
+
+filesets:
+  rtl-bare:
+    files:
+    - rtl/datapath.sv
+    file_type : systemVerilogSource
+    depend:
+    - polito:len5:packages
+    - polito:len5:common
+    - polito:len5:frontend
+    - polito:len5:expipe
+
+  rtl-bare-tb:
+    files:
+    - tb/tb_with_l2cemu.sv
+    - tb/memory/cache_L2_system_emulator.sv
+    - tb/memory/memory_if.sv
+    - tb/memory/memory_class.svh
+    - tb/memory/memory_bare_emu.sv
+    - tb/tb_bare.sv
+    file_type : systemVerilogSource
+
+targets:
+  # Default target
+  default: &default
+    filesets:
+    - rtl-bare
+    toplevel: [datapath]
+
+  # RTL simulation
+  sim:
+    <<: *default
+    default_tool: modelsim
+    filesets_append:
+    - rtl-bare-tb
+    toplevel: [tb_bare]
+    tools:
+      modelsim:
+        vlog_options:
+        - -override_timescale 1ns/1ps
+        - -suppress vlog-2583
+        - -suppress vlog-2577
+        - -pedanticerrors
+        - -define MODELSIM
+        - -svinputport=compat
+        - -hazards
+        - -vmake
+
+  # Format HDL with Verible
+  format:
+    filesets:
+    - rtl-bare
+    - rtl-bare-tb
+    toplevel: datapath
+    description: Format source files using verible-verilog-format
+    default_tool: veribleformat
+    tools:
+      veribleformat:
+        verible_format_args:
+        - '--assignment_statement_alignment=align'
+        - '--case_items_alignment=align'
+        - '--formal_parameters_indentation=indent'
+        - '--named_parameter_alignment=align'
+        - '--named_parameter_indentation=indent'
+        - '--named_port_alignment=align'
+        - '--named_port_indentation=indent'
+        - '--port_declarations_alignment=align'
+        - '--port_declarations_indentation=indent'
+        - '--assignment_statement_alignment=align'
+        - '--module_net_variable_alignment=align'
+        - '--inplace'
+
+  # Static analysis with Verible
+  lint:
+    filesets:
+    - rtl-bare
+    - rtl-bare-tb
+    toplevel: datapath
+    description: Perform static analysis using Verible
+    default_tool: veriblelint
+    tools:
+      veriblelint:
+        ruleset: default
+        verible_lint_args:
+        - '--waiver_files=../../../rtl/misc/verible-lint.waiver'
+        rules:
+        - 'line-length=length:120'
+
+# Parameters
+parameters:
+  log_level:
+    datatype: str
+    description: |
+      Set the log level. Admitted values: LOG_NONE|LOG_LOW|LOG_MEDIUM|LOG_HIGH|LOG_FULL|LOG_DEBUG.
+      Errors and configuration messages are always printed.
+    paramtype: cmdlinearg
+  firmware:
+    datatype: str
+    description: Firmware (in HEX format) to load into the system SRAM.
+    paramtype: plusarg
+  max_cycles:
+    datatype: int
+    description: Maximum number of simulation cycles (halt the simulation when reached).
+    paramtype: plusarg
+  SYNTHESIS:
+    datatype: bool
+    paramtype: vlogdefine
+    description: |
+      Can isolate code that is (or is not) meant for Synthesis/Simulation only
+  POSTLAYOUT:
+    datatype: bool
+    paramtype: vlogdefine
+    description: |
+      Can isolate code that is (or is not) meant for post-layout simulation only

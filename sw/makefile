@@ -44,7 +44,7 @@ ARFLAGS			:= rcus # s replaces ranlib
 #LIB_CRT                    = $(wildcard src/crt0.S)
 #LIB_CRT                    += $(wildcard src/irq.S)
 #LIB_BASE                   = $(wildcard src/*.c)
-#LIB_RUNTIME                = 
+#LIB_RUNTIME                =
 #LIB_DRIVERS                += $(wildcard /*.c)
 
 # LEN5 software support

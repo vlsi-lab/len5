@@ -19,32 +19,32 @@
 import expipe_pkg::*;
 
 module fp_regstat #(
-               REG_NUM     = 32,              // power of 2
-    localparam REG_IDX_LEN = $clog2(REG_NUM)
+             REG_NUM     = 32,              // power of 2
+  localparam REG_IDX_LEN = $clog2(REG_NUM)
 ) (
-    input logic clk_i,
-    input logic rst_n_i,
+  input logic clk_i,
+  input logic rst_n_i,
 
-    // Handshake from/to the issue logic
-    input logic issue_valid_i,
+  // Handshake from/to the issue logic
+  input logic issue_valid_i,
 
-    // Data from/to the issue logic
-    input logic     [REG_IDX_LEN-1:0] issue_rd_idx_i,  // destination register of the issuing instruction
-    input rob_idx_t                   issue_rob_idx_i, // ROB index where the instruction is being allocated (tail pointer of the ROB)
+  // Data from/to the issue logic
+  input logic     [REG_IDX_LEN-1:0] issue_rd_idx_i,  // destination register of the issuing instruction
+  input rob_idx_t                   issue_rob_idx_i, // ROB index where the instruction is being allocated (tail pointer of the ROB)
 
-    input logic [REG_IDX_LEN-1:0] issue_rs1_idx_i,  // first source register index
-    input logic [REG_IDX_LEN-1:0] issue_rs2_idx_i,  // second source register index
-    output logic issue_rs1_busy_o,  // rs1 value is in the ROB or has to be computed
-    output rob_idx_t issue_rs1_rob_idx_o,  // the index of the ROB where the result is found
-    output logic issue_rs2_busy_o,  // rs1 value is in the ROB or has to be computed
-    output rob_idx_t issue_rs2_rob_idx_o,  // the index of the ROB where the result is found
+  input logic [REG_IDX_LEN-1:0] issue_rs1_idx_i,  // first source register index
+  input logic [REG_IDX_LEN-1:0] issue_rs2_idx_i,  // second source register index
+  output logic issue_rs1_busy_o,  // rs1 value is in the ROB or has to be computed
+  output rob_idx_t issue_rs1_rob_idx_o,  // the index of the ROB where the result is found
+  output logic issue_rs2_busy_o,  // rs1 value is in the ROB or has to be computed
+  output rob_idx_t issue_rs2_rob_idx_o,  // the index of the ROB where the result is found
 
-    // Handshake from/to the commit logic
-    input logic comm_valid_i,
+  // Handshake from/to the commit logic
+  input logic comm_valid_i,
 
-    // Data from the commit logic
-    input logic     [REG_IDX_LEN-1:0] comm_rd_idx_i,   // destination register of the committing instr.
-    input rob_idx_t                   comm_head_idx_i  // head entry of the ROB
+  // Data from the commit logic
+  input logic [REG_IDX_LEN-1:0] comm_rd_idx_i,  // destination register of the committing instr.
+  input rob_idx_t comm_head_idx_i  // head entry of the ROB
 );
 
   // DEFINITIONS
@@ -90,7 +90,7 @@ module fp_regstat #(
       foreach (regstat_data[i]) begin
         regstat_data[i] <= 0;
       end
-    end else begin  // Normal update 
+    end else begin  // Normal update
 
       // WRITE DESTINATION ROB ENTRY FROM ISSUE STAGE (WRITE PORT 1)
       // The ROB entry assigned to the issuing instructioin (tail of the ROB) is recorded in the corresponding destination register entry
@@ -112,7 +112,7 @@ module fp_regstat #(
   // --------------------------
   // REGISTER STATUS READ PORTS
   // --------------------------
-  // READ OPERANDS FOR THE ISSUE STAGE 
+  // READ OPERANDS FOR THE ISSUE STAGE
   // rs1 (READ PORT 1)
   assign issue_rs1_busy_o    = |regstat_data[issue_rs1_idx_i].busy;  // 0 only if no in-flight instructions will write that register
 

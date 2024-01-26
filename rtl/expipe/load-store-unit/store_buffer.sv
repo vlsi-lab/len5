@@ -12,15 +12,7 @@
 // Author: Michele Caon
 // Date: 15/07/2022
 
-// LEN5 compilation switches
-`include "len5_config.svh"
-
-// Import UVM report macros
-`ifndef SYNTHESIS
-`include "uvm_macros.svh"
-import uvm_pkg::*;
-`endif
-
+import len5_config_pkg::*;
 import len5_pkg::XLEN;
 import len5_pkg::except_code_t;
 import len5_pkg::BUFF_IDX_LEN;
@@ -73,7 +65,7 @@ module store_buffer #(
     /* Load buffer (for load-after-store dependencies) */
     output  logic                       lb_latest_valid_o,      // the latest store tag is valid
     output  logic [IDX_W-1:0]           lb_latest_idx_o,        // tag of the latest store
-    output  logic                       lb_oldest_completed_o,  // the oldest store has completed 
+    output  logic                       lb_oldest_completed_o,  // the oldest store has completed
     output  logic [IDX_W-1:0]           lb_oldest_idx_o,        // tag of the oldest active store
 
     /* Level-zero cache control (store-to-load forwarding) */
@@ -136,7 +128,7 @@ module store_buffer #(
     assign  save_addr       = adder_valid_i & adder_ready_o;
     assign  mem_accepted    = mem_valid_o & mem_ready_i;
     assign  mem_done        = mem_valid_i & mem_ready_o;
-  
+
     // Counters control
     assign  head_cnt_clr    = flush_i;
     assign  tail_cnt_clr    = flush_i;
@@ -186,8 +178,8 @@ module store_buffer #(
                             next_state[i]   = STORE_S_RS2_PENDING;
                         else
                             next_state[i]   = STORE_S_RS12_PENDING;
-                    end else 
-                        next_state[i] = STORE_S_CACHED; 
+                    end else
+                        next_state[i] = STORE_S_CACHED;
                 end
             `endif /* LEN5_STORE_LOAD_FWD_EN */
                 STORE_S_EMPTY: begin // push
@@ -201,8 +193,8 @@ module store_buffer #(
                             next_state[i]   = STORE_S_RS2_PENDING;
                         else
                             next_state[i]   = STORE_S_RS12_PENDING;
-                    end else 
-                        next_state[i] = STORE_S_EMPTY; 
+                    end else
+                        next_state[i] = STORE_S_EMPTY;
                 end
                 STORE_S_RS12_PENDING: begin // save rs1 and/or rs2 value from CDB
                     if (save_rs) begin
@@ -372,7 +364,7 @@ module store_buffer #(
     `else
     assign  issue_ready_o  = curr_state[tail_idx] == STORE_S_EMPTY;
     `endif /* LEN5_STORE_LOAD_FWD_EN */
-    
+
     /* CDB */
     // NOTE: save memory address in result field for exception handling (mtval)
     assign  cdb_valid_o              = curr_state[head_idx] == STORE_S_COMPLETED;

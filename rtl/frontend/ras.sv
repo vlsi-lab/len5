@@ -23,16 +23,16 @@
 import len5_pkg::*;
 
 module ras #(
-    parameter RAS_DEPTH = 4  // number of recent return addresses to buffer
+  parameter RAS_DEPTH = 4  // number of recent return addresses to buffer
 ) (
-    input logic clk_i,
-    input logic rst_n_i,
+  input logic clk_i,
+  input logic rst_n_i,
 
-    // From the branch unit
-    input  logic            push_i,
-    input  logic            pop_i,
-    input  logic [XLEN-1:0] ret_addr_i,
-    output logic [XLEN-1:0] ret_addr_o
+  // From the branch unit
+  input  logic            push_i,
+  input  logic            pop_i,
+  input  logic [XLEN-1:0] ret_addr_i,
+  output logic [XLEN-1:0] ret_addr_o
 );
   localparam IDX_W = $clog2(RAS_DEPTH);
 
@@ -61,15 +61,15 @@ module ras #(
   assign new_cnt_en = push_i ^ pop_i;
   assign new_cnt_up = push_i;
   updown_counter #(
-      .W(IDX_W)
+    .W(IDX_W)
   ) u_new_cnt (
-      .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
-      .en_i   (new_cnt_en),
-      .clr_i  (1'b0),
-      .up_dn_i(new_cnt_up),
-      .count_o(new_idx),
-      .tc_o   ()             // unused
+    .clk_i  (clk_i),
+    .rst_n_i(rst_n_i),
+    .en_i   (new_cnt_en),
+    .clr_i  (1'b0),
+    .up_dn_i(new_cnt_up),
+    .count_o(new_idx),
+    .tc_o   ()             // unused
   );
   assign last_idx   = new_idx - 1;
 

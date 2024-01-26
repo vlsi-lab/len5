@@ -16,38 +16,38 @@ import len5_pkg::*;
 import expipe_pkg::*;
 
 module issue_queue (
-    input logic clk_i,
-    input logic rst_n_i,
-    input logic flush_i,
+  input logic clk_i,
+  input logic rst_n_i,
+  input logic flush_i,
 
-    // Handshake from/to fetch unit
-    input  logic fetch_valid_i,
-    output logic fetch_ready_o,
+  // Handshake from/to fetch unit
+  input  logic fetch_valid_i,
+  output logic fetch_ready_o,
 
-    // Data from fetch unit
-    input logic         [XLEN-1:0] curr_pc_i,
-    input logic         [ILEN-1:0] instruction_i,
-    input logic         [XLEN-1:0] pred_target_i,
-    input logic                    pred_taken_i,
-    input logic                    except_raised_i,
-    input except_code_t            except_code_i,
+  // Data from fetch unit
+  input logic         [XLEN-1:0] curr_pc_i,
+  input logic         [ILEN-1:0] instruction_i,
+  input logic         [XLEN-1:0] pred_target_i,
+  input logic                    pred_taken_i,
+  input logic                    except_raised_i,
+  input except_code_t            except_code_i,
 
-    // Handshake from/to the issue logic
-    input  logic issue_ready_i,
-    output logic issue_valid_o,
+  // Handshake from/to the issue logic
+  input  logic issue_ready_i,
+  output logic issue_valid_o,
 
-    // Data to the execution pipeline
-    output logic         [XLEN-1:0] curr_pc_o,
-    output logic         [ILEN-1:0] instruction_o,
-    output logic         [XLEN-1:0] pred_target_o,
-    output logic                    pred_taken_o,
-    output logic                    except_raised_o,
-    output except_code_t            except_code_o
+  // Data to the execution pipeline
+  output logic         [XLEN-1:0] curr_pc_o,
+  output logic         [ILEN-1:0] instruction_o,
+  output logic         [XLEN-1:0] pred_target_o,
+  output logic                    pred_taken_o,
+  output logic                    except_raised_o,
+  output except_code_t            except_code_o
 );
 
   // DEFINITIONS
 
-  // New instruction 
+  // New instruction
   iq_entry_t new_instr, issued_instr;
 
   // ----------------
@@ -62,18 +62,18 @@ module issue_queue (
   assign new_instr.except_code   = except_code_i;
 
   fifo #(
-      .DATA_T(iq_entry_t),
-      .DEPTH (IQ_DEPTH)
+    .DATA_T(iq_entry_t),
+    .DEPTH (IQ_DEPTH)
   ) u_issue_fifo (
-      .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
-      .flush_i(flush_i),
-      .valid_i(fetch_valid_i),
-      .ready_i(issue_ready_i),
-      .valid_o(issue_valid_o),
-      .ready_o(fetch_ready_o),
-      .data_i (new_instr),
-      .data_o (issued_instr)
+    .clk_i  (clk_i),
+    .rst_n_i(rst_n_i),
+    .flush_i(flush_i),
+    .valid_i(fetch_valid_i),
+    .ready_i(issue_ready_i),
+    .valid_o(issue_valid_o),
+    .ready_o(fetch_ready_o),
+    .data_i (new_instr),
+    .data_o (issued_instr)
   );
 
   // Output instruction

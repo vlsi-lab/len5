@@ -12,14 +12,12 @@
 // Author: Michele Caon
 // Date: 03/11/2021
 
-// LEN5 compilation switches
-`include "len5_config.svh"
-
 // Opcode and CSR address definition
 `include "instr_macros.svh"
 `include "csr_macros.svh"
 
 // Data types and parameters
+import len5_config_pkg::*;
 import len5_pkg::*;
 import csr_pkg::*;
 import expipe_pkg::*;
@@ -27,35 +25,35 @@ import memory_pkg::PPN_LEN;
 import memory_pkg::asid_t;
 
 module csrs (
-    // Clock and reset 
-    input logic clk_i,
-    input logic rst_n_i,
+  // Clock and reset
+  input logic clk_i,
+  input logic rst_n_i,
 
-    // Handshaking with commit logic
-    input logic valid_i,
+  // Handshaking with commit logic
+  input logic valid_i,
 
-    // Control from commit logic
-    input comm_csr_instr_t                  comm_insn_i,  // committing instruction type
-    input csr_op_t                          comm_op_i,
-    input logic            [FUNCT3_LEN-1:0] funct3_i,
+  // Control from commit logic
+  input comm_csr_instr_t                  comm_insn_i,  // committing instruction type
+  input csr_op_t                          comm_op_i,
+  input logic            [FUNCT3_LEN-1:0] funct3_i,
 
-    // CSR address and data to/from commit logic
-    input logic [CSR_ADDR_LEN-1:0] addr_i,
-    input logic [REG_IDX_LEN-1:0] rs1_idx_i,  // source register or unsigned immediate
-    input logic [XLEN-1:0] data_i,  // data to write to the CSR
-    input except_code_t exc_data_i,  // exception data (e.g., FPU exceptions)
-    input logic [REG_IDX_LEN-1:0] rd_idx_i,  // destination register
-    output csr_t data_o,
-    output logic acc_exc_o,  // ILLEGAL INSTRUCTION flag (invalid address or access permission)
-    output csr_mtvec_t mtvec_o,  // exception base address and mode
+  // CSR address and data to/from commit logic
+  input logic [CSR_ADDR_LEN-1:0] addr_i,
+  input logic [REG_IDX_LEN-1:0] rs1_idx_i,  // source register or unsigned immediate
+  input logic [XLEN-1:0] data_i,  // data to write to the CSR
+  input except_code_t exc_data_i,  // exception data (e.g., FPU exceptions)
+  input logic [REG_IDX_LEN-1:0] rd_idx_i,  // destination register
+  output csr_t data_o,
+  output logic acc_exc_o,  // ILLEGAL INSTRUCTION flag (invalid address or access permission)
+  output csr_mtvec_t mtvec_o,  // exception base address and mode
 
-    // Data to the FPU
+  // Data to the FPU
 `ifdef LEN5_FP_EN
-    output logic [FCSR_FRM_LEN-1:0] fpu_frm_o,  // dynamic rounding mode
+  output logic [FCSR_FRM_LEN-1:0] fpu_frm_o,  // dynamic rounding mode
 `endif  /* LEN5_FP_EN */
 
-    // Data to the load/store unit
-    output csr_priv_t priv_mode_o  // current privilege mode
+  // Data to the load/store unit
+  output csr_priv_t priv_mode_o  // current privilege mode
 );
 
   // CSR read and write values and control
@@ -84,7 +82,7 @@ module csrs (
   // PROCESSOR EXECUTION MODE
   // ------------------------
   // NOTE: code should not be able to discover the mode it is running in, so the
-  // following CSR is only visible by the core itself. At reset, the execution 
+  // following CSR is only visible by the core itself. At reset, the execution
   // mode defaults to M-mode.
   csr_priv_t          priv_mode;  // current execution mode
 
@@ -373,7 +371,7 @@ module csrs (
         `CSR_ADDR_MCAUSE: begin
           if (comm_op_i == CSR_OP_SYSTEM || priv_mode >= PRIV_MODE_M) mcause <= csr_wr_val;
         end
-        // mtval 
+        // mtval
         `CSR_ADDR_MTVAL: begin
           if (comm_op_i == CSR_OP_SYSTEM || priv_mode >= PRIV_MODE_M) mtval <= csr_wr_val;
         end
@@ -425,20 +423,25 @@ module csrs (
       else if (!mcountinhibit[0]) mcycle <= mcycle + 1;
       // minstret
       if (minstret_load) minstret <= csr_wr_val;
-      else if (comm_insn_i != COMM_CSR_INSTR_TYPE_NONE && !mcountinhibit[2]) minstret <= minstret + 1;
+      else if (comm_insn_i != COMM_CSR_INSTR_TYPE_NONE && !mcountinhibit[2])
+        minstret <= minstret + 1;
 `ifdef LEN5_CSR_HPMCOUNTERS_EN
       // hpmcounter3 (retired jumps)
       if (hpmcounter3_load) hpmcounter3 <= csr_wr_val;
-      else if (comm_insn_i == COMM_CSR_INSTR_TYPE_JUMP && !mcountinhibit[3]) hpmcounter3 <= hpmcounter3 + 1;
+      else if (comm_insn_i == COMM_CSR_INSTR_TYPE_JUMP && !mcountinhibit[3])
+        hpmcounter3 <= hpmcounter3 + 1;
       // hpmcounter4 (retired branches)
       if (hpmcounter4_load) hpmcounter4 <= csr_wr_val;
-      else if (comm_insn_i == COMM_CSR_INSTR_TYPE_BRANCH && !mcountinhibit[4]) hpmcounter4 <= hpmcounter4 + 1;
+      else if (comm_insn_i == COMM_CSR_INSTR_TYPE_BRANCH && !mcountinhibit[4])
+        hpmcounter4 <= hpmcounter4 + 1;
       // hpmcounter5 (retired loads)
       if (hpmcounter5_load) hpmcounter5 <= csr_wr_val;
-      else if (comm_insn_i == COMM_CSR_INSTR_TYPE_LOAD && !mcountinhibit[5]) hpmcounter5 <= hpmcounter5 + 1;
+      else if (comm_insn_i == COMM_CSR_INSTR_TYPE_LOAD && !mcountinhibit[5])
+        hpmcounter5 <= hpmcounter5 + 1;
       // hpmcounter6 (retired stores)
       if (hpmcounter6_load) hpmcounter6 <= csr_wr_val;
-      else if (comm_insn_i == COMM_CSR_INSTR_TYPE_STORE && !mcountinhibit[6]) hpmcounter6 <= hpmcounter6 + 1;
+      else if (comm_insn_i == COMM_CSR_INSTR_TYPE_STORE && !mcountinhibit[6])
+        hpmcounter6 <= hpmcounter6 + 1;
 `endif  /* LEN5_CSR_HPMCOUNTERS_EN */
     end
   end

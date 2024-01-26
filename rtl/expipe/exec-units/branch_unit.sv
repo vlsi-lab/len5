@@ -12,43 +12,42 @@
 // Author: Michele Caon
 // Date: 17/11/2021
 
-`include "len5_config.svh"
-
+import len5_config_pkg::*;
 import len5_pkg::*;
 import expipe_pkg::*;
 import fetch_pkg::resolution_t;
 
 module branch_unit #(
-    RS_DEPTH = 4  // must be a power of 2
+  RS_DEPTH = 4  // must be a power of 2
 ) (
-    input logic clk_i,
-    input logic rst_n_i,
-    input logic flush_i,
+  input logic clk_i,
+  input logic rst_n_i,
+  input logic flush_i,
 
-    // Frontend
-    input  logic        fe_ready_i,
-    output logic        fe_res_valid_o,
-    output resolution_t fe_res_o,
+  // Frontend
+  input  logic        fe_ready_i,
+  output logic        fe_res_valid_o,
+  output resolution_t fe_res_o,
 
-    // Issue Stage
-    input  logic                   issue_valid_i,
-    output logic                   issue_ready_o,
-    input  branch_ctl_t            issue_branch_type_i,
-    input  op_data_t               issue_rs1_i,
-    input  op_data_t               issue_rs2_i,
-    input  logic        [XLEN-1:0] issue_imm_value_i,
-    input  rob_idx_t               issue_dest_rob_idx_i,
-    input  logic        [XLEN-1:0] issue_curr_pc_i,
-    input  logic        [XLEN-1:0] issue_pred_target_i,
-    input  logic                   issue_pred_taken_i,
-    output logic                   issue_mis_o,
+  // Issue Stage
+  input  logic                   issue_valid_i,
+  output logic                   issue_ready_o,
+  input  branch_ctl_t            issue_branch_type_i,
+  input  op_data_t               issue_rs1_i,
+  input  op_data_t               issue_rs2_i,
+  input  logic        [XLEN-1:0] issue_imm_value_i,
+  input  rob_idx_t               issue_dest_rob_idx_i,
+  input  logic        [XLEN-1:0] issue_curr_pc_i,
+  input  logic        [XLEN-1:0] issue_pred_target_i,
+  input  logic                   issue_pred_taken_i,
+  output logic                   issue_mis_o,
 
-    // CDB 
-    input  logic      cdb_ready_i,
-    input  logic      cdb_valid_i,  // to know if the CDB is carrying valid data
-    output logic      cdb_valid_o,
-    input  cdb_data_t cdb_data_i,
-    output cdb_data_t cdb_data_o
+  // CDB
+  input  logic      cdb_ready_i,
+  input  logic      cdb_valid_i,  // to know if the CDB is carrying valid data
+  output logic      cdb_valid_o,
+  input  cdb_data_t cdb_data_i,
+  output cdb_data_t cdb_data_o
 
 );
 
@@ -155,17 +154,17 @@ module branch_unit #(
 `endif  /* LEN5_C_EN */
 
   spill_cell #(
-      .DATA_T(bu_out_reg_t),
-      .SKIP  (BU_SPILL_SKIP)
+    .DATA_T(bu_out_reg_t),
+    .SKIP  (BU_SPILL_SKIP)
   ) u_bu_out_reg (
-      .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
-      .valid_i(rs_bu_valid),
-      .ready_i(rs_bu_ready),
-      .valid_o(bu_rs_valid),
-      .ready_o(bu_rs_ready),
-      .data_i (bu_outreg_in),
-      .data_o (bu_outreg_out)
+    .clk_i  (clk_i),
+    .rst_n_i(rst_n_i),
+    .valid_i(rs_bu_valid),
+    .ready_i(rs_bu_ready),
+    .valid_o(bu_rs_valid),
+    .ready_o(bu_rs_ready),
+    .data_i (bu_outreg_in),
+    .data_o (bu_outreg_out)
   );
 
   // Resolution register
@@ -185,59 +184,59 @@ module branch_unit #(
   // BRANCH CONTROL UNIT
   // -------------------
   branch_cu u_branch_cu (
-      .clk_i          (clk_i),
-      .rst_n_i        (rst_n_i),
-      .flush_i        (flush_i),
-      .valid_i        (rs_bu_valid),
-      .misprediction_i(res_mispredicted),
-      .fe_ready_i     (fe_ready_i),
-      .issue_mis_o    (issue_mis_o),
-      .fe_res_valid_o (fe_res_valid_o),
-      .bu_mis_reg_en_o(cu_res_reg_en)
+    .clk_i          (clk_i),
+    .rst_n_i        (rst_n_i),
+    .flush_i        (flush_i),
+    .valid_i        (rs_bu_valid),
+    .misprediction_i(res_mispredicted),
+    .fe_ready_i     (fe_ready_i),
+    .issue_mis_o    (issue_mis_o),
+    .fe_res_valid_o (fe_res_valid_o),
+    .bu_mis_reg_en_o(cu_res_reg_en)
   );
 
   // -------------------------------
   // BRANCH UNIT RESERVATION STATION
   // -------------------------------
   branch_rs #(
-      .DEPTH(RS_DEPTH)
+    .DEPTH(RS_DEPTH)
   ) u_branch_rs (
-      .clk_i               (clk_i),
-      .rst_n_i             (rst_n_i),
-      .flush_i             (flush_i),
-      .issue_valid_i       (issue_valid_i),
-      .issue_ready_o       (issue_ready_o),
-      .issue_branch_type_i (issue_branch_type_i),
-      .issue_rs1_i         (issue_rs1_i),
-      .issue_rs2_i         (issue_rs2_i),
-      .issue_imm_value_i   (issue_imm_value_i),
-      .issue_dest_rob_idx_i(issue_dest_rob_idx_i),
-      .issue_curr_pc_i     (issue_curr_pc_i),
-      .issue_pred_target_i (issue_pred_target_i),
-      .issue_pred_taken_i  (issue_pred_taken_i),
-      .cdb_ready_i         (cdb_ready_i),
-      .cdb_valid_i         (cdb_valid_i),
-      .cdb_valid_o         (cdb_valid_o),
-      .cdb_data_i          (cdb_data_i),
-      .cdb_data_o          (cdb_data_o),
-      .bu_valid_i          (bu_rs_valid),
-      .bu_ready_i          (bu_rs_ready),
-      .bu_valid_o          (rs_bu_valid),
-      .bu_ready_o          (rs_bu_ready),
-      .bu_rob_idx_i        (bu_outreg_out.rob_idx),
-      .bu_res_mis_i        (bu_outreg_out.res_mispredicted),
-      .bu_link_addr_i      (bu_outreg_out.link_addr),
+    .clk_i               (clk_i),
+    .rst_n_i             (rst_n_i),
+    .flush_i             (flush_i),
+    .issue_valid_i       (issue_valid_i),
+    .issue_ready_o       (issue_ready_o),
+    .issue_branch_type_i (issue_branch_type_i),
+    .issue_rs1_i         (issue_rs1_i),
+    .issue_rs2_i         (issue_rs2_i),
+    .issue_imm_value_i   (issue_imm_value_i),
+    .issue_dest_rob_idx_i(issue_dest_rob_idx_i),
+    .issue_curr_pc_i     (issue_curr_pc_i),
+    .issue_pred_target_i (issue_pred_target_i),
+    .issue_pred_taken_i  (issue_pred_taken_i),
+    .cdb_ready_i         (cdb_ready_i),
+    .cdb_valid_i         (cdb_valid_i),
+    .cdb_valid_o         (cdb_valid_o),
+    .cdb_data_i          (cdb_data_i),
+    .cdb_data_o          (cdb_data_o),
+    .bu_valid_i          (bu_rs_valid),
+    .bu_ready_i          (bu_rs_ready),
+    .bu_valid_o          (rs_bu_valid),
+    .bu_ready_o          (rs_bu_ready),
+    .bu_rob_idx_i        (bu_outreg_out.rob_idx),
+    .bu_res_mis_i        (bu_outreg_out.res_mispredicted),
+    .bu_link_addr_i      (bu_outreg_out.link_addr),
 `ifndef LEN5_C_EN
-      .bu_except_raised_i  (bu_outreg_out.except_raised),
+    .bu_except_raised_i  (bu_outreg_out.except_raised),
 `endif  /* LEN5_C_EN */
-      .bu_rob_idx_o        (rs_bu_rob_idx),
-      .bu_rs1_o            (rs_bu_rs1),
-      .bu_rs2_o            (rs_bu_rs2),
-      .bu_imm_o            (rs_bu_imm),
-      .bu_curr_pc_o        (rs_bu_curr_pc),
-      .bu_pred_target_o    (rs_bu_pred_target),
-      .bu_pred_taken_o     (rs_bu_pred_taken),
-      .bu_branch_type_o    (rs_bu_branch_type)
+    .bu_rob_idx_o        (rs_bu_rob_idx),
+    .bu_rs1_o            (rs_bu_rs1),
+    .bu_rs2_o            (rs_bu_rs2),
+    .bu_imm_o            (rs_bu_imm),
+    .bu_curr_pc_o        (rs_bu_curr_pc),
+    .bu_pred_target_o    (rs_bu_pred_target),
+    .bu_pred_taken_o     (rs_bu_pred_taken),
+    .bu_branch_type_o    (rs_bu_branch_type)
   );
 
   // -----------------

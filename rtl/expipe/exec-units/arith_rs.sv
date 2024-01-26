@@ -12,61 +12,53 @@
 // Author: Michele Caon
 // Date: 19/08/2022
 
-// LEN5 compilation switches
-`include "len5_config.svh"
-
-// Import UVM report macros
-`ifndef SYNTHESIS
-`include "uvm_macros.svh"
-import uvm_pkg::*;
-`endif
-
+import len5_config_pkg::*;
 import len5_pkg::*;
 import expipe_pkg::*;
 
 module arith_rs #(
-    parameter DEPTH = 4,  // must be a power of 2
-    parameter EU_CTL_LEN = 4,
-    localparam RS_IDX_LEN = $clog2(DEPTH)
+  parameter DEPTH = 4,  // must be a power of 2
+  parameter EU_CTL_LEN = 4,
+  localparam RS_IDX_LEN = $clog2(DEPTH)
 ) (
-    input logic clk_i,
-    input logic rst_n_i,
-    input logic flush_i,
+  input logic clk_i,
+  input logic rst_n_i,
+  input logic flush_i,
 
 
-    /* Issue Stage */
-    input  logic                      issue_valid_i,
-    output logic                      issue_ready_o,
-    input  logic     [EU_CTL_LEN-1:0] issue_eu_ctl_i,
-    input  op_data_t                  issue_rs1_i,
-    input  op_data_t                  issue_rs2_i,
-    input  rob_idx_t                  issue_dest_rob_idx_i,
+  /* Issue Stage */
+  input  logic                      issue_valid_i,
+  output logic                      issue_ready_o,
+  input  logic     [EU_CTL_LEN-1:0] issue_eu_ctl_i,
+  input  op_data_t                  issue_rs1_i,
+  input  op_data_t                  issue_rs2_i,
+  input  rob_idx_t                  issue_dest_rob_idx_i,
 
-    /* CDB */
-    input  logic      cdb_ready_i,
-    input  logic      cdb_valid_i,  // to know if the CDB is carrying valid data
-    output logic      cdb_valid_o,
-    input  cdb_data_t cdb_data_i,
-    output cdb_data_t cdb_data_o,
+  /* CDB */
+  input  logic      cdb_ready_i,
+  input  logic      cdb_valid_i,  // to know if the CDB is carrying valid data
+  output logic      cdb_valid_o,
+  input  cdb_data_t cdb_data_i,
+  output cdb_data_t cdb_data_o,
 
-    /* Execution unit */
-    input  logic                          eu_ready_i,
-    input  logic                          eu_valid_i,
-    output logic                          eu_valid_o,
-    output logic                          eu_ready_o,
-    input  rob_idx_t                      eu_rob_idx_i,
-    input  logic         [      XLEN-1:0] eu_result_i,
-    input  logic                          eu_except_raised_i,
-    input  except_code_t                  eu_except_code_i,
-    output logic         [EU_CTL_LEN-1:0] eu_ctl_o,
-    output logic         [      XLEN-1:0] eu_rs1_o,
-    output logic         [      XLEN-1:0] eu_rs2_o,
-    output rob_idx_t                      eu_rob_idx_o
+  /* Execution unit */
+  input  logic                          eu_ready_i,
+  input  logic                          eu_valid_i,
+  output logic                          eu_valid_o,
+  output logic                          eu_ready_o,
+  input  rob_idx_t                      eu_rob_idx_i,
+  input  logic         [      XLEN-1:0] eu_result_i,
+  input  logic                          eu_except_raised_i,
+  input  except_code_t                  eu_except_code_i,
+  output logic         [EU_CTL_LEN-1:0] eu_ctl_o,
+  output logic         [      XLEN-1:0] eu_rs1_o,
+  output logic         [      XLEN-1:0] eu_rs2_o,
+  output rob_idx_t                      eu_rob_idx_o
 );
   // INTERNAL SIGNALS
   // ----------------
 
-  // Generic arithmetic reservation station content 
+  // Generic arithmetic reservation station content
   typedef struct packed {
     logic [EU_CTL_LEN-1:0] eu_ctl;  // Control signals for the EU
     rob_idx_t rs1_rob_idx;  // The entry of the rob that will contain the required operand.
@@ -330,29 +322,29 @@ module arith_rs #(
 
   // New entry
   prio_enc #(
-      .N(DEPTH)
+    .N(DEPTH)
   ) new_sel (
-      .lines_i(empty),
-      .enc_o  (new_idx),
-      .valid_o()
+    .lines_i(empty),
+    .enc_o  (new_idx),
+    .valid_o()
   );
 
   // Execution
   prio_enc #(
-      .N(DEPTH)
+    .N(DEPTH)
   ) ex_sel (
-      .lines_i(ready_ex),
-      .enc_o  (ex_idx),
-      .valid_o()
+    .lines_i(ready_ex),
+    .enc_o  (ex_idx),
+    .valid_o()
   );
 
   // CDB access
   prio_enc #(
-      .N(DEPTH)
+    .N(DEPTH)
   ) cdb_sel (
-      .lines_i(ready_cdb),
-      .enc_o  (cdb_idx),
-      .valid_o()
+    .lines_i(ready_cdb),
+    .enc_o  (cdb_idx),
+    .valid_o()
   );
 
   // ----------

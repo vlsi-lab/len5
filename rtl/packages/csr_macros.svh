@@ -15,7 +15,7 @@
 `ifndef CSR_MACROS_
 `define CSR_MACROS_
 
-`include "len5_config.svh"
+import len5_config_pkg::*;
 
 // -------------
 // CSR ADDRESSES
@@ -36,7 +36,7 @@
 `define CSR_ADDR_USTATUS 12'h000
 `define CSR_ADDR_UUIE 12'h004
 `define CSR_ADDR_UTVEC 12'h005
-// User trap handling 
+// User trap handling
 `define CSR_ADDR_USCRATCH 12'h040
 `define CSR_ADDR_UEPC 12'h041
 `define CSR_ADDR_UCAUSE 12'h042

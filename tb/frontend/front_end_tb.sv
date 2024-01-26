@@ -105,7 +105,7 @@ front_end #(.HLEN(4),.BTB_BITS(4)) u_front_end
 
   // For pc_gen from or to back end
   .except_i			(except_i),
-  .except_pc_i		(except_pc_i)   
+  .except_pc_i		(except_pc_i)
 );
-    
+
 endmodule

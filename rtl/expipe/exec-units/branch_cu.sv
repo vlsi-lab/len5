@@ -20,15 +20,15 @@
  */
 
 module branch_cu (
-    input  logic clk_i,
-    input  logic rst_n_i,
-    input  logic flush_i,
-    input  logic valid_i,
-    input  logic misprediction_i,
-    input  logic fe_ready_i,
-    output logic issue_mis_o,      // notify issue about the mispred.
-    output logic fe_res_valid_o,   // send the resolution to the FE
-    output logic bu_mis_reg_en_o
+  input  logic clk_i,
+  input  logic rst_n_i,
+  input  logic flush_i,
+  input  logic valid_i,
+  input  logic misprediction_i,
+  input  logic fe_ready_i,
+  output logic issue_mis_o,      // notify issue about the mispred.
+  output logic fe_res_valid_o,   // send the resolution to the FE
+  output logic bu_mis_reg_en_o
 );
   // INTERNAL SIGNALS
   // ----------------

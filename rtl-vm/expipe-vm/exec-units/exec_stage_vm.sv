@@ -12,9 +12,7 @@
 // Author: Michele Caon, Walid Walid
 // Date: 17/11/2021
 
-// LEN5 compilation switches
-`include "len5_config.svh"
-
+import len5_config_pkg::*;
 import len5_pkg::*;
 import expipe_pkg::*;
 import memory_pkg::dtlb_lsq_ans_t;
@@ -55,7 +53,7 @@ module exec_stage_vm (
     input logic                          issue_rs2_ready_i,    // second operand is ready at issue time (from the RF or the ROB)
     input rob_idx_t                      issue_rs2_idx_i,      // the index of the ROB where the first operand can be found (if not ready)
     input logic     [          XLEN-1:0] issue_rs2_value_i,    // the value of the first operand (if ready)
-    input logic     [          XLEN-1:0] issue_imm_value_i,    // the value of the immediate field (for st and branches)                   
+    input logic     [          XLEN-1:0] issue_imm_value_i,    // the value of the immediate field (for st and branches)
     input rob_idx_t                      issue_rob_idx_i,      // the location of the ROB assigned to the instruction
     input logic     [          XLEN-1:0] issue_pred_pc_i,      // the PC of the current issuing instr (branches only)
     input logic     [          XLEN-1:0] issue_pred_target_i,  // the predicted target of the current issuing instr (branches only)

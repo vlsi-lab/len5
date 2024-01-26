@@ -13,13 +13,13 @@
 // Date: 31/10/2019
 
 module age_based_sel #(
-               N       = 8,             // power of 2
-    localparam AGE_LEN = $clog2(N) + 1  //4
+  parameter int unsigned N       = 8,             // power of 2
+  parameter int unsigned AGE_LEN = $clog2(N) + 1  //4
 ) (
-    input  logic [        N-1:0] lines_i,
-    input  logic [  AGE_LEN-1:0] ages_i [N-1:0],
-    output logic [$clog2(N)-1:0] enc_o,
-    output logic                 valid_o
+  input  logic [        N-1:0] lines_i,
+  input  logic [  AGE_LEN-1:0] ages_i [N],
+  output logic [$clog2(N)-1:0] enc_o,
+  output logic                 valid_o
 );
 
   // ------------------
@@ -32,7 +32,7 @@ module age_based_sel #(
     enc_o      = 0;  // Default if none is selected
     for (int i = 0; i < N; i++) begin
       if (lines_i[i] && (ages_i[i] >= oldest_age[AGE_LEN-1:0])) begin  // >= handles initial case where alla ages are 0
-        enc_o = i[$clog2(N)-1:0];
+        enc_o                   = i[$clog2(N)-1:0];
         oldest_age[AGE_LEN-1:0] = ages_i[i];
       end
     end

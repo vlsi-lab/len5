@@ -3,13 +3,13 @@ CAPI=2:
 # Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-name: "vlsi:polito:len5_common"
+name: "polito:len5:common:0.1.0"
 description: " LEN5 CPU util components"
 
 filesets:
- common_rtl:
+ common-rtl:
    depend:
-    - vlsi:polito:len5_packages 
+    - polito:len5:packages
    files:
     - age_based_sel.sv
     - byte_selector.sv
@@ -36,4 +36,4 @@ filesets:
 targets:
     default:
         filesets:
-        - common_rtl
+        - common-rtl

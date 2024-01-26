@@ -12,52 +12,46 @@
 // Author: Michele Caon
 // Date: 17/11/2021
 
-// Import UVM report macros
-`ifndef SYNTHESIS
-`include "uvm_macros.svh"
-import uvm_pkg::*;
-`endif
-
 import len5_pkg::*;
 import expipe_pkg::*;
 
 module op_only_rs #(
-    RS_DEPTH = 4,  // must be a power of 2
+  RS_DEPTH = 4,  // must be a power of 2
 
-    // EU-specific parameters
-    EU_CTL_LEN = 2
+  // EU-specific parameters
+  EU_CTL_LEN = 2
 ) (
-    // Clock, reset, and flush
-    input logic clk_i,
-    input logic rst_n_i,
-    input logic flush_i,
+  // Clock, reset, and flush
+  input logic clk_i,
+  input logic rst_n_i,
+  input logic flush_i,
 
-    // Handshake from/to issue arbiter
-    input  logic issue_valid_i,
-    output logic issue_ready_o,
+  // Handshake from/to issue arbiter
+  input  logic issue_valid_i,
+  output logic issue_ready_o,
 
-    // Data from the decode stage
-    // input   logic [OP_ONLY_CTL_LEN-1:0]    ctl_i,
-    input logic                rs1_ready_i,
-    input rob_idx_t            rs1_idx_i,
-    input logic     [XLEN-1:0] rs1_value_i,
-    input rob_idx_t            dest_idx_i,
+  // Data from the decode stage
+  // input   logic [OP_ONLY_CTL_LEN-1:0]    ctl_i,
+  input logic                rs1_ready_i,
+  input rob_idx_t            rs1_idx_i,
+  input logic     [XLEN-1:0] rs1_value_i,
+  input rob_idx_t            dest_idx_i,
 
-    // Hanshake from/to the CDB 
-    input  logic cdb_ready_i,
-    input  logic cdb_valid_i,  // to know if the CDB is carrying valid data
-    output logic cdb_valid_o,
+  // Hanshake from/to the CDB
+  input  logic cdb_ready_i,
+  input  logic cdb_valid_i,  // to know if the CDB is carrying valid data
+  output logic cdb_valid_o,
 
-    // Data from/to the CDB
-    input  cdb_data_t cdb_data_i,
-    output cdb_data_t cdb_data_o
+  // Data from/to the CDB
+  input  cdb_data_t cdb_data_i,
+  output cdb_data_t cdb_data_o
 );
 
   // DEFINITIONS
 
   localparam RS_IDX_LEN = $clog2(RS_DEPTH);  //3 reservation station address width
 
-  // Reservation station entry 
+  // Reservation station entry
   typedef struct packed {
     logic valid;  // The entry contains a valid instruction
     logic rs1_ready;  // The first operand value is available in 'rs1_value'
@@ -73,11 +67,11 @@ module op_only_rs #(
   logic head_cnt_en, head_cnt_clr, tail_cnt_en, tail_cnt_clr;
 
   // The actual reservation station data structure
-  rs_entry_t rs_data[0:RS_DEPTH-1];
+  rs_entry_t rs_data    [0:RS_DEPTH-1];
 
   // Status signals
-  logic valid_a[0:RS_DEPTH-1];  // valid entries, empty entries
-  logic res_ready_a[0:RS_DEPTH-1];  // Ready operands / ready result entries 
+  logic      valid_a    [0:RS_DEPTH-1];  // valid entries, empty entries
+  logic      res_ready_a[0:RS_DEPTH-1];  // Ready operands / ready result entries
 
   // RS control signals
   logic rs_push, rs_pop;
@@ -112,7 +106,7 @@ module op_only_rs #(
     rs_push       = 1'b0;
     rs_pop        = 1'b0;
 
-    // Handshake control 
+    // Handshake control
     issue_ready_o = 1'b0;
     cdb_valid_o   = 1'b0;
 
@@ -131,7 +125,7 @@ module op_only_rs #(
     if (res_ready_a[head_idx]) begin
       cdb_valid_o = 1'b1;
       if (cdb_ready_i) begin
-        rs_pop      = 1'b1;  // if the CDB can accept outcoming data, 
+        rs_pop      = 1'b1;  // if the CDB can accept outcoming data,
         head_cnt_en = 1'b1;
       end
     end
@@ -192,25 +186,25 @@ module op_only_rs #(
   // HEAD, EX AND TAIL POINTERS
   // --------------------------
   modn_counter #(
-      .N(RS_DEPTH)
+    .N(RS_DEPTH)
   ) head_counter (
-      .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
-      .en_i   (head_cnt_en),
-      .clr_i  (head_cnt_clr),
-      .count_o(head_idx),
-      .tc_o   ()               // Not needed
+    .clk_i  (clk_i),
+    .rst_n_i(rst_n_i),
+    .en_i   (head_cnt_en),
+    .clr_i  (head_cnt_clr),
+    .count_o(head_idx),
+    .tc_o   ()               // Not needed
   );
 
   modn_counter #(
-      .N(RS_DEPTH)
+    .N(RS_DEPTH)
   ) tail_counter (
-      .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
-      .en_i   (tail_cnt_en),
-      .clr_i  (tail_cnt_clr),
-      .count_o(tail_idx),
-      .tc_o   ()               // Not needed
+    .clk_i  (clk_i),
+    .rst_n_i(rst_n_i),
+    .en_i   (tail_cnt_en),
+    .clr_i  (tail_cnt_clr),
+    .count_o(tail_idx),
+    .tc_o   ()               // Not needed
   );
 
   // -----------------

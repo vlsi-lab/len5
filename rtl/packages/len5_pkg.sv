@@ -17,27 +17,26 @@
 `ifndef LEN5_PKG_
 `define LEN5_PKG_
 
-// LEN5 compilation switches
-`include "len5_config.svh"
-
 package len5_pkg;
+  // LEN5 configuration
+  import len5_config_pkg::*;
 
   // Global constants
-  localparam ILEN = 32;  // instruction length
-  localparam XLEN = 64;
-  localparam FLEN = 64;
+  localparam int unsigned ILEN = 32;  // instruction length
+  localparam int unsigned XLEN = 64;
+  localparam int unsigned FLEN = 64;
 
   /* Instruction fileds width */
-  localparam OPCODE_LEN = 7;
-  localparam FUNCT2_LEN = 2;
-  localparam FUNCT3_LEN = 3;
-  localparam FUNCT7_LEN = 7;
-  localparam B_IMM = 12;  // B-type immediate length
-  localparam I_IMM = 12;  // I-type immediate length
-  localparam S_IMM = I_IMM;  // S-type immediate length
-  localparam U_IMM = 20;  // U-type immediate length
-  localparam J_IMM = U_IMM;  // J-type immediate length
-  localparam [ILEN-1:0] NOP = 'h13;
+  localparam int unsigned OPCODE_LEN = 7;
+  localparam int unsigned FUNCT2_LEN = 2;
+  localparam int unsigned FUNCT3_LEN = 3;
+  localparam int unsigned FUNCT7_LEN = 7;
+  localparam int unsigned B_IMM = 12;  // B-type immediate length
+  localparam int unsigned I_IMM = 12;  // I-type immediate length
+  localparam int unsigned S_IMM = I_IMM;  // S-type immediate length
+  localparam int unsigned U_IMM = 20;  // U-type immediate length
+  localparam int unsigned J_IMM = U_IMM;  // J-type immediate length
+  localparam int [ILEN-1:0] NOP = 'h13;
 
   // -------------------
   // INSTRUCTION FORMATS
@@ -127,10 +126,12 @@ package len5_pkg;
   // ---------------
   // EXCEPTION CODES
   // ---------------
+  // To fit the last four bits of the mcause/scause CSR and the fflags of the fcsr CSR
+  localparam int unsigned EXCEPT_TYPE_LEN = 5;
 
-  localparam EXCEPT_TYPE_LEN = 5;  // to fit the last four bits of the mcause/scause CSR and the fflags of the fcsr CSR
-
-  // This are the LSBs of the entire exception codes defined by the specs. This are used in the execution pipeline to save area. This code can be directly appended when writing mcause/scause CSRs during exception handling
+  // This are the LSBs of the entire exception codes defined by the specs. This are used in the execution
+  // pipeline to save area. This code can be directly appended when writing mcause/scause CSRs during
+  // exception handling
   typedef enum logic [EXCEPT_TYPE_LEN-1:0] {
     // Standard
     E_I_ADDR_MISALIGNED   = 'h00,
@@ -156,8 +157,8 @@ package len5_pkg;
   // --------------
   // I-cache
   // --------------
-  localparam ICACHE_OFFSET = 4;  // for 16-instruction lines
-  localparam ICACHE_INSTR = 1 << ICACHE_OFFSET;
+  localparam int unsigned ICACHE_OFFSET = 4;  // for 16-instruction lines
+  localparam int unsigned ICACHE_INSTR = 1 << ICACHE_OFFSET;
 
   // icache output struct
   typedef struct packed {
@@ -170,32 +171,32 @@ package len5_pkg;
   // ------------------
 
   // GLOBAL
-  localparam XREG_NUM = 32;  // number of integer gp registers
-  localparam REG_IDX_LEN = $clog2(XREG_NUM);  // Register file address width
+  localparam int unsigned XREG_NUM = 32;  // number of integer gp registers
+  localparam int unsigned REG_IDX_LEN = $clog2(XREG_NUM);  // RF address width
 
-  localparam FREG_NUM = 32;  // number of floating-point registers
-  localparam FREG_IDX_LEN = $clog2(FREG_NUM);  // Floating point register file address width
+  localparam int unsigned FREG_NUM = 32;  // number of floating-point registers
+  localparam int unsigned FREG_IDX_LEN = $clog2(FREG_NUM);  // FP RF address width
 
   // ISSUE QUEUE
-  localparam IQ_DEPTH = 2;  // number of entries in the issue queue. This may or may not be a power of 2 (power of 2 recommended)
+  localparam int unsigned IQ_DEPTH = 2;  // number of entries in the issue queue (power of 2)
 
   // LOAD/STORE UNIT
-  localparam LDBUFF_DEPTH = 4;  // number of entries in the load buffer
-  localparam STBUFF_DEPTH = 4;  // number of entries in the store buffer
-  localparam LDBUFF_TAG_W = $clog2(LDBUFF_DEPTH);  // load buffer address width
-  localparam STBUFF_TAG_W = $clog2(STBUFF_DEPTH);  // store buffer address width
-  localparam BUFF_IDX_LEN = (LDBUFF_TAG_W > STBUFF_TAG_W) ? (LDBUFF_TAG_W) : (STBUFF_TAG_W); // the largest of the two. Useful when comparing indexes from both
+  localparam int unsigned LDBUFF_DEPTH = 4;  // number of entries in the load buffer
+  localparam int unsigned STBUFF_DEPTH = 4;  // number of entries in the store buffer
+  localparam int unsigned LDBUFF_TAG_W = $clog2(LDBUFF_DEPTH);  // load buffer address width
+  localparam int unsigned STBUFF_TAG_W = $clog2(STBUFF_DEPTH);  // store buffer address width
+  localparam int unsigned BUFF_IDX_LEN = (LDBUFF_TAG_W > STBUFF_TAG_W) ? (LDBUFF_TAG_W) : (STBUFF_TAG_W);
 
   // ROB
-  localparam ROB_DEPTH = 8; // Number of entries in the ROB. This also tells the number of instruction that coexist in the execution pipeline at the same time
+  localparam int unsigned ROB_DEPTH = 8; // Number of entries in the ROB
 
   // RESERVATION STATIONS
-  localparam ALU_RS_DEPTH = 4;
-  localparam MULT_RS_DEPTH = 2;
-  localparam DIV_RS_DEPTH = 2;
-  localparam DIV_PIPE_DEPTH = 8;
-  localparam FPU_RS_DEPTH = 2;
-  localparam BU_RS_DEPTH = 4;
+  localparam int unsigned ALU_RS_DEPTH = 4;
+  localparam int unsigned MULT_RS_DEPTH = 2;
+  localparam int unsigned DIV_RS_DEPTH = 2;
+  localparam int unsigned DIV_PIPE_DEPTH = 8;
+  localparam int unsigned FPU_RS_DEPTH = 2;
+  localparam int unsigned BU_RS_DEPTH = 4;
 
 endpackage
 

@@ -14,7 +14,7 @@ ENTRY(_start)
 /* Simulation memory layout */
 MEMORY
 {
-  /* The testbench uses associative arrays, the memory is not allocated unless 
+  /* The testbench uses associative arrays, the memory is not allocated unless
   needed. */
   ROM (rx)  : ORIGIN = 0x80000000, LENGTH = 64M
   RAM (!rx) : ORIGIN = (ORIGIN(ROM) + LENGTH(ROM)), LENGTH = 128M
@@ -71,7 +71,7 @@ SECTIONS
       PROVIDE_HIDDEN (__rela_iplt_end = .);
     }
   /* DYNAMIC LINKING END */
-  
+
   /* >>> CUSTOM START <<< */
   /* Initialization (at fixed address) */
   .init (__boot_pc):
@@ -90,7 +90,7 @@ SECTIONS
   /* .init           :
   {
     KEEP (*(SORT_NONE(.init)))
-  } */  
+  } */
   /* >>>  CUSTOM END  <<< */
 
   /* DYNAMIC LINKING START */

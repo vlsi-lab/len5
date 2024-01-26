@@ -15,11 +15,11 @@
 // NOTE: Synopsys should be able to synthesize a performance optimised priority encoder from simple behavioural code
 
 module prio_enc_inv #(
-    N = 8
+  parameter int unsigned N = 8
 ) (
-    input  logic [        0:N-1] lines_i,
-    output logic [$clog2(N)-1:0] enc_o,    //2:0
-    output logic                 valid_o
+  input  logic [        N-1:0] lines_i,
+  output logic [$clog2(N)-1:0] enc_o,    //2:0
+  output logic                 valid_o
 );
   // The priority decreases with the input index: lines_i[0] has the highest priority and lines_i[N] the lowest
   always_comb begin

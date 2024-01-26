@@ -3,13 +3,13 @@ CAPI=2:
 # Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-name: "vlsi:polito:len5_memory"
+name: "polito:len5:vm:0.1.0"
 description: " LEN5 virtual memory components"
 
 filesets:
  expipe-vm:
    depend:
-    - vlsi:polito:len5_packages 
+    - polito:len5:packages
    files:
     - expipe-vm/exec-units/exec_stage_vm.sv
     - expipe-vm/load-store-unit-vm/load_buffer.sv
@@ -20,31 +20,31 @@ filesets:
 
  frontend-vm:
    depend:
-    - vlsi:polito:len5_packages 
+    - polito:len5:packages
    files:
-    - frontend-vm/bpu.sv 
-    - frontend-vm/btb.sv 
-    - frontend-vm/fetch_controller.sv 
+    - frontend-vm/bpu.sv
+    - frontend-vm/btb.sv
+    - frontend-vm/fetch_controller.sv
     - frontend-vm/fetch_stage.sv
-    - frontend-vm/frontend.sv 
-    - frontend-vm/gshare.sv 
-    - frontend-vm/icache_ifc.sv 
-    - frontend-vm/ifu.sv 
-    - frontend-vm/instr_sel.sv 
-    - frontend-vm/pc_gen.sv 
+    - frontend-vm/frontend.sv
+    - frontend-vm/gshare.sv
+    - frontend-vm/icache_ifc.sv
+    - frontend-vm/ifu.sv
+    - frontend-vm/instr_sel.sv
+    - frontend-vm/pc_gen.sv
     - frontend-vm/presence_check.sv
    file_type : systemVerilogSource
 
  datapath-vm:
    depend:
-    - vlsi:polito:len5_packages 
+    - polito:len5:packages
    files:
     - datapath_vm.sv
    file_type : systemVerilogSource
-    
+
 targets:
  default:
    filesets:
     - expipe-vm
     - frontend-vm
-    - datapath_vm
+    - datapath-vm

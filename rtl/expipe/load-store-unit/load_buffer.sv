@@ -12,15 +12,7 @@
 // Author: Michele Caon
 // Date: 15/07/2022
 
-// LEN5 compilation switches
-`include "len5_config.svh"
-
-// Import UVM report macros
-`ifndef SYNTHESIS
-`include "uvm_macros.svh"
-import uvm_pkg::*;
-`endif
-
+import len5_config_pkg::*;
 import len5_pkg::XLEN;
 import len5_pkg::STBUFF_TAG_W;
 import len5_pkg::except_code_t;
@@ -128,10 +120,10 @@ module load_buffer #(
     assign  pop             = cdb_valid_o & cdb_ready_i;
     assign  save_rs1        = cdb_valid_i;
     assign  addr_accepted   = adder_valid_o & adder_ready_i;
-    assign  save_addr       = adder_valid_i & adder_ready_o;  
+    assign  save_addr       = adder_valid_i & adder_ready_o;
     assign  mem_accepted    = mem_valid_o & mem_ready_i;
     assign  save_mem        = mem_valid_i & mem_ready_o;
-  
+
     // Counters clear
     assign  head_cnt_clr    = flush_i;
     assign  tail_cnt_clr    = flush_i;
@@ -159,13 +151,13 @@ module load_buffer #(
                         lb_op[i]        = LOAD_OP_PUSH;
                         if (issue_rs1_i.ready)
                             next_state[i]   = LOAD_S_ADDR_REQ;
-                        else                    
+                        else
                             next_state[i]   = LOAD_S_RS1_PENDING;
-                    end else 
-                        next_state[i] = LOAD_S_EMPTY; 
+                    end else
+                        next_state[i] = LOAD_S_EMPTY;
                 end
                 LOAD_S_RS1_PENDING: begin // save rs1 value from CDB
-                    if (save_rs1 && cdb_data_i.rob_idx == data[i].rs1_rob_idx) begin 
+                    if (save_rs1 && cdb_data_i.rob_idx == data[i].rs1_rob_idx) begin
                         lb_op[i]        = LOAD_OP_SAVE_RS1;
                         next_state[i]   = LOAD_S_ADDR_REQ;
                     end else
@@ -240,7 +232,7 @@ module load_buffer #(
                 LOAD_S_COMPLETED: begin
                     if (pop && head_idx == i)
                         next_state[i]   = LOAD_S_EMPTY;
-                    else 
+                    else
                         next_state[i]   = LOAD_S_COMPLETED;
                 end
                 default: next_state[i]  = LOAD_S_HALT;
@@ -333,7 +325,7 @@ module load_buffer #(
                 if (!rst_n_i) begin
                     store_dep[i]        <= 1'b0;
                     store_dep_idx[i]    <= '0;
-                end else if (flush_i) begin 
+                end else if (flush_i) begin
                     store_dep[i]        <= 1'b0;
                 end else if (store_dep_set[i]) begin
                     store_dep[i]        <= 1'b1;
@@ -341,7 +333,7 @@ module load_buffer #(
                 end else if (store_dep_clr[i]) begin
                     store_dep[i]        <= 1'b0;
                 end
-            end     
+            end
         end
     endgenerate
 
@@ -351,7 +343,7 @@ module load_buffer #(
 
     /* Issue stage */
     assign issue_ready_o   = curr_state[tail_idx] == LOAD_S_EMPTY;
-    
+
     /* CDB */
     assign cdb_valid_o              = curr_state[head_idx] == LOAD_S_COMPLETED;
     assign cdb_data_o.rob_idx       = data[head_idx].dest_rob_idx;
@@ -388,7 +380,7 @@ module load_buffer #(
     // -------------
     // NOTE: the memory is expected to provide a doubleword regardless of
     //       the load width. This module extracts and sign-extends only the
-    //       requested data from the fetched doubleword. 
+    //       requested data from the fetched doubleword.
 `ifdef ONLY_DOUBLEWORD_MEM_ACCESSES
     assign  byte_offs   = data[mem_tag_i].imm_addr_value[2:0];
     byte_selector u_byte_selector (

@@ -15,15 +15,13 @@
 `ifndef EXPIPE_PKG
 `define EXPIPE_PKG
 
-// LEN5 compilation switches
-`include "len5_config.svh"
-
 package expipe_pkg;
 
   /* Inlcude isnstruction macros */
   `include "instr_macros.svh"
 
   // Import global constants
+  import len5_config_pkg::*;
   import len5_pkg::*;
 
   // ----------
@@ -32,71 +30,71 @@ package expipe_pkg;
 
   // COMMIT UNIT
   // -----------
-  localparam ROB_IDX_LEN = $clog2(ROB_DEPTH);  // ROB index width
-  localparam ROB_EXCEPT_LEN = EXCEPT_TYPE_LEN;
+  localparam int unsigned ROB_IDX_LEN = $clog2(ROB_DEPTH);  // ROB index width
+  localparam int unsigned ROB_EXCEPT_LEN = EXCEPT_TYPE_LEN;
 
   // Maximum number of in-flight instructions
   // NOTE: currently, the registers in the commit can hold up to 3 additional
   // instructions besides those contained of the ROB.
-  localparam COMMIT_UNIT_DEPTH = ROB_DEPTH + 3;
+  localparam int unsigned COMMIT_UNIT_DEPTH = ROB_DEPTH + 3;
 
   // ISSUE QUEUE
   // -----------
-  localparam IQ_IDX_LEN = $clog2(IQ_DEPTH);  // issue queue index width
+  localparam int unsigned IQ_IDX_LEN = $clog2(IQ_DEPTH);  // issue queue index width
 
   // EXECUTION UNITS
   // ---------------
-  localparam BASE_EU_N = 4;  // load buffer, store buffer, branch unit, ALU
+  localparam int unsigned BASE_EU_N = 4;  // load buffer, store buffer, branch unit, ALU
 
 `ifdef LEN5_M_EN
-  localparam MULT_EU_N = 2;  // MULT, DIV
+  localparam int unsigned MULT_EU_N = 2;  // MULT, DIV
 `else
-  localparam MULT_EU_N = 0;
+  localparam int unsigned MULT_EU_N = 0;
 `endif  /* LEN5_M_EN */
 
 `ifdef LEN5_FP_EN
-  localparam FP_EU_N = 1;  // FPU
+  localparam int unsigned FP_EU_N = 1;  // FPU
 `else
-  localparam FP_EU_N = 0;
+  localparam int unsigned FP_EU_N = 0;
 `endif  /* LEN5_FP_EN */
 
   // Total number of execution units
-  localparam EU_N = BASE_EU_N + MULT_EU_N + FP_EU_N;
+  localparam int unsigned EU_N = BASE_EU_N + MULT_EU_N + FP_EU_N;
 
   // RESERVATION STATIONS
   // --------------------
 
   // BRANCH UNIT
-  localparam BRANCH_TYPE_LEN = 3;
-  localparam BU_CTL_LEN = BRANCH_TYPE_LEN;  // size of 'branch_ctl_t' from len5_pkg
+  localparam int unsigned BRANCH_TYPE_LEN = 3;
+  localparam int unsigned BU_CTL_LEN = BRANCH_TYPE_LEN;  // size of 'branch_ctl_t' from len5_pkg
 
   // ALU
-  localparam ALU_CTL_LEN = 4;  // ALU operation control
+  localparam int unsigned ALU_CTL_LEN = 4;  // ALU operation control
 
   // MULT
-  localparam MULT_CTL_LEN = 3;  // integer multiplier operation control
-  localparam MULT_PIPE_DEPTH = 5;
+  localparam int unsigned MULT_CTL_LEN = 3;  // integer multiplier operation control
+  localparam int unsigned MULT_PIPE_DEPTH = 5;
 
   // DIV
-  localparam DIV_CTL_LEN = 2;  // integer divider operation control
+  localparam int unsigned DIV_CTL_LEN = 2;  // integer divider operation control
 
   // FPU
-  localparam FPU_CTL_LEN = 4;  // floating point multiplier operation control
+  localparam int unsigned FPU_CTL_LEN = 4;  // floating point multiplier operation control
 
   // OPERANDS ONLY
-  localparam OP_ONLY_CTL_LEN = 2;
+  localparam int unsigned OP_ONLY_CTL_LEN = 2;
 
   // LOAD-STORE UNIT
-  localparam LSU_CTL_LEN = 3;
+  localparam int unsigned LSU_CTL_LEN = 3;
 
   // MAXIMUM DIMENSION OF EU_CONTROL FIELDS
   // this must be set to the maximum of the previous parameters
-  localparam MAX_EU_CTL_LEN = ALU_CTL_LEN;
+  localparam int unsigned MAX_EU_CTL_LEN = ALU_CTL_LEN;
 
 
   // REGISTER STATUS REGISTER(S)
   // ---------------------------
-  localparam REGSTAT_CNT_W = $clog2(COMMIT_UNIT_DEPTH);
+  localparam int unsigned REGSTAT_CNT_W = $clog2(COMMIT_UNIT_DEPTH);
 
   // ---
   // ALL

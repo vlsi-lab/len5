@@ -12,15 +12,7 @@
 // Author: Michele Caon
 // Date: 24/10/2019
 
-// LEN5 compilation switches
-`include "len5_config.svh"
-
-// Import UVM report macros
-`ifndef SYNTHESIS
-`include "uvm_macros.svh"
-import uvm_pkg::*;
-`endif
-
+import len5_config_pkg::*;
 import len5_pkg::XLEN;
 import len5_pkg::LDBUFF_DEPTH;
 
@@ -115,7 +107,7 @@ module load_buffer (
     output logic [STBUFF_TAG_W:0] vfwd_older_stores_o,
     output logic [STBUFF_TAG_W:0] pfwd_older_stores_o,
 
-    // Hanshake from/to the CDB 
+    // Hanshake from/to the CDB
     input  logic cdb_ready_i,
     input  logic cdb_valid_i,  // to know if the CDB is carrying valid data
     output logic cdb_valid_o,
@@ -743,12 +735,12 @@ module load_buffer (
   assign vadder_idx_o             = vadder_req_idx;
   assign vadder_ldtype_o          = lb_data[vadder_req_idx].load_type;
 
-  // TO THE TLB 
+  // TO THE TLB
   assign dtlb_isstore_o           = 1'b0;  // the instruction is a load
   assign dtlb_vaddr_o             = lb_data[dtlb_req_idx].vaddr[VADDR_LEN-1:PAGE_OFFSET_LEN];  // (VADDR READ PORT 1)
   assign dtlb_idx_o               = dtlb_req_idx;
 
-  // TO THE D$ 
+  // TO THE D$
   assign dcache_isstore_o         = 1'b0;  // the instruction is a load
   assign dcache_paddr_o           = paddr_a[dcache_req_idx];  // (PADDR READ PORT 1)
   assign dcache_idx_o             = dcache_req_idx;
@@ -774,10 +766,10 @@ module load_buffer (
   always @(negedge clk_i) begin
     // Notice when the load buffer is full
     assert (valid_a !== '1)
-    else `uvm_info("BUFFSIZE", $sformatf("Load buffer full (%0d entries): you might want to increase its depth", LDBUFF_DEPTH), UVM_HIGH)
+    else $display($sformatf("Load buffer full (%0d entries): you might want to increase its depth", LDBUFF_DEPTH))
     foreach (lb_data[i]) begin
       assert (lb_data[i].except_code != E_UNKNOWN)
-      else `uvm_error("EXCEPTION", $sformatf("Load buffer entry %4d has encountered an unknown exception", i))
+      else `$error($sformatf("Load buffer entry %4d has encountered an unknown exception", i))
     end
   end
 `endif

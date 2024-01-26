@@ -12,15 +12,7 @@
 // Author: Michele Caon
 // Date: 17/11/2021
 
-// LEN5 compilation switches
-`include "len5_config.svh"
-
-/* Include UVM macros */
-`ifndef SYNTHESIS
-`include "uvm_macros.svh"
-import uvm_pkg::*;
-`endif
-
+import len5_config_pkg::*;
 import len5_pkg::*;
 import expipe_pkg::*;
 import csr_pkg::csr_priv_t;
@@ -57,7 +49,7 @@ module issue_stage
 	// Integer register file
     input   logic [XLEN-1:0]        intrf_rs1_value_i,      // value of the first operand
     input   logic [XLEN-1:0]        intrf_rs2_value_i,      // value of the second operand
-    output  logic [REG_IDX_LEN-1:0] intrf_rs1_idx_o,        // RF address of the first operand 
+    output  logic [REG_IDX_LEN-1:0] intrf_rs1_idx_o,        // RF address of the first operand
     output  logic [REG_IDX_LEN-1:0] intrf_rs2_idx_o,        // RF address of the second operand
 
 `ifdef LEN5_FP_EN
@@ -75,8 +67,8 @@ module issue_stage
     // Floating-point register file data
     input   logic [XLEN-1:0]        fprf_rs1_value_i,       // value of the first operand
     input   logic [XLEN-1:0]        fprf_rs2_value_i,       // value of the second operand
-    output  logic [REG_IDX_LEN-1:0] fprf_rs1_idx_o,         // RF address of the first operand 
-    output  logic [REG_IDX_LEN-1:0] fprf_rs2_idx_o,         // RF address of the second operand    
+    output  logic [REG_IDX_LEN-1:0] fprf_rs1_idx_o,         // RF address of the first operand
+    output  logic [REG_IDX_LEN-1:0] fprf_rs2_idx_o,         // RF address of the second operand
 `endif /* LEN5_FP_EN */
 
 	// Execution pipeline
@@ -86,7 +78,7 @@ module issue_stage
     output  eu_ctl_t                ex_eu_ctl_o,            // controls for the associated EU
     output  op_data_t               ex_rs1_o,
     output  op_data_t               ex_rs2_o,
-    output  logic [XLEN-1:0]        ex_imm_value_o, // the value of the immediate field (for st and branches)                   
+    output  logic [XLEN-1:0]        ex_imm_value_o, // the value of the immediate field (for st and branches)
     output  rob_idx_t               ex_rob_idx_o,           // the location of the ROB assigned to the instruction
     output  logic [XLEN-1:0]        ex_curr_pc_o,              // the PC of the current issuing instr (branches only)
     output  logic [XLEN-1:0]        ex_pred_target_o,  // the predicted target of the current issuing instr (branches only)
@@ -112,7 +104,7 @@ module issue_stage
 
     // INTERNAL SIGNALS
 
-    // Instruction data 
+    // Instruction data
     logic [REG_IDX_LEN-1:0]             instr_rs1_idx, instr_rs2_idx, instr_rd_idx;
     logic [XLEN-1:0]                    instr_imm_i_value;
     logic [XLEN-1:0]                    instr_imm_s_value;
@@ -122,7 +114,7 @@ module issue_stage
     logic [XLEN-1:0]                    instr_imm_rs1_value;    // for CSR immediate instr.
     logic [XLEN-1:0]                    imm_value;              // selected immediate
 
-    // Fetch stage <--> issue queue 
+    // Fetch stage <--> issue queue
     iq_entry_t          new_instr;
 
     // Issue queue <--> issuing instruction register
@@ -248,7 +240,7 @@ module issue_stage
         unique case (id_imm_format)
             IMM_TYPE_S:     imm_value   = instr_imm_s_value;
             IMM_TYPE_B:     imm_value   = instr_imm_b_value;
-            IMM_TYPE_U:     imm_value   = instr_imm_u_value;    
+            IMM_TYPE_U:     imm_value   = instr_imm_u_value;
             IMM_TYPE_J:     imm_value   = instr_imm_j_value;
             IMM_TYPE_RS1:   imm_value   = instr_imm_rs1_value;
             default:        imm_value   = instr_imm_i_value;
@@ -349,7 +341,7 @@ module issue_stage
     `endif /* LEN5_FP_EN */
 
     always_comb begin: operand_fetch_logic
-        // Default values 
+        // Default values
         rs1_ready                   = 1'b0;
         rs2_ready                   = 1'b0;
         rs1_value                   = '0;
@@ -359,7 +351,7 @@ module issue_stage
         `ifdef LEN5_FP_EN
         if (id_cu_issue_type != ISSUE_TYPE_FP) begin
         `endif /* LEN5_FP_EN */
-            
+
             // Fetch rs1
             if (ireg_data_out.rs1_is_pc) begin
                 rs1_ready       = 1'b1;
@@ -373,7 +365,7 @@ module issue_stage
                         rs1_ready   = 1'b0;
                         rs1_value   = '0;
                     end
-                end else begin                  // the operand is available in the register file 
+                end else begin                  // the operand is available in the register file
                     rs1_ready           = 1'b1;
                     rs1_value           = intrf_rs1_value_i;
                 end
@@ -382,7 +374,7 @@ module issue_stage
             // Fetch rs2
             if (ireg_data_out.rs2_is_imm) begin
                 rs2_ready       = 1'b1;
-                rs2_value       = ireg_data_out.imm_value; 
+                rs2_value       = ireg_data_out.imm_value;
             end else if (ireg_data_out.rs2_req) begin               // rs2 value is required
                 if (int_regstat_rs2_busy_i) begin   // the operand is provided by an in-flight instr.
                     if (comm_rs2_ready_i) begin // forward the operand from commit stage (CDB, ROB, etc.)
@@ -392,7 +384,7 @@ module issue_stage
                         rs2_ready   = 1'b0;
                         rs2_value   = 0;
                     end
-                end else begin                  // the operand is available in the register file 
+                end else begin                  // the operand is available in the register file
                     rs2_ready           = 1'b1;
                     rs2_value           = intrf_rs2_value_i;
                 end
@@ -400,8 +392,8 @@ module issue_stage
 
         /* FLOATING-POINT OPERANDS */
         `ifdef LEN5_FP_EN
-        end else begin  
-            
+        end else begin
+
             // Fetch rs1
             if (ireg_data_out.rs1_req) begin               // rs1 value is required
                 if (fp_regstat_rs1_busy_i) begin   // the operand is provided by an in-flight instr.
@@ -412,7 +404,7 @@ module issue_stage
                         rs1_ready   = 1'b0;
                         rs1_value   = 0;
                     end
-                end else begin                  // the operand is available in the register file 
+                end else begin                  // the operand is available in the register file
                     rs1_ready           = 1'b1;
                     rs1_value           = fprf_rs1_value_i;
                 end
@@ -428,7 +420,7 @@ module issue_stage
                         rs2_ready   = 1'b0;
                         rs2_value   = 0;
                     end
-                end else begin                  // the operand is available in the register file 
+                end else begin                  // the operand is available in the register file
                     rs2_ready           = 1'b1;
                     rs2_value           = fprf_rs2_value_i;
                 end
@@ -460,7 +452,7 @@ module issue_stage
     `ifdef LEN5_FP_EN
     // Data to the floating-point register status register
     assign  fp_regstat_rs1_idx_o    = ireg_data_out.rs1_idx;
-    assign  fp_regstat_rs2_idx_o    = ireg_data_out.rs2_idx; 
+    assign  fp_regstat_rs2_idx_o    = ireg_data_out.rs2_idx;
     assign  fp_regstat_rd_idx_o     = ireg_data_out.rd_idx;
     assign  fp_regstat_rob_idx_o    = comm_tail_idx_i;
 
@@ -501,7 +493,7 @@ module issue_stage
     `ifndef SYNTHESIS
     always @(posedge clk_i) begin
         if (comm_valid_o && comm_ready_i) begin
-            `uvm_info("ISSUE", $sformatf("Issuing instruction: %h", comm_data_o.instruction.raw), UVM_DEBUG);
+            $display(comm_data_o.instruction.raw);
         end
     end
     // Instruction sent to at most one execution unit

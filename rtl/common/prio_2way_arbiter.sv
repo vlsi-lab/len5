@@ -13,20 +13,20 @@
 // Date: 29/10/2019
 
 module prio_2way_arbiter #(
-    parameter type DATA_T
+  parameter type DATA_T
 ) (
-    // Handshaking
-    input  logic high_prio_valid_i,  // from upstream hardware
-    input  logic low_prio_valid_i,   // from upstream hardware
-    input  logic ready_i,            // from downstream hardware
-    output logic valid_o,            // to downstream hardware
-    output logic high_prio_ready_o,  // to upstream hardware
-    output logic low_prio_ready_o,   // to upstream hardware
+  // Handshaking
+  input  logic high_prio_valid_i,  // from upstream hardware
+  input  logic low_prio_valid_i,   // from upstream hardware
+  input  logic ready_i,            // from downstream hardware
+  output logic valid_o,            // to downstream hardware
+  output logic high_prio_ready_o,  // to upstream hardware
+  output logic low_prio_ready_o,   // to upstream hardware
 
-    // Data
-    input  DATA_T high_prio_data_i,
-    input  DATA_T low_prio_data_i,
-    output DATA_T data_o
+  // Data
+  input  DATA_T high_prio_data_i,
+  input  DATA_T low_prio_data_i,
+  output DATA_T data_o
 );
   // INTERNAL SIGNALS
   // ----------------

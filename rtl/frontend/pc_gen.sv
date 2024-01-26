@@ -16,19 +16,19 @@ import len5_pkg::*;
 import fetch_pkg::*;
 
 module pc_gen #(
-    parameter [XLEN-1:0] BOOT_PC = 'h0
+  parameter logic [XLEN-1:0] BOOT_PC = 'h0
 ) (
-    input logic                   clk_i,
-    input logic                   rst_n_i,
-    input logic                   comm_except_raised_i,
-    input logic        [XLEN-1:0] comm_except_pc_i,
-    input logic                   bu_res_valid_i,
-    input resolution_t            bu_res_i,
-    input prediction_t            pred_i,
-    input logic                   mem_ready_i,
-    output logic            valid_o,
-    output logic            bu_ready_o,
-    output logic [XLEN-1:0] pc_o
+  input  logic                   clk_i,
+  input  logic                   rst_n_i,
+  input  logic                   comm_except_raised_i,
+  input  logic        [XLEN-1:0] comm_except_pc_i,
+  input  logic                   bu_res_valid_i,
+  input  resolution_t            bu_res_i,
+  input  prediction_t            pred_i,
+  input  logic                   mem_ready_i,
+  output logic                   valid_o,
+  output logic                   bu_ready_o,
+  output logic        [XLEN-1:0] pc_o
 );
 
   // INTERNAL SIGNALS
@@ -40,7 +40,7 @@ module pc_gen #(
   // -------------------
 
   // Mux + adder
-  assign add_pc = (bu_res_valid_i && bu_res_i.mispredict) ? bu_res_i.pc : pc_o;
+  assign add_pc    = (bu_res_valid_i && bu_res_i.mispredict) ? bu_res_i.pc : pc_o;
   assign adder_out = add_pc + (ILEN >> 3);
 
   // Priority list for choosing the next PC value:
