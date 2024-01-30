@@ -15,7 +15,7 @@ filesets:
   rtl-bare:
     files:
     - rtl/datapath.sv
-    file_type : systemVerilogSource
+    file_type: systemVerilogSource
     depend:
     - polito:len5:packages
     - polito:len5:common
@@ -30,14 +30,25 @@ filesets:
     - tb/memory/memory_class.svh
     - tb/memory/memory_bare_emu.sv
     - tb/tb_bare.sv
-    file_type : systemVerilogSource
+    file_type: systemVerilogSource
+
+  questasim-bare-tb:
+    files:
+    - tb/len5_tb.sv
+    file_type: systemVerilogSource
+
+  verilator-bare-tb:
+    files:
+    - tb/verilator/len5_tb.cpp
+    - tb/verilator/tb_macros.hh: {is_include_file: true}
+    file_type: cppSource
 
 targets:
   # Default target
   default: &default
     filesets:
     - rtl-bare
-    toplevel: [datapath]
+    toplevel: datapath
 
   # RTL simulation
   sim:
@@ -45,7 +56,9 @@ targets:
     default_tool: modelsim
     filesets_append:
     - rtl-bare-tb
-    toplevel: [tb_bare]
+    - tool_modelsim ? (questasim-bare-tb)
+    - tool_verilator ? (verilator-bare-tb)
+    toplevel: len5_tb
     tools:
       modelsim:
         vlog_options:
@@ -57,6 +70,23 @@ targets:
         - -svinputport=compat
         - -hazards
         - -vmake
+      verilator:
+        mode: cc
+        verilator_options:
+        - '--cc'
+        - '--assert'
+        - '--trace'
+        - '--trace-fst'
+        - '--trace-structs'
+        - '--trace-max-array 128'
+        - '--x-assign unique'
+        - '--x-initial unique'
+        - '--report-unoptflat'
+        - '--exe'
+        - 'len5_tb.cpp'
+        - '-Wall'
+        - '-Wpedantic'
+        - '-CFLAGS "-Wall -g"'
 
   # Format HDL with Verible
   format:

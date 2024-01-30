@@ -18,16 +18,19 @@ import expipe_pkg::*;
 import memory_pkg::*;
 import csr_pkg::*;
 
-module tb_bare;
+module tb_bare #(
+  parameter string        MEM_DUMP_FILE = "mem_dump.txt",
+  parameter int unsigned  BOOT_PC = 64'h0
+) (
+  input logic             clk_i,        // simulation clock
+  input logic             rst_ni,       // simulation reset
+  input string            mem_file_i,   // memory file, in ASCII HEX format
+  input longint unsigned  num_cycles_i  // number of cycles to simulate
+);
   // ----------------
   // TB CONFIGURATION
   // ----------------
-
-  // Boot program counter
-  localparam int unsigned FetchBootPC = BOOT_PC;
-
   // Memory emulator configuration
-  localparam string MemDumpFile = "mem_dump.txt";
   localparam int unsigned MemDumpT = 0;  // memory dump period (in cycles, 0 to disable)
   localparam int unsigned MemPipeNum = 0;  // memory latency
 
@@ -40,19 +43,8 @@ module tb_bare;
 
   // INTERNAL SIGNALS
   // ----------------
-
-  // Input memory file (binary)
-  string           mem_file = "memory.mem";
-
   // Number of cycles to simulate
-  longint unsigned num_cycles = 0;  // 0: no boundary
   longint unsigned curr_cycle = 0;
-
-  // Clock and reset
-  logic clk, rst_n;
-
-  // Stop flag
-  logic            tb_stop = 1'b0;
 
   // Serial monitor string
   string           serial_str;
@@ -83,24 +75,11 @@ module tb_bare;
   // Command-line options and configuration
   // --------------------------------------
   initial begin
-    // Set the memory file path
-    if ($value$plusargs("=%s", mem_file)) begin
-      $display("Updated memory file");
-    end
-
-    // Set the number of cycles to simulate
-    if ($value$plusargs("N=%d", num_cycles)) begin
-      $display("Updated number of simulation cycles");
-    end
-
     /* Print boot program counter */
     $display($sformatf("Boot program counter: 0x%x", BOOT_PC));
 
-    /* Print the number of simulation cycles */
-    $display($sformatf("Number of simulation cycles: %0d", num_cycles));
-
     /* Print memory file being used */
-    $display($sformatf("Memory image: %s", mem_file));
+    $display($sformatf("Memory image: %s", mem_file_i));
 
     /* Print the serial monitor base address */
     $display($sformatf("Serial monitor memory address: 0x%h", SERIAL_ADDR));
@@ -122,40 +101,24 @@ module tb_bare;
                        ));
   end
 
-  // Clock and reset generation
-  // --------------------------
+  // Watchdog
+  // --------
   initial begin
-    clk   = 1'b1;
-    rst_n = 1'b0;
-
-    #10 rst_n = 1'b1;
-
-    fork
-      begin
-        if (num_cycles > 0) begin
-          repeat (num_cycles) begin
-            @(posedge clk);
-            curr_cycle += 1;
-          end
-          $stop;
-        end
+    if (num_cycles_i > 0) begin
+      repeat (num_cycles_i) begin
+        @(posedge clk);
+        curr_cycle += 1;
       end
-
-      begin
-        @(posedge tb_stop);
-        repeat (10) @(posedge clk);
-        $display("Stopping simulation");
-        printReport();
-        $stop;
-      end
-    join
+      $error("[%t] Simulation timeout. Exiting...", $time);
+      $stop;
+    end
   end
   always #5 clk = ~clk;
 
   // Memory monitor
   // --------------
   // Track the number of issued memory requests
-  always_ff @(posedge clk) begin : mem_monitor
+  always_ff @(posedge clk_i) begin : mem_monitor
     if (dp_data_mem_valid && data_mem_dp_ready) begin
       case (dp_data_mem_req.acc_type)
         MEM_ACC_LD: num_data_loads++;
@@ -177,7 +140,7 @@ module tb_bare;
 
   // Serial monitor
   // --------------
-  always_ff @(posedge clk) begin : serial_monitor
+  always_ff @(posedge clk_i) begin : serial_monitor
     byte c;
 
     // Sniff SERIAL ADDRESS and print content
@@ -204,14 +167,15 @@ module tb_bare;
   // Exit monitor
   // ------------
   // Stop the simulation after a certain memory location is written
-  always_ff @(posedge clk) begin : exit_monitor
+  always_ff @(posedge clk_i) begin : exit_monitor
     byte c;
 
     if (dp_data_mem_valid && dp_data_mem_req.addr == EXIT_ADDR && dp_data_mem_req.acc_type == MEM_ACC_ST) begin
       c <= dp_data_mem_req.value[7:0];
       $display($sformatf("Program exit with code: 0x%h", c));
-      tb_stop <= 1'b1;
-    end else tb_stop <= 0;
+      printReport();
+      $stop;
+    end
   end
 
   // -------
@@ -222,10 +186,10 @@ module tb_bare;
   // -----------------------
   datapath #(
     .FetchMemIfFifoDepth(FetchMemIfFifoDepth),
-    .BOOT_PC            (FetchBootPC)
+    .BOOT_PC            (BOOT_PC)
   ) u_datapath (
-    .clk_i           (clk),
-    .rst_n_i         (rst_n),
+    .clk_i           (clk_i),
+    .rst_n_i         (rst_ni),
     .mem_flush_o     (dp_mem_flush),
     .ins_mem_valid_i (ins_mem_dp_valid),
     .ins_mem_ready_i (ins_mem_dp_ready),
@@ -249,11 +213,11 @@ module tb_bare;
     .SKIP_INS_ANS_REG (MEM_EMU_SKIP_INSTR_OUT_REG),
     .SKIP_DATA_ANS_REG(MEM_EMU_SKIP_DATA_OUT_REG)
   ) u_memory_bare_emu (
-    .clk_i          (clk),
-    .rst_n_i        (rst_n),
+    .clk_i          (clk_i),
+    .rst_n_i        (rst_ni),
     .flush_i        (dp_mem_flush),
-    .mem_file_i     (mem_file),
-    .mem_dump_file_i(MemDumpFile),
+    .mem_file_i     (mem_file_i),
+    .mem_dump_file_i(MEM_DUMP_FILE),
     .ins_valid_i    (dp_ins_mem_valid),
     .ins_ready_i    (dp_ins_mem_ready),
     .ins_valid_o    (ins_mem_dp_valid),
