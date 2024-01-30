@@ -24,14 +24,11 @@ module tb_with_l2cemu;
   // TB CONFIGURATION
   // ----------------
 
-  // Initial program counter
-  localparam logic [XLEN-1:0] BOOT_PC = BOOT_PC;
-
   // Memory dump period (in clock cycles)
-  localparam MEM_DUMP_T = 20;
+  localparam int unsigned MemDumpT = 20;
 
   // Memory file
-  localparam string MEM_DUMP_FILE = "mem_dump.txt";
+  localparam string MemDumpFile = "mem_dump.txt";
 
   // INTERNAL SIGNALS
   // ----------------
@@ -81,19 +78,19 @@ module tb_with_l2cemu;
 
     /* Print M extension information */
     $display($sformatf("M extension: %s",
-                                  `ifdef LEN5_M_EN "YES"
-                                  `else
-                                  "NO"
-                                  `endif
-                                  ));
+                       `ifdef LEN5_M_EN "YES"
+                       `else
+                       "NO"
+                       `endif
+                       ));
 
     /* Print FP extension information */
     $display($sformatf("D extension: %s",
-                                  `ifdef LEN5_FP_EN "YES"
-                                  `else
-                                  "NO"
-                                  `endif
-                                  ));
+                       `ifdef LEN5_FP_EN "YES"
+                       `else
+                       "NO"
+                       `endif
+                       ));
   end
 
   // Clock and reset generation
@@ -107,8 +104,8 @@ module tb_with_l2cemu;
 
     // Periodically dump memory content
     forever begin
-      repeat (MEM_DUMP_T) @(posedge clk);
-      if (0 != u_cache_L2_system_emulator.i_memory.PrintMem(MEM_DUMP_FILE)) begin
+      repeat (MemDumpT) @(posedge clk);
+      if (0 != u_cache_L2_system_emulator.i_memory.PrintMem(MemDumpFile)) begin
         $display("ERROR while dumping memory content");
       end
     end

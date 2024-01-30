@@ -33,31 +33,29 @@ module exec_stage (
   output resolution_t fe_res_o,
 
   // ISSUE STAGE
-  input logic issue_valid_i[0:EU_N-1],  // valid to each RS
-  output logic issue_ready_o[0:EU_N-1],  // ready from each RS
+  input logic issue_valid_i[EU_N],  // valid to each RS
+  output logic issue_ready_o[EU_N],  // ready from each RS
   input eu_ctl_t issue_eu_ctl_i,  // controls for the associated EU
   input op_data_t issue_rs1_i,  // rs1 value, ROB index and availability
   input op_data_t issue_rs2_i,  // rs1 value, ROB index and availability
   input  logic     [XLEN-1:0] issue_imm_value_i,              // the value of the immediate field (for st and branches)
   input rob_idx_t issue_rob_idx_i,  // the location of the ROB assigned to the instruction
   input logic [XLEN-1:0] issue_curr_pc_i,  // the PC of the current issuing instr (branches only)
-  input  logic     [XLEN-1:0] issue_pred_target_i,            // the predicted target of the current issuing instr (branches only)
-  input  logic                issue_pred_taken_i,             // the predicted taken bit of the current issuing instr (branches only)
+  input  logic     [XLEN-1:0] issue_pred_target_i,// predicted target of the current issuing instr (branches only)
+  input  logic                issue_pred_taken_i, // predicted taken bit of the current issuing instr (branches only)
   output logic issue_mis_o,
 
   // COMMON DATA BUS (CDB)
-  input  logic      [0:EU_N-1] cdb_ready_i,  // from the CDB arbiter
+  input  logic      [EU_N-1:0] cdb_ready_i,  // from the CDB arbiter
   input  logic                 cdb_valid_i,  // CDB data is valid
-  output logic      [0:EU_N-1] cdb_valid_o,  // to the CDB arbiter
+  output logic      [EU_N-1:0] cdb_valid_o,  // to the CDB arbiter
   input  cdb_data_t            cdb_data_i,
-  output cdb_data_t [0:EU_N-1] cdb_data_o,
+  output cdb_data_t [EU_N-1:0] cdb_data_o,
 
   // ROB AND CSRs
-  input logic                        comm_sb_spec_instr_i,
-  input rob_idx_t                    comm_sb_rob_head_idx_i,
-`ifdef LEN5_FP_EN
-  input logic     [FCSR_FRM_LEN-1:0] csr_frm_i,               // global rounding mode for the FPU
-`endif  /* LEN5_FP_EN */
+  input logic     comm_sb_spec_instr_i,
+  input rob_idx_t comm_sb_rob_head_idx_i,
+  // input logic     [FCSR_FRM_LEN-1:0] csr_frm_i,               // global rounding mode for the FPU
 
   // MEMORY SYSTEM
   // -------------
@@ -204,83 +202,88 @@ module exec_stage (
     .cdb_data_o          (cdb_data_o[EU_INT_ALU])
   );
 
-`ifdef LEN5_M_EN
-  // Integer multiplier
-  // ------------------
-  mult_unit #(
-    .EU_CTL_LEN(MAX_EU_CTL_LEN),
-    .RS_DEPTH  (MULT_RS_DEPTH)
-  ) u_mult_unit (
-    .clk_i               (clk_i),
-    .rst_n_i             (rst_n_i),
-    .flush_i             (mis_flush_i),
-    .issue_valid_i       (issue_valid_i[EU_INT_MULT]),
-    .issue_ready_o       (issue_ready_o[EU_INT_MULT]),
-    .issue_eu_ctl_i      (issue_eu_ctl_i.mult),
-    .issue_rs1_i         (issue_rs1_i),
-    .issue_rs2_i         (issue_rs2_i),
-    .issue_dest_rob_idx_i(issue_rob_idx_i),
-    .cdb_ready_i         (cdb_ready_i[EU_INT_MULT]),
-    .cdb_valid_i         (cdb_valid_i),
-    .cdb_valid_o         (cdb_valid_o[EU_INT_MULT]),
-    .cdb_data_i          (cdb_data_i),
-    .cdb_data_o          (cdb_data_o[EU_INT_MULT])
-  );
+  // Integer multiplier and divider
+  // ------------------------------
+  generate
+    if (LEN5_M_EN) begin : gen_mult_unit
+      mult_unit #(
+        .EU_CTL_LEN(MAX_EU_CTL_LEN),
+        .RS_DEPTH  (MULT_RS_DEPTH)
+      ) u_mult_unit (
+        .clk_i               (clk_i),
+        .rst_n_i             (rst_n_i),
+        .flush_i             (mis_flush_i),
+        .issue_valid_i       (issue_valid_i[EU_INT_MULT]),
+        .issue_ready_o       (issue_ready_o[EU_INT_MULT]),
+        .issue_eu_ctl_i      (issue_eu_ctl_i.mult),
+        .issue_rs1_i         (issue_rs1_i),
+        .issue_rs2_i         (issue_rs2_i),
+        .issue_dest_rob_idx_i(issue_rob_idx_i),
+        .cdb_ready_i         (cdb_ready_i[EU_INT_MULT]),
+        .cdb_valid_i         (cdb_valid_i),
+        .cdb_valid_o         (cdb_valid_o[EU_INT_MULT]),
+        .cdb_data_i          (cdb_data_i),
+        .cdb_data_o          (cdb_data_o[EU_INT_MULT])
+      );
 
-  // Integer divider
-  // ---------------
-  div_unit #(
-    .EU_CTL_LEN(MAX_EU_CTL_LEN),
-    .RS_DEPTH  (DIV_RS_DEPTH),
-    .PIPE_DEPTH(DIV_PIPE_DEPTH)
-  ) u_div_unit (
-    .clk_i               (clk_i),
-    .rst_n_i             (rst_n_i),
-    .flush_i             (mis_flush_i),
-    .issue_valid_i       (issue_valid_i[EU_INT_DIV]),
-    .issue_ready_o       (issue_ready_o[EU_INT_DIV]),
-    .issue_eu_ctl_i      (issue_eu_ctl_i.div),
-    .issue_rs1_i         (issue_rs1_i),
-    .issue_rs2_i         (issue_rs2_i),
-    .issue_dest_rob_idx_i(issue_rob_idx_i),
-    .cdb_ready_i         (cdb_ready_i[EU_INT_DIV]),
-    .cdb_valid_i         (cdb_valid_i),
-    .cdb_valid_o         (cdb_valid_o[EU_INT_DIV]),
-    .cdb_data_i          (cdb_data_i),
-    .cdb_data_o          (cdb_data_o[EU_INT_DIV])
-  );
-`endif  /* LEN5_M_EN */
+      div_unit #(
+        .EU_CTL_LEN(MAX_EU_CTL_LEN),
+        .RS_DEPTH  (DIV_RS_DEPTH),
+        .PIPE_DEPTH(DIV_PIPE_DEPTH)
+      ) u_div_unit (
+        .clk_i               (clk_i),
+        .rst_n_i             (rst_n_i),
+        .flush_i             (mis_flush_i),
+        .issue_valid_i       (issue_valid_i[EU_INT_DIV]),
+        .issue_ready_o       (issue_ready_o[EU_INT_DIV]),
+        .issue_eu_ctl_i      (issue_eu_ctl_i.div),
+        .issue_rs1_i         (issue_rs1_i),
+        .issue_rs2_i         (issue_rs2_i),
+        .issue_dest_rob_idx_i(issue_rob_idx_i),
+        .cdb_ready_i         (cdb_ready_i[EU_INT_DIV]),
+        .cdb_valid_i         (cdb_valid_i),
+        .cdb_valid_o         (cdb_valid_o[EU_INT_DIV]),
+        .cdb_data_i          (cdb_data_i),
+        .cdb_data_o          (cdb_data_o[EU_INT_DIV])
+      );
+    end else begin : gen_no_mult_unit
+      assign issue_ready_o[EU_INT_MULT] = 1'b0;
+      assign cdb_valid_o[EU_INT_MULT]   = 1'b0;
+      assign cdb_data_o[EU_INT_MULT]    = '0;
+      assign issue_ready_o[EU_INT_DIV]  = 1'b0;
+      assign cdb_valid_o[EU_INT_DIV]    = 1'b0;
+      assign cdb_data_o[EU_INT_DIV]     = '0;
+    end
+  endgenerate
 
   // -------------------
   // FLOATING-POINT UNIT
   // -------------------
 
-`ifdef LEN5_FP_EN
-  fp_unit #(
-    .EU_CTL_LEN(FPU_CTL_LEN),
-    .RS_DEPTH  (FPU_RS_DEPTH)
-  ) u_fpu_unit (
-    .clk_i              (clk_i),
-    .rst_n_i            (rst_n_i),
-    .flush_i            (mis_flush_i),
-    .issue_valid_i      (issue_valid_i[EU_FPU]),
-    .issue_ready_o      (issue_ready_o[EU_FPU]),
-    .eu_ctl_i           (issue_eu_ctl_i[FPU_CTL_LEN-1:0]),
-    .rs1_ready_i        (issue_rs1_i.ready),
-    .rs1_idx_i          (issue_rs1_i.rob_idx),
-    .rs1_value_i        (issue_rs1_i.value),
-    .rs2_ready_i        (issue_rs2_i.ready),
-    .rs2_idx_i          (issue_rs2_i.rob_idx),
-    .rs2_value_i        (issue_rs2_i.value),
-    .dest_idx_i         (issue_rob_idx_i),
-    .cdb_ready_i        (cdb_ready_i[EU_FPU]),
-    .cdb_valid_i        (cdb_valid_i),
-    .cdb_valid_o        (cdb_valid_o[EU_FPU]),
-    .cdb_idx_i          (cdb_data_i.rob_idx),
-    .cdb_data_i         (cdb_data_i.value),
-    .cdb_except_raised_i(cdb_data_i.except_raised),
-    .cdb_data_o         (cdb_data_o[EU_FPU]),
-    .csr_frm_i          (csr_frm_i)
-  );
-`endif  /* LEN5_FP_EN */
+  // fp_unit #(
+  //   .EU_CTL_LEN(FPU_CTL_LEN),
+  //   .RS_DEPTH  (FPU_RS_DEPTH)
+  // ) u_fpu_unit (
+  //   .clk_i              (clk_i),
+  //   .rst_n_i            (rst_n_i),
+  //   .flush_i            (mis_flush_i),
+  //   .issue_valid_i      (issue_valid_i[EU_FPU]),
+  //   .issue_ready_o      (issue_ready_o[EU_FPU]),
+  //   .eu_ctl_i           (issue_eu_ctl_i[FPU_CTL_LEN-1:0]),
+  //   .rs1_ready_i        (issue_rs1_i.ready),
+  //   .rs1_idx_i          (issue_rs1_i.rob_idx),
+  //   .rs1_value_i        (issue_rs1_i.value),
+  //   .rs2_ready_i        (issue_rs2_i.ready),
+  //   .rs2_idx_i          (issue_rs2_i.rob_idx),
+  //   .rs2_value_i        (issue_rs2_i.value),
+  //   .dest_idx_i         (issue_rob_idx_i),
+  //   .cdb_ready_i        (cdb_ready_i[EU_FPU]),
+  //   .cdb_valid_i        (cdb_valid_i),
+  //   .cdb_valid_o        (cdb_valid_o[EU_FPU]),
+  //   .cdb_idx_i          (cdb_data_i.rob_idx),
+  //   .cdb_data_i         (cdb_data_i.value),
+  //   .cdb_except_raised_i(cdb_data_i.except_raised),
+  //   .cdb_data_o         (cdb_data_o[EU_FPU]),
+  //   .csr_frm_i          (csr_frm_i)
+  // );
 endmodule

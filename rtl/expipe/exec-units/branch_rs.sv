@@ -16,8 +16,8 @@ import len5_pkg::*;
 import expipe_pkg::*;
 
 module branch_rs #(
-  parameter DEPTH = 4,  // must be a power of 2
-  localparam RS_IDX_LEN = $clog2(DEPTH)
+  parameter int unsigned DEPTH = 4,  // must be a power of 2
+  localparam int unsigned RsIdxLen = $clog2(DEPTH)
 ) (
   input logic clk_i,
   input logic rst_n_i,
@@ -69,7 +69,7 @@ module branch_rs #(
   logic head_cnt_en, head_cnt_clr;
   logic tail_cnt_en, tail_cnt_clr;
   logic ex_cnt_en, ex_cnt_clr;
-  logic [RS_IDX_LEN-1:0] tail_idx, ex_idx, head_idx;
+  logic [RsIdxLen-1:0] tail_idx, ex_idx, head_idx;
 
   // Branch reservation station data
   bu_data_t data[DEPTH];
@@ -309,7 +309,8 @@ module branch_rs #(
 `ifndef SYNTHESIS
   always @(posedge clk_i) begin
     foreach (curr_state[i]) begin
-      assert property (@(posedge clk_i) disable iff (!rst_n_i) curr_state[i] == BU_S_HALT |-> ##1 curr_state[i] != BU_S_HALT);
+      assert property (@(posedge clk_i) disable iff (!rst_n_i) curr_state[i] == BU_S_HALT |->
+        ##1 curr_state[i] != BU_S_HALT);
     end
   end
 `endif  /* SYNTHESIS */

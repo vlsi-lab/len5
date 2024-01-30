@@ -28,11 +28,11 @@ module cdb (
   input cdb_data_t max_prio_data_i,
 
   // Handshake from/to the reservation stations
-  input  logic [0:EU_N-2] rs_valid_i,
-  output logic [0:EU_N-2] rs_ready_o,
+  input  logic [EU_N-2:0] rs_valid_i,
+  output logic [EU_N-2:0] rs_ready_o,
 
   // Data from the reservation stations or issue queue.
-  input cdb_data_t [0:EU_N-2] rs_data_i,
+  input cdb_data_t [EU_N-2:0] rs_data_i,
 
   // Handshake from/to the ROB
   input logic rob_ready_i,

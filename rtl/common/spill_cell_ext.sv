@@ -21,7 +21,7 @@
 
 module spill_cell_ext #(
   parameter type DATA_T = logic,
-  parameter bit SKIP    = 1'b0
+  parameter bit  SKIP   = 1'b0
 ) (
   // Clock, reset, and flush
   input logic clk_i,
@@ -42,13 +42,13 @@ module spill_cell_ext #(
 );
   // Bypass internal logic
   generate
-    if (SKIP) begin: gen_skip_cell_gen
+    if (SKIP) begin : gen_skip_cell_gen
       assign valid_o     = valid_i;
       assign ready_o     = ready_i;
       assign data_o      = data_i;
       assign buff_full_o = 1'b0;
       assign buff_data_o = '0;
-    end else begin: gen_spill_cell_gen
+    end else begin : gen_spill_cell_gen
       // ----------------
       // INTERNAL SIGNALS
       // ----------------

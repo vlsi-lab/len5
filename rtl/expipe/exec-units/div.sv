@@ -18,10 +18,10 @@ import len5_pkg::*;
 import expipe_pkg::*;
 
 module div #(
-  parameter PIPE_DEPTH = 4,  // number of pipeline levels (>0)
+  parameter int unsigned PIPE_DEPTH = 4,  // number of pipeline levels (>0)
 
   // EU-specific parameters
-  parameter EU_CTL_LEN = 4
+  parameter int unsigned EU_CTL_LEN = 4
 ) (
   input logic clk_i,
   input logic rst_n_i,
@@ -49,9 +49,9 @@ module div #(
   logic                except_raised;
 
   // Pipeline registers
-  logic     [XLEN-1:0] pipe_result_d       [PIPE_DEPTH-1:0];
-  rob_idx_t            pipe_rob_idx_d      [PIPE_DEPTH-1:0];
-  logic                pipe_except_raised_d[PIPE_DEPTH-1:0];
+  logic     [XLEN-1:0] pipe_result_d       [PIPE_DEPTH];
+  rob_idx_t            pipe_rob_idx_d      [PIPE_DEPTH];
+  logic                pipe_except_raised_d[PIPE_DEPTH];
 
   // --------------
   // DIV OPERATIONS
@@ -81,7 +81,7 @@ module div #(
 
   // Generate PIPE_DEPTH-1 pipeline registers
   generate
-    for (genvar i = 1; i < PIPE_DEPTH; i = i + 1) begin: gen_pipe_reg
+    for (genvar i = 1; i < PIPE_DEPTH; i = i + 1) begin : gen_pipe_reg
       always_ff @(posedge clk_i or negedge rst_n_i) begin
         if (!rst_n_i) begin
           pipe_result_d[i]        <= '0;

@@ -61,10 +61,8 @@ module commit_stage (
   // Commit logic <--> register files and status
   output logic int_rs_valid_o,
   output logic int_rf_valid_o,
-`ifdef LEN5_FP_EN
-  output logic fp_rs_valid_o,
-  output logic fp_rf_valid_o,
-`endif  /* LEN5_FP_EN */
+  // output logic fp_rs_valid_o,
+  // output logic fp_rf_valid_o,
 
   // Data to the register status registers
   output rob_idx_t rs_head_idx_o,
@@ -319,10 +317,8 @@ module commit_stage (
     .except_code_i     (inreg_data_out.data.except_code),
     .int_rs_valid_o    (int_rs_valid_o),
     .int_rf_valid_o    (int_rf_valid_o),
-`ifdef LEN5_FP_EN
-    .fp_rs_valid_o     (fp_rs_valid_o),
-    .fp_rf_valid_o     (fp_rf_valid_o),
-`endif  /* LEN5_FP_EN */
+    // .fp_rs_valid_o     (fp_rs_valid_o),
+    // .fp_rf_valid_o     (fp_rf_valid_o),
     .sb_exec_store_o   (sb_exec_store_o),
     .csr_valid_o       (csr_valid_o),
     .csr_override_o    (cu_csr_override),
@@ -338,7 +334,8 @@ module commit_stage (
   // Exception adder
   // ---------------
   // NOTE: may be replaced with an or if mtvec.base is aligned to 64 bytes
-  assign adder_op  = (csr_mtvec_i.mode == 0) ? 'h0 : {{(XLEN - 2 - EXCEPT_TYPE_LEN) {1'b0}}, comm_reg_data.data.except_code, 2'b00};
+  assign adder_op  = (csr_mtvec_i.mode == 0) ? 'h0 :
+      {{(XLEN - 2 - EXCEPT_TYPE_LEN) {1'b0}}, comm_reg_data.data.except_code, 2'b00};
   assign adder_out = {csr_mtvec_i.base, 2'b00} + adder_op;
 
   // rd MUX
@@ -441,17 +438,18 @@ module commit_stage (
   a_no_except :
   assert property (p_no_except)
   else
-    $display($sformatf("WARNING: Committing exception: %s",
-                                           comm_reg_data.data.except_code.name()));
+    $display($sformatf("WARNING: Committing exception: %s", comm_reg_data.data.except_code.name()));
   // ISR address
   property p_except;
-    @(posedge clk_i) disable iff (!rst_n_i) fe_except_raised_o |-> fe_except_pc_o == ((comm_reg_data.data.except_code << 2) + (csr_mtvec_i.base << 2))
+    @(posedge clk_i) disable iff (!rst_n_i) fe_except_raised_o |->
+      fe_except_pc_o == ((comm_reg_data.data.except_code << 2) + (csr_mtvec_i.base << 2))
   endproperty
   a_except :
   assert property (p_except);
   // Detect deadlock (watchdog timer)
   property p_watchdog;
-    @(posedge clk_i) disable iff (!rst_n_i) u_commit_cu.curr_state == u_commit_cu.IDLE |-> ##[1:100] u_commit_cu.curr_state != u_commit_cu.IDLE
+    @(posedge clk_i) disable iff (!rst_n_i) u_commit_cu.curr_state == u_commit_cu.IDLE |->
+      ##[1:100] u_commit_cu.curr_state != u_commit_cu.IDLE
   endproperty
   // The number of jump/branch instructions must never overflow
   property p_jb_instr;
@@ -467,8 +465,12 @@ module commit_stage (
   a_watchdog :
   assert property (p_watchdog)
   else
-    $display($sformatf("IDLE timeout | pc: %h | instr: %h",
-                                      comm_reg_data.data.instr_pc,
-                                      comm_reg_data.data.instruction.raw));
+    $display(
+        $sformatf(
+            "IDLE timeout | pc: %h | instr: %h",
+            comm_reg_data.data.instr_pc,
+            comm_reg_data.data.instruction.raw
+        )
+    );
 `endif  // SYNTHESIS
 endmodule

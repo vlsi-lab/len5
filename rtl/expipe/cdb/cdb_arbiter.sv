@@ -25,8 +25,8 @@ module cdb_arbiter (
   output logic max_prio_ready_o,
 
   // Handshake from/to the units
-  input  logic [0:EU_N-2] valid_i,
-  output logic [0:EU_N-2] ready_o,
+  input  logic [EU_N-2:0] valid_i,
+  output logic [EU_N-2:0] ready_o,
 
   // Handshake from/to the ROB
   input  logic rob_ready_i,
@@ -38,16 +38,16 @@ module cdb_arbiter (
 );
 
   // DEFINITIONS
-  logic [0:EU_N-2] rem_valid_a, msk_valid_a;
+  logic [EU_N-2:0] rem_valid_a, msk_valid_a;
 
   // Valid MUX
-  logic [          0:EU_N-2] mux_valid_a;
+  logic [          EU_N-2:0] mux_valid_a;
 
   // Valid priority encoder + decoder
   logic [$clog2(EU_N-1)-1:0] enc_out;
   logic [  $clog2(EU_N)-1:0] served_temp;
   logic                      enc_valid;
-  logic [          0:EU_N-1] dec_valid_a;
+  logic [          EU_N-1:0] dec_valid_a;
 
   // ---------
   // VALID MUX

@@ -16,11 +16,11 @@ import len5_pkg::*;
 import expipe_pkg::*;
 
 module div_unit #(
-  RS_DEPTH = 4,  // must be a power of 2,
+  parameter int unsigned RS_DEPTH = 4,  // must be a power of 2,
 
   // EU-specific parameters
-  EU_CTL_LEN = 4,
-  PIPE_DEPTH = 4
+  parameter int unsigned EU_CTL_LEN = 4,
+  parameter int unsigned PIPE_DEPTH = 4
 ) (
   // Clock, reset, and flush
   input logic clk_i,

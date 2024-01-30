@@ -19,15 +19,15 @@ import len5_pkg::*;
 import memory_pkg::*;
 
 /**
- * @brief	Bare-metal load-store unit.
+ * @brief   Bare-metal load-store unit.
  *
- * @details	This module contains the load and store buffers, and to each is
+ * @details This module contains the load and store buffers, and to each is
  *          associated an adder tpcompute the target memory address.
  *          It is meant to be directly attached to a memory
  */
 module load_store_unit #(
-  parameter LB_DEPTH = 4,
-  parameter SB_DEPTH = 4
+  parameter int unsigned LB_DEPTH = 4,
+  parameter int unsigned SB_DEPTH = 4
 ) (
   input logic clk_i,
   input logic rst_n_i,
@@ -86,8 +86,9 @@ module load_store_unit #(
   input  logic                            mem_store_except_raised_i,
   input  except_code_t                    mem_store_except_code_i
 );
-  localparam ST_IDX_W = $clog2(SB_DEPTH);
-  localparam L0_TAG_W = XLEN - ST_IDX_W;
+  // PARAMETERS
+  localparam int unsigned StIdxW = $clog2(SB_DEPTH);
+  localparam int unsigned L0TagW = XLEN - StIdxW;
 
   // INTERNAL SIGNALS
   // ----------------
@@ -107,20 +108,18 @@ module load_store_unit #(
   adder_ans_t adder_lb_ans, adder_sb_ans;
 
   // Load-store buffers <--> level-zero cache control
-`ifdef LEN5_STORE_LOAD_FWD_EN
-  logic                sb_l0_valid;
-  logic [    XLEN-1:0] sb_l0_addr;
-  logic [ST_IDX_W-1:0] sb_l0_idx;
-  logic [L0_TAG_W-1:0] sb_l0_tag;
-  logic                sb_l0_cached;
-  logic [         3:0] sb_l0_width;
-  logic [    XLEN-1:0] sb_l0_value;
-  logic [    XLEN-1:0] lb_l0_addr;
-  logic [         3:0] lb_l0_width;
-  logic [ST_IDX_W-1:0] l0_sb_idx;
-  logic                l0_lb_valid;
-  logic [    XLEN-1:0] l0_lb_value;
-`endif  /* LEN5_STORE_LOAD_FWD_EN */
+  logic              sb_l0_valid;
+  logic [  XLEN-1:0] sb_l0_addr;
+  logic [StIdxW-1:0] sb_l0_idx;
+  logic [L0TagW-1:0] sb_l0_tag;
+  logic              sb_l0_cached;
+  logic [       3:0] sb_l0_width;
+  logic [  XLEN-1:0] sb_l0_value;
+  logic [  XLEN-1:0] lb_l0_addr;
+  logic [       3:0] lb_l0_width;
+  logic [StIdxW-1:0] l0_sb_idx;
+  logic              l0_lb_valid;
+  logic [  XLEN-1:0] l0_lb_value;
 
   // --------------
   // LSU SUBSYSTEMS
@@ -155,10 +154,8 @@ module load_store_unit #(
     .adder_ready_o        (lb_adder_ready),
     .adder_ans_i          (adder_lb_ans),
     .adder_req_o          (lb_adder_req),
-`ifdef LEN5_STORE_LOAD_FWD_EN
     .l0_valid_i           (l0_lb_valid),
     .l0_value_i           (l0_lb_value),
-`endif  /* LEN5_STORE_LOAD_FWD_EN */
     .mem_valid_o          (mem_load_valid_o),
     .mem_ready_i          (mem_load_ready_i),
     .mem_valid_i          (mem_load_valid_i),
@@ -205,13 +202,11 @@ module load_store_unit #(
     .adder_ready_o        (sb_adder_ready),
     .adder_ans_i          (adder_sb_ans),
     .adder_req_o          (sb_adder_req),
-`ifdef LEN5_STORE_LOAD_FWD_EN
     .l0_idx_i             (l0_sb_idx),
     .l0_tag_o             (sb_l0_tag),
     .l0_cached_o          (sb_l0_cached),
     .l0_width_o           (sb_l0_width),
     .l0_value_o           (sb_l0_value),
-`endif  /* LEN5_STORE_LOAD_FWD_EN */
     .mem_valid_o          (mem_store_valid_o),
     .mem_ready_i          (mem_store_ready_i),
     .mem_valid_i          (mem_store_valid_i),
@@ -256,31 +251,42 @@ module load_store_unit #(
 
   // LEVEL-ZERO CACHE CONTROL
   // ------------------------
-`ifdef LEN5_STORE_LOAD_FWD_EN  // TO-DO: Check if L0 works correctly
-  assign sb_l0_valid = mem_store_valid_o & mem_store_ready_i;
-  assign sb_l0_addr  = mem_store_addr_o;
-  assign sb_l0_idx   = mem_store_tag_i;
-  assign lb_l0_addr  = mem_load_addr_o;
-  assign lb_l0_width = mem_load_be_o;
-  l0_cache #(
-    .STBUFF_DEPTH(SB_DEPTH)
-  ) u_l0_cache (
-    .clk_i      (clk_i),
-    .rst_n_i    (rst_n_i),
-    .flush_i    (except_flush_i),
-    .st_valid_i (sb_l0_valid),
-    .st_addr_i  (sb_l0_addr),
-    .st_idx_i   (sb_l0_idx),
-    .st_tag_i   (sb_l0_tag),
-    .st_cached_i(sb_l0_cached),
-    .st_width_i (sb_l0_width),
-    .st_value_i (sb_l0_value),
-    .ld_addr_i  (lb_l0_addr),
-    .ld_width_i (lb_l0_width),
-    .st_idx_o   (l0_sb_idx),
-    .ld_valid_o (l0_lb_valid),
-    .ld_value_o (l0_lb_value)
-  );
-`endif  /* LEN5_STORE_LOAD_FWD_EN */
+  generate
+    if (LEN5_STORE_LOAD_FWD_EN) begin : gen_store_load_fwd
+      assign sb_l0_valid = mem_store_valid_o & mem_store_ready_i;
+      assign sb_l0_addr  = mem_store_addr_o;
+      assign sb_l0_idx   = mem_store_tag_i;
+      assign lb_l0_addr  = mem_load_addr_o;
+      assign lb_l0_width = mem_load_be_o;
+      l0_cache #(
+        .STBUFF_DEPTH(SB_DEPTH)
+      ) u_l0_cache (
+        .clk_i      (clk_i),
+        .rst_n_i    (rst_n_i),
+        .flush_i    (except_flush_i),
+        .st_valid_i (sb_l0_valid),
+        .st_addr_i  (sb_l0_addr),
+        .st_idx_i   (sb_l0_idx),
+        .st_tag_i   (sb_l0_tag),
+        .st_cached_i(sb_l0_cached),
+        .st_width_i (sb_l0_width),
+        .st_value_i (sb_l0_value),
+        .ld_addr_i  (lb_l0_addr),
+        .ld_width_i (lb_l0_width),
+        .st_idx_o   (l0_sb_idx),
+        .ld_valid_o (l0_lb_valid),
+        .ld_value_o (l0_lb_value)
+      );
+    end else begin : gen_no_store_load_fwd
+      assign sb_l0_valid = '0;
+      assign sb_l0_addr  = '0;
+      assign sb_l0_idx   = '0;
+      assign lb_l0_addr  = '0;
+      assign lb_l0_width = '0;
+      assign l0_sb_idx   = '0;
+      assign l0_lb_valid = '0;
+      assign l0_lb_value = '0;
+    end
+  endgenerate
 
 endmodule

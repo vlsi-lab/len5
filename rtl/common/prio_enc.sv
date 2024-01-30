@@ -23,10 +23,10 @@ module prio_enc #(
 );
   generate
     // If there's only one input, the index is always 0
-    if (N == 1) begin: gen_prio_enc_gen
+    if (N == 1) begin : gen_prio_enc_gen
       assign valid_o = lines_i[0];
       assign enc_o   = 0;
-    end else begin: gen_prio_enc_gen
+    end else begin : gen_prio_enc_gen
       // The priority decreases with the input index: lines_i[0] has the highest priority and lines_i[N] the lowest
       always_comb begin : prio_enc_logic
         enc_o   = 0;

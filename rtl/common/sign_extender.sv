@@ -16,33 +16,35 @@ import expipe_pkg::*;
 import len5_pkg::XLEN;
 import memory_pkg::*;
 
-module sign_extender
-(
-    input   ldst_width_t                type_i, // load/store type (number of bytes to select)
-    input   logic [XLEN-1:0]            data_i,
-    output  logic [XLEN-1:0]            data_o
+module sign_extender (
+  input  ldst_width_t            type_i,  // load/store type (number of bytes to select)
+  input  logic        [XLEN-1:0] data_i,
+  output logic        [XLEN-1:0] data_o
 );
-    localparam int unsigned BYTE = 8; // number of bits in a byte
+  localparam int unsigned BYTE = 8;  // number of bits in a byte
 
-    // Sign extension/zero padding
-    // ---------------------------
-    always_comb begin: line_generation
-        case(type_i)
-            // Load bite
-            LS_BYTE: data_o = { {(XLEN-1*BYTE){data_i[1*BYTE-1]}}, data_i[1*BYTE-1:0] }; // sign extension
-            LS_BYTE_U: data_o = { {(XLEN-1*BYTE){1'b0}}, data_i[1*BYTE-1:0]}; // zero padding
+  // Sign extension/zero padding
+  // ---------------------------
+  always_comb begin : line_generation
+    case (type_i)
+      // Load bite
+      LS_BYTE:
+      data_o = {{(XLEN - 1 * BYTE) {data_i[1*BYTE-1]}}, data_i[1*BYTE-1:0]};  // sign extension
+      LS_BYTE_U: data_o = {{(XLEN - 1 * BYTE) {1'b0}}, data_i[1*BYTE-1:0]};  // zero padding
 
-            // Load halfword
-            LS_HALFWORD: data_o = { {(XLEN-2*BYTE){data_i[2*BYTE-1]}}, data_i[2*BYTE-1:0] }; // sign extension
-            LS_HALFWORD_U: data_o = { {(XLEN-2*BYTE){1'b0}}, data_i[2*BYTE-1:0]}; // zero padding
+      // Load halfword
+      LS_HALFWORD:
+      data_o = {{(XLEN - 2 * BYTE) {data_i[2*BYTE-1]}}, data_i[2*BYTE-1:0]};  // sign extension
+      LS_HALFWORD_U: data_o = {{(XLEN - 2 * BYTE) {1'b0}}, data_i[2*BYTE-1:0]};  // zero padding
 
-            // Load word
-            LS_WORD: data_o = { {(XLEN-4*BYTE){data_i[4*BYTE-1]}}, data_i[4*BYTE-1:0] }; // sign extension
-            LS_WORD_U: data_o = { {(XLEN-4*BYTE){1'b0}}, data_i[4*BYTE-1:0]}; // zero padding
+      // Load word
+      LS_WORD:
+      data_o = {{(XLEN - 4 * BYTE) {data_i[4*BYTE-1]}}, data_i[4*BYTE-1:0]};  // sign extension
+      LS_WORD_U: data_o = {{(XLEN - 4 * BYTE) {1'b0}}, data_i[4*BYTE-1:0]};  // zero padding
 
-            // Load doubleword
-            default: data_o = data_i;
-        endcase
-    end
+      // Load doubleword
+      default: data_o = data_i;
+    endcase
+  end
 
 endmodule

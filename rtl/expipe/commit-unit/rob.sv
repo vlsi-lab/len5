@@ -17,9 +17,9 @@ import len5_pkg::REG_IDX_LEN;
 import expipe_pkg::*;
 
 /**
- * @brief	Reaorder Buffer
+ * @brief Reaorder Buffer
  *
- * @details	Based on a simple FIFO queue and expanded to support
+ * @details Based on a simple FIFO queue and expanded to support
  *          updates from the CDB.
  */
 module rob #(
@@ -177,7 +177,8 @@ module rob #(
   // ----------
 `ifndef SYNTHESIS
   property p_fifo_push;
-    @(posedge clk_i) disable iff (!rst_n_i) sync_accept_on (flush_i) issue_valid_i && issue_ready_o |-> ##1 data_valid[$past(
+    @(posedge clk_i) disable iff (!rst_n_i) sync_accept_on (flush_i)
+      issue_valid_i && issue_ready_o |-> ##1 data_valid[$past(
         tail_idx
     )] == 1'b1 && data[$past(
         tail_idx
@@ -202,7 +203,8 @@ module rob #(
     );
 
   property p_fifo_pop;
-    @(posedge clk_i) disable iff (!rst_n_i) sync_accept_on (flush_i) comm_valid_o && comm_ready_i |-> ##1 issue_ready_o == 1'b1 && data_valid[$past(
+    @(posedge clk_i) disable iff (!rst_n_i) sync_accept_on (flush_i)
+      comm_valid_o && comm_ready_i |-> ##1 issue_ready_o == 1'b1 && data_valid[$past(
         head_idx
     )] == 1'b0;
   endproperty

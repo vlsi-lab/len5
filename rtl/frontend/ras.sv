@@ -13,9 +13,9 @@
 // Date: 11/10/2022
 
 /**
- * @brief	Return address stack
+ * @brief Return address stack
  *
- * @details	This module stores the return address (PC+4) of the last jump-and-
+ * @details This module stores the return address (PC+4) of the last jump-and-
  *          link instructions. When a 'ret' instruction is detected, the latest
  *          return address is fetched and used as the next value for the PC.
  */
@@ -23,7 +23,7 @@
 import len5_pkg::*;
 
 module ras #(
-  parameter RAS_DEPTH = 4  // number of recent return addresses to buffer
+  parameter int unsigned RAS_DEPTH = 4  // number of recent return addresses to buffer
 ) (
   input logic clk_i,
   input logic rst_n_i,
@@ -34,7 +34,7 @@ module ras #(
   input  logic [XLEN-1:0] ret_addr_i,
   output logic [XLEN-1:0] ret_addr_o
 );
-  localparam IDX_W = $clog2(RAS_DEPTH);
+  localparam int unsigned IdxW = $clog2(RAS_DEPTH);
 
   // INTERNAL SIGNALS
   // ----------------
@@ -45,7 +45,7 @@ module ras #(
 
   // New and last entry indexes
   logic new_cnt_en, new_cnt_up;
-  logic [IDX_W-1:0] new_idx, last_idx;
+  logic [IdxW-1:0] new_idx, last_idx;
 
   // --------------------------
   // RETURN ADDRESS LIFO BUFFER
@@ -61,7 +61,7 @@ module ras #(
   assign new_cnt_en = push_i ^ pop_i;
   assign new_cnt_up = push_i;
   updown_counter #(
-    .W(IDX_W)
+    .W(IdxW)
   ) u_new_cnt (
     .clk_i  (clk_i),
     .rst_n_i(rst_n_i),

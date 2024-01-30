@@ -17,9 +17,10 @@ import len5_pkg::*;
 import expipe_pkg::*;
 
 module arith_rs #(
-  parameter DEPTH = 4,  // must be a power of 2
-  parameter EU_CTL_LEN = 4,
-  localparam RS_IDX_LEN = $clog2(DEPTH)
+  parameter int unsigned DEPTH = 4,  // must be a power of 2
+  parameter int unsigned EU_CTL_LEN = 4,
+  /* Dependent parameters: do NOT override */
+  localparam int unsigned RsIdxLen = $clog2(DEPTH)
 ) (
   input logic clk_i,
   input logic rst_n_i,
@@ -72,7 +73,7 @@ module arith_rs #(
   } arith_rs_data_t;
 
   // New, execution, and CDB write pointers
-  logic [RS_IDX_LEN-1:0] new_idx, ex_idx, cdb_idx;
+  logic [RsIdxLen-1:0] new_idx, ex_idx, cdb_idx;
   logic empty[DEPTH], ready_ex[DEPTH], ready_cdb[DEPTH];
 
   // Arithmetic reservation station data
@@ -353,7 +354,8 @@ module arith_rs #(
 `ifndef SYNTHESIS
   always @(posedge clk_i) begin
     foreach (curr_state[i]) begin
-      assert property (@(posedge clk_i) disable iff (!rst_n_i) curr_state[i] == ARITH_S_HALT |-> ##1 curr_state[i] != ARITH_S_HALT);
+      assert property (@(posedge clk_i) disable iff (!rst_n_i) curr_state[i] == ARITH_S_HALT |->
+        ##1 curr_state[i] != ARITH_S_HALT);
     end
   end
 `endif  /* SYNTHESIS */

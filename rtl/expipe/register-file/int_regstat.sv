@@ -15,8 +15,9 @@
 import expipe_pkg::*;
 
 module int_regstat #(
-             REG_NUM     = 32,              // power of 2
-  localparam REG_IDX_LEN = $clog2(REG_NUM)  // not exposed
+  parameter  int unsigned REG_NUM   = 32,              // power of 2
+  // Dependent parameters: do NOT override
+  localparam int unsigned RegIdxLen = $clog2(REG_NUM)  // not exposed
 ) (
   input logic clk_i,
   input logic rst_n_i,
@@ -24,19 +25,19 @@ module int_regstat #(
 
   // Issue Logic
   input logic issue_valid_i,
-  input  logic     [REG_IDX_LEN-1:0] issue_rd_idx_i,       // destination register of the issuing instruction
-  input  rob_idx_t                   issue_rob_idx_i,      // ROB index where the instruction is being allocated (tail pointer of the ROB)
-  input logic [REG_IDX_LEN-1:0] issue_rs1_idx_i,  // first source register index
-  input logic [REG_IDX_LEN-1:0] issue_rs2_idx_i,  // second source register index
+  input logic [RegIdxLen-1:0] issue_rd_idx_i,  // destination register of the issuing instruction
+  input rob_idx_t issue_rob_idx_i,  // allocated ROB index
+  input logic [RegIdxLen-1:0] issue_rs1_idx_i,  // first source register index
+  input logic [RegIdxLen-1:0] issue_rs2_idx_i,  // second source register index
   output logic issue_rs1_busy_o,  // rs1 value is in the ROB or has to be computed
   output rob_idx_t issue_rs1_rob_idx_o,  // the index of the ROB where the result is found
   output logic issue_rs2_busy_o,  // rs1 value is in the ROB or has to be computed
   output rob_idx_t issue_rs2_rob_idx_o,  // the index of the ROB where the result is found
 
   // Commit Logic
-  input logic comm_valid_i,
-  input logic [REG_IDX_LEN-1:0] comm_rd_idx_i,  // destination register of the committing instr.
-  input rob_idx_t comm_head_idx_i  // head entry of the ROB
+  input logic                     comm_valid_i,
+  input logic     [RegIdxLen-1:0] comm_rd_idx_i,   // destination register of the committing instr.
+  input rob_idx_t                 comm_head_idx_i  // head entry of the ROB
 );
 
   // INTERNAL SIGNALS
@@ -94,7 +95,7 @@ module int_regstat #(
   // BUSY COUNTERS
   // -------------
   generate
-    for (genvar i = 1; i < REG_NUM; i++) begin: gen_busy_counters
+    for (genvar i = 1; i < REG_NUM; i++) begin : gen_busy_counters
       updown_counter #(
         .W(REGSTAT_CNT_W)
       ) u_rob_cnt (
@@ -141,11 +142,10 @@ module int_regstat #(
     @(posedge clk_i) disable iff (!rst_n_i) en && &cnt |-> ##1 |cnt;
   endproperty
   generate
-    for (genvar i = 1; i < REG_NUM - 1; i++) begin: gen_assertion_gen
+    for (genvar i = 1; i < REG_NUM - 1; i++) begin : gen_assertion_gen
       a_busy_cnt_overflow :
       assert property (p_busy_cnt_overflow(i, busy_cnt_en[i], busy_cnt[i]))
-      else
-        `$error($sformatf("busy count %0d overflow", i));
+      else $error($sformatf("busy count %0d overflow", i));
     end
   endgenerate
 `endif  /* SYNTHESIS */

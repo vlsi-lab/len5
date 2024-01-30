@@ -283,4 +283,51 @@ package csr_pkg;
     csr_satp_t      satp;
   } csr_t;
 
+  // --------------
+  // DEFAULT VALUES
+  // --------------
+
+  // MISA extensions
+  // ---------------
+  localparam misa_extensions_t MISA_EXT = {
+    1'b0,  // A
+    1'b0,  // B
+    1'b0,  // C
+    1'b0,  // D
+    1'b0,  // E
+    1'b0,  // F
+    1'b0,  // G
+    1'b0,  // H
+    1'b1,  // I
+    1'b0,  // J
+    1'b0,  // K
+    1'b0,  // L
+    LEN5_M_EN,  // M
+    1'b0,  // N
+    1'b0,  // O
+    1'b0,  // P
+    1'b0,  // Q
+    1'b0,  // R
+    1'b0,  // S
+    1'b0,  // T
+    1'b0,  // U
+    1'b0,  // V
+    1'b0,  // W
+    1'b0,  // X
+    1'b0,  // Y
+    1'b0  // Z
+  };
+
+  // Implementation IDs
+  // ------------------
+  localparam csr_mvendorid_t CSR_MVENDORID = 'h0;
+  localparam csr_marchid_t CSR_MARCHID = 'h0;
+  localparam csr_mimpid_t CSR_MIMPID = 'h0;
+  localparam csr_mhartid_t CSR_MHARTID = 'h0;
+
+  // MTVEC
+  // -----
+  localparam logic [XLEN-1:2] CSR_MTVEC_BASE = 'h0;
+  localparam logic [1:0] CSR_MTVEC_MODE = 2'b00;
+
 endpackage

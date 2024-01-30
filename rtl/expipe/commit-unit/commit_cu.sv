@@ -19,6 +19,7 @@ import len5_config_pkg::*;
 import len5_pkg::*;
 import expipe_pkg::*;
 import csr_pkg::*;
+import instr_pkg::*;
 
 module commit_cu (
   // Clock and reset
@@ -46,11 +47,9 @@ module commit_cu (
   output logic int_rs_valid_o,
   output logic int_rf_valid_o,
 
-`ifdef LEN5_FP_EN
   // CU <--> floating-point register file and status
-  output logic fp_rs_valid_o,
-  output logic fp_rf_valid_o,
-`endif  /* LEN5_FP_EN */
+  // output logic fp_rs_valid_o,
+  // output logic fp_rf_valid_o,
 
   // CU <--> store buffer
   output logic sb_exec_store_o,  // pop the store instruction from the store buffer
@@ -122,12 +121,10 @@ module commit_cu (
         if (res_ready_i) v_next_state = COMMIT_INT_RF;
         else v_next_state = HALT;
       end
-`ifdef LEN5_FP_EN
-      COMM_TYPE_FP_RF: begin
-        if (res_ready_i) v_next_state = COMMIT_FP_RF;
-        else v_next_state = HALT;
-      end
-`endif  /* LEN5_FP_EN */
+      // COMM_TYPE_FP_RF: begin
+      //   if (res_ready_i) v_next_state = COMMIT_FP_RF;
+      //   else v_next_state = HALT;
+      // end
       COMM_TYPE_LOAD: begin
         if (res_ready_i) v_next_state = COMMIT_LOAD;
         else v_next_state = HALT;
@@ -179,13 +176,11 @@ module commit_cu (
         else next_state = IDLE;
       end
 
-`ifdef LEN5_FP_EN
       // Commit to the floating-point register file
-      COMMIT_FP_RF: begin
-        if (valid_i) next_state = v_next_state;
-        else next_state = IDLE;
-      end
-`endif  /* LEN5_FP_EN */
+      // COMMIT_FP_RF: begin
+      //   if (valid_i) next_state = v_next_state;
+      //   else next_state = IDLE;
+      // end
 
       // Commit store instructions
       COMMIT_STORE: begin
@@ -262,20 +257,18 @@ module commit_cu (
   // Output evaluation
   always_comb begin : cu_out_eval
     // Default values
-    ready_o         = 1'b0;
-    comm_reg_en_o   = 1'b0;
-    comm_reg_clr_o  = 1'b0;
-    comm_rd_sel_o   = COMM_RD_SEL_RES;
-    comm_jb_instr_o = 1'b0;
-    comm_csr_sel_o  = COMM_CSR_SEL_RES;
-    csr_override_o  = 1'b0;
-    csr_addr_o      = `CSR_ADDR_MEPC;
-    int_rs_valid_o  = 1'b0;
-    int_rf_valid_o  = 1'b0;
-`ifdef LEN5_FP_EN
-    fp_rs_valid_o = 1'b0;
-    fp_rf_valid_o = 1'b0;
-`endif  /* LEN5_FP_EN */
+    ready_o            = 1'b0;
+    comm_reg_en_o      = 1'b0;
+    comm_reg_clr_o     = 1'b0;
+    comm_rd_sel_o      = COMM_RD_SEL_RES;
+    comm_jb_instr_o    = 1'b0;
+    comm_csr_sel_o     = COMM_CSR_SEL_RES;
+    csr_override_o     = 1'b0;
+    csr_addr_o         = CSR_MEPC;
+    int_rs_valid_o     = 1'b0;
+    int_rf_valid_o     = 1'b0;
+    // fp_rs_valid_o = 1'b0;
+    // fp_rf_valid_o = 1'b0;
     sb_exec_store_o    = 1'b0;
     csr_valid_o        = 1'b0;
     csr_comm_insn_o    = COMM_CSR_INSTR_TYPE_NONE;
@@ -299,16 +292,13 @@ module commit_cu (
         csr_comm_insn_o = COMM_CSR_INSTR_TYPE_INT;
       end
 
-`ifdef LEN5_FP_EN
-      COMMIT_FP_RF: begin
-        ready_o         = 1'b1;
-        fp_rs_valid_o   = 1'b1;
-        fp_rf_valid_o   = 1'b1;
-        comm_reg_en_o   = 1'b1;
-        csr_comm_insn_o = COMM_CSR_INSTR_TYPE_OTHER;
-
-      end
-`endif  /* LEN5_FP_EN */
+      // COMMIT_FP_RF: begin
+      // ready_o         = 1'b1;
+      // fp_rs_valid_o   = 1'b1;
+      // fp_rf_valid_o   = 1'b1;
+      // comm_reg_en_o   = 1'b1;
+      // csr_comm_insn_o = COMM_CSR_INSTR_TYPE_OTHER;
+      // end
 
       COMMIT_LOAD: begin
         ready_o         = 1'b1;
@@ -374,14 +364,14 @@ module commit_cu (
       COMMIT_ECALL: begin
         csr_valid_o     = 1'b1;  // save PC to mepc
         csr_override_o  = 1'b1;
-        csr_addr_o      = `CSR_ADDR_MEPC;
+        csr_addr_o      = CSR_MEPC;
         comm_csr_sel_o  = COMM_CSR_SEL_PC;
         csr_comm_insn_o = COMM_CSR_INSTR_TYPE_OTHER;
       end
       INT_WRITE_CODE: begin
         csr_valid_o    = 1'b1;  // save exception code to mcause
         csr_override_o = 1'b1;
-        csr_addr_o     = `CSR_ADDR_MCAUSE;
+        csr_addr_o     = CSR_MCAUSE;
         comm_csr_sel_o = COMM_CSR_SEL_INT;
         comm_reg_en_o  = 1'b1;
       end
@@ -392,7 +382,7 @@ module commit_cu (
       end
       COMMIT_MRET: begin  // read mepc
         csr_override_o  = 1'b1;
-        csr_addr_o      = `CSR_ADDR_MEPC;
+        csr_addr_o      = CSR_MEPC;
         comm_csr_sel_o  = COMM_CSR_SEL_ZERO;
         comm_reg_en_o   = 1'b1;
         ex_mis_flush_o  = 1'b1;
@@ -401,7 +391,7 @@ module commit_cu (
       end
       MRET_LOAD_PC: begin
         csr_override_o     = 1'b1;
-        csr_addr_o         = `CSR_ADDR_MEPC;
+        csr_addr_o         = CSR_MEPC;
         comm_csr_sel_o     = COMM_CSR_SEL_ZERO;
         fe_except_raised_o = 1'b1;
         issue_resume_o     = 1'b1;
@@ -413,7 +403,7 @@ module commit_cu (
       COMMIT_EXCEPT: begin
         csr_valid_o    = 1'b1;
         csr_override_o = 1'b1;
-        csr_addr_o     = `CSR_ADDR_MEPC;
+        csr_addr_o     = CSR_MEPC;
         comm_csr_sel_o = COMM_CSR_SEL_PC;
         ex_mis_flush_o = 1'b1;
         except_flush_o = 1'b1;
@@ -421,26 +411,26 @@ module commit_cu (
       EXCEPT_WRITE_CODE: begin
         csr_valid_o    = 1'b1;  // save exception code to mcause
         csr_override_o = 1'b1;
-        csr_addr_o     = `CSR_ADDR_MCAUSE;
+        csr_addr_o     = CSR_MCAUSE;
         comm_csr_sel_o = COMM_CSR_SEL_EXCEPT;
       end
       EXCEPT_SAVE_ADDR: begin
         comm_reg_en_o  = 1'b1;
         csr_override_o = 1'b1;
-        csr_addr_o     = `CSR_ADDR_MTVAL;
+        csr_addr_o     = CSR_MTVAL;
         comm_csr_sel_o = COMM_CSR_SEL_RES;  // faulting address inside instruction result
         comm_rd_sel_o  = COMM_RD_SEL_CSR;
       end
       EXCEPT_SAVE_INSTR: begin
         comm_reg_en_o  = 1'b1;
         csr_override_o = 1'b1;
-        csr_addr_o     = `CSR_ADDR_MTVAL;
+        csr_addr_o     = CSR_MTVAL;
         comm_csr_sel_o = COMM_CSR_SEL_INSN;
       end
       EXCEPT_CLEAR_MTVAL: begin
         comm_reg_en_o  = 1'b1;
         csr_override_o = 1'b1;
-        csr_addr_o     = `CSR_ADDR_MTVAL;
+        csr_addr_o     = CSR_MTVAL;
         comm_csr_sel_o = COMM_CSR_SEL_ZERO;
       end
       EXCEPT_LOAD_PC: begin
@@ -465,13 +455,8 @@ module commit_cu (
   // ----------
 `ifndef SYNTHESIS
   always @(posedge clk_i) begin
-    $display($sformatf(
-              "valid_i: %b | instr: %h | type: %s | state: %s",
-              valid_i,
-              instr_i,
-              comm_type_i.name(),
-              curr_state.name()
-              ))
+    $display($sformatf("valid_i: %b | instr: %h | type: %s | state: %s", valid_i, instr_i,
+                       comm_type_i.name(), curr_state.name()));
   end
 `endif  /* SYNTHESIS */
 

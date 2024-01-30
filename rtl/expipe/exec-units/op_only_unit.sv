@@ -24,10 +24,10 @@ import expipe_pkg::cdb_data_t;
 import expipe_pkg::rob_idx_t;
 
 module op_only_unit #(
-  RS_DEPTH = 4,  // must be a power of 2
+  parameter int unsigned RS_DEPTH = 4,  // must be a power of 2
 
   // EU-specific parameters
-  EU_CTL_LEN = 4
+  parameter int unsigned EU_CTL_LEN = 4
 ) (
   // Clock, reset, and flush
   input logic clk_i,

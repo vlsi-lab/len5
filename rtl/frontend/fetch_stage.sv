@@ -21,7 +21,7 @@ module fetch_stage #(
   parameter int unsigned HLEN = 4,
   parameter int unsigned BTB_BITS = 4,
   parameter int unsigned BOOT_PC = 64'h0,
-  parameter c2b_t        INIT_C2B = WNT,
+  parameter c2b_t INIT_C2B = WNT,
   parameter int unsigned MEMIF_FIFO_DEPTH = 2  // equal to the max number of outstanding requests the memory can accept
 ) (
   input logic clk_i,

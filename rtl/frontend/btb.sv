@@ -34,14 +34,14 @@ module btb #(
 );
 
   // Definitions
-  localparam int unsigned BTB_ROWS = 1 << BTB_BITS;
+  localparam int unsigned BtbRows = 1 << BTB_BITS;
 
-  struct packed {
+  typedef struct packed {
     logic                            valid;
     logic [XLEN-BTB_BITS-OFFSET-1:0] tag;
     logic [XLEN-OFFSET-1:0]          target;
-  }
-      btb_d[BTB_ROWS], btb_q[BTB_ROWS];
+  } btb_entry_t;
+  btb_entry_t btb_d[BtbRows], btb_q[BtbRows];
 
   logic [BTB_BITS-1:0] addr_r, addr_w;
   logic [XLEN-BTB_BITS-OFFSET-1:0] tag_r, tag_w;
@@ -71,11 +71,11 @@ module btb #(
 
   always_ff @(posedge clk_i or negedge rst_n_i) begin
     if (!rst_n_i) begin : btb_async_rst
-      for (int i = 0; i < BTB_ROWS; i++) begin
+      for (int i = 0; i < BtbRows; i++) begin
         btb_q[i] <= '0;
       end
     end else if (flush_i) begin : btb_sync_flush
-      for (int i = 0; i < BTB_ROWS; i++) begin
+      for (int i = 0; i < BtbRows; i++) begin
         btb_q[i] <= '0;
       end
     end else btb_q <= btb_d;

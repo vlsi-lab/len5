@@ -45,6 +45,13 @@ lint: | .check-fusesoc
 	@echo "## Running static analysis..."
 	fusesoc run --no-export --target lint polito:len5:len5
 
+# Check RTL code
+.PHONY: check
+check: | .check-fusesoc
+	@echo "## Checking RTL code..."
+	fusesoc run --no-export --target format polito:len5:len5
+	fusesoc run --no-export --target lint polito:len5:len5
+
 # RTL simulation
 # --------------
 # QuestaSim
@@ -90,11 +97,6 @@ run-helloworld-questasim: questasim-sim app-helloworld | .check-fusesoc
 # Create new directories
 %/:
 	mkdir -p $@
-
-# RTL format with Verible
-.PHONY: format-verible
-verible-format:
-	scripts/format-verible;
 
 # Clean-up
 .PHONY: clean

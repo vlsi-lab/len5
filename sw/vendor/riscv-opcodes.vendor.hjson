@@ -1,0 +1,15 @@
+{
+  name: "riscv-opcodes",
+  target_dir: "riscv-opcodes",
+
+  upstream: {
+    url: "https://github.com/riscv/riscv-opcodes.git",
+    rev: "master",
+  },
+
+  patch_dir: "patches/riscv-opcodes",
+
+  exclude_from_upstream: [
+    ".github",
+  ]
+}

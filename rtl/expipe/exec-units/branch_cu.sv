@@ -13,9 +13,9 @@
 // Date: 11/10/2022
 
 /**
- * @brief	Branch unit control unit
+ * @brief Branch unit control unit
  *
- * @details	This module implements a simple control unit that handles the
+ * @details This module implements a simple control unit that handles the
  *          notification of a misprediction to the frontend.
  */
 

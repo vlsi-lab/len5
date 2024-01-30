@@ -43,7 +43,7 @@ module fp_rf (
   // DEFINITIONS
 
   // Register file data
-  logic [XLEN-1:0] rf_data[0:FREG_NUM-1];
+  logic [XLEN-1:0] rf_data[FREG_NUM];
 
   // ------------------------
   // REGISTER FILE WRITE PORT

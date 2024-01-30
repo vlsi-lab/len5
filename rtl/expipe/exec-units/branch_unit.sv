@@ -18,7 +18,7 @@ import expipe_pkg::*;
 import fetch_pkg::resolution_t;
 
 module branch_unit #(
-  RS_DEPTH = 4  // must be a power of 2
+  parameter int unsigned RS_DEPTH = 4  // must be a power of 2
 ) (
   input logic clk_i,
   input logic rst_n_i,
@@ -105,14 +105,14 @@ module branch_unit #(
   // ----------------------
   always_comb begin
     case (rs_bu_branch_type)
-      BEQ:     res_taken = (rs_bu_rs1 == rs_bu_rs2);
-      BNE:     res_taken = (rs_bu_rs1 != rs_bu_rs2);
-      BLT:     res_taken = ($signed(rs_bu_rs1) < $signed(rs_bu_rs2));
-      BGE:     res_taken = ($signed(rs_bu_rs1) >= $signed(rs_bu_rs2));
-      BLTU:    res_taken = (rs_bu_rs1 < rs_bu_rs2);
-      BGEU:    res_taken = (rs_bu_rs1 >= rs_bu_rs2);
-      JAL:     res_taken = 1'b1;
-      JALR:    res_taken = 1'b1;
+      BU_BEQ:  res_taken = (rs_bu_rs1 == rs_bu_rs2);
+      BU_BNE:  res_taken = (rs_bu_rs1 != rs_bu_rs2);
+      BU_BLT:  res_taken = ($signed(rs_bu_rs1) < $signed(rs_bu_rs2));
+      BU_BGE:  res_taken = ($signed(rs_bu_rs1) >= $signed(rs_bu_rs2));
+      BU_BLTU: res_taken = (rs_bu_rs1 < rs_bu_rs2);
+      BU_BGEU: res_taken = (rs_bu_rs1 >= rs_bu_rs2);
+      BU_JAL:  res_taken = 1'b1;
+      BU_JALR: res_taken = 1'b1;
       default: res_taken = 1'b0;
     endcase
   end
@@ -120,9 +120,9 @@ module branch_unit #(
   // Branch target computation
   // -------------------------
   // NOTE: set the target LSB to zero as per JAL/JALR specs
-  assign adder_op         = (rs_bu_branch_type == JALR) ? rs_bu_rs1 : rs_bu_curr_pc;
+  assign adder_op         = (rs_bu_branch_type == BU_JALR) ? rs_bu_rs1 : rs_bu_curr_pc;
   assign adder_out        = rs_bu_imm + adder_op;
-  assign res_lsb          = (rs_bu_branch_type == JALR) ? 1'b0 : adder_out[0];
+  assign res_lsb          = (rs_bu_branch_type == BU_JALR) ? 1'b0 : adder_out[0];
   assign res_target       = {adder_out[XLEN-1:1], res_lsb};
 
   // Link address adder

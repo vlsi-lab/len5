@@ -16,7 +16,7 @@ import len5_pkg::*;
 
 /* verilator lint_off BLKLOOPINIT */
 module gshare #(
-    parameter HLEN = 4
+    parameter int unsigned HLEN = 4
 ) (
     input logic                   clk_i,
     input logic                   rst_n_i,

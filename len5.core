@@ -96,7 +96,7 @@ targets:
         verible_lint_args:
         - '--waiver_files=../../../rtl/misc/verible-lint.waiver'
         rules:
-        - 'line-length=length:120'
+        - 'line-length=length:160'
 
 # Parameters
 parameters:

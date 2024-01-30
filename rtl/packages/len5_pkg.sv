@@ -188,7 +188,7 @@ package len5_pkg;
   localparam int unsigned BUFF_IDX_LEN = (LDBUFF_TAG_W > STBUFF_TAG_W) ? (LDBUFF_TAG_W) : (STBUFF_TAG_W);
 
   // ROB
-  localparam int unsigned ROB_DEPTH = 8; // Number of entries in the ROB
+  localparam int unsigned ROB_DEPTH = 8;  // Number of entries in the ROB
 
   // RESERVATION STATIONS
   localparam int unsigned ALU_RS_DEPTH = 4;

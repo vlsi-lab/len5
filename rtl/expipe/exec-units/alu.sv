@@ -16,10 +16,10 @@ import len5_pkg::*;
 import expipe_pkg::*;
 
 module alu #(
-  parameter SKIP_REG = 0,  // make the ALU fully combinational
+  parameter int unsigned SKIP_REG = 0,  // make the ALU fully combinational
 
   // EU-specific parameters
-  parameter EU_CTL_LEN = 4
+  parameter int unsigned EU_CTL_LEN = 4
 ) (
   input logic clk_i,
   input logic rst_n_i,

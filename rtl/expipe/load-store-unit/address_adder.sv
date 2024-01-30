@@ -17,9 +17,9 @@ import len5_pkg::*;
 import expipe_pkg::*;
 
 /**
- * @brief	Address adder.
+ * @brief Address adder.
  *
- * @details	Adder to compute the target memory address starting from a base
+ * @details Adder to compute the target memory address starting from a base
  *          address (rs1) and an offset (immediate value). Not suitable for
  *          virtual memory.
  */
@@ -57,11 +57,11 @@ module address_adder (
 
   // Address adder
   // -------------
-  assign ans.tag = req_i.tag;
-  assign ans.is_store = req_i.is_store;
-  assign ans.result = req_i.base + req_i.offs;
+  assign ans.tag           = req_i.tag;
+  assign ans.is_store      = req_i.is_store;
+  assign ans.result        = req_i.base + req_i.offs;
   assign ans.except_raised = align_except;
-  assign ans.except_code   = (req_i.is_store) ? E_ST_ADDR_MISALIGNED : E_LD_ADDR_MISALIGNED;  // without VM, only alignment exceptions are possible
+  assign ans.except_code   = (req_i.is_store) ? E_ST_ADDR_MISALIGNED : E_LD_ADDR_MISALIGNED;
 
   // Output spill cell
   // -----------------

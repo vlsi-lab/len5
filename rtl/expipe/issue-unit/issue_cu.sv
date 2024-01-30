@@ -39,9 +39,7 @@ module issue_cu (
   input  logic ex_mis_i,
   output logic ex_valid_o,
   output logic int_regstat_valid_o,
-`ifdef LEN5_FP_EN
-  output logic fp_regstat_valid_o,
-`endif  /* LEN5_FP_EN */
+  // output logic fp_regstat_valid_o,
 
   // Commit stage <--> CU
   input  logic comm_ready_i,
@@ -210,11 +208,9 @@ module issue_cu (
     issue_fetch_except_o = 1'b0;
     ex_valid_o           = 1'b0;
     int_regstat_valid_o  = 1'b0;
-`ifdef LEN5_FP_EN
-    fp_regstat_valid_o = 1'b0;
-`endif  /* LEN5_FP_EN */
-    comm_valid_o    = 1'b0;
-    comm_jb_instr_o = 1'b0;
+    // fp_regstat_valid_o = 1'b0;
+    comm_valid_o         = 1'b0;
+    comm_jb_instr_o      = 1'b0;
 
     case (curr_state)
       S_RESET:       ;  // use default values
@@ -260,9 +256,7 @@ module issue_cu (
         ex_valid_o   = downstream_ready;
         comm_valid_o = downstream_ready;
         iq_ready_o   = downstream_ready;
-`ifdef LEN5_FP_EN
-        fp_regstat_valid_o = downstream_ready;
-`endif  /* LEN5_FP_EN */
+        // fp_regstat_valid_o = downstream_ready;
       end
       S_CSR_WAIT_OP: ;
       S_ISSUE_CSR: begin
@@ -301,14 +295,9 @@ module issue_cu (
   // ----------
 `ifndef SYNTHESIS
   always @(posedge clk_i) begin
-    $display($sformatf(
-              "valid_i: %b | commit ready: %b | ex. ready: %d | type: %s | state: %s",
-              iq_valid_i,
-              comm_ready_i,
-              ex_ready_i,
-              issue_type_i.name(),
-              curr_state.name()
-              ))
+    $display($sformatf("valid_i: %b | commit ready: %b | ex. ready: %d | type: %s | state: %s",
+                       iq_valid_i, comm_ready_i, ex_ready_i, issue_type_i.name(),
+                       curr_state.name()));
   end
 `endif  /* SYNTHESIS */
 endmodule

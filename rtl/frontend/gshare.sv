@@ -17,8 +17,8 @@ import fetch_pkg::*;
 
 /* verilator lint_off BLKLOOPINIT */
 module gshare #(
-  parameter       HLEN     = 4,
-  parameter c2b_t INIT_C2B = WNT
+  parameter int unsigned HLEN     = 4,
+  parameter c2b_t        INIT_C2B = WNT
 ) (
   input logic                   clk_i,
   input logic                   rst_n_i,
@@ -30,11 +30,11 @@ module gshare #(
   output logic taken_o
 );
   // Parameters
-  localparam PHT_ROWS = 1 << HLEN;
+  localparam int unsigned PhtRows = 1 << HLEN;
 
   // INTERNAL SIGNALS
   // ----------------
-  c2b_t pht_d[PHT_ROWS], pht_q[PHT_ROWS];  // 2-bit predictor counters
+  c2b_t pht_d[PhtRows], pht_q[PhtRows];  // 2-bit predictor counters
   logic [HLEN-1:0] history, index_r, index_w;  // global branch history
 
   // --------------------------
@@ -85,11 +85,11 @@ module gshare #(
 
   always_ff @(posedge clk_i or negedge rst_n_i) begin
     if (!rst_n_i) begin : pht_async_rst
-      for (int i = 0; i < PHT_ROWS; i++) begin
+      for (int i = 0; i < PhtRows; i++) begin
         pht_q[i] <= INIT_C2B;
       end
     end else if (flush_i) begin : pht_sync_flush
-      for (int i = 0; i < PHT_ROWS; i++) begin
+      for (int i = 0; i < PhtRows; i++) begin
         pht_q[i] <= INIT_C2B;
       end
     end else pht_q <= pht_d;

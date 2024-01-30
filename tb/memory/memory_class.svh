@@ -16,17 +16,17 @@
 //          sparse data.
 
 class memory_class #(
-  parameter WWIDTH = 32,
-  parameter AWIDTH = 64
+  parameter int unsigned WWIDTH = 32,
+  parameter int unsigned AWIDTH = 64
 );
   // PROPERTIES
   // ----------
 
   // Parameters
-  localparam BWIDTH = 8;
-  localparam HWWIDTH = WWIDTH >> 1;
-  localparam DWWIDTH = WWIDTH << 1;
-  localparam LWIDTH = WWIDTH << 4;
+  localparam int unsigned BWIDTH = 8;
+  localparam int unsigned HWWIDTH = WWIDTH >> 1;
+  localparam int unsigned DWWIDTH = WWIDTH << 1;
+  localparam int unsigned LWIDTH = WWIDTH << 4;
 
   // File info
   local string               memory_file_path;
@@ -109,12 +109,12 @@ class memory_class #(
 
     // Scan the next line in the memory
     if ($fgets(this.file_line, this.fd) < 0) begin
-      `$error("Unexpected memory file format ($fgets)");
+      $error("Unexpected memory file format ($fgets)");
       return 1;
     end
     ret_code = $sscanf(this.file_line, "%h %h", addr, data);
     if (!$feof(this.fd) && ret_code != 2) begin
-      `$error("Unexpected memory file format ($fscanf)");
+      $error("Unexpected memory file format ($fscanf)");
       return 1;
     end
     return 0;
@@ -144,8 +144,7 @@ class memory_class #(
     CloseMemFile();
 
     // Return the number of loaded bytes
-    $display($sformatf("Loaded %0d bytes (%0d words)", this.mem.num(),
-                                   this.mem.num() >> 2));
+    $display($sformatf("Loaded %0d bytes (%0d words)", this.mem.num(), this.mem.num() >> 2));
     return this.mem.num();
   endfunction : LoadMemTxt
 
@@ -160,8 +159,7 @@ class memory_class #(
   function int ReadB(logic [AWIDTH-1:0] addr);
     // Search the byte in memory
     if (!this.mem.exists(addr)) begin
-      $display($sformatf("Reading uninitialized byte at address 0x%h", addr),
-                );
+      $display($sformatf("Reading uninitialized byte at address 0x%h", addr),);
       this.read_byte = '0;
       return 2;
     end
@@ -179,7 +177,7 @@ class memory_class #(
 
     // Check address alignment
     if (addr[0] != 1'b0) begin
-      `$error($sformatf("Halfword address 0x%h is NOT aligned on 16 bits", addr))
+      $error($sformatf("Halfword address 0x%h is NOT aligned on 16 bits", addr));
       return 1;  // exit
     end
 
@@ -205,7 +203,7 @@ class memory_class #(
 
     // Check address alignment
     if (addr[1:0] != 2'b00) begin
-      `$error($sformatf("Word address 0x%h is NOT aligned on 32 bits", addr))
+      $error($sformatf("Word address 0x%h is NOT aligned on 32 bits", addr));
       return 1;  // exit
     end
 
@@ -231,7 +229,7 @@ class memory_class #(
 
     // Check address alignment
     if (addr[2:0] != 3'b000) begin
-      `$error($sformatf("Doubleword address 0x%h is NOT aligned on 64 bits", addr))
+      $error($sformatf("Doubleword address 0x%h is NOT aligned on 64 bits", addr));
       return 1;  // exit
     end
 
@@ -256,8 +254,8 @@ class memory_class #(
     int                ret;
 
     // Check address alignment
-    if (addr[5:0] != 9'b000000) begin
-      `$error($sformatf("Line address 0x%h is NOT aligned on 512 bits", addr))
+    if (addr[5:0] != 6'b000000) begin
+      $error($sformatf("Line address 0x%h is NOT aligned on 512 bits", addr));
       return 1;  // exit
     end
 
@@ -295,7 +293,7 @@ class memory_class #(
 
     // Check address alignment
     if (addr[0] != 1'b0) begin
-      `$error($sformatf("Halfword address 0x%h is NOT aligned on 16 bits", addr))
+      $error($sformatf("Halfword address 0x%h is NOT aligned on 16 bits", addr));
       return 1;  // exit
     end
 
@@ -314,7 +312,7 @@ class memory_class #(
 
     // Check address alignment
     if (addr[1:0] != 2'b00) begin
-      `$error($sformatf("Word address 0x%h is NOT aligned on 32 bits", addr))
+      $error($sformatf("Word address 0x%h is NOT aligned on 32 bits", addr));
       return 1;  // exit
     end
 
@@ -333,7 +331,7 @@ class memory_class #(
 
     // Check address alignment
     if (addr[2:0] != 3'b000) begin
-      `$error($sformatf("Doubleword address 0x%h is NOT aligned on 64 bits", addr))
+      $error($sformatf("Doubleword address 0x%h is NOT aligned on 64 bits", addr));
       return 1;  // exit
     end
 
@@ -351,8 +349,8 @@ class memory_class #(
     int                ret;
 
     // Check address alignment
-    if (addr[5:0] != 9'b000000) begin
-      `$error($sformatf("Line address 0x%h is NOT aligned on 512 bits", addr))
+    if (addr[5:0] != 6'b000000) begin
+      $error($sformatf("Line address 0x%h is NOT aligned on 512 bits", addr));
       return 1;  // exit
     end
 
@@ -377,7 +375,7 @@ class memory_class #(
 
     // Check if the memory is empty
     if (!this.mem.first(baddr)) begin
-      `$error("Memory is empty");
+      $error("Memory is empty");
       return 1;
     end
 

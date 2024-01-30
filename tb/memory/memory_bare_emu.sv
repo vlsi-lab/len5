@@ -20,10 +20,10 @@ import len5_pkg::*;
 import expipe_pkg::*;
 
 module memory_bare_emu #(
-  parameter DUMP_PERIOD       = 0,  // cycles, zero to disable
-  parameter PIPE_NUM          = 0,  // number of pipeline registers
-  parameter SKIP_INS_ANS_REG  = 0,  // instruction from memory is directly passed to fetch
-  parameter SKIP_DATA_ANS_REG = 0   // data from memory is directly passed to LSU
+  parameter int unsigned DUMP_PERIOD = 0,  // cycles, zero to disable
+  parameter int unsigned PIPE_NUM = 0,  // number of pipeline registers
+  parameter int unsigned SKIP_INS_ANS_REG  = 0,  // instruction from memory is directly passed to fetch
+  parameter int unsigned SKIP_DATA_ANS_REG = 0  // data from memory is directly passed to LSU
 ) (
   input logic clk_i,
   input logic rst_n_i,
@@ -69,7 +69,7 @@ module memory_bare_emu #(
     i_mem = new(mem_file_i);
     d_mem = new(mem_file_i);
     if (i_mem.LoadMem() <= 0) begin
-      $error("Unable to load instruction memory")
+      $fatal("Unable to load instruction memory");
     end
   end
 
@@ -77,12 +77,12 @@ module memory_bare_emu #(
   // -----------
   // Dump the memory content in each cycle
   generate
-    if (DUMP_PERIOD > 0) begin : mem_dump
+    if (DUMP_PERIOD > 0) begin : gen_mem_dump
       initial begin
         while (1) begin
           repeat (DUMP_PERIOD) @(posedge clk_i);
           if (i_mem.PrintMem(mem_dump_file_i)) begin
-            `$error("Unable to dump memory content to file");
+            $fatal("Unable to dump memory content to file");
           end
         end
       end
@@ -106,7 +106,7 @@ module memory_bare_emu #(
           ins_ans.value = {'0, i_mem.read_word};
         end
         default: begin
-          `$error("Unsupported instruction request");
+          $fatal("Unsupported instruction request");
         end
       endcase
 
@@ -154,44 +154,44 @@ module memory_bare_emu #(
               d_mem.WriteB(data_req_i.addr, data_req_i.value[7:0]);
             end
             LS_HALFWORD, LS_HALFWORD_U: begin
-              d_ret = d_mem.WriteHW(data_req_i.addr, data_req_i.value[15:0]);
+              d_ret <= d_mem.WriteHW(data_req_i.addr, data_req_i.value[15:0]);
             end
             LS_WORD, LS_WORD_U: begin
-              d_ret = d_mem.WriteW(data_req_i.addr, data_req_i.value[31:0]);
+              d_ret <= d_mem.WriteW(data_req_i.addr, data_req_i.value[31:0]);
             end
             LS_DOUBLEWORD: begin
-              d_ret = d_mem.WriteDW(data_req_i.addr, data_req_i.value);
+              d_ret <= d_mem.WriteDW(data_req_i.addr, data_req_i.value);
             end
             default: begin
-              `$error("Unsupported data store request");
+              $fatal("Unsupported data store request");
             end
           endcase
         end
         MEM_ACC_LD: begin : load_data
           case (data_req_i.ls_type)
             LS_BYTE, LS_BYTE_U: begin
-              d_ret = d_mem.ReadB(data_req_i.addr);
+              d_ret          <= d_mem.ReadB(data_req_i.addr);
               data_ans.value <= {'0, d_mem.read_byte};
             end
             LS_HALFWORD, LS_HALFWORD_U: begin
-              d_ret = d_mem.ReadHW(data_req_i.addr);
+              d_ret          <= d_mem.ReadHW(data_req_i.addr);
               data_ans.value <= {'0, d_mem.read_halfword};
             end
             LS_WORD, LS_WORD_U: begin
-              d_ret = d_mem.ReadW(data_req_i.addr);
+              d_ret          <= d_mem.ReadW(data_req_i.addr);
               data_ans.value <= {'0, d_mem.read_word};
             end
             LS_DOUBLEWORD: begin
-              d_ret = d_mem.ReadDW(data_req_i.addr);
+              d_ret          <= d_mem.ReadDW(data_req_i.addr);
               data_ans.value <= {'0, d_mem.read_doubleword};
             end
             default: begin
-              `$error("Unsupported data load request");
+              $fatal("Unsupported data load request");
             end
           endcase
         end
         default: begin
-          `$error("Unsupported data request");
+          $fatal("Unsupported data request");
         end
       endcase
 
@@ -239,7 +239,7 @@ module memory_bare_emu #(
   assign data_pipe_valid[0] = data_valid_i;
   assign data_pipe_reg[0]   = data_ans;
   generate
-    for (genvar i = 1; i < PIPE_NUM + 1; i++) begin
+    for (genvar i = 1; i < PIPE_NUM + 1; i++) begin : gen_mem_pipe_reg
       always_ff @(posedge clk_i) begin : mem_pipe_reg
         if (!rst_n_i) begin
           ins_pipe_valid[i]  <= 1'b0;

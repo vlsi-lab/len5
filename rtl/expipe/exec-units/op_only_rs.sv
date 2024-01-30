@@ -16,10 +16,10 @@ import len5_pkg::*;
 import expipe_pkg::*;
 
 module op_only_rs #(
-  RS_DEPTH = 4,  // must be a power of 2
+  parameter int unsigned RS_DEPTH = 4,  // must be a power of 2
 
   // EU-specific parameters
-  EU_CTL_LEN = 2
+  parameter int unsigned EU_CTL_LEN = 2
 ) (
   // Clock, reset, and flush
   input logic clk_i,
@@ -48,30 +48,29 @@ module op_only_rs #(
 );
 
   // DEFINITIONS
-
-  localparam RS_IDX_LEN = $clog2(RS_DEPTH);  //3 reservation station address width
+  localparam int unsigned RsIdxLen = $clog2(RS_DEPTH);  //3 reservation station address width
 
   // Reservation station entry
   typedef struct packed {
     logic valid;  // The entry contains a valid instruction
     logic rs1_ready;  // The first operand value is available in 'rs1_value'
-    rob_idx_t rs1_idx;    // The entry of the rob that will contain the required operand. This can be fetched as soon as it appears on the CDB (when the EU produces it).
+    rob_idx_t rs1_idx;    // ROB entry containing the required operand, fetched as soon as it appears on the CDB
     logic [XLEN-1:0] rs1_value;  // The value of the first operand
     rob_idx_t dest_idx;  // The entry of the ROB assigned to the current instruction
   } rs_entry_t;
 
   // Reservation station pointers
-  logic [RS_IDX_LEN-1:0] head_idx, tail_idx;
+  logic [RsIdxLen-1:0] head_idx, tail_idx;
 
   // Head, ex and tail counters
   logic head_cnt_en, head_cnt_clr, tail_cnt_en, tail_cnt_clr;
 
   // The actual reservation station data structure
-  rs_entry_t rs_data    [0:RS_DEPTH-1];
+  rs_entry_t rs_data    [RS_DEPTH];
 
   // Status signals
-  logic      valid_a    [0:RS_DEPTH-1];  // valid entries, empty entries
-  logic      res_ready_a[0:RS_DEPTH-1];  // Ready operands / ready result entries
+  logic      valid_a    [RS_DEPTH];  // valid entries, empty entries
+  logic      res_ready_a[RS_DEPTH];  // Ready operands / ready result entries
 
   // RS control signals
   logic rs_push, rs_pop;
@@ -212,10 +211,10 @@ module op_only_rs #(
   // -----------------
 
   // To the CDB
-  assign cdb_data_o.rob_idx = rs_data[head_idx].dest_idx;
-  assign cdb_data_o.res_value = rs_data[head_idx].rs1_value;  // for CSR instructions
-  assign cdb_data_o.except_raised = 1'b0;  // no exception can be raised  (Wrong, First check the Missp if ok then cheeck address misaglined)
-  assign cdb_data_o.except_code = E_UNKNOWN;
+  assign cdb_data_o.rob_idx       = rs_data[head_idx].dest_idx;
+  assign cdb_data_o.res_value     = rs_data[head_idx].rs1_value;  // for CSR instructions
+  assign cdb_data_o.except_raised = 1'b0;  // TODO: first check the mispred and address misaglined
+  assign cdb_data_o.except_code   = E_UNKNOWN;
 
   // ----------
   // ASSERTIONS

@@ -39,11 +39,11 @@ module spill_cell #(
 );
   // Bypass internal logic
   generate
-    if (SKIP) begin: gen_skip_cell_gen
+    if (SKIP) begin : gen_skip_cell_gen
       assign valid_o = valid_i;
       assign ready_o = ready_i;
       assign data_o  = data_i;
-    end else begin: gen_spill_cell_gen
+    end else begin : gen_spill_cell_gen
 
       // ----------------
       // INTERNAL SIGNALS

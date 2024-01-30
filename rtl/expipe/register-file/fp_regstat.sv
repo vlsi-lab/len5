@@ -19,8 +19,9 @@
 import expipe_pkg::*;
 
 module fp_regstat #(
-             REG_NUM     = 32,              // power of 2
-  localparam REG_IDX_LEN = $clog2(REG_NUM)
+  parameter  int unsigned REG_NUM   = 32,              // power of 2
+  // Dependent parameters: do NOT override
+  localparam int unsigned RegIdxLen = $clog2(REG_NUM)
 ) (
   input logic clk_i,
   input logic rst_n_i,
@@ -29,11 +30,11 @@ module fp_regstat #(
   input logic issue_valid_i,
 
   // Data from/to the issue logic
-  input logic     [REG_IDX_LEN-1:0] issue_rd_idx_i,  // destination register of the issuing instruction
-  input rob_idx_t                   issue_rob_idx_i, // ROB index where the instruction is being allocated (tail pointer of the ROB)
+  input logic [RegIdxLen-1:0] issue_rd_idx_i,  // destination register of the issuing instruction
+  input rob_idx_t issue_rob_idx_i,  // allocated ROB index
 
-  input logic [REG_IDX_LEN-1:0] issue_rs1_idx_i,  // first source register index
-  input logic [REG_IDX_LEN-1:0] issue_rs2_idx_i,  // second source register index
+  input logic [RegIdxLen-1:0] issue_rs1_idx_i,  // first source register index
+  input logic [RegIdxLen-1:0] issue_rs2_idx_i,  // second source register index
   output logic issue_rs1_busy_o,  // rs1 value is in the ROB or has to be computed
   output rob_idx_t issue_rs1_rob_idx_o,  // the index of the ROB where the result is found
   output logic issue_rs2_busy_o,  // rs1 value is in the ROB or has to be computed
@@ -43,14 +44,14 @@ module fp_regstat #(
   input logic comm_valid_i,
 
   // Data from the commit logic
-  input logic [REG_IDX_LEN-1:0] comm_rd_idx_i,  // destination register of the committing instr.
-  input rob_idx_t comm_head_idx_i  // head entry of the ROB
+  input logic     [RegIdxLen-1:0] comm_rd_idx_i,   // destination register of the committing instr.
+  input rob_idx_t                 comm_head_idx_i  // head entry of the ROB
 );
 
   // DEFINITIONS
 
   // Register status data
-  regstat_entry_t regstat_data[0:REG_NUM-1];  /* TODO: check for error on this */
+  regstat_entry_t regstat_data[REG_NUM];  /* TODO: check for error on this */
 
   // Operation control
   logic regstat_issue_upd, regstat_comm_upd;
@@ -114,12 +115,12 @@ module fp_regstat #(
   // --------------------------
   // READ OPERANDS FOR THE ISSUE STAGE
   // rs1 (READ PORT 1)
-  assign issue_rs1_busy_o    = |regstat_data[issue_rs1_idx_i].busy;  // 0 only if no in-flight instructions will write that register
+  assign issue_rs1_busy_o    = |regstat_data[issue_rs1_idx_i].busy;  // 0 only if written by in-flight instruction
 
   //assign issue_rs1_busy_o             = regstat_data[issue_rs1_idx_i].busy;
   assign issue_rs1_rob_idx_o = regstat_data[issue_rs1_idx_i].rob_idx;
   // rs2 (READ PORT 2)
-  assign issue_rs2_busy_o    = |regstat_data[issue_rs2_idx_i].busy;  // 0 only if no in-flight instructions will write that register
+  assign issue_rs2_busy_o    = |regstat_data[issue_rs2_idx_i].busy;  // 0 only if written by in-flight instruction
 
   //assign issue_rs2_busy_o             = regstat_data[issue_rs2_idx_i].busy;
   assign issue_rs2_rob_idx_o = regstat_data[issue_rs2_idx_i].rob_idx;

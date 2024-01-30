@@ -45,18 +45,8 @@ package expipe_pkg;
   // EXECUTION UNITS
   // ---------------
   localparam int unsigned BASE_EU_N = 4;  // load buffer, store buffer, branch unit, ALU
-
-`ifdef LEN5_M_EN
-  localparam int unsigned MULT_EU_N = 2;  // MULT, DIV
-`else
-  localparam int unsigned MULT_EU_N = 0;
-`endif  /* LEN5_M_EN */
-
-`ifdef LEN5_FP_EN
-  localparam int unsigned FP_EU_N = 1;  // FPU
-`else
-  localparam int unsigned FP_EU_N = 0;
-`endif  /* LEN5_FP_EN */
+  localparam int unsigned MULT_EU_N = (LEN5_M_EN) ? 2 : 0;  // MULT, DIV
+  localparam int unsigned FP_EU_N = (LEN5_FP_EN) ? 1 : 0;  // FPU
 
   // Total number of execution units
   localparam int unsigned EU_N = BASE_EU_N + MULT_EU_N + FP_EU_N;
@@ -186,14 +176,14 @@ package expipe_pkg;
 
   // Branch unit control
   typedef enum logic [MAX_EU_CTL_LEN-1:0] {
-    BEQ  = 'h0,
-    BNE  = 'h1,
-    BLT  = 'h2,
-    BGE  = 'h3,
-    BLTU = 'h4,
-    BGEU = 'h5,
-    JAL  = 'h6,
-    JALR = 'h7
+    BU_BEQ  = 'h0,
+    BU_BNE  = 'h1,
+    BU_BLT  = 'h2,
+    BU_BGE  = 'h3,
+    BU_BLTU = 'h4,
+    BU_BGEU = 'h5,
+    BU_JAL  = 'h6,
+    BU_JALR = 'h7
   } branch_ctl_t;
 
   // Load-store unit control
@@ -253,13 +243,9 @@ EU_N
     EU_LOAD_BUFFER,
     EU_STORE_BUFFER,
     EU_INT_ALU,
-`ifdef LEN5_M_EN
     EU_INT_MULT,
     EU_INT_DIV,
-`endif  /* LEN5_M_EN */
-`ifdef LEN5_FP_EN
     EU_FPU,
-`endif  /* LEN5_FP_EN */
     EU_BRANCH_UNIT
   } issue_eu_t;
 
