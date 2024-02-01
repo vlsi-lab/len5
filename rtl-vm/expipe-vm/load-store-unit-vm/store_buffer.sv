@@ -875,6 +875,7 @@ module store_buffer (
   // ASSERTIONS
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   always @(negedge clk_i) begin
     // Notice when the load buffer is full
     assert (valid_a !== '1)
@@ -885,6 +886,7 @@ module store_buffer (
       else `$error($sformatf("Store buffer entry %4d has encountered an unknown exception", i))
     end
   end
-`endif
+`endif /* VERILATOR */
+`endif /* SYNTHESIS */
 
 endmodule

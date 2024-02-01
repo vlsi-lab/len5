@@ -294,10 +294,12 @@ module issue_cu (
   // DEBUG CODE
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   always @(posedge clk_i) begin
     $display($sformatf("valid_i: %b | commit ready: %b | ex. ready: %d | type: %s | state: %s",
                        iq_valid_i, comm_ready_i, ex_ready_i, issue_type_i.name(),
                        curr_state.name()));
   end
+`endif  /* VERILATOR */
 `endif  /* SYNTHESIS */
 endmodule

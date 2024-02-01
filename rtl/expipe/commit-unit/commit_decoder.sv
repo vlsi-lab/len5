@@ -124,7 +124,7 @@ module commit_decoder (
 
         // FENCE
         // -----
-        `OPCODE_MISC_MEM: comm_type = COMM_TYPE_FENCE;
+        FENCE: comm_type = COMM_TYPE_FENCE;
 
         default: comm_type = COMM_TYPE_EXCEPT;
       endcase

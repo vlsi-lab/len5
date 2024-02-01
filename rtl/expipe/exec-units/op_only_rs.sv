@@ -220,12 +220,14 @@ module op_only_rs #(
   // ASSERTIONS
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   // Check that assigned instructions are missing their operand
   property p_op_not_ready;
     @(posedge clk_i) disable iff (!rst_n_i) issue_valid_i |-> !rs1_ready_i;
   endproperty
   a_op_not_ready :
   assert property (p_op_not_ready);
-`endif
+`endif /* VERILATOR */
+`endif /* SYNTHESIS */
 
 endmodule

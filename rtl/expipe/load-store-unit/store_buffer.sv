@@ -449,12 +449,14 @@ module store_buffer #(
   // ASSERTIONS
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   always @(posedge clk_i) begin
     foreach (curr_state[i]) begin
       assert property (@(posedge clk_i) disable iff (!rst_n_i) curr_state[i] == STORE_S_HALT |->
                 ##1 curr_state[i] != STORE_S_HALT);
     end
   end
+`endif  /* VERILATOR */
 `endif  /* SYNTHESIS */
 
 endmodule

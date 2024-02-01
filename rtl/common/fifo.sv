@@ -135,6 +135,7 @@ module fifo #(
   // ASSERTIONS
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   property p_fifo_push;
     @(posedge clk_i) disable iff (!rst_n_i) sync_accept_on (flush_i)
       valid_i && ready_o |-> ##1 valid_o && data_valid[$past(
@@ -176,6 +177,7 @@ module fifo #(
   endproperty
   a_ready_n :
   assert property (p_ready_n);
+`endif  /* VERILATOR */
 `endif  /* SYNTHESIS */
 
 endmodule

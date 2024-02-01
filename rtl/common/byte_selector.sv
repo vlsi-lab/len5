@@ -72,6 +72,7 @@ module byte_selector (
   // ASSERTIONS
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   always_comb begin
     case (type_i)
       LS_HALFWORD, LS_HALFWORD_U:
@@ -95,6 +96,7 @@ module byte_selector (
       default: ;
     endcase
   end
-`endif
+`endif /* VERILATOR */
+`endif /* SYNTHESIS */
 
 endmodule

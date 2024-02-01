@@ -451,10 +451,12 @@ module commit_cu (
   // DEBUG CODE
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   always @(posedge clk_i) begin
     $display($sformatf("valid_i: %b | instr: %h | type: %s | state: %s", valid_i, instr_i,
                        comm_type_i.name(), curr_state.name()));
   end
+`endif  /* VERILATOR */
 `endif  /* SYNTHESIS */
 
 endmodule

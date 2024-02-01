@@ -137,6 +137,7 @@ module int_regstat #(
   // ASSERTIONS
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   // The counter should never overflow
   property p_busy_cnt_overflow(i, en, cnt);
     @(posedge clk_i) disable iff (!rst_n_i) en && &cnt |-> ##1 |cnt;
@@ -148,5 +149,6 @@ module int_regstat #(
       else $error($sformatf("busy count %0d overflow", i));
     end
   endgenerate
+`endif  /* VERILATOR */
 `endif  /* SYNTHESIS */
 endmodule

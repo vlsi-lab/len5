@@ -125,6 +125,7 @@ module vaddr_adder #(
   // ASSERTIONS
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   satp_mode_t vm_mode_e;
   always @(negedge clk_i) begin
     $cast(vm_mode_e, vm_mode);
@@ -152,6 +153,7 @@ module vaddr_adder #(
       default: ;
     endcase
   end
-`endif
+`endif /* VERILATOR */
+`endif /* SYNTHESIS */
 
 endmodule

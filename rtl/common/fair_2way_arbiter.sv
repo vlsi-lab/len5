@@ -13,7 +13,7 @@
 // Date: 29/10/2019
 
 module fair_2way_arbiter #(
-  parameter type DATA_T
+  parameter type DATA_T = logic
 ) (
   input logic clk_i,
   input logic rst_n_i,

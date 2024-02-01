@@ -13,7 +13,7 @@
 // Date: 29/10/2019
 
 module prio_2way_arbiter #(
-  parameter type DATA_T
+  parameter type DATA_T = logic
 ) (
   // Handshaking
   input  logic high_prio_valid_i,  // from upstream hardware

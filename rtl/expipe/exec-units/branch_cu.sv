@@ -105,6 +105,7 @@ module branch_cu (
   // DEBUG CODE
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   property p_fe_valid;
     @(posedge clk_i) disable iff (!rst_n_i)
         sync_accept_on(flush_i)
@@ -120,5 +121,6 @@ module branch_cu (
   endproperty
   a_wait_flush :
   assert property (p_wait_flush);
+`endif  /* VERILATOR */
 `endif  /* SYNTHESIS */
 endmodule

@@ -495,6 +495,7 @@ module issue_stage (
   // DEBUG CODE
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   always @(posedge clk_i) begin
     if (comm_valid_o && comm_ready_i) begin
       $display(comm_data_o.instruction.raw);
@@ -508,6 +509,7 @@ module issue_stage (
   endproperty
   a_ex_valid :
   assert property (p_ex_valid);
+`endif  /* VERILATOR */
 `endif  /* SYNTHESIS */
 
 endmodule

@@ -176,6 +176,7 @@ module rob #(
   // ASSERTIONS
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   property p_fifo_push;
     @(posedge clk_i) disable iff (!rst_n_i) sync_accept_on (flush_i)
       issue_valid_i && issue_ready_o |-> ##1 data_valid[$past(
@@ -236,6 +237,7 @@ module rob #(
   endproperty
   a_flush :
   assert property (p_flush);
+`endif  /* VERILATOR */
 `endif  /* SYNTHESIS */
 
 endmodule

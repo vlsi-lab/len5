@@ -129,11 +129,13 @@ module fifo_nohs #(
       // ASSERTIONS
       // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
       property p_fifo_full;
         @(posedge clk_i) disable iff (!rst_n_i || flush_i) (tail_cnt == head_cnt) && data_valid[head_cnt] |-> !push_i
       endproperty
       a_fifo_full :
       assert property (p_fifo_full);
+`endif  /* VERILATOR */
 `endif  /* SYNTHESIS */
     end
   endgenerate

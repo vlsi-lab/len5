@@ -718,7 +718,9 @@ module issue_decoder (
   // ASSERTIONS
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   /* Assertions here */
-`endif
+`endif /* VERILATOR */
+`endif /* SYNTHESIS */
 
 endmodule
