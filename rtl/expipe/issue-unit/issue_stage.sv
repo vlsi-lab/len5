@@ -69,9 +69,9 @@ module issue_stage (
   // output  logic [REG_IDX_LEN-1:0] fprf_rs2_idx_o,         // RF address of the second operand
 
   // Execution pipeline
-  input logic ex_ready_i[EU_N],  // ready signal from each reservation station
+  input logic [MAX_EU_N-1:0] ex_ready_i,  // ready signal from each reservation station
   input logic ex_mis_i,  // misprediction from the branch unit
-  output logic ex_valid_o[EU_N],  // valid signal to each reservation station
+  output logic [MAX_EU_N-1:0] ex_valid_o,  // valid signal to each reservation station
   output eu_ctl_t ex_eu_ctl_o,  // controls for the associated EU
   output op_data_t ex_rs1_o,
   output op_data_t ex_rs2_o,
@@ -122,39 +122,39 @@ module issue_stage (
   issue_reg_t ireg_data_in, ireg_data_out;
 
   // Issue decoderc <--> issue stage
-  issue_type_t             id_cu_issue_type;
-  except_code_t            id_except_code;
-  logic                    id_skip_eu;
-  issue_eu_t               id_assigned_eu;
-  eu_ctl_t                 id_eu_ctl;
-  logic                    id_rs1_req;
-  logic                    id_rs1_is_pc;
-  logic                    id_rs2_req;
-  logic                    id_rs2_is_imm;
+  issue_type_t                 id_cu_issue_type;
+  except_code_t                id_except_code;
+  logic                        id_skip_eu;
+  issue_eu_t                   id_assigned_eu;
+  eu_ctl_t                     id_eu_ctl;
+  logic                        id_rs1_req;
+  logic                        id_rs1_is_pc;
+  logic                        id_rs2_req;
+  logic                        id_rs2_is_imm;
   // logic               id_rs3_req;
-  imm_format_t             id_imm_format;
+  imm_format_t                 id_imm_format;
 
   // Issue queue <--> issue logic
-  logic                    cu_iq_ready;
-  logic         [XLEN-1:0] iq_il_curr_pc;
-  logic         [ILEN-1:0] iq_il_instr;
-  logic         [XLEN-1:0] iq_il_pred_target;
-  logic                    iq_il_pred_taken;
-  logic                    iq_cu_except_raised;
-  except_code_t            iq_il_except_code;
+  logic                        cu_iq_ready;
+  logic         [    XLEN-1:0] iq_il_curr_pc;
+  logic         [    ILEN-1:0] iq_il_instr;
+  logic         [    XLEN-1:0] iq_il_pred_target;
+  logic                        iq_il_pred_taken;
+  logic                        iq_cu_except_raised;
+  except_code_t                iq_il_except_code;
 
   // Issue logic <--> CU
-  logic                    iq_cu_valid;
-  logic                    iq_flush;
-  logic                    cu_mis_flush;
-  logic                    cu_il_res_ready;
-  logic                    cu_il_res_sel_rs1;
-  logic                    cu_il_sel_fetch_except;
-  logic                    cu_il_ex_valid;
-  logic                    il_cu_ex_ready;
+  logic                        iq_cu_valid;
+  logic                        iq_flush;
+  logic                        cu_mis_flush;
+  logic                        cu_il_res_ready;
+  logic                        cu_il_res_sel_rs1;
+  logic                        cu_il_sel_fetch_except;
+  logic                        cu_il_ex_valid;
+  logic                        il_cu_ex_ready;
 
   // CU <--> execution stage
-  logic                    ex_valid               [EU_N];
+  logic         [MAX_EU_N-1:0] ex_valid;
 
   // Operand fetch
   rob_idx_t rs1_rob_idx, rs2_rob_idx;

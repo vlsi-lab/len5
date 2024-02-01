@@ -13,7 +13,7 @@
 // Date: 10/11/2019
 // Description: behavioural emulator of a non-blocking L2 Cache system
 
-`include "../tb/memory/memory_class.svh"
+`include "memory_class.svh"
 
 import len5_pkg::*;
 import memory_pkg::*;

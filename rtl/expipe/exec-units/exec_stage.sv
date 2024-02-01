@@ -33,8 +33,8 @@ module exec_stage (
   output resolution_t fe_res_o,
 
   // ISSUE STAGE
-  input logic issue_valid_i[EU_N],  // valid to each RS
-  output logic issue_ready_o[EU_N],  // ready from each RS
+  input logic [MAX_EU_N-1:0] issue_valid_i,  // valid to each RS
+  output logic [MAX_EU_N-1:0] issue_ready_o,  // ready from each RS
   input eu_ctl_t issue_eu_ctl_i,  // controls for the associated EU
   input op_data_t issue_rs1_i,  // rs1 value, ROB index and availability
   input op_data_t issue_rs2_i,  // rs1 value, ROB index and availability
@@ -46,11 +46,11 @@ module exec_stage (
   output logic issue_mis_o,
 
   // COMMON DATA BUS (CDB)
-  input  logic      [EU_N-1:0] cdb_ready_i,  // from the CDB arbiter
-  input  logic                 cdb_valid_i,  // CDB data is valid
-  output logic      [EU_N-1:0] cdb_valid_o,  // to the CDB arbiter
-  input  cdb_data_t            cdb_data_i,
-  output cdb_data_t [EU_N-1:0] cdb_data_o,
+  input  logic      [MAX_EU_N-1:0] cdb_ready_i,  // from the CDB arbiter
+  input  logic                     cdb_valid_i,  // CDB data is valid
+  output logic      [MAX_EU_N-1:0] cdb_valid_o,  // to the CDB arbiter
+  input  cdb_data_t                cdb_data_i,
+  output cdb_data_t [MAX_EU_N-1:0] cdb_data_o,
 
   // ROB AND CSRs
   input logic     comm_sb_spec_instr_i,

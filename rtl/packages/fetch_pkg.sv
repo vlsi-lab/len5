@@ -25,7 +25,7 @@ package fetch_pkg;
   // DATA TYPES
   // ----------
 
-  // G-share predictor counter values
+  // BPU G-share predictor counter values and initial value
   typedef enum logic [1:0] {  // 2-bit counter
     SNT,  // strong not-taken
     WNT,  // weak not-taken
@@ -77,9 +77,9 @@ package fetch_pkg;
       ILEN / 8
   );  // 2 LSB of addresses are always 0, so no use in using them for indexing
 
-  // g-share branch predictor history length and counters intial value
+  // G-share branch predictor history length and counters intial value
   localparam int unsigned HLEN = BPU_HLEN;
-  localparam c2b_t INIT_C2B = BPU_INIT_C2B;
+  localparam c2b_t INIT_C2B = c2b_t'(BPU_INIT_C2B);
 
   // Branch target buffer bits
   localparam int unsigned BTB_BITS = BPU_BTB_BITS;

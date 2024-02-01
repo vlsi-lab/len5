@@ -36,7 +36,7 @@ package len5_pkg;
   localparam int unsigned S_IMM = I_IMM;  // S-type immediate length
   localparam int unsigned U_IMM = 20;  // U-type immediate length
   localparam int unsigned J_IMM = U_IMM;  // J-type immediate length
-  localparam int [ILEN-1:0] NOP = 'h13;
+  localparam logic [ILEN-1:0] NOP = 'h13;
 
   // -------------------
   // INSTRUCTION FORMATS

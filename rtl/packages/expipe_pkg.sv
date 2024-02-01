@@ -238,15 +238,15 @@ package expipe_pkg;
 
   // Assigned execution unit
   typedef enum logic [$clog2(
-EU_N
+MAX_EU_N
 )-1:0] {
     EU_LOAD_BUFFER,
     EU_STORE_BUFFER,
+    EU_BRANCH_UNIT,
     EU_INT_ALU,
     EU_INT_MULT,
     EU_INT_DIV,
-    EU_FPU,
-    EU_BRANCH_UNIT
+    EU_FPU
   } issue_eu_t;
 
   // Issue register data

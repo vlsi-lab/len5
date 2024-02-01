@@ -58,7 +58,7 @@ check: | .check-fusesoc
 .PHONY: questasim-sim
 questasim-sim: | .check-fusesoc
 	@echo "## Running simulation with QuestaSim"
-	$(FUSESOC) run --no-export --target=sim --tool=modelsim $(FUSESOC_FLAGS) --setup --build polito:len5:len5 2>&1 | tee builsim.log
+	fusesoc run --no-export --target=sim --tool=modelsim $(FUSESOC_FLAGS) --setup --build polito:len5:len5 2>&1 | tee builsim.log
 
 # Verilator
 # TODO: add verilator support to .core files

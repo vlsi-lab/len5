@@ -14,6 +14,7 @@
 // Date: 03/08/2019
 
 package csr_pkg;
+  import len5_config_pkg::LEN5_M_EN;
   import len5_pkg::XLEN;
 
   // ----
@@ -320,10 +321,10 @@ package csr_pkg;
 
   // Implementation IDs
   // ------------------
-  localparam csr_mvendorid_t CSR_MVENDORID = 'h0;
-  localparam csr_marchid_t CSR_MARCHID = 'h0;
-  localparam csr_mimpid_t CSR_MIMPID = 'h0;
-  localparam csr_mhartid_t CSR_MHARTID = 'h0;
+  localparam csr_mvendorid_t CSR_MVENDORID_VALUE = 'h0;
+  localparam csr_marchid_t CSR_MARCHID_VALUE = 'h0;
+  localparam csr_mimpid_t CSR_MIMPID_VALUE = 'h0;
+  localparam csr_mhartid_t CSR_MHARTID_VALUE = 'h0;
 
   // MTVEC
   // -----

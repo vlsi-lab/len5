@@ -86,21 +86,21 @@ module issue_decoder (
     unique case (instruction_i.raw)
       // RV64I
       ADD: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_ADD;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
       ADDW: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_ADDW;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
       ADDI: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_ADD;
         rs1_req     = 1'b1;
@@ -108,7 +108,7 @@ module issue_decoder (
         rs2_is_imm  = 1'b1;
       end
       ADDIW: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_ADDW;
         rs1_req     = 1'b1;
@@ -116,28 +116,28 @@ module issue_decoder (
         rs2_is_imm  = 1'b1;
       end
       SUB: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SUB;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
       SUBW: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SUBW;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
       AND: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_AND;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
       ANDI: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_AND;
         rs1_req     = 1'b1;
@@ -145,14 +145,14 @@ module issue_decoder (
         rs2_is_imm  = 1'b1;
       end
       OR: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_OR;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
       ORI: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_OR;
         rs1_req     = 1'b1;
@@ -160,14 +160,14 @@ module issue_decoder (
         rs2_is_imm  = 1'b1;
       end
       XOR: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_XOR;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
       XORI: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_XOR;
         rs1_req     = 1'b1;
@@ -175,21 +175,21 @@ module issue_decoder (
         rs2_is_imm  = 1'b1;
       end
       SLL: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SLL;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
       SLLW: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SLLW;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
       SLLI: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SLL;
         rs1_req     = 1'b1;
@@ -197,7 +197,7 @@ module issue_decoder (
         rs2_is_imm  = 1'b1;
       end
       SLLIW: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SLLW;
         rs1_req     = 1'b1;
@@ -205,21 +205,21 @@ module issue_decoder (
         rs2_is_imm  = 1'b1;
       end
       SRL: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SRL;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
       SRLW: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SRLW;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
       SRLI: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SRL;
         rs1_req     = 1'b1;
@@ -227,7 +227,7 @@ module issue_decoder (
         rs2_is_imm  = 1'b1;
       end
       SRLIW: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SRLW;
         rs1_req     = 1'b1;
@@ -235,21 +235,21 @@ module issue_decoder (
         rs2_is_imm  = 1'b1;
       end
       SRA: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SRA;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
       SRAW: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SRAW;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
       SRAI: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SRA;
         rs1_req     = 1'b1;
@@ -257,7 +257,7 @@ module issue_decoder (
         rs2_is_imm  = 1'b1;
       end
       SRAIW: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SRAW;
         rs1_req     = 1'b1;
@@ -265,21 +265,21 @@ module issue_decoder (
         rs2_is_imm  = 1'b1;
       end
       SLT: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SLT;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
       SLTU: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SLTU;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
       SLTI: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SLT;
         rs1_req     = 1'b1;
@@ -287,7 +287,7 @@ module issue_decoder (
         rs2_is_imm  = 1'b1;
       end
       SLTIU: begin
-        issue_type  = INSTR_TYPE_INT;
+        issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SLTU;
         rs1_req     = 1'b1;
@@ -454,9 +454,9 @@ module issue_decoder (
         skip_eu       = 1'b1;
         opcode_except = 1'b1;
         unique case (priv_mode_i)
-          PRIV_MODE_U: except_code = E_ENV_CALL_U;
-          PRIV_MODE_S: except_code = E_ENV_CALL_S;
-          default:     except_code = E_ENV_CALL_M;
+          PRIV_MODE_U: except_code = E_ENV_CALL_UMODE;
+          PRIV_MODE_S: except_code = E_ENV_CALL_SMODE;
+          default:     except_code = E_ENV_CALL_MMODE;
         endcase
       end
       EBREAK: begin  // TODO: add EBREAK support

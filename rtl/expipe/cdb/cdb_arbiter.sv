@@ -13,6 +13,7 @@
 // Date: 11/11/2019
 
 import expipe_pkg::*;
+import len5_config_pkg::MAX_EU_N;
 
 module cdb_arbiter (
   input logic clk_i,
@@ -25,29 +26,29 @@ module cdb_arbiter (
   output logic max_prio_ready_o,
 
   // Handshake from/to the units
-  input  logic [EU_N-2:0] valid_i,
-  output logic [EU_N-2:0] ready_o,
+  input  logic [MAX_EU_N-2:0] valid_i,
+  output logic [MAX_EU_N-2:0] ready_o,
 
   // Handshake from/to the ROB
   input  logic rob_ready_i,
   output logic rob_valid_o,
 
   // To the CDB MUX
-  output logic                    served_max_prio_o,
-  output logic [$clog2(EU_N)-1:0] served_o
+  output logic                        served_max_prio_o,
+  output logic [$clog2(MAX_EU_N)-1:0] served_o
 );
 
   // DEFINITIONS
-  logic [EU_N-2:0] rem_valid_a, msk_valid_a;
+  logic [MAX_EU_N-2:0] rem_valid_a, msk_valid_a;
 
   // Valid MUX
-  logic [          EU_N-2:0] mux_valid_a;
+  logic [          MAX_EU_N-2:0] mux_valid_a;
 
   // Valid priority encoder + decoder
-  logic [$clog2(EU_N-1)-1:0] enc_out;
-  logic [  $clog2(EU_N)-1:0] served_temp;
-  logic                      enc_valid;
-  logic [          EU_N-1:0] dec_valid_a;
+  logic [$clog2(MAX_EU_N-1)-1:0] enc_out;
+  logic [  $clog2(MAX_EU_N)-1:0] served_temp;
+  logic                          enc_valid;
+  logic [          MAX_EU_N-1:0] dec_valid_a;
 
   // ---------
   // VALID MUX
@@ -59,7 +60,7 @@ module cdb_arbiter (
   // VALID PRIORITY ENCODER
   // ----------------------
   prio_enc_inv #(
-    .N(EU_N - 1)
+    .N(MAX_EU_N - 1)
   ) vaild_prio_enc (
     .lines_i(mux_valid_a),
     .enc_o  (enc_out),

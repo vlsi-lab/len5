@@ -19,6 +19,7 @@
 
 import expipe_pkg::*;
 import csr_pkg::*;
+import instr_pkg::*;
 import len5_pkg::ILEN;
 import len5_pkg::OPCODE_LEN;
 import len5_pkg::instr_t;
@@ -52,49 +53,16 @@ module commit_decoder (
       case (instruction_i.raw)
         // Intructions committing to the integer RF
         // ----------------------------------------
-        ADD,
-                ADDI,
-                ADDIW,
-                ADDW,
-                AND,
-                ANDI,
-                OR,
-                ORI,
-                SLL,
-                SLLI,
-                SLLIW,
-                SLLW,
-                SLT,
-                SLTI,
-                SLTIU,
-                SLTU,
-                SRA,
-                SRAI,
-                SRAIW,
-                SRAW,
-                SRL,
-                SRLI,
-                SRLIW,
-                SRLW,
-                SUB,
-                SUBW,
-                XOR,
-                XORI,
-                MUL,
-                MULH,
-                MULHSU,
-                MULHU,
-                MULW,
-                REM,
-                REMU,
-                REMUW,
-                REMW,
-                DIV,
-                DIVU,
-                DIVUW,
-                DIVW,
-                LUI,
-                AUIPC:
+        ADD, ADDI, ADDIW, ADDW,
+        SUB, SUBW,
+        AND, ANDI, OR, ORI, XOR, XORI,
+        SLL, SLLI, SLLIW, SLLW, SLT, SLTI, SLTIU, SLTU,
+        SRA, SRAI, SRAIW, SRAW, SRL, SRLI, SRLIW, SRLW,
+        MUL, MULH, MULHSU, MULHU, MULW,
+        REM, REMU, REMUW, REMW,
+        DIV, DIVU, DIVUW, DIVW,
+        LUI, AUIPC
+        :
         comm_type = COMM_TYPE_INT_RF;
 
         LB, LBU, LD, LH, LHU, LUI, LW, LWU: comm_type = COMM_TYPE_LOAD;

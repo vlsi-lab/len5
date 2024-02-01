@@ -163,10 +163,10 @@ module csrs (
   assign misa.extensions    = MISA_EXT;
 
   // Implementation IDs
-  assign mvendorid          = CSR_MVENDORID;
-  assign marchid            = CSR_MARCHID;
-  assign mimpid             = CSR_MIMPID;
-  assign mhartid            = CSR_MHARTID;
+  assign mvendorid          = CSR_MVENDORID_VALUE;
+  assign marchid            = CSR_MARCHID_VALUE;
+  assign mimpid             = CSR_MIMPID_VALUE;
+  assign mhartid            = CSR_MHARTID_VALUE;
 
   // MSTATUS
   assign mstatus.sd         = 1'b0;

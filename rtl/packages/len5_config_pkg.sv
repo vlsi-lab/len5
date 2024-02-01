@@ -11,145 +11,159 @@
 // File: len5_config_pkg.svh
 // Author: Michele Caon
 // Date: 04/11/2021
+`ifndef LEN5_CONFIG_PKG_
+`define LEN5_CONFIG_PKG_
 
 package len5_config_pkg;
-// --------------------
-// GLOBAL CONFIGURATION
-// --------------------
+  // --------------------
+  // GLOBAL CONFIGURATION
+  // --------------------
 
-// Boot memory translation mode
-enum boot_mode_e {BARE, SV39, SV48};
-localparam boot_mode_e BOOT_VM_MODE = BARE; // BARE|SV39|SV48
+  // Boot memory translation mode
+  typedef enum {
+    BARE,
+    SV39,
+    SV48
+  } boot_mode_e;
+  localparam boot_mode_e BOOT_VM_MODE = BARE;  // BARE|SV39|SV48
 
-// Boot program counter
-localparam logic[63:0] BOOT_PC = 64'h180;
+  // Boot program counter
+  localparam logic [63:0] BOOT_PC = 64'h180;
 
-// MEMORY-MAPPED DEVICES
-// ---------------------
+  // MEMORY-MAPPED DEVICES
+  // ---------------------
 
-// Address mask for memory-mapped devices
-// This mask defines the address range that is reserved to memory-mapped
-// devices. Store-to-load forwarding (see below) in this region is not
-// performed.
-localparam logic[63:0] MMAP_MASK = 64'h000000000000ffff; // 64kiB by default
+  // Address mask for memory-mapped devices
+  // This mask defines the address range that is reserved to memory-mapped
+  // devices. Store-to-load forwarding (see below) in this region is not
+  // performed.
+  localparam logic [63:0] MMAP_MASK = 64'h000000000000ffff;  // 64kiB by default
 
-// TB Serial interface base address
-localparam logic[63:0] SERIAL_ADDR = 'h10000;
+  // TB Serial interface base address
+  localparam logic [63:0] SERIAL_ADDR = 'h10000;
 
-// TB exit register address (stop the simulation when written)
-localparam logic[63:0] EXIT_ADDR = 'h10000;
+  // TB exit register address (stop the simulation when written)
+  localparam logic [63:0] EXIT_ADDR = 'h10000;
 
-// MEMORY EMULATOR PARAMETERS
-// --------------------------
+  // MEMORY EMULATOR PARAMETERS
+  // --------------------------
 
-// Raise access fault on load from empty (uninitialized) memory location
-//`define MEM_EMU_RAISE_READ_ACCESS_FAULT
+  // Raise access fault on load from empty (uninitialized) memory location
+  //`define MEM_EMU_RAISE_READ_ACCESS_FAULT
 
-// Skip instruction and/or data output registers
-localparam bit MEM_EMU_SKIP_INSTR_OUT_REG = 1'b1;
-localparam bit MEM_EMU_SKIP_DATA_OUT_REG = 1'b1;
+  // Skip instruction and/or data output registers
+  localparam bit MEM_EMU_SKIP_INSTR_OUT_REG = 1'b1;
+  localparam bit MEM_EMU_SKIP_DATA_OUT_REG = 1'b1;
 
-// FRONTEND PARAMETERS
-// -------------------
-// BPU g-share predictor global history length
-localparam int unsigned BPU_HLEN = 4;
+  // FRONTEND PARAMETERS
+  // -------------------
+  // BPU g-share predictor global history length
+  localparam int unsigned BPU_HLEN = 4;
+  typedef enum {
+    SNT,
+    WNT,
+    WT,
+    ST
+  } bpu_init_c2b_t;
+  localparam bpu_init_c2b_t BPU_INIT_C2B = WT;
+  // BPU Branch Target Buffer (BTB) addressing bits (the remaining ones are used
+  // as tag)
+  localparam int unsigned BPU_BTB_BITS = 4;
 
-// BPU g-share predictor counters initial value
-enum bpu_init_c2b_e {SNT, WNT, WT, ST};
-bpu_init_c2b_e BPU_INIT_C2B = WT;
+  // -----------------
+  // PIPELINE SWITCHES
+  // -----------------
+  // The following switches enable or disable some of the sequential elements
+  // inside some functional units, therefore reducing the latency at the
+  // expense of increased delay on the involved lines. The increased delay
+  // may impact on the operation frequency if the combinational unit enters
+  // the processor critical path. The pipeline of the processor can handle
+  // functional units with arbitrary latency, including 0-cycle, so this
+  // changes do not require any modification.
 
-// BPU Branch Target Buffer (BTB) addressing bits (the remaining ones are used
-// as tag)
-localparam int unsigned BPU_BTB_BITS = 4;
+  // FETCH STAGE
+  // -----------
 
-// -----------------
-// PIPELINE SWITCHES
-// -----------------
-// The following switches enable or disable some of the sequential elements
-// inside some functional units, therefore reducing the latency at the
-// expense of increased delay on the involved lines. The increased delay
-// may impact on the operation frequency if the combinational unit enters
-// the processor critical path. The pipeline of the processor can handle
-// functional units with arbitrary latency, including 0-cycle, so this
-// changes do not require any modification.
+  // Fetch memory interface
+  // NOTE: if the memory is 0-latency, at least one of the fetch unit registers
+  // must be enabled (i.e., not skipped). Therefore, at least one of the
+  // following switches must be commented in this case.
+  localparam bit FETCH_REQ_SPILL_SKIP = 1'b1; // memory requests from the fetch unit are directly passed to the memory
+  localparam bit FETCH_ANS_SPILL_SKIP = 1'b0; // fetched instructions are directly passed to the issue stage
 
-// FETCH STAGE
-// -----------
+  // EXECUTION PIPELINE
+  // ------------------
 
-// Fetch memory interface
-// NOTE: if the memory is 0-latency, at least one of the fetch unit registers
-// must be enabled (i.e., not skipped). Therefore, at least one of the
-// following switches must be commented in this case.
-localparam bit FETCH_REQ_SPILL_SKIP = 1'b1; // memory requests from the fetch unit are directly passed to the memory
-//`define FETCH_ANS_SPILL_SKIP // fetched instructions are directly passed to the issue stage
+  // ALU
+  localparam bit ALU_SPILL_SKIP = 1'b1;  // make the ALU fully combinational
 
-// EXECUTION PIPELINE
-// ------------------
+  // Branch Unit
+  localparam bit BU_SPILL_SKIP = 1'b1;  // make the target address adder fully combinational
 
-// ALU
-localparam bit ALU_SPILL_SKIP = 1'b1; // make the ALU fully combinational
+  // Load-store Unit
+  localparam bit LSU_SPILL_SKIP = 1'b1;  // make address adder fully combinational
 
-// Branch Unit
-localparam bit BU_SPILL_SKIP = 1'b1; // make the target address adder fully combinational
+  // Commit Stage
+  localparam bit COMMIT_SPILL_SKIP = 1'b1;  // directly connect the commit CU to the ROB output
 
-// Load-store Unit
-localparam bit LSU_SPILL_SKIP = 1'b1; // make address adder fully combinational
+  // -----------------
+  // FEATURES SWITCHES
+  // -----------------
 
-// Commit Stage
-localparam bit COMMIT_SPILL_SKIP = 1'b1; // directly connect the commit CU to the ROB output
+  // Enable store-to-load forwarding
+  // -------------------------------
+  // This switch instantiates a small cache with the same size as store buffer
+  // inside the Load-Store Unit. This cache records the store buffer entry
+  // containing the latest instruction that wrote a certain memory location.
+  // When a load instruction accesses the same location, the forwarding of the
+  // stored result is attempted.
+  // IMPORTANT: this feature breaks reads from memory-mapped devices, therefore
+  // it is only applied to memory addresses outside of the region masked by
+  // 'MMAP_MASK' (defined above).
+  localparam bit LEN5_STORE_LOAD_FWD_EN = 1'b1;
 
-// -----------------
-// FEATURES SWITCHES
-// -----------------
+  // Enable C extension
+  // ------------------
+  // NOTE: CURRENTLY UNSUPPORTED
+  localparam bit LEN5_C_EN = 1'b0;
 
-// Enable store-to-load forwarding
-// -------------------------------
-// This switch instantiates a small cache with the same size as store buffer
-// inside the Load-Store Unit. This cache records the store buffer entry
-// containing the latest instruction that wrote a certain memory location.
-// When a load instruction accesses the same location, the forwarding of the
-// stored result is attempted.
-// IMPORTANT: this feature breaks reads from memory-mapped devices, therefore
-// it is only applied to memory addresses outside of the region masked by
-// 'MMAP_MASK' (defined above).
-localparam bit LEN5_STORE_LOAD_FWD_EN = 1'b1;
+  // Enable M extension support
+  // --------------------------
+  localparam bit LEN5_M_EN = 1'b0;
 
-// Enable C extension
-// ------------------
-// NOTE: CURRENTLY UNSUPPORTED
-localparam bit LEN5_C_EN = 1'b0;
+  // Enable floating-point support
+  // -----------------------------
+  localparam bit LEN5_FP_EN = 1'b0;
 
-// Enable M extension support
-// --------------------------
-localparam bit LEN5_M_EN = 1'b0;
+  // Enable atomic support
+  // ---------------------
+  localparam bit LEN5_A_EN = 1'b0;
 
-// Enable floating-point support
-// -----------------------------
-localparam bit LEN5_FP_EN = 1'b0;
+  // Maximum number of execution units :
+  // load buffer, store buffer, branch unit, ALU, MULT, DIV, FPU
+  localparam int unsigned MAX_EU_N = 8;
 
-// Enable atomic support
-// ---------------------
-localparam bit LEN5_A_EN = 1'b0;
+  // Reservation stations
+  // --------------------
+  // If defined, the arbiters of the shared virtual address adder, the DTLB and the DCACHE will give the highest priority to the store buffer in case of conflict. This might slightly increase the forwarding hit ration from the store buffer to the load buffer, while decreasing the latency of loads execution.
+  localparam bit ENABLE_STORE_PRIO_2WAY_ARBITER = 1'b1;
 
-// Reservation stations
-// --------------------
-// If defined, the arbiters of the shared virtual address adder, the DTLB and the DCACHE will give the highest priority to the store buffer in case of conflict. This might slightly increase the forwarding hit ration from the store buffer to the load buffer, while decreasing the latency of loads execution.
-localparam bit ENABLE_STORE_PRIO_2WAY_ARBITER = 1'b1;
+  // If defined, instantiate a byte selector in the load buffer. All memory
+  // accesses are aligned on 64 bits, and the selector picks the correct
+  // word/halfword/byte from it the fetched doubleword.
+  localparam bit ONLY_DOUBLEWORD_MEM_ACCESSES = 1'b0;
 
-// If defined, instantiate a byte selector in the load buffer. All memory
-// accesses are aligned on 64 bits, and the selector picks the correct
-// word/halfword/byte from it the fetched doubleword.
-localparam bit ONLY_DOUBLEWORD_MEM_ACCESSES = 1'b0;
+  // CSRs
+  // ----
+  // If defined, instantiate additional performance counters (mcycle and
+  // minstret are always instantiated). See 'csrs.sv' to see what counters are
+  // available in LEN5.
+  localparam bit LEN5_CSR_HPMCOUNTERS_EN = 1'b1;
 
-// CSRs
-// ----
-// If defined, instantiate additional performance counters (mcycle and
-// minstret are always instantiated). See 'csrs.sv' to see what counters are
-// available in LEN5.
-localparam bit LEN5_CSR_HPMCOUNTERS_EN = 1'b1;
-
-//////////////////////////////////////////////////////////////////////////////
-// OTHER DEFINES
-localparam logic [63:0] ST2LD_FWD_MASK = ~MMAP_MASK;
+  //////////////////////////////////////////////////////////////////////////////
+  // OTHER DEFINES
+  localparam logic [63:0] ST2LD_FWD_MASK = ~MMAP_MASK;
 
 endpackage
+
+`endif  /* LEN5_CONFIG_PKG */

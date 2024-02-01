@@ -14,7 +14,6 @@
 
 // LEN5 compilation switches
 `include "instr_macros.svh"
-`include "csr_macros.svh"
 
 import len5_config_pkg::*;
 import expipe_pkg::*;
