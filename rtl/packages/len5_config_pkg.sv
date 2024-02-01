@@ -8,7 +8,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: len5_config_pkg.svh
+// File: len5_config_pkg.sv
 // Author: Michele Caon
 // Date: 04/11/2021
 
