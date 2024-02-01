@@ -12,9 +12,6 @@
 // Author: Michele Caon
 // Date: 25/11/2021
 
-// Include CSR definitions
-`include "csr_macros.svh"
-
 import len5_config_pkg::*;
 import len5_pkg::*;
 import expipe_pkg::*;
