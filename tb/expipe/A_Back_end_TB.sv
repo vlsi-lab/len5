@@ -94,7 +94,7 @@ initial begin
     #10 flush_i = 0;
     #10 curr_pc_i = 'h0000000000000002;
 
-    #600 $finish;
+    #600 $finish();
 end
 
 // ---

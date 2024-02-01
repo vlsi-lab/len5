@@ -14,9 +14,6 @@
 //         Michele Caon
 // Date: 26/07/2019
 
-`ifndef LEN5_PKG_
-`define LEN5_PKG_
-
 package len5_pkg;
   // LEN5 configuration
   import len5_config_pkg::*;
@@ -199,5 +196,3 @@ package len5_pkg;
   localparam int unsigned BU_RS_DEPTH = 4;
 
 endpackage
-
-`endif  /* LEN5_PKG_ */

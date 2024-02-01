@@ -12,8 +12,6 @@
 // Author: Michele Caon
 // Date: 25/11/2021
 
-// Include CSR definitions
-
 import len5_config_pkg::*;
 import len5_pkg::*;
 import expipe_pkg::*;
@@ -453,10 +451,12 @@ module commit_cu (
   // DEBUG CODE
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   always @(posedge clk_i) begin
     $display($sformatf("valid_i: %b | instr: %h | type: %s | state: %s", valid_i, instr_i,
                        comm_type_i.name(), curr_state.name()));
   end
+`endif  /* VERILATOR */
 `endif  /* SYNTHESIS */
 
 endmodule

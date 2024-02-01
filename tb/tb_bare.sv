@@ -110,7 +110,7 @@ module tb_bare #(
         curr_cycle += 1;
       end
       $error("[%t] Simulation timeout. Exiting...", $time);
-      $stop;
+      $stop();
     end
   end
   always #5 clk = ~clk;
@@ -174,7 +174,7 @@ module tb_bare #(
       c <= dp_data_mem_req.value[7:0];
       $display($sformatf("Program exit with code: 0x%h", c));
       printReport();
-      $stop;
+      $stop();
     end
   end
 

@@ -128,93 +128,93 @@ module backend (
 
   // Issue Stage <--> Commit Stage
   // -----------------------------
-  logic                                                comm_issue_ready;
-  logic                                                issue_comm_valid;
-  logic                                                comm_issue_resume;
-  rob_idx_t                                            comm_issue_rob_tail_idx;
-  rob_entry_t                                          issue_comm_rob_data;
-  logic                                                issue_comm_jb_instr;
-  rob_idx_t                                            issue_comm_rs1_rob_idx;
-  logic                                                comm_issue_rs1_ready;
-  logic              [          XLEN-1:0]              comm_issue_rs1_value;
-  rob_idx_t                                            issue_comm_rs2_rob_idx;
-  logic                                                comm_issue_rs2_ready;
-  logic              [          XLEN-1:0]              comm_issue_rs2_value;
+  logic                                 comm_issue_ready;
+  logic                                 issue_comm_valid;
+  logic                                 comm_issue_resume;
+  rob_idx_t                             comm_issue_rob_tail_idx;
+  rob_entry_t                           issue_comm_rob_data;
+  logic                                 issue_comm_jb_instr;
+  rob_idx_t                             issue_comm_rs1_rob_idx;
+  logic                                 comm_issue_rs1_ready;
+  logic            [          XLEN-1:0] comm_issue_rs1_value;
+  rob_idx_t                             issue_comm_rs2_rob_idx;
+  logic                                 comm_issue_rs2_ready;
+  logic            [          XLEN-1:0] comm_issue_rs2_value;
 
   // Issue stage <--> execution units
   // --------------------------------
-  logic              [      MAX_EU_N-1:0]              ex_issue_ready;
-  logic                                                ex_issue_mis;
-  logic              [      MAX_EU_N-1:0]              il_ex_valid;
-  logic              [MAX_EU_CTL_LEN-1:0]              issue_ex_eu_ctl;
-  op_data_t                                            issue_ex_rs1;
-  op_data_t                                            issue_ex_rs2;
-  logic              [          XLEN-1:0]              issue_ex_imm_value;
-  rob_idx_t                                            issue_ex_rob_idx;
-  logic              [          XLEN-1:0]              issue_ex_curr_pc;
-  logic              [          XLEN-1:0]              issue_ex_pred_target;
-  logic                                                issue_ex_pred_taken;
+  logic                                 ex_issue_ready                          [EU_N];
+  logic                                 ex_issue_mis;
+  logic                                 il_ex_valid                             [EU_N];
+  logic            [MAX_EU_CTL_LEN-1:0] issue_ex_eu_ctl;
+  op_data_t                             issue_ex_rs1;
+  op_data_t                             issue_ex_rs2;
+  logic            [          XLEN-1:0] issue_ex_imm_value;
+  rob_idx_t                             issue_ex_rob_idx;
+  logic            [          XLEN-1:0] issue_ex_curr_pc;
+  logic            [          XLEN-1:0] issue_ex_pred_target;
+  logic                                 issue_ex_pred_taken;
 
   // Issue stage <--> CSRs
   // ---------------------
-  logic                                                csr_il_mstatus_tsr;
-  csr_priv_t                                           csr_il_priv_mode;
+  logic                                 csr_il_mstatus_tsr;
+  csr_priv_t                            csr_il_priv_mode;
 
   // Execution stage <--> CDB
   // ------------------------
-  logic              [      MAX_EU_N-1:0]              cdb_ex_ready;
-  logic              [      MAX_EU_N-1:0]              ex_cdb_valid;
-  cdb_data_t       [                     MAX_EU_N-1:0] ex_cdb_data;
+  logic            [            EU_N-1] cdb_ex_ready;
+  logic            [            EU_N-1] ex_cdb_valid;
+  cdb_data_t       [            EU_N-1] ex_cdb_data;
 
   // Execution stage <--> commit stage
   // ---------------------------------
-  logic                                                comm_sb_spec_instr;
-  rob_idx_t                                            comm_sb_rob_head_idx;
+  logic                                 comm_sb_spec_instr;
+  rob_idx_t                             comm_sb_rob_head_idx;
 
   // Execution stage <--> CSRs
   // -------------------------
-  logic              [  FCSR_FRM_LEN-1:0]              csr_ex_frm;
-  logic              [ SATP_MODE_LEN-1:0]              csr_ex_vm_mode;
+  logic            [  FCSR_FRM_LEN-1:0] csr_ex_frm;
+  logic            [ SATP_MODE_LEN-1:0] csr_ex_vm_mode;
 
   // CDB <--> commit stage
   // ---------------------
-  logic                                                comm_cdb_ready;
+  logic                                 comm_cdb_ready;
 
   // CDB <--> others
   // ---------------
-  logic                                                cdb_others_valid;
-  cdb_data_t                                           cdb_others_data;
+  logic                                 cdb_others_valid;
+  cdb_data_t                            cdb_others_data;
 
   // Commit logic --> (both) register status registers
   // -------------------------------------------------
-  rob_idx_t                                            comm_rs_head_idx;
+  rob_idx_t                             comm_rs_head_idx;
 
   // Commit logic --> (both) register files
   // --------------------------------------
-  logic              [   REG_IDX_LEN-1:0]              comm_rf_rd_idx;
-  logic              [          XLEN-1:0]              comm_rf_rd_value;
+  logic            [   REG_IDX_LEN-1:0] comm_rf_rd_idx;
+  logic            [          XLEN-1:0] comm_rf_rd_value;
 
   // Commit logic <--> CSRs
   // ----------------------
-  logic                                                comm_csr_valid;
-  logic                                                csr_comm_ready;
-  logic              [          XLEN-1:0]              csr_comm_data;
-  logic                                                csr_comm_acc_exc;
-  csr_mtvec_t                                          csr_comm_mtvec;
-  comm_csr_instr_t                                     comm_csr_comm_insn;
-  logic                                                comm_csr_comm_jb;
-  csr_op_t                                             comm_csr_op;
-  logic              [    FUNCT3_LEN-1:0]              comm_csr_funct3;
-  logic              [  CSR_ADDR_LEN-1:0]              comm_csr_addr;
-  logic              [   REG_IDX_LEN-1:0]              comm_csr_rs1_idx;
-  logic              [          XLEN-1:0]              comm_csr_data;
-  except_code_t                                        comm_csr_except_code;
-  logic              [   REG_IDX_LEN-1:0]              comm_csr_rd_idx;
+  logic                                 comm_csr_valid;
+  logic                                 csr_comm_ready;
+  logic            [          XLEN-1:0] csr_comm_data;
+  logic                                 csr_comm_acc_exc;
+  csr_mtvec_t                           csr_comm_mtvec;
+  comm_csr_instr_t                      comm_csr_comm_insn;
+  logic                                 comm_csr_comm_jb;
+  csr_op_t                              comm_csr_op;
+  logic            [    FUNCT3_LEN-1:0] comm_csr_funct3;
+  logic            [  CSR_ADDR_LEN-1:0] comm_csr_addr;
+  logic            [   REG_IDX_LEN-1:0] comm_csr_rs1_idx;
+  logic            [          XLEN-1:0] comm_csr_data;
+  except_code_t                         comm_csr_except_code;
+  logic            [   REG_IDX_LEN-1:0] comm_csr_rd_idx;
 
   // Commit Logic <--> others
   // ------------------------
-  logic                                                ex_mis_flush;  // flush on misprediction
-  logic                                                except_flush;  // flush on exception
+  logic                                 ex_mis_flush;  // flush on misprediction
+  logic                                 except_flush;  // flush on exception
 
   // -------
   // MODULES

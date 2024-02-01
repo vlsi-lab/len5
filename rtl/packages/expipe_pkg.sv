@@ -16,10 +16,6 @@
 `define EXPIPE_PKG
 
 package expipe_pkg;
-
-  /* Inlcude isnstruction macros */
-  `include "instr_macros.svh"
-
   // Import global constants
   import len5_config_pkg::*;
   import len5_pkg::*;

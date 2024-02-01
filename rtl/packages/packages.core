@@ -10,8 +10,7 @@ filesets:
  len5-packages:
    files:
    - util.svh : {is_include_file : true}
-   - instr_macros.svh : {is_include_file : true}
-   - len5_config_pkg.sv  
+   - len5_config_pkg.sv
    - len5_pkg.sv
    - instr_pkg.sv
    - csr_pkg.sv

@@ -107,7 +107,7 @@ initial begin
     #30 flush_i = 1;
     #10 flush_i = 0;
 
-    #600 $finish;
+    #600 $finish();
 end
 
 // ---

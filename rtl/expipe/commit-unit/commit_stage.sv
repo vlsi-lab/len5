@@ -12,9 +12,6 @@
 // Author: Michele Caon
 // Date: 20/11/2019
 
-// LEN5 compilation switches
-`include "instr_macros.svh"
-
 import len5_config_pkg::*;
 import expipe_pkg::*;
 import len5_pkg::*;
@@ -431,6 +428,7 @@ module commit_stage (
   // ASSERTIONS
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   property p_no_except;
     @(posedge clk_i) disable iff (!rst_n_i) ex_mis_flush_o |=> !fe_except_raised_o
   endproperty
@@ -471,5 +469,6 @@ module commit_stage (
             comm_reg_data.data.instruction.raw
         )
     );
-`endif  // SYNTHESIS
+`endif  /* VERILATOR */
+`endif  /* SYNTHESIS */
 endmodule

@@ -46,7 +46,7 @@ module int_regstat #(
   rob_idx_t busy_rob_idx     [1:REG_NUM-1];  // newest ROB entry that is going to write rd
   logic busy_cnt_en[1:REG_NUM-1], busy_cnt_up[1:REG_NUM-1];
   logic busy_cnt_clr;
-  logic [REGSTAT_CNT_W-1:0] busy_cnt     [1:REG_NUM-1];  // number of in-flight instructions writing rd
+  logic [REGSTAT_CNT_W-1:0] busy_cnt[1:REG_NUM-1];  // number of in-flight instructions writing rd
   logic skip_cnt_upd;
 
   // -----------------------------
@@ -137,6 +137,7 @@ module int_regstat #(
   // ASSERTIONS
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   // The counter should never overflow
   property p_busy_cnt_overflow(i, en, cnt);
     @(posedge clk_i) disable iff (!rst_n_i) en && &cnt |-> ##1 |cnt;
@@ -148,5 +149,6 @@ module int_regstat #(
       else $error($sformatf("busy count %0d overflow", i));
     end
   endgenerate
+`endif  /* VERILATOR */
 `endif  /* SYNTHESIS */
 endmodule

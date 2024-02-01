@@ -133,6 +133,7 @@ module fifo_comb_ready #(
   // ASSERTIONS
   // ----------
 `ifndef SYNTHESIS
+`ifndef VERILATOR
   property p_fifo_push;
     @(posedge clk_i) disable iff (!rst_n_i || flush_i) valid_i && ready_o |-> ##1 valid_o ##0 data_valid[$past(
         tail_cnt
@@ -177,6 +178,7 @@ module fifo_comb_ready #(
   endproperty
   a_ready_n :
   assert property (p_ready_n);
+`endif  /* VERILATOR */
 `endif  /* SYNTHESIS */
 
 endmodule

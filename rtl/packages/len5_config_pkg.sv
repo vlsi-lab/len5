@@ -8,7 +8,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: len5_config_pkg.svh
+// File: len5_config_pkg.sv
 // Author: Michele Caon
 // Date: 04/11/2021
 `ifndef LEN5_CONFIG_PKG_
@@ -18,17 +18,12 @@ package len5_config_pkg;
   // --------------------
   // GLOBAL CONFIGURATION
   // --------------------
-
   // Boot memory translation mode
-  typedef enum {
-    BARE,
-    SV39,
-    SV48
-  } boot_mode_e;
-  localparam boot_mode_e BOOT_VM_MODE = BARE;  // BARE|SV39|SV48
+  typedef enum logic [1:0] {BARE, SV39, SV48} boot_mode_t;
+  localparam boot_mode_t BOOT_VM_MODE = BARE; // BARE|SV39|SV48
 
   // Boot program counter
-  localparam logic [63:0] BOOT_PC = 64'h180;
+  localparam logic[63:0] BOOT_PC = 64'h180;
 
   // MEMORY-MAPPED DEVICES
   // ---------------------
@@ -37,13 +32,13 @@ package len5_config_pkg;
   // This mask defines the address range that is reserved to memory-mapped
   // devices. Store-to-load forwarding (see below) in this region is not
   // performed.
-  localparam logic [63:0] MMAP_MASK = 64'h000000000000ffff;  // 64kiB by default
+  localparam logic[63:0] MMAP_MASK = 64'h000000000000ffff; // 64kiB by default
 
   // TB Serial interface base address
-  localparam logic [63:0] SERIAL_ADDR = 'h10000;
+  localparam logic[63:0] SERIAL_ADDR = 'h10000;
 
   // TB exit register address (stop the simulation when written)
-  localparam logic [63:0] EXIT_ADDR = 'h10000;
+  localparam logic[63:0] EXIT_ADDR = 'h10000;
 
   // MEMORY EMULATOR PARAMETERS
   // --------------------------
@@ -95,16 +90,16 @@ package len5_config_pkg;
   // ------------------
 
   // ALU
-  localparam bit ALU_SPILL_SKIP = 1'b1;  // make the ALU fully combinational
+  localparam bit ALU_SPILL_SKIP = 1'b1; // make the ALU fully combinational
 
   // Branch Unit
-  localparam bit BU_SPILL_SKIP = 1'b1;  // make the target address adder fully combinational
+  localparam bit BU_SPILL_SKIP = 1'b1; // make the target address adder fully combinational
 
   // Load-store Unit
-  localparam bit LSU_SPILL_SKIP = 1'b1;  // make address adder fully combinational
+  localparam bit LSU_SPILL_SKIP = 1'b1; // make address adder fully combinational
 
   // Commit Stage
-  localparam bit COMMIT_SPILL_SKIP = 1'b1;  // directly connect the commit CU to the ROB output
+  localparam bit COMMIT_SPILL_SKIP = 1'b1; // directly connect the commit CU to the ROB output
 
   // -----------------
   // FEATURES SWITCHES
@@ -163,7 +158,6 @@ package len5_config_pkg;
   //////////////////////////////////////////////////////////////////////////////
   // OTHER DEFINES
   localparam logic [63:0] ST2LD_FWD_MASK = ~MMAP_MASK;
-
 endpackage
 
 `endif  /* LEN5_CONFIG_PKG */
