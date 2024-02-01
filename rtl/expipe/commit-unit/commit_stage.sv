@@ -12,10 +12,6 @@
 // Author: Michele Caon
 // Date: 20/11/2019
 
-// LEN5 compilation switches
-`include "instr_macros.svh"
-`include "csr_macros.svh"
-
 import len5_config_pkg::*;
 import expipe_pkg::*;
 import len5_pkg::*;

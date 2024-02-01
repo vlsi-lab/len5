@@ -46,7 +46,7 @@ module int_regstat #(
   rob_idx_t busy_rob_idx     [1:REG_NUM-1];  // newest ROB entry that is going to write rd
   logic busy_cnt_en[1:REG_NUM-1], busy_cnt_up[1:REG_NUM-1];
   logic busy_cnt_clr;
-  logic [REGSTAT_CNT_W-1:0] busy_cnt     [1:REG_NUM-1];  // number of in-flight instructions writing rd
+  logic [REGSTAT_CNT_W-1:0] busy_cnt[1:REG_NUM-1];  // number of in-flight instructions writing rd
   logic skip_cnt_upd;
 
   // -----------------------------

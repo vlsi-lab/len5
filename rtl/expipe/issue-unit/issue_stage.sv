@@ -75,10 +75,10 @@ module issue_stage (
   output eu_ctl_t ex_eu_ctl_o,  // controls for the associated EU
   output op_data_t ex_rs1_o,
   output op_data_t ex_rs2_o,
-  output  logic [XLEN-1:0]        ex_imm_value_o, // the value of the immediate field (for st and branches)
+  output logic [XLEN-1:0] ex_imm_value_o,  // the value of the immediate field (for st and branches)
   output rob_idx_t ex_rob_idx_o,  // the location of the ROB assigned to the instruction
   output logic [XLEN-1:0] ex_curr_pc_o,  // the PC of the current issuing instr (branches only)
-  output  logic [XLEN-1:0]        ex_pred_target_o,  // predicted target of the current issuing branch instr
+  output logic [XLEN-1:0] ex_pred_target_o,  // predicted target of the current issuing branch instr
   output logic ex_pred_taken_o,  // predicted taken bit of the current issuing branch instr
 
   // Commit stage

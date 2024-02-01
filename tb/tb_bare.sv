@@ -19,13 +19,13 @@ import memory_pkg::*;
 import csr_pkg::*;
 
 module tb_bare #(
-  parameter string        MEM_DUMP_FILE = "mem_dump.txt",
-  parameter int unsigned  BOOT_PC = 64'h0
+  parameter string       MEM_DUMP_FILE = "mem_dump.txt",
+  parameter int unsigned BOOT_PC       = 64'h0
 ) (
-  input logic             clk_i,        // simulation clock
-  input logic             rst_ni,       // simulation reset
-  input string            mem_file_i,   // memory file, in ASCII HEX format
-  input longint unsigned  num_cycles_i  // number of cycles to simulate
+  input logic            clk_i,        // simulation clock
+  input logic            rst_ni,       // simulation reset
+  input string           mem_file_i,   // memory file, in ASCII HEX format
+  input longint unsigned num_cycles_i  // number of cycles to simulate
 );
   // ----------------
   // TB CONFIGURATION
@@ -110,7 +110,7 @@ module tb_bare #(
         curr_cycle += 1;
       end
       $error("[%t] Simulation timeout. Exiting...", $time);
-      $stop;
+      $stop();
     end
   end
   always #5 clk = ~clk;
@@ -174,7 +174,7 @@ module tb_bare #(
       c <= dp_data_mem_req.value[7:0];
       $display($sformatf("Program exit with code: 0x%h", c));
       printReport();
-      $stop;
+      $stop();
     end
   end
 

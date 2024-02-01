@@ -25,5 +25,6 @@ echo "\
 " > $INSTR_PKG
 cat $RISCV_OPCODES_DIR/inst.sverilog >> $INSTR_PKG
 sed -i "s/package riscv_instr/package $PKG_NAME/g" $INSTR_PKG
+sed -i -E 's/localparam \[([0-9]+):([0-9]+)\]/localparam logic [\1:\2]/g' $INSTR_PKG
 
 exit 0

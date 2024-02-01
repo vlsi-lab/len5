@@ -14,9 +14,6 @@
 
 // THIS FILE IS ONYL A TEMPLATE, THE COMMIT LOGIC IS NOT IMPLEMENTED YET, SINCE IT REQUIRES ALL THE PROCESSOR PARTS TO BE FUNCTIONAL
 
-/* Include instruction macros */
-`include "instr_macros.svh"
-
 import expipe_pkg::*;
 import csr_pkg::*;
 import len5_pkg::ILEN;

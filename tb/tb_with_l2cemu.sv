@@ -127,7 +127,7 @@ module tb_with_l2cemu;
     // Stop the simulation after the requested number of cycles
     if (num_cycles > 0) begin
       repeat (num_cycles) @(posedge clk);
-      $stop;
+      $stop();
     end
   end
 
