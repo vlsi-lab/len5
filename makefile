@@ -58,13 +58,13 @@ check: | .check-fusesoc
 .PHONY: verilator-build
 verilator-build: | .check-fusesoc
 	@echo "## Building simulation model with Verilator..."
-	fusesoc run --target sim --tool verilator $(FUSESOC_FLAGS) --build polito:len5:len5 2>&1 | tee build/build.log
+	fusesoc run --no-export --target sim --tool verilator $(FUSESOC_FLAGS) --build polito:len5:len5 2>&1 | tee build/build.log
 
 # QuestaSim
 .PHONY: questasim-sim
 questasim-sim: | .check-fusesoc
 	@echo "## Running simulation with QuestaSim..."
-	fusesoc run --target sim --tool modelsim $(FUSESOC_FLAGS) --build polito:len5:len5 2>&1 | tee build/build.log
+	fusesoc run --no-export --target sim --tool modelsim $(FUSESOC_FLAGS) --build polito:len5:len5 2>&1 | tee build/build.log
 
 # Verilator
 # TODO: add verilator support to .core files
