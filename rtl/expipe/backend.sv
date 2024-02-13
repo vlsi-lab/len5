@@ -183,10 +183,6 @@ module backend (
   logic                                 cdb_others_valid;
   cdb_data_t                            cdb_others_data;
 
-  // Commit logic --> (both) register status registers
-  // -------------------------------------------------
-  rob_idx_t                             comm_rs_head_idx;
-
   // Commit logic --> (both) register files
   // --------------------------------------
   logic            [   REG_IDX_LEN-1:0] comm_rf_rd_idx;
@@ -196,16 +192,13 @@ module backend (
   // ----------------------
   logic                                 comm_csr_valid;
   logic            [          XLEN-1:0] csr_comm_data;
-  logic                                 csr_comm_acc_exc;
   csr_mtvec_t                           csr_comm_mtvec;
   comm_csr_instr_t                      comm_csr_comm_insn;
   //logic                                 comm_csr_comm_jb; // TODO: check
   csr_op_t                              comm_csr_op;
-  logic            [    FUNCT3_LEN-1:0] comm_csr_funct3;
   logic            [  CSR_ADDR_LEN-1:0] comm_csr_addr;
   logic            [   REG_IDX_LEN-1:0] comm_csr_rs1_idx;
   logic            [          XLEN-1:0] comm_csr_data;
-  except_code_t                         comm_csr_except_code;
   logic            [   REG_IDX_LEN-1:0] comm_csr_rd_idx;
 
   // Commit Logic <--> others
@@ -355,8 +348,7 @@ module backend (
   //   .issue_rs2_busy_o   (fp_regstat_il_rs2_busy),
   //   .issue_rs2_rob_idx_o(fp_regstat_il_rs2_rob_idx),
   //   .comm_valid_i       (comm_fprs_valid),
-  //   .comm_rd_idx_i      (comm_rf_rd_idx),
-  //   .comm_head_idx_i    (comm_rs_head_idx)
+  //   .comm_rd_idx_i      (comm_rf_rd_idx)
   // );
 
   // // Floating-point register file
@@ -499,22 +491,18 @@ module backend (
     // .fp_rs_valid_o(comm_fprs_valid),
     // .fp_rf_valid_o(comm_fprf_valid),
 
-    .rs_head_idx_o(comm_rs_head_idx),
-
     .rd_idx_o  (comm_rf_rd_idx),
     .rd_value_o(comm_rf_rd_value),
 
-    .csr_valid_o      (comm_csr_valid),
-    .csr_data_i       (csr_comm_data),
-    .csr_mtvec_i      (csr_comm_mtvec),
-    .csr_comm_insn_o  (comm_csr_comm_insn),
-    .csr_op_o         (comm_csr_op),
-    .csr_funct3_o     (comm_csr_funct3),
-    .csr_addr_o       (comm_csr_addr),
-    .csr_rs1_idx_o    (comm_csr_rs1_idx),
-    .csr_data_o       (comm_csr_data),
-    .csr_except_code_o(comm_csr_except_code),
-    .csr_rd_idx_o     (comm_csr_rd_idx)
+    .csr_valid_o    (comm_csr_valid),
+    .csr_data_i     (csr_comm_data),
+    .csr_mtvec_i    (csr_comm_mtvec),
+    .csr_comm_insn_o(comm_csr_comm_insn),
+    .csr_op_o       (comm_csr_op),
+    .csr_addr_o     (comm_csr_addr),
+    .csr_rs1_idx_o  (comm_csr_rs1_idx),
+    .csr_data_o     (comm_csr_data),
+    .csr_rd_idx_o   (comm_csr_rd_idx)
   );
 
   // ----
@@ -531,8 +519,8 @@ module backend (
     .data_i     (comm_csr_data),
     .rd_idx_i   (comm_csr_rd_idx),
     .data_o     (csr_comm_data),
-    .acc_exc_o  (csr_comm_acc_exc),
     .mtvec_o    (csr_comm_mtvec),
+    .csr_exc_o  (),                    // TODO: handle illegal CSR access exceptions
     // .fpu_frm_o  (csr_ex_frm),
     .priv_mode_o(csr_il_priv_mode)
   );

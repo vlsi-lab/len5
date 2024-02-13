@@ -80,7 +80,7 @@ filesets:
 
  verilator-waivers:
    files:
-    - expipe/expipe-waivers.vlt
+    - misc/expipe-waivers.vlt
    file_type: vlt
 
 targets:

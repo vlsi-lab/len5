@@ -19,17 +19,19 @@ module commit_decoder (
   input  len5_pkg::instr_t       instruction_i,
   input  logic                   except_raised_i,
   // Control to the commit logic
-  output expipe_pkg::comm_type_t comm_type_o
+  output expipe_pkg::comm_type_t comm_type_o,
+  output csr_pkg::csr_op_t       csr_op_o          // CSR operation
 );
-
   import len5_pkg::ILEN;
   import len5_pkg::OPCODE_LEN;
   import expipe_pkg::*;
   import csr_pkg::*;
   import instr_pkg::*;
+
   // INTERNAL SIGNALS
   // ----------------
   comm_type_t comm_type;
+  csr_op_t    csr_op;
 
   // --------------------
   // COMMIT DOCODER LOGIC
@@ -38,13 +40,14 @@ module commit_decoder (
   always_comb begin : comm_decoder
     // Default
     comm_type = COMM_TYPE_NONE;
+    csr_op    = CSR_OP_SYSTEM;
 
     // Hanle exceptions
     if (except_raised_i) comm_type = COMM_TYPE_EXCEPT;
 
     // No exceptions raised
     else begin
-      case (instruction_i.raw)
+      unique casez (instruction_i.raw)
         // Intructions committing to the integer RF
         // ----------------------------------------
         ADD, ADDI, ADDIW, ADDW,
@@ -75,7 +78,30 @@ module commit_decoder (
 
         // CSR instructions
         // ----------------
-        CSRRC, CSRRCI, CSRRS, CSRRSI, CSRRW, CSRRWI: comm_type = COMM_TYPE_CSR;
+        CSRRC: begin
+          comm_type = COMM_TYPE_CSR;
+          csr_op    = CSR_OP_CSRRC;
+        end
+        CSRRCI: begin
+          comm_type = COMM_TYPE_CSR;
+          csr_op    = CSR_OP_CSRRCI;
+        end
+        CSRRS: begin
+          comm_type = COMM_TYPE_CSR;
+          csr_op    = CSR_OP_CSRRS;
+        end
+        CSRRSI: begin
+          comm_type = COMM_TYPE_CSR;
+          csr_op    = CSR_OP_CSRRSI;
+        end
+        CSRRW: begin
+          comm_type = COMM_TYPE_CSR;
+          csr_op    = CSR_OP_CSRRW;
+        end
+        CSRRWI: begin
+          comm_type = COMM_TYPE_CSR;
+          csr_op    = CSR_OP_CSRRWI;
+        end
 
         // ECALL, EBREAK
         // -------------
@@ -101,5 +127,6 @@ module commit_decoder (
   // -----------------
   // Commit type MUX
   assign comm_type_o = comm_type;
+  assign csr_op_o    = csr_op;
 
 endmodule

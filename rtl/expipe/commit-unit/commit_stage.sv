@@ -56,9 +56,6 @@ module commit_stage (
   // output logic fp_rs_valid_o,
   // output logic fp_rf_valid_o,
 
-  // Data to the register status registers
-  output expipe_pkg::rob_idx_t rs_head_idx_o,
-
   // Data to the register files
   output logic [len5_pkg::REG_IDX_LEN-1:0] rd_idx_o,   // the index of the destination register (rd)
   output logic [       len5_pkg::XLEN-1:0] rd_value_o, // the value to be stored in rd
@@ -69,11 +66,9 @@ module commit_stage (
   input csr_pkg::csr_mtvec_t csr_mtvec_i,  // mtvec data
   output expipe_pkg::comm_csr_instr_t csr_comm_insn_o,  // committing instruction type
   output csr_pkg::csr_op_t csr_op_o,
-  output logic [len5_pkg::FUNCT3_LEN-1:0] csr_funct3_o,
   output logic [csr_pkg::CSR_ADDR_LEN-1:0] csr_addr_o,
   output logic [len5_pkg::REG_IDX_LEN-1:0] csr_rs1_idx_o,
   output logic [len5_pkg::XLEN-1:0] csr_data_o,
-  output len5_pkg::except_code_t csr_except_code_o,
   output logic [len5_pkg::REG_IDX_LEN-1:0] csr_rd_idx_o
 );
 
@@ -284,7 +279,8 @@ module commit_stage (
   commit_decoder u_comm_decoder (
     .instruction_i  (inreg_data_out.data.instruction),
     .except_raised_i(inreg_data_out.data.except_raised),
-    .comm_type_o    (cd_comm_type)
+    .comm_type_o    (cd_comm_type),
+    .csr_op_o       (cd_csr_op)
   );
 
   // COMMIT CONTROL UNIT
@@ -399,8 +395,6 @@ module commit_stage (
   // Data to front-end
   assign fe_except_pc_o    = adder_out;
 
-  assign rs_head_idx_o     = rob_reg_head_idx;
-
   // To store buffer
   // NOTE: if there are in-flight jumps or branches, the new instuction is
   // speculative.
@@ -412,11 +406,9 @@ module commit_stage (
   assign rd_value_o        = rd_value;
 
   // Data to CSRs
-  assign csr_funct3_o      = comm_reg_data.data.instruction.i.funct3;
   assign csr_addr_o        = csr_addr;
   assign csr_rs1_idx_o     = comm_reg_data.data.instruction.r.rs1;
   assign csr_data_o        = csr_data;
-  assign csr_except_code_o = comm_reg_data.data.except_code;
   assign csr_rd_idx_o      = comm_reg_data.data.rd_idx;
 
   // Data to others

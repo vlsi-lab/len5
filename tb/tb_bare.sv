@@ -148,13 +148,13 @@ module tb_bare #(
   // Track the number of issued memory requests
   always_ff @(posedge clk_i) begin : mem_monitor
     if (dp2mem_load_valid && mem2dp_load_ready) begin
-      num_data_loads++;
+      num_data_loads <= num_data_loads + 1;
     end
     if (dp2mem_store_valid && mem2dp_store_ready) begin
-      num_data_stores++;
+      num_data_stores <= num_data_stores + 1;
     end
     if (dp2mem_instr_valid && mem2dp_instr_ready) begin
-      num_instr_loads++;
+      num_instr_loads <= num_instr_loads + 1;
     end
   end
 

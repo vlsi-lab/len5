@@ -30,8 +30,8 @@ module csrs (
   input logic [len5_pkg::XLEN-1:0] data_i,  // data to write to the CSR
   input logic [REG_IDX_LEN-1:0] rd_idx_i,  // destination register
   output csr_pkg::csr_t data_o,
-  output logic acc_exc_o,  // ILLEGAL INSTRUCTION flag (invalid address or access permission)
   output csr_pkg::csr_mtvec_t mtvec_o,  // exception base address and mode
+  output logic csr_exc_o,  // exception raised
 
   // Data to the FPU
   // output logic [FCSR_FRM_LEN-1:0] fpu_frm_o,  // dynamic rounding mode
@@ -91,6 +91,9 @@ module csrs (
   csr_mhartid_t                  mhartid;
   // MSTATUS
   csr_mstatus_t                  mstatus;
+  logic [1:0]                    mstatus_mpp;
+  logic                          mstatus_mpie;
+  logic                          mstatus_mie;
   // MTVEC
   csr_mtvec_t                    mtvec;
   // Performance counters
@@ -179,14 +182,14 @@ module csrs (
   assign mstatus.mprv       = 1'b0;
   assign mstatus.xs         = 'h0;
   assign mstatus.fs         = 'h0;
-  // assign mstatus.mpp           = PRIV_MODE_U;
+  assign mstatus.mpp        = mstatus_mpp;
   assign mstatus.not_used_2 = 'h0;
   assign mstatus.spp        = 'h0;  // S-mode not supported
-  // assign mstatus.mpie          = 1'b0;
+  assign mstatus.mpie       = mstatus_mpie;
   assign mstatus.not_used_1 = 'h0;
   assign mstatus.spie       = 1'b0;
   assign mstatus.upie       = 1'b0;
-  // assign mstatus.mie           = 1'b0;
+  assign mstatus.mie        = mstatus_mie;
   assign mstatus.not_used_0 = 1'b0;
   assign mstatus.sie        = 1'b0;
   assign mstatus.uie        = 1'b0;
@@ -308,9 +311,9 @@ module csrs (
       // fcsr
       // fcsr <= '0;
       // mstatus
-      mstatus.mpp  <= PRIV_MODE_U;
-      mstatus.mpie <= 1'b0;
-      mstatus.mie  <= 1'b0;
+      mstatus_mpp  <= PRIV_MODE_U;
+      mstatus_mpie <= 1'b0;
+      mstatus_mie  <= 1'b0;
       // mtvec
       mtvec.base   <= CSR_MTVEC_BASE;
       mtvec.mode   <= CSR_MTVEC_MODE;
@@ -332,9 +335,9 @@ module csrs (
         // mstatus
         CSR_MSTATUS: begin
           if (priv_mode >= PRIV_MODE_M) begin
-            mstatus.mpp  <= csr_wr_val[12:11];
-            mstatus.mpie <= csr_wr_val[7];
-            mstatus.mie  <= csr_wr_val[3];
+            mstatus_mpp  <= csr_wr_val[12:11];
+            mstatus_mpie <= csr_wr_val[7];
+            mstatus_mie  <= csr_wr_val[3];
           end
         end
         // mtvec
@@ -428,11 +431,12 @@ module csrs (
 
   // Data to FPU
   // assign fpu_frm_o = fcsr.frm;
-
   assign priv_mode_o = priv_mode;
 
+  // CSR access exception
+  assign csr_exc_o   = inv_acc_exc;
+
   // Data to commit logic
-  assign acc_exc_o   = inv_acc_exc;
   assign data_o      = csr_rd_val;
   assign mtvec_o     = mtvec;
 

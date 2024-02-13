@@ -207,7 +207,7 @@ package csr_pkg;
 
   // Machine Cause Register
   typedef struct packed {
-    logic            interrupt;
+    logic            intr;
     logic [XLEN-2:0] except_code;
   } csr_mcause_t;
 

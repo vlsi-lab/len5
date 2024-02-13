@@ -42,7 +42,7 @@ module commit_cu (
 
   // CU <--> CSRs
   output logic csr_valid_o,
-  output logic csr_override_o,  // unconditionally access the requested CSR
+  output logic csr_override_o,  // TODO: probably redundant with decoder
   output expipe_pkg::comm_csr_instr_t csr_comm_insn_o,  // committing instruction type
   output logic [csr_pkg::CSR_ADDR_LEN-1:0] csr_addr_o,
 

@@ -14,12 +14,14 @@
 // Description: memory emulator
 // Details: memory modeled as SystemVerilog associative array to support
 //          sparse data.
+
 import len5_pkg::WWIDTH;
 import len5_pkg::AWIDTH;
 import len5_pkg::BWIDTH;
 import len5_pkg::HWWIDTH;
 import len5_pkg::DWWIDTH;
 import len5_pkg::LWIDTH;
+
 class memory_class;
   // File info
   const local string                     memory_file_path;
@@ -49,10 +51,18 @@ class memory_class;
   endfunction : new
 
   // Open the memory file
-  local function void OpenMemFile(string mode = "r", string file = this.memory_file_path);
-    this.fd = $fopen(file, mode);
+  local function void OpenMemFile(string path, string mode = "r");
+    // NOTE: prevent Verilator error about mode width in $fopen()
+    case (mode)
+      "rb": this.fd = $fopen(path, "rb");
+      "w": this.fd = $fopen(path, "w");
+      "r": this.fd = $fopen(path, "r");
+      default: begin
+        $display("ERROR: $fopen() mode '%s' not supported", mode);
+      end
+    endcase
     if (this.fd == 0) begin
-      $error($sformatf("Cannot open memory file '%s'", this.memory_file_path));
+      $display("Cannot open memory file '%s'", this.memory_file_path);
     end
   endfunction : OpenMemFile
 
@@ -62,23 +72,25 @@ class memory_class;
   endfunction : CloseMemFile
 
   // Load memory wrapper
-  function int LoadMem(string file = this.memory_file_path, logic [AWIDTH-1:0] offs = 0);
-    string ext = file.substr(file.len() - 3, file.len() - 1);
+  function int LoadMem(logic [AWIDTH-1:0] offs = 0);
+    string path = this.memory_file_path;
+    string ext = path.substr(path.len() - 3, path.len() - 1);
     // Choose the memory load method based on the file extension
     if ( (ext.compare("txt") == 0) || (ext.compare("hex") == 0) ) begin
-      return this.LoadMemTxt(file);
+      return this.LoadMemTxt();
     end
-    return this.LoadMemBin(file, offs);
+    return this.LoadMemBin(offs);
   endfunction : LoadMem
 
   // Load the memory content from a memory dump file (e.g., the output of 'objcopy -O binary')
-  local function int LoadMemBin(string file = this.memory_file_path, logic [AWIDTH-1:0] offs = 0);
+  local function int LoadMemBin(logic [AWIDTH-1:0] offs = 0);
+    string             path = this.memory_file_path;
     int                ret_code = 0;
     logic [AWIDTH-1:0] addr = offs;
     logic [       7:0] frame_buff   [512];  // read 512 bytes at a time
 
     // Open the memory file as binary
-    this.OpenMemFile("rb", file);
+    this.OpenMemFile(path, "rb");
 
     // Store the memory bytes
     do begin
@@ -103,24 +115,25 @@ class memory_class;
 
     // Scan the next line in the memory
     if ($fgets(this.file_line, this.fd) < 0) begin
-      $error("Unexpected memory file format ($fgets)");
+      $display("ERROR: Unexpected memory file format ($fgets)");
       return 1;
     end
     ret_code = $sscanf(this.file_line, "%h %h", addr, data);
     if (!$feof(this.fd) && ret_code != 2) begin
-      $error("Unexpected memory file format ($fscanf)");
+      $display("ERROR: Unexpected memory file format ($fscanf)");
       return 1;
     end
     return 0;
   endfunction : ScanMemLine
 
   // Load the memory content from a text file ('address data' pairs)
-  local function int LoadMemTxt(string file = this.memory_file_path);
+  local function int LoadMemTxt();
+    string path = this.memory_file_path;
     logic [AWIDTH-1:0] waddr, baddr;
     logic [WWIDTH-1:0] data;
 
     // Open the memory file
-    OpenMemFile("r", file);
+    OpenMemFile(path, "r");
 
     // Scan each line and load the data into the memory array
     while (!$feof(
@@ -138,7 +151,7 @@ class memory_class;
     CloseMemFile();
 
     // Return the number of loaded bytes
-    $display($sformatf("Loaded %0d bytes (%0d words)", this.mem.num(), this.mem.num() >> 2));
+    $display("Loaded %0d bytes (%0d words)", this.mem.num(), this.mem.num() >> 2);
     return this.mem.num();
   endfunction : LoadMemTxt
 
@@ -171,7 +184,7 @@ class memory_class;
 
     // Check address alignment
     if (addr[0] != 1'b0) begin
-      $error($sformatf("Halfword address 0x%h is NOT aligned on 16 bits", addr));
+      $display("ERROR: Halfword address 0x%h is NOT aligned on 16 bits", addr);
       return 1;  // exit
     end
 
@@ -197,7 +210,7 @@ class memory_class;
 
     // Check address alignment
     if (addr[1:0] != 2'b00) begin
-      $error($sformatf("Word address 0x%h is NOT aligned on 32 bits", addr));
+      $display("ERROR: Word address 0x%h is NOT aligned on 32 bits", addr);
       return 1;  // exit
     end
 
@@ -223,7 +236,7 @@ class memory_class;
 
     // Check address alignment
     if (addr[2:0] != 3'b000) begin
-      $error($sformatf("Doubleword address 0x%h is NOT aligned on 64 bits", addr));
+      $display("ERROR: Doubleword address 0x%h is NOT aligned on 64 bits", addr);
       return 1;  // exit
     end
 
@@ -249,7 +262,7 @@ class memory_class;
 
     // Check address alignment
     if (addr[5:0] != 6'b000000) begin
-      $error($sformatf("Line address 0x%h is NOT aligned on 512 bits", addr));
+      $display("ERROR: Line address 0x%h is NOT aligned on 512 bits", addr);
       return 1;  // exit
     end
 
@@ -286,7 +299,7 @@ class memory_class;
 
     // Check address alignment
     if (addr[0] != 1'b0) begin
-      $error($sformatf("Halfword address 0x%h is NOT aligned on 16 bits", addr));
+      $display("ERROR: Halfword address 0x%h is NOT aligned on 16 bits", addr);
       return 1;  // exit
     end
 
@@ -304,7 +317,7 @@ class memory_class;
 
     // Check address alignment
     if (addr[1:0] != 2'b00) begin
-      $error($sformatf("Word address 0x%h is NOT aligned on 32 bits", addr));
+      $display("ERROR: Word address 0x%h is NOT aligned on 32 bits", addr);
       return 1;  // exit
     end
 
@@ -322,7 +335,7 @@ class memory_class;
 
     // Check address alignment
     if (addr[2:0] != 3'b000) begin
-      $error($sformatf("Doubleword address 0x%h is NOT aligned on 64 bits", addr));
+      $display("ERROR: Doubleword address 0x%h is NOT aligned on 64 bits", addr);
       return 1;  // exit
     end
 
@@ -340,7 +353,7 @@ class memory_class;
 
     // Check address alignment
     if (addr[5:0] != 6'b000000) begin
-      $error($sformatf("Line address 0x%h is NOT aligned on 512 bits", addr));
+      $display("ERROR: Line address 0x%h is NOT aligned on 512 bits", addr);
       return 1;  // exit
     end
 
@@ -356,16 +369,16 @@ class memory_class;
   // ---------------
 
   // Dump memory content to file
-  function bit PrintMem(string out_path = this.memory_file_path);
+  function bit PrintMem(string out_path = "./memory_dump.txt");
     logic [AWIDTH-1:0] baddr, waddr;
     logic [WWIDTH-1:0] w;
     baddr = '0;
     // Open the output file
-    OpenMemFile("w", out_path);
+    OpenMemFile(out_path, "w");
 
     // Check if the memory is empty
     if (this.mem.first(baddr) == 0) begin
-      $error("Memory is empty");
+      $display("ERROR: Memory is empty");
       return 1;
     end
 

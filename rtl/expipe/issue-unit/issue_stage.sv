@@ -134,7 +134,7 @@ module issue_stage (
 
   // Issue queue <--> issue logic
   logic                        cu_iq_ready;
-  logic iq_cu_except_raised;
+  logic                        iq_cu_except_raised;
 
   // Issue logic <--> CU
   logic                        iq_cu_valid;
@@ -156,7 +156,7 @@ module issue_stage (
   // -------
   // MODULES
   // -------
-  //                              /  ISSUE REGISTER  \
+  //                              /  ISSUE REGISTER  \.
   // fetch stage > ISSUE QUEUE > {   ISSUE DECODER    } > execution/commit
   //                              \     ISSUE CU     /
   //                               \ OPERANDS FETCH /
@@ -296,26 +296,26 @@ module issue_stage (
 
   // CU
   issue_cu u_issue_cu (
-    .clk_i               (clk_i),
-    .rst_n_i             (rst_n_i),
-    .flush_i             (flush_i),
-    .mis_flush_o         (cu_mis_flush),
-    .iq_valid_i          (iq_cu_valid),
-    .iq_ready_o          (cu_iq_ready),
-    .iq_except_raised_i  (iq_cu_except_raised),
-    .issue_type_i        (id_cu_issue_type),
-    .issue_rs1_ready_i   (rs1_ready),
-    .issue_res_ready_o   (cu_il_res_ready),
-    .issue_res_sel_rs1_o (cu_il_res_sel_rs1),
-    .ex_ready_i          (il_cu_ex_ready),
-    .ex_mis_i            (ex_mis_i),
-    .ex_valid_o          (cu_il_ex_valid),
-    .int_regstat_valid_o (int_regstat_valid_o),
+    .clk_i              (clk_i),
+    .rst_n_i            (rst_n_i),
+    .flush_i            (flush_i),
+    .mis_flush_o        (cu_mis_flush),
+    .iq_valid_i         (iq_cu_valid),
+    .iq_ready_o         (cu_iq_ready),
+    .iq_except_raised_i (iq_cu_except_raised),
+    .issue_type_i       (id_cu_issue_type),
+    .issue_rs1_ready_i  (rs1_ready),
+    .issue_res_ready_o  (cu_il_res_ready),
+    .issue_res_sel_rs1_o(cu_il_res_sel_rs1),
+    .ex_ready_i         (il_cu_ex_ready),
+    .ex_mis_i           (ex_mis_i),
+    .ex_valid_o         (cu_il_ex_valid),
+    .int_regstat_valid_o(int_regstat_valid_o),
     // .fp_regstat_valid_o   (fp_regstat_valid_o     ),
-    .comm_ready_i        (comm_ready_i),
-    .comm_valid_o        (comm_valid_o),
-    .comm_resume_i       (comm_resume_i),
-    .comm_jb_instr_o     (comm_jb_instr_o)
+    .comm_ready_i       (comm_ready_i),
+    .comm_valid_o       (comm_valid_o),
+    .comm_resume_i      (comm_resume_i),
+    .comm_jb_instr_o    (comm_jb_instr_o)
   );
 
   // Execution stage valid encoding

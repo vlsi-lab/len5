@@ -83,7 +83,7 @@ module issue_decoder (
     except_code   = E_ILLEGAL_INSTRUCTION;
 
     // Main decoding logic
-    unique case (instruction_i.raw)
+    unique casez (instruction_i.raw)
       // RV64I
       ADD: begin
         issue_type  = ISSUE_TYPE_INT;

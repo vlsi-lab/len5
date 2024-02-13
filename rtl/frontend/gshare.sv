@@ -18,12 +18,13 @@ module gshare #(
   parameter int unsigned     HLEN     = 4,
   parameter fetch_pkg::c2b_t INIT_C2B = WNT
 ) (
-  input logic                                        clk_i,
-  input logic                                        rst_n_i,
-  input logic                                        flush_i,
-  input logic                   [len5_pkg::XLEN-1:0] curr_pc_i,
-  input logic                                        res_valid_i,
-  input fetch_pkg::resolution_t                      res_i,
+  input logic                      clk_i,
+  input logic                      rst_n_i,
+  input logic                      flush_i,
+  input logic [len5_pkg::XLEN-1:0] curr_pc_i,
+  input logic                      res_valid_i,
+  input logic                      res_taken_i,
+  input logic [          HLEN-1:0] res_hist_i,
 
   output logic taken_o
 );
@@ -47,7 +48,7 @@ module gshare #(
       if (flush_i) begin : bht_sync_flush
         history <= '0;
       end else if (res_valid_i) begin : bht_shift
-        history <= {history[HLEN-2:0], res_i.taken};
+        history <= {history[HLEN-2:0], res_taken_i};
       end
     end
   end : bht
@@ -63,19 +64,19 @@ module gshare #(
     if (res_valid_i) begin : c2b_fsm
       case (pht_q[index_w])
         SNT: begin
-          if (res_i.taken) pht_d[index_w] = WNT;
+          if (res_taken_i) pht_d[index_w] = WNT;
           else pht_d[index_w] = SNT;
         end
         WNT: begin
-          if (res_i.taken) pht_d[index_w] = WT;
+          if (res_taken_i) pht_d[index_w] = WT;
           else pht_d[index_w] = SNT;
         end
         WT: begin
-          if (res_i.taken) pht_d[index_w] = ST;
+          if (res_taken_i) pht_d[index_w] = ST;
           else pht_d[index_w] = WNT;
         end
         ST: begin
-          if (res_i.taken) pht_d[index_w] = ST;
+          if (res_taken_i) pht_d[index_w] = ST;
           else pht_d[index_w] = WT;
         end
         default: pht_d[index_w] = WNT;
@@ -97,7 +98,7 @@ module gshare #(
 
   // Assignments
   assign index_r = history ^ curr_pc_i[HLEN+OFFSET-1:OFFSET];  // XOR hashing
-  assign index_w = history ^ res_i.pc[HLEN+OFFSET-1:OFFSET];
+  assign index_w = history ^ res_hist_i;
   assign taken_o = pht_q[index_r][1];
 
 endmodule

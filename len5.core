@@ -31,18 +31,13 @@ filesets:
     - tb/memory/memory_if.sv
     - tb/memory/memory_bare_emu.sv
     - tb/tb_bare.sv
+    - tb/verilator/len5_tb.cpp: {file_type: cppSource}
+    - tb/verilator/tb_macros.hh: {file_type: cppSource, is_include_file: true}
     file_type: systemVerilogSource
 
   questasim-bare-tb:
     files:
-    - tb/len5_tb.sv
     file_type: systemVerilogSource
-
-  verilator-bare-tb:
-    files:
-    - tb/verilator/len5_tb.cpp
-    - tb/verilator/tb_macros.hh: {is_include_file: true}
-    file_type: cppSource
 
   verilator-waivers:
    files:
@@ -91,8 +86,6 @@ targets:
         - '--x-assign unique'
         - '--x-initial unique'
         - '--report-unoptflat'
-        - '-error-limit'
-        - '100'
         - '--exe'
         - 'len5_tb.cpp'
         - '-Wall'

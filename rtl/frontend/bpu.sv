@@ -44,7 +44,8 @@ module bpu #(
     .flush_i    (flush_i),
     .curr_pc_i  (curr_pc_i),
     .res_valid_i(bu_res_valid_i),
-    .res_i      (bu_res_i),
+    .res_taken_i(bu_res_i.taken),
+    .res_hist_i (bu_res_i.pc[HLEN+OFFSET-1:OFFSET]),
     .taken_o    (gshare_taken)
   );
 

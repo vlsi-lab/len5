@@ -71,18 +71,18 @@ module fetch_stage #(
   // MODULES
   // -------
 
-  // BPU      \
-    //           }  MEMORY INTERFACE > ISSUE STAGE
-    // PC GEN   /
+  // BPU      \.
+  //           }  MEMORY INTERFACE > ISSUE STAGE
+  // PC GEN   /
 
-    // TODO: add return-address stack for jumps/branches according to specs
-    // Section 2.5.
+  // TODO: add return-address stack for jumps/branches according to specs
+  // Section 2.5.
 
-    // BRANCH PREDICTION UNIT
-    // ----------------------
-    // NOTE: the prediction is provided in the same cycle as the PC, so no
-    //       synchronization is required.
-    bpu #(
+  // BRANCH PREDICTION UNIT
+  // ----------------------
+  // NOTE: the prediction is provided in the same cycle as the PC, so no
+  //       synchronization is required.
+  bpu #(
     .HLEN    (HLEN),
     .BTB_BITS(BTB_BITS),
     .INIT_C2B(INIT_C2B)
