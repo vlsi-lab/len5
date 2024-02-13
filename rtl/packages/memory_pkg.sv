@@ -12,12 +12,11 @@
 // Author: Matteo Perotti
 // Date: 23/08/2019
 
-`include "util.svh"
-
 package memory_pkg;
   import len5_pkg::*;
   import csr_pkg::csr_priv_t;
   import expipe_pkg::ldst_width_t;
+  import util_pkg::*;
 
   // Byte widths
   localparam int unsigned BYTE = 1;
@@ -51,9 +50,9 @@ package memory_pkg;
   } ppn_t;  // 44 bit physical page number
 
   typedef struct packed {
-    logic [XLEN-1:VADDR_LEN]    not_used;
-    vpn_t                       vpn;
-    logic [PAGE_OFFSET_LEN-1:0] page_offset;
+    logic [len5_pkg::XLEN-1:VADDR_LEN] not_used;
+    vpn_t                              vpn;
+    logic [PAGE_OFFSET_LEN-1:0]        page_offset;
   } virtual_addr_t;
 
   typedef enum logic [1:0] {
@@ -81,21 +80,21 @@ package memory_pkg;
 
   // Request to the memory
   typedef struct packed {
-    logic [BUFF_IDX_LEN-1:0] tag;       // instruction tag
-    mem_acc_t                acc_type;
-    ldst_width_t             ls_type;
-    logic [XLEN-1:0]         addr;      // physical address
-    logic [XLEN-1:0]         value;
+    logic [BUFF_IDX_LEN-1:0]   tag;       // instruction tag
+    mem_acc_t                  acc_type;
+    ldst_width_t               ls_type;
+    logic [len5_pkg::XLEN-1:0] addr;      // physical address
+    logic [len5_pkg::XLEN-1:0] value;
   } mem_req_t;
 
   // Answer from the memory
   typedef struct packed {
-    logic [BUFF_IDX_LEN-1:0] tag;            // instruction tag
-    mem_acc_t                acc_type;
-    logic [XLEN-1:0]         addr;
-    logic [XLEN-1:0]         value;          // fetched value
-    logic                    except_raised;
-    except_code_t            except_code;
+    logic [BUFF_IDX_LEN-1:0]   tag;            // instruction tag
+    mem_acc_t                  acc_type;
+    logic [len5_pkg::XLEN-1:0] addr;
+    logic [len5_pkg::XLEN-1:0] value;          // fetched value
+    logic                      except_raised;
+    except_code_t              except_code;
   } mem_ans_t;
 
   //--------\\
@@ -123,7 +122,7 @@ package memory_pkg;
   localparam int unsigned ICACHE_L1_IDX_A_LEN = $clog2(
       ICACHE_L1_SIZE / (ICACHE_L1_ASSOCIATIVITY * ICACHE_L1_LINE_SIZE)
   );  // 6 bit to address a single set6;//
-  localparam int unsigned ICACHE_L1_TAG_A_LEN      = XLEN - (ICACHE_L1_IDX_A_LEN + ICACHE_L1_LINE_OFF_A_LEN + ICACHE_L1_WORD_A_LEN);
+  localparam int unsigned ICACHE_L1_TAG_A_LEN      = len5_pkg::XLEN - (ICACHE_L1_IDX_A_LEN + ICACHE_L1_LINE_OFF_A_LEN + ICACHE_L1_WORD_A_LEN);
 
   localparam int unsigned ICACHE_L1_BE_LEN = ((ICACHE_L1_TAG_A_LEN + 1) + 7) / 8;
 
@@ -144,15 +143,15 @@ package memory_pkg;
   } icache_line_addr_t;
 
   typedef struct packed {
-    logic [XLEN-1:0] vaddr;
-    logic            valid;
+    logic [len5_pkg::XLEN-1:0] vaddr;
+    logic                      valid;
   } frontend_icache_req_t;
 
   typedef struct packed {
-    icache_line_t    line;
-    logic [XLEN-1:0] vaddr;
-    exception_e      exception;
-    logic            valid;
+    icache_line_t              line;
+    logic [len5_pkg::XLEN-1:0] vaddr;
+    exception_e                exception;
+    logic                      valid;
   } icache_frontend_ans_t;
 
   typedef struct packed {
@@ -257,7 +256,7 @@ package memory_pkg;
   localparam int unsigned DCACHE_L1_IDX_A_LEN = $clog2(
       DCACHE_L1_SIZE / (DCACHE_L1_ASSOCIATIVITY * DCACHE_L1_LINE_SIZE)
   );  //3;//
-  localparam int unsigned DCACHE_L1_TAG_A_LEN         = XLEN - (DCACHE_L1_IDX_A_LEN + DCACHE_L1_LINE_OFF_A_LEN + DCACHE_L1_WORD_A_LEN);
+  localparam int unsigned DCACHE_L1_TAG_A_LEN         = len5_pkg::XLEN - (DCACHE_L1_IDX_A_LEN + DCACHE_L1_LINE_OFF_A_LEN + DCACHE_L1_WORD_A_LEN);
 
   localparam int unsigned DCACHE_L1_LINE_A_LEN = DCACHE_L1_TAG_A_LEN + DCACHE_L1_IDX_A_LEN;
   localparam int unsigned DCACHE_L1_TVD_LEN = DCACHE_L1_TAG_A_LEN + 2;  // Tag + Valid + Dirty (TVD)
@@ -314,20 +313,20 @@ package memory_pkg;
   } store_width_e;
 
   typedef struct packed {
-    dcache_L1_addr_t  paddr;        // the physical cache address
-    logic [XLEN-1:0]  data;         // data to be stored
-    lsq_d0_req_type_e req_type;     // Load or Store
-    store_width_e     store_width;  // B, HW, W, DW (for Store!)
-    lsq_addr_t        lsq_addr;     // to address the answer to LSQ
-    logic             valid;        // request valid
+    dcache_L1_addr_t           paddr;        // the physical cache address
+    logic [len5_pkg::XLEN-1:0] data;         // data to be stored
+    lsq_d0_req_type_e          req_type;     // Load or Store
+    store_width_e              store_width;  // B, HW, W, DW (for Store!)
+    lsq_addr_t                 lsq_addr;     // to address the answer to LSQ
+    logic                      valid;        // request valid
   } lsq_l1dc_req_t;
 
   // L1 D-Cache -> LSQ
   typedef struct packed {
-    logic [XLEN-1:0] data;       // loaded data
-    logic            was_store;  // '1' if the answer is relative to a store
-    lsq_addr_t       lsq_addr;   // to address the answer
-    logic            valid;      // valid answer
+    logic [len5_pkg::XLEN-1:0] data;       // loaded data
+    logic                      was_store;  // '1' if the answer is relative to a store
+    lsq_addr_t                 lsq_addr;   // to address the answer
+    logic                      valid;      // valid answer
   } l1dc_lsq_ans_t;
 
   // L1 D-Cache -> LSQ (wake-up)
@@ -384,14 +383,14 @@ package memory_pkg;
   // d0 data sel block -> output registers
 
   typedef struct packed {
-    d0_d1_req_type_e req_type;     // request type
-    dcache_L1_addr_t paddr;        // the physical cache address
-    logic [XLEN-1:0] data;         // doubleword to be stored
-    dcache_line_t    line;
-    store_width_e    store_width;  // B, HW, W, DW (for Store!)
-    wbb_tag_t        wbb_tag;      // tag for L2 -> WBB answers
-    lsq_addr_t       lsq_addr;     // to address the answer to LSQ
-    logic            valid;        // request valid
+    d0_d1_req_type_e           req_type;     // request type
+    dcache_L1_addr_t           paddr;        // the physical cache address
+    logic [len5_pkg::XLEN-1:0] data;         // doubleword to be stored
+    dcache_line_t              line;
+    store_width_e              store_width;  // B, HW, W, DW (for Store!)
+    wbb_tag_t                  wbb_tag;      // tag for L2 -> WBB answers
+    lsq_addr_t                 lsq_addr;     // to address the answer to LSQ
+    logic                      valid;        // request valid
   } d1_req_info_t;
 
   typedef struct packed {
@@ -418,16 +417,16 @@ package memory_pkg;
   } d1_d0_req_type_e;
 
   typedef struct packed {
-    d1_d0_req_type_e req_type;     // d1 -> d0 request type
-    dcache_L1_addr_t paddr;        // the physical cache address
-    logic [XLEN-1:0] data;         // data to be stored
-    dcache_line_t    line;         // forwarded line
-    store_width_e    store_width;  // B, HW, W, DW (for Store!)
-    lsq_addr_t       lsq_addr;     // to address the answer to LSQ
-    hit_vec_t        hit_vec;      // hit lines from the comparison block in d1
-    dirty_vec_t      dirty_vec;    // one hotted dirty vector from d1
-    repl_vec_t       replace_vec;  // updateL2 replace idx
-    logic            valid;        // request valid
+    d1_d0_req_type_e           req_type;     // d1 -> d0 request type
+    dcache_L1_addr_t           paddr;        // the physical cache address
+    logic [len5_pkg::XLEN-1:0] data;         // data to be stored
+    dcache_line_t              line;         // forwarded line
+    store_width_e              store_width;  // B, HW, W, DW (for Store!)
+    lsq_addr_t                 lsq_addr;     // to address the answer to LSQ
+    hit_vec_t                  hit_vec;      // hit lines from the comparison block in d1
+    dirty_vec_t                dirty_vec;    // one hotted dirty vector from d1
+    repl_vec_t                 replace_vec;  // updateL2 replace idx
+    logic                      valid;        // request valid
   } d1_d0_req_t;
 
   typedef struct packed {
@@ -496,11 +495,11 @@ package memory_pkg;
   } mshr_wbb_winner_e;
 
   typedef struct packed {
-    d1_d0_req_type_e req_type;
-    dcache_L1_addr_t paddr;
-    logic [XLEN-1:0] doubleword;
-    lsq_addr_t       lsq_addr;
-    store_width_e    store_width;
+    d1_d0_req_type_e           req_type;
+    dcache_L1_addr_t           paddr;
+    logic [len5_pkg::XLEN-1:0] doubleword;
+    lsq_addr_t                 lsq_addr;
+    store_width_e              store_width;
   } l1dc_replay_t;
 
   //---------\\
@@ -571,7 +570,7 @@ package memory_pkg;
   localparam int unsigned CACHE_L2_IDX_A_LEN = $clog2(
       CACHE_L2_SIZE / (CACHE_L2_ASSOCIATIVITY * CACHE_L2_LINE_SIZE)
   );  // 10
-  localparam int unsigned CACHE_L2_TAG_A_LEN      = XLEN - (CACHE_L2_IDX_A_LEN + CACHE_L2_LINE_OFF_A_LEN + CACHE_L2_WORD_A_LEN);
+  localparam int unsigned CACHE_L2_TAG_A_LEN      = len5_pkg::XLEN - (CACHE_L2_IDX_A_LEN + CACHE_L2_LINE_OFF_A_LEN + CACHE_L2_WORD_A_LEN);
 
   typedef logic [CACHE_L2_LINE_LEN-1:0] l2c_line_t;
   typedef logic [CACHE_L2_IDX_A_LEN-1:0] l2c_addr_t;
@@ -616,12 +615,12 @@ package memory_pkg;
   } l2c_l2arb_ans_type_e;
 
   typedef struct packed {
-    logic [XLEN-1:0]     data;      // loaded data
-    l2c_line_t           line;      // l2c line ans
-    cache_L2_addr_t      paddr;     // data to be stored
-    l2c_l2arb_ans_type_e ans_type;  // specify the request type
-    wbb_tag_t            wbb_tag;   // to address the answer
-    logic                valid;     // valid answer
+    logic [len5_pkg::XLEN-1:0] data;      // loaded data
+    l2c_line_t                 line;      // l2c line ans
+    cache_L2_addr_t            paddr;     // data to be stored
+    l2c_l2arb_ans_type_e       ans_type;  // specify the request type
+    wbb_tag_t                  wbb_tag;   // to address the answer
+    logic                      valid;     // valid answer
   } l2c_l2arb_ans_t;
 
   // L2 Cache -> DRAM
@@ -975,8 +974,8 @@ package memory_pkg;
   } ptw_l2c_req_t;
 
   typedef struct packed {
-    logic [XLEN-1:0] pte;    // 64 bits page table entry
-    logic            valid;
+    logic [len5_pkg::XLEN-1:0] pte;    // 64 bits page table entry
+    logic                      valid;
   } l2c_ptw_ans_t;
 
   typedef struct packed {

@@ -23,7 +23,7 @@ module ifu (
     input logic flush_i,
 
     // From/to PC gen
-    input  logic [XLEN-1:0] pc_i,
+    input  logic [len5_pkg::XLEN-1:0] pc_i,
     output logic            fetch_ready_o,
 
     // From/to i-cache interface
@@ -37,13 +37,13 @@ module ifu (
     // To backend
     output logic except_o,
     //output except_code_t except_code_o,
-    output except_code_t except_code_o,
+    output len5_pkg::except_code_t except_code_o,
 
     // From/to instruction decode
     input  logic            issue_ready_i,
     output logic            issue_valid_o,
     output logic [ILEN-1:0] instruction_o,
-    output logic [XLEN-1:0] curr_pc_o
+    output logic [len5_pkg::XLEN-1:0] curr_pc_o
 );
 
   // Signal declarations

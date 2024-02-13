@@ -12,10 +12,6 @@
 // Author: Michele Caon
 // Date: 15/07/2022
 
-import len5_config_pkg::*;
-import len5_pkg::*;
-import expipe_pkg::*;
-
 /**
  * @brief Address adder.
  *
@@ -34,14 +30,18 @@ module address_adder (
   output logic valid_o,
   output logic ready_o,
 
-  input  adder_req_t req_i,
-  output adder_ans_t ans_o
+  input  expipe_pkg::adder_req_t req_i,
+  output expipe_pkg::adder_ans_t ans_o
 );
+
+  import len5_config_pkg::*;
+  import len5_pkg::*;
+  import expipe_pkg::*;
+
   // INTERNAL SIGNALS
   // ----------------
-  logic       [XLEN-1:0] res;
-  logic                  align_except;
-  adder_ans_t            ans;
+  logic       align_except;
+  adder_ans_t ans;
 
   // Exception handler
   // -----------------
@@ -58,19 +58,19 @@ module address_adder (
   // Address adder
   // -------------
   assign ans.tag           = req_i.tag;
-  assign ans.is_store      = req_i.is_store;
   assign ans.result        = req_i.base + req_i.offs;
   assign ans.except_raised = align_except;
   assign ans.except_code   = (req_i.is_store) ? E_ST_ADDR_MISALIGNED : E_LD_ADDR_MISALIGNED;
 
   // Output spill cell
   // -----------------
-  spill_cell #(
+  spill_cell_flush #(
     .DATA_T(adder_ans_t),
     .SKIP  (LSU_SPILL_SKIP)
   ) u_out_reg (
     .clk_i  (clk_i),
     .rst_n_i(rst_n_i),
+    .flush_i(flush_i),
     .valid_i(valid_i),
     .ready_i(ready_i),
     .valid_o(valid_o),

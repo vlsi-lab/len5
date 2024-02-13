@@ -32,8 +32,8 @@ module exec_stage_vm (
 
     // FETCH UNIT
     // ----------
-    output logic [XLEN-1:0] fetch_res_pc_o,
-    output logic [XLEN-1:0] fetch_res_target_o,
+    output logic [len5_pkg::XLEN-1:0] fetch_res_pc_o,
+    output logic [len5_pkg::XLEN-1:0] fetch_res_target_o,
     output logic            fetch_res_taken_o,
     output logic            fetch_res_valid_o,
     output logic            fetch_res_mispredict_o,
@@ -49,14 +49,14 @@ module exec_stage_vm (
     input logic     [MAX_EU_CTL_LEN-1:0] issue_eu_ctl_i,       // controls for the associated EU
     input logic                          issue_rs1_ready_i,    // first operand is ready at issue time (from the RF or the ROB)
     input rob_idx_t                      issue_rs1_idx_i,      // the index of the ROB where the first operand can be found (if not ready
-    input logic     [          XLEN-1:0] issue_rs1_value_i,    // the value of the first operand (if ready)
+    input logic     [          len5_pkg::XLEN-1:0] issue_rs1_value_i,    // the value of the first operand (if ready)
     input logic                          issue_rs2_ready_i,    // second operand is ready at issue time (from the RF or the ROB)
     input rob_idx_t                      issue_rs2_idx_i,      // the index of the ROB where the first operand can be found (if not ready)
-    input logic     [          XLEN-1:0] issue_rs2_value_i,    // the value of the first operand (if ready)
-    input logic     [          XLEN-1:0] issue_imm_value_i,    // the value of the immediate field (for st and branches)
+    input logic     [          len5_pkg::XLEN-1:0] issue_rs2_value_i,    // the value of the first operand (if ready)
+    input logic     [          len5_pkg::XLEN-1:0] issue_imm_value_i,    // the value of the immediate field (for st and branches)
     input rob_idx_t                      issue_rob_idx_i,      // the location of the ROB assigned to the instruction
-    input logic     [          XLEN-1:0] issue_pred_pc_i,      // the PC of the current issuing instr (branches only)
-    input logic     [          XLEN-1:0] issue_pred_target_i,  // the predicted target of the current issuing instr (branches only)
+    input logic     [          len5_pkg::XLEN-1:0] issue_pred_pc_i,      // the PC of the current issuing instr (branches only)
+    input logic     [          len5_pkg::XLEN-1:0] issue_pred_target_i,  // the predicted target of the current issuing instr (branches only)
     input logic                          issue_pred_taken_i,   // the predicted taken bit of the current issuing instr (branches only)
 
     // COMMON DATA BUS (CDB)

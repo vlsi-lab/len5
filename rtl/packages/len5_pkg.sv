@@ -17,6 +17,13 @@
 package len5_pkg;
   // LEN5 configuration
   import len5_config_pkg::*;
+  localparam int unsigned WWIDTH = 32;
+  localparam int unsigned AWIDTH = 64;
+  localparam int unsigned BWIDTH = 8;
+  // Parameters
+  localparam int unsigned HWWIDTH = WWIDTH >> 1;
+  localparam int unsigned DWWIDTH = WWIDTH << 1;
+  localparam int unsigned LWIDTH = WWIDTH << 4;
 
   // Global constants
   localparam int unsigned ILEN = 32;  // instruction length

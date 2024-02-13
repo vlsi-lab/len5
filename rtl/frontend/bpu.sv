@@ -12,23 +12,23 @@
 // Author: Marco Andorno
 // Date: 7/8/2019
 
-import len5_pkg::*;
-import fetch_pkg::*;
-
 module bpu #(
-  parameter int unsigned HLEN     = 4,
-  parameter int unsigned BTB_BITS = 4,
-  parameter c2b_t        INIT_C2B = WNT
+  parameter int unsigned     HLEN     = 4,
+  parameter int unsigned     BTB_BITS = 4,
+  parameter fetch_pkg::c2b_t INIT_C2B = WNT
 ) (
-  input logic                   clk_i,
-  input logic                   rst_n_i,
-  input logic                   flush_i,
-  input logic        [XLEN-1:0] curr_pc_i,
-  input logic                   bu_res_valid_i,
-  input resolution_t            bu_res_i,
+  input logic                                        clk_i,
+  input logic                                        rst_n_i,
+  input logic                                        flush_i,
+  input logic                   [len5_pkg::XLEN-1:0] curr_pc_i,
+  input logic                                        bu_res_valid_i,
+  input fetch_pkg::resolution_t                      bu_res_i,
 
-  output prediction_t pred_o
+  output fetch_pkg::prediction_t pred_o
 );
+
+  import len5_pkg::*;
+  import fetch_pkg::*;
   // Signal definitions
   logic btb_hit, btb_update, btb_del_entry;
   logic                   gshare_taken;
@@ -51,15 +51,16 @@ module bpu #(
   btb #(
     .BTB_BITS(BTB_BITS)
   ) u_btb (
-    .clk_i      (clk_i),
-    .rst_n_i    (rst_n_i),
-    .flush_i    (flush_i),
-    .curr_pc_i  (curr_pc_i),
-    .valid_i    (btb_update),
-    .del_entry_i(btb_del_entry),
-    .res_i      (bu_res_i),
-    .hit_o      (btb_hit),
-    .target_o   (btb_target)
+    .clk_i       (clk_i),
+    .rst_n_i     (rst_n_i),
+    .flush_i     (flush_i),
+    .curr_pc_i   (curr_pc_i),
+    .valid_i     (btb_update),
+    .del_entry_i (btb_del_entry),
+    .res_pc_i    (bu_res_i.pc),
+    .res_target_i(bu_res_i.target),
+    .hit_o       (btb_hit),
+    .target_o    (btb_target)
   );
 
   // Assignments

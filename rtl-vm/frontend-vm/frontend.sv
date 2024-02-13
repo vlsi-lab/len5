@@ -19,14 +19,14 @@ import expipe_pkg::*;
 module frontend #(
     parameter HLEN = 4,
     parameter BTB_BITS = 4,
-    parameter [XLEN-1:0] BOOT_PC = 'h0
+    parameter [len5_pkg::XLEN-1:0] BOOT_PC = 'h0
 ) (
     input logic clk_i,
     input logic rst_n_i,
     input logic flush_i,
 
     // From/to i-cache
-    output logic                 [XLEN-1:0] addr_o,
+    output logic                 [len5_pkg::XLEN-1:0] addr_o,
     output logic                            addr_valid_o,
     input  logic                            addr_ready_i,
     output logic                            data_ready_o,
@@ -36,7 +36,7 @@ module frontend #(
     input  logic                   issue_ready_i,
     output logic                   issue_valid_o,
     output logic        [ILEN-1:0] instruction_o,
-    output logic        [XLEN-1:0] curr_pc_o,
+    output logic        [len5_pkg::XLEN-1:0] curr_pc_o,
     output prediction_t            pred_o,
 
     // From branch unit (ex stage)
@@ -49,7 +49,7 @@ module frontend #(
 
     // For pc_gen from or to back end
     input logic            except_i,
-    input logic [XLEN-1:0] except_pc_i
+    input logic [len5_pkg::XLEN-1:0] except_pc_i
 );
 
   // Signal declarations
@@ -105,7 +105,8 @@ module frontend #(
       .except_i     (except_i),
       .except_pc_i  (except_pc_i),
       .res_i        (res_i),
-      .pred_i       (pred_i),
+      .pred_target_i(pred_i.target),
+      .pred_taken_i(pred_i.taken),
       .fetch_ready_i(fetch_ready_o),
       .pc_o         (pc_o)
   );

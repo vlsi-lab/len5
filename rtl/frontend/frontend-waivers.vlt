@@ -1,0 +1,14 @@
+// Copyright 2022 Politecnico di Torino.
+// Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// File: frontend-waivers.vlt
+// Author:  Mattia Mirigaldi
+// Date: 12/02/2024
+// Description: Verilator waivers 
+
+`verilator_config
+lint_off -rule UNUSED -file "*/btb.sv" -match "Bits of signal are not used: 'curr_pc_i'[1:0]"
+lint_off -rule UNUSED -file "*/btb.sv" -match "Bits of signal are not used: 'res_pc_i'[1:0]"
+lint_off -rule UNUSED -file "*/btb.sv" -match "Bits of signal are not used: 'res_target_i'[1:0]"
+lint_off -rule UNUSED -file "*/gshare.sv" -match "Bits of signal are not used: 'curr_pc_i'[63:6,1:0]"

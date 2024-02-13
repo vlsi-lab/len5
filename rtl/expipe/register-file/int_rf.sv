@@ -12,11 +12,6 @@
 // Author: Michele Caon
 // Date: 12/11/2019
 
-import len5_pkg::XLEN;
-import len5_pkg::XREG_NUM;
-import len5_pkg::REG_IDX_LEN;
-import expipe_pkg::*;
-
 module int_rf (
   input logic clk_i,
   input logic rst_n_i,
@@ -26,15 +21,19 @@ module int_rf (
   // output  logic                   comm_ready_o,
 
   // Data from the commit logic (result write port)
-  input logic [REG_IDX_LEN-1:0] comm_rd_idx_i,
-  input logic [       XLEN-1:0] comm_rd_value_i,
+  input logic [len5_pkg::REG_IDX_LEN-1:0] comm_rd_idx_i,
+  input logic [       len5_pkg::XLEN-1:0] comm_rd_value_i,
 
   // Data to the issue stage (operands read ports)
-  input  logic [REG_IDX_LEN-1:0] issue_rs1_idx_i,
-  input  logic [REG_IDX_LEN-1:0] issue_rs2_idx_i,
-  output logic [       XLEN-1:0] issue_rs1_value_o,
-  output logic [       XLEN-1:0] issue_rs2_value_o
+  input  logic [len5_pkg::REG_IDX_LEN-1:0] issue_rs1_idx_i,
+  input  logic [len5_pkg::REG_IDX_LEN-1:0] issue_rs2_idx_i,
+  output logic [       len5_pkg::XLEN-1:0] issue_rs1_value_o,
+  output logic [       len5_pkg::XLEN-1:0] issue_rs2_value_o
 );
+
+  import len5_pkg::XLEN;
+  import len5_pkg::XREG_NUM;
+  import expipe_pkg::*;
 
   // DEFINITIONS
 

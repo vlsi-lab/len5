@@ -13,7 +13,7 @@
 // Date: 19/08/2022
 
 module updown_counter #(
-  parameter int unsigned W = 4  // number of bits
+  parameter int unsigned WIDTH = 4  // number of bits
 ) (
   // Input signals
   input logic clk_i,
@@ -23,8 +23,8 @@ module updown_counter #(
   input logic up_dn_i,  // 1: up, 0: down
 
   // Output signals
-  output logic [W-1:0] count_o,
-  output logic         tc_o      // Terminal count: '1' when count_o = 2^W-1
+  output logic [WIDTH-1:0] count_o,
+  output logic             tc_o      // Terminal count: '1' when count_o = 2^WIDTH-1
 );
 
   // Terminal count

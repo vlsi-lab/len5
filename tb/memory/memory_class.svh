@@ -14,44 +14,38 @@
 // Description: memory emulator
 // Details: memory modeled as SystemVerilog associative array to support
 //          sparse data.
-
-class memory_class #(
-  parameter int unsigned WWIDTH = 32,
-  parameter int unsigned AWIDTH = 64
-);
-  // PROPERTIES
-  // ----------
-
-  // Parameters
-  localparam int unsigned BWIDTH = 8;
-  localparam int unsigned HWWIDTH = WWIDTH >> 1;
-  localparam int unsigned DWWIDTH = WWIDTH << 1;
-  localparam int unsigned LWIDTH = WWIDTH << 4;
-
+import len5_pkg::WWIDTH;
+import len5_pkg::AWIDTH;
+import len5_pkg::BWIDTH;
+import len5_pkg::HWWIDTH;
+import len5_pkg::DWWIDTH;
+import len5_pkg::LWIDTH;
+class memory_class;
   // File info
-  local string               memory_file_path;
-  local int                  fd;
-  local string               file_line;
+  const local string                     memory_file_path;
+  const local int                        fd;
+  const local string                     file_line;
 
   // File data
-  local logic  [ WWIDTH-1:0] word_buf;
-  logic        [ BWIDTH-1:0] read_byte;
-  logic        [HWWIDTH-1:0] read_halfword;
-  logic        [ WWIDTH-1:0] read_word;
-  logic        [DWWIDTH-1:0] read_doubleword;
-  logic        [ LWIDTH-1:0] read_line;
+  logic              [ BWIDTH-1:0] read_byte;
+  logic              [HWWIDTH-1:0] read_halfword;
+  logic              [ WWIDTH-1:0] read_word;
+  logic              [DWWIDTH-1:0] read_doubleword;
+  logic              [ LWIDTH-1:0] read_line;
 
   // Memory data
   // NOTE: delared as static so it's shared by all instances
-  static logic [ BWIDTH-1:0] mem[logic         [AWIDTH-1:0]];
+  // TODO: Update verilator to support static class members
+  // static logic       [ BWIDTH-1:0] mem[logic         [AWIDTH-1:0]];
+  logic       [BWIDTH-1:0] mem[logic         [AWIDTH-1:0]];
 
   // METHODS
   // -------
 
   // Constructor
-  function new(string memory_file_path = "./memory.txt");
-    this.memory_file_path = memory_file_path;
-    this.mem              = {};
+  function new(string file_path = "./memory.txt");
+    this.memory_file_path = file_path;
+    this.mem              = '{default: 0};
   endfunction : new
 
   // Open the memory file
@@ -71,7 +65,7 @@ class memory_class #(
   function int LoadMem(string file = this.memory_file_path, logic [AWIDTH-1:0] offs = 0);
     string ext = file.substr(file.len() - 3, file.len() - 1);
     // Choose the memory load method based on the file extension
-    if (!ext.compare("txt") || !ext.compare("hex")) begin
+    if ( (ext.compare("txt") == 0) || (ext.compare("hex") == 0) ) begin
       return this.LoadMemTxt(file);
     end
     return this.LoadMemBin(file, offs);
@@ -91,9 +85,9 @@ class memory_class #(
       // Read multiple bytes at a time to reduce overhead
       ret_code = $fread(frame_buff, this.fd);
       for (int i = 0; i < ret_code; i++) begin
-        this.mem[addr+i] = frame_buff[i];
+        this.mem[addr+{32'b0, i}] = frame_buff[i];
       end
-      addr += ret_code;
+      addr += {32'b0, ret_code};
     end while (ret_code != 0);
 
     // Close the memory file
@@ -135,7 +129,7 @@ class memory_class #(
       if (ScanMemLine(waddr, data) != 0) return -1;
       // Store the read bytes
       for (int i = 0; i < (WWIDTH >> 3); i++) begin
-        baddr           = waddr + i;
+        baddr           = waddr + {32'b0, i};
         this.mem[baddr] = data[BWIDTH*(i+1)-1-:BWIDTH];
       end
     end
@@ -158,7 +152,7 @@ class memory_class #(
   // Read a byte
   function int ReadB(logic [AWIDTH-1:0] addr);
     // Search the byte in memory
-    if (!this.mem.exists(addr)) begin
+    if (this.mem.exists(addr) == 0) begin
       $display($sformatf("Reading uninitialized byte at address 0x%h", addr),);
       this.read_byte = '0;
       return 2;
@@ -183,7 +177,7 @@ class memory_class #(
 
     // Read bytes from memory
     for (int i = 0; i < (HWWIDTH >> 3); i++) begin
-      baddr                      = addr + i;
+      baddr                      = addr + {32'b0, i};
 
       // Read current byte
       ret                        = this.ReadB(baddr);
@@ -209,7 +203,7 @@ class memory_class #(
 
     // Read bytes from memory
     for (int i = 0; i < (WWIDTH >> 3); i++) begin
-      baddr                     = addr + i;
+      baddr                     = addr + {32'b0,i};
 
       // Read current byte
       ret                       = this.ReadB(baddr);
@@ -235,7 +229,7 @@ class memory_class #(
 
     // Read bytes from memory
     for (int i = 0; i < (DWWIDTH >> 3); i++) begin
-      baddr                      = addr + i;
+      baddr                      = addr + {32'b0,i};
 
       // Read current byte
       ret                        = this.ReadB(baddr);
@@ -261,7 +255,7 @@ class memory_class #(
 
     // Read bytes from memory
     for (int i = 0; i < (LWIDTH >> 3); i++) begin
-      baddr                     = addr + i;
+      baddr                     = addr + {32'b0, i};
 
       // Read current byte
       ret                       = this.ReadB(baddr);
@@ -289,7 +283,6 @@ class memory_class #(
   // Write a halfword
   function int WriteHW(logic [AWIDTH-1:0] addr, logic [HWWIDTH-1:0] data);
     logic [AWIDTH-1:0] baddr;  // word address
-    int                ret;
 
     // Check address alignment
     if (addr[0] != 1'b0) begin
@@ -299,7 +292,7 @@ class memory_class #(
 
     // Store the bytes
     for (int i = 0; i < (HWWIDTH >> 3); i++) begin
-      baddr = addr + i;
+      baddr = addr + {32'b0, i};
       WriteB(baddr, data[BWIDTH*(i+1)-1-:BWIDTH]);
     end
     return 0;
@@ -308,7 +301,6 @@ class memory_class #(
   // Write word
   function int WriteW(logic [AWIDTH-1:0] addr, logic [WWIDTH-1:0] data);
     logic [AWIDTH-1:0] baddr;  // word address
-    int                ret;
 
     // Check address alignment
     if (addr[1:0] != 2'b00) begin
@@ -318,7 +310,7 @@ class memory_class #(
 
     // Store the bytes
     for (int i = 0; i < (WWIDTH >> 3); i++) begin
-      baddr = addr + i;
+      baddr = addr + {32'b0, i};
       WriteB(baddr, data[BWIDTH*(i+1)-1-:BWIDTH]);
     end
     return 0;
@@ -327,7 +319,6 @@ class memory_class #(
   // Write doubleword
   function int WriteDW(logic [AWIDTH-1:0] addr, logic [DWWIDTH-1:0] data);
     logic [AWIDTH-1:0] baddr;  // word address
-    int                ret;
 
     // Check address alignment
     if (addr[2:0] != 3'b000) begin
@@ -337,7 +328,7 @@ class memory_class #(
 
     // Store the bytes
     for (int i = 0; i < (DWWIDTH >> 3); i++) begin
-      baddr = addr + i;
+      baddr = addr + {32'b0, i};
       WriteB(baddr, data[BWIDTH*(i+1)-1-:BWIDTH]);
     end
     return 0;
@@ -346,7 +337,6 @@ class memory_class #(
   // Store entire line
   function int WriteLine(logic [AWIDTH-1:0] addr, logic [LWIDTH-1:0] data);
     logic [AWIDTH-1:0] baddr;  // word address
-    int                ret;
 
     // Check address alignment
     if (addr[5:0] != 6'b000000) begin
@@ -356,7 +346,7 @@ class memory_class #(
 
     // Store the bytes
     for (int i = 0; i < (LWIDTH >> 3); i++) begin
-      baddr = addr + i;
+      baddr = addr + {32'b0, i};
       WriteB(baddr, data[BWIDTH*(i+1)-1-:BWIDTH]);
     end
     return 0;
@@ -369,12 +359,12 @@ class memory_class #(
   function bit PrintMem(string out_path = this.memory_file_path);
     logic [AWIDTH-1:0] baddr, waddr;
     logic [WWIDTH-1:0] w;
-
+    baddr = '0;
     // Open the output file
     OpenMemFile("w", out_path);
 
     // Check if the memory is empty
-    if (!this.mem.first(baddr)) begin
+    if (this.mem.first(baddr) == 0) begin
       $error("Memory is empty");
       return 1;
     end
@@ -382,17 +372,17 @@ class memory_class #(
     // Iterate over the memory
     w = 'x;
     do begin
-      w[BWIDTH*(baddr[1:0]+1)-1-:BWIDTH] = this.mem[baddr];
+      w[BWIDTH*({30'b0, baddr[1:0]} + 1)-1-:BWIDTH] = this.mem[baddr];
       // $display("cnt: %0d | buff: %h | baddr: %h | data: %h", baddr[1:0], w, baddr, this.mem[baddr]);
       // Print the word and reset the word buffer
       if (baddr[1:0] == 2'b11) begin
-        waddr = {baddr[AWIDTH:2], 2'b00};
+        waddr = {baddr[AWIDTH-1:2], 2'b00};
         $fdisplay(this.fd, "%016h %08h", waddr, w);
         w = 'x;
       end
     end while (this.mem.next(
         baddr
-    ));
+    ) == 1);
 
     // Close the file
     CloseMemFile();

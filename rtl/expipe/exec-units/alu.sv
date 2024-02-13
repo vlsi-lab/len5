@@ -12,11 +12,8 @@
 // Author: Michele Caon
 // Date: 10/11/2021
 
-import len5_pkg::*;
-import expipe_pkg::*;
-
 module alu #(
-  parameter int unsigned SKIP_REG = 0,  // make the ALU fully combinational
+  parameter bit SKIP_REG = 1'b0,  // make the ALU fully combinational
 
   // EU-specific parameters
   parameter int unsigned EU_CTL_LEN = 4
@@ -32,16 +29,18 @@ module alu #(
   output logic ready_o,
 
   // Data from/to the reservation station unit
-  input  logic         [EU_CTL_LEN-1:0] ctl_i,
-  input  rob_idx_t                      rob_idx_i,
-  input  logic         [      XLEN-1:0] rs1_i,
-  input  logic         [      XLEN-1:0] rs2_i,
-  output rob_idx_t                      rob_idx_o,
-  output logic         [      XLEN-1:0] result_o,
-  output logic                          except_raised_o,
-  output except_code_t                  except_code_o
+  input  logic                   [    EU_CTL_LEN-1:0] ctl_i,
+  input  expipe_pkg::rob_idx_t                        rob_idx_i,
+  input  logic                   [len5_pkg::XLEN-1:0] rs1_i,
+  input  logic                   [len5_pkg::XLEN-1:0] rs2_i,
+  output expipe_pkg::rob_idx_t                        rob_idx_o,
+  output logic                   [len5_pkg::XLEN-1:0] result_o,
+  output logic                                        except_raised_o,
+  output len5_pkg::except_code_t                      except_code_o
 );
 
+  import len5_pkg::*;
+  import expipe_pkg::*;
   // ALU output
   logic [XLEN-1:0] result;
   logic            except_raised;
@@ -57,26 +56,35 @@ module alu #(
 
     unique case (ctl_i)
       ALU_ADD:  result = rs1_i + rs2_i;
-      ALU_ADDW: result = signed'(rs1_i[(XLEN>>1)-1:0] + rs2_i[(XLEN>>1)-1:0]);
+      ALU_ADDW: begin
+        result = {32'h0, rs1_i[(XLEN>>1)-1:0] + rs2_i[(XLEN>>1)-1:0]};
+        // Sign-extend the result
+        result = {{32{result[XLEN>>1]}}, {result[(XLEN>>1)-1:0]}};
+      end
       ALU_SUB:  result = rs1_i - rs2_i;
-      ALU_SUBW: result = signed'(rs1_i[(XLEN>>1)-1:0] - rs2_i[(XLEN>>1)-1:0]);
+      ALU_SUBW: begin
+        result = {32'h0, signed'(rs1_i[(XLEN>>1)-1:0] - rs2_i[(XLEN>>1)-1:0])};
+        // Sign-extend the result
+        result = {{32{result[XLEN>>1]}}, {result[(XLEN>>1)-1:0]}};
+      end
       ALU_AND:  result = rs1_i & rs2_i;
       ALU_OR:   result = rs1_i | rs2_i;
       ALU_XOR:  result = rs1_i ^ rs2_i;
       ALU_SLL:  result = rs1_i << rs2_i[5:0];
-      ALU_SLLW: result = signed'(rs1_i[(XLEN>>1)-1:0] << rs2_i[4:0]);
+      ALU_SLLW: result = {32'h0, signed'(rs1_i[(XLEN>>1)-1:0] << rs2_i[4:0])};
       ALU_SRL:  result = rs1_i >> rs2_i[5:0];
       ALU_SRLW: result = {32'h0, rs1_i[(XLEN>>1)-1:0] >> rs2_i[4:0]};
       ALU_SRA:  result = rs1_i >>> rs2_i[5:0];
-      ALU_SRAW: result = rs1_i[(XLEN>>1)-1:0] >>> rs2_i[4:0];
-      ALU_SLT:  result = signed'(rs1_i) < signed'(rs2_i);
-      ALU_SLTU: result = rs1_i < rs2_i;
+      ALU_SRAW: begin
+        result = {32'h0, rs1_i[(XLEN>>1)-1:0] >>> rs2_i[4:0]};
+        // Sign-extend the result
+        result = {{32{result[XLEN>>1]}}, {result[(XLEN>>1)-1:0]}};
+      end
+      ALU_SLT:  result = signed'(rs1_i) << signed'(rs2_i);
+      ALU_SLTU: result = rs1_i << rs2_i;
       default:  except_raised = 1'b1;
     endcase
   end
-
-  // Exception handling
-  assign except_code = E_ILLEGAL_INSTRUCTION;  // invalid ALU opcode
 
   // ---------------
   // OUTPUT REGISTER
@@ -101,6 +109,7 @@ module alu #(
   assign result_o                      = out_reg_data_out.res;
   assign rob_idx_o                     = out_reg_data_out.rob_idx;
   assign except_raised_o               = out_reg_data_out.except_raised;
+  assign except_code_o                 = E_ILLEGAL_INSTRUCTION;
 
   // Output register
   spill_cell_flush #(
@@ -117,9 +126,4 @@ module alu #(
     .data_i (out_reg_data_in),
     .data_o (out_reg_data_out)
   );
-
-  // Exception handling
-  // ------------------
-  assign except_code_o = E_ILLEGAL_INSTRUCTION;
-
 endmodule

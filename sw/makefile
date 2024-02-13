@@ -23,10 +23,11 @@ ISA_STRING					?= rv64izicsr
 ABI_STRING					?= lp64
 CFLAGS			:= -march=$(ISA_STRING) \
 				   -mabi=$(ABI_STRING) \
+				   -mstrict-align \ # TODO: REMOVE WHEN UNALIGNED ACCESS IS SUPPORTED
 				   -nostartfiles \
 				   -O0 \
 				   -g \
-				   -Wall
+				   -Wall 
 LDFLAGS			:= -T $(LINKER) \
 				   -static \
 				   -L $(RISCV)/$(RISCV_EXE_PREFIX)/lib \

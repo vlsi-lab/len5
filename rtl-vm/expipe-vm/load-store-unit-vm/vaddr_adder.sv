@@ -39,12 +39,12 @@ module vaddr_adder #(
 
     // Data from/to the load/store buffers
     input  logic                             is_store_i,
-    input  logic         [         XLEN-1:0] rs1_value_i,
-    input  logic         [         XLEN-1:0] imm_value_i,
+    input  logic         [         len5_pkg::XLEN-1:0] rs1_value_i,
+    input  logic         [         len5_pkg::XLEN-1:0] imm_value_i,
     input  logic         [      IDX_LEN-1:0] lsb_idx_i,
     input  logic         [LDST_TYPE_LEN-1:0] ldst_type_i,
     output logic                             is_store_o,
-    output logic         [         XLEN-1:0] vaddr_o,
+    output logic         [         len5_pkg::XLEN-1:0] vaddr_o,
     output logic         [      IDX_LEN-1:0] lsb_idx_o,
     output except_code_t                     except_o
 );

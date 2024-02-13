@@ -12,9 +12,6 @@
 // Author: Michele Caon
 // Date: 11/11/2019
 
-import expipe_pkg::*;
-import len5_config_pkg::MAX_EU_N;
-
 module cdb_arbiter (
   input logic clk_i,
   input logic rst_n_i,
@@ -26,17 +23,20 @@ module cdb_arbiter (
   output logic max_prio_ready_o,
 
   // Handshake from/to the units
-  input  logic [MAX_EU_N-2:0] valid_i,
-  output logic [MAX_EU_N-2:0] ready_o,
+  input  logic [len5_config_pkg::MAX_EU_N-2:0] valid_i,
+  output logic [len5_config_pkg::MAX_EU_N-2:0] ready_o,
 
   // Handshake from/to the ROB
   input  logic rob_ready_i,
   output logic rob_valid_o,
 
   // To the CDB MUX
-  output logic                        served_max_prio_o,
-  output logic [$clog2(MAX_EU_N)-1:0] served_o
+  output logic                                         served_max_prio_o,
+  output logic [$clog2(len5_config_pkg::MAX_EU_N)-1:0] served_o
 );
+
+  import len5_config_pkg::MAX_EU_N;
+  import expipe_pkg::*;
 
   // DEFINITIONS
   logic [MAX_EU_N-2:0] rem_valid_a, msk_valid_a;
@@ -47,8 +47,7 @@ module cdb_arbiter (
   // Valid priority encoder + decoder
   logic [$clog2(MAX_EU_N-1)-1:0] enc_out;
   logic [  $clog2(MAX_EU_N)-1:0] served_temp;
-  logic                          enc_valid;
-  logic [          MAX_EU_N-1:0] dec_valid_a;
+  logic [          MAX_EU_N-2:0] dec_valid_a;
 
   // ---------
   // VALID MUX
@@ -64,7 +63,9 @@ module cdb_arbiter (
   ) vaild_prio_enc (
     .lines_i(mux_valid_a),
     .enc_o  (enc_out),
-    .valid_o(enc_valid)
+    /* verilator lint_off PINCONNECTEMPTY */
+    .valid_o()              // not needed
+    /* verilator lint_on PINCONNECTEMPTY */
   );
   assign served_temp = enc_out + 1;
 

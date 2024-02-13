@@ -12,11 +12,6 @@
 // Author: Michele Caon
 // Date: 17/11/2021
 
-import len5_config_pkg::*;
-import len5_pkg::*;
-import expipe_pkg::*;
-import fetch_pkg::resolution_t;
-
 module branch_unit #(
   parameter int unsigned RS_DEPTH = 4  // must be a power of 2
 ) (
@@ -25,31 +20,35 @@ module branch_unit #(
   input logic flush_i,
 
   // Frontend
-  input  logic        fe_ready_i,
-  output logic        fe_res_valid_o,
-  output resolution_t fe_res_o,
+  input  logic                   fe_ready_i,
+  output logic                   fe_res_valid_o,
+  output fetch_pkg::resolution_t fe_res_o,
 
   // Issue Stage
-  input  logic                   issue_valid_i,
-  output logic                   issue_ready_o,
-  input  branch_ctl_t            issue_branch_type_i,
-  input  op_data_t               issue_rs1_i,
-  input  op_data_t               issue_rs2_i,
-  input  logic        [XLEN-1:0] issue_imm_value_i,
-  input  rob_idx_t               issue_dest_rob_idx_i,
-  input  logic        [XLEN-1:0] issue_curr_pc_i,
-  input  logic        [XLEN-1:0] issue_pred_target_i,
-  input  logic                   issue_pred_taken_i,
-  output logic                   issue_mis_o,
+  input  logic                                         issue_valid_i,
+  output logic                                         issue_ready_o,
+  input  expipe_pkg::branch_ctl_t                      issue_branch_type_i,
+  input  expipe_pkg::op_data_t                         issue_rs1_i,
+  input  expipe_pkg::op_data_t                         issue_rs2_i,
+  input  logic                    [len5_pkg::XLEN-1:0] issue_imm_value_i,
+  input  expipe_pkg::rob_idx_t                         issue_dest_rob_idx_i,
+  input  logic                    [len5_pkg::XLEN-1:0] issue_curr_pc_i,
+  input  logic                    [len5_pkg::XLEN-1:0] issue_pred_target_i,
+  input  logic                                         issue_pred_taken_i,
+  output logic                                         issue_mis_o,
 
   // CDB
-  input  logic      cdb_ready_i,
-  input  logic      cdb_valid_i,  // to know if the CDB is carrying valid data
-  output logic      cdb_valid_o,
-  input  cdb_data_t cdb_data_i,
-  output cdb_data_t cdb_data_o
-
+  input  logic                  cdb_ready_i,
+  input  logic                  cdb_valid_i,  // to know if the CDB is carrying valid data
+  output logic                  cdb_valid_o,
+  input  expipe_pkg::cdb_data_t cdb_data_i,
+  output expipe_pkg::cdb_data_t cdb_data_o
 );
+
+  import len5_config_pkg::*;
+  import len5_pkg::*;
+  import expipe_pkg::*;
+  import fetch_pkg::resolution_t;
 
   // Data from/to the execution unit
   logic        [XLEN-1:0] rs_bu_rs1;
@@ -85,7 +84,6 @@ module branch_unit #(
   typedef struct packed {
     rob_idx_t        rob_idx;
     logic            res_mispredicted;
-    logic            res_taken;
     logic [XLEN-1:0] link_addr;
 `ifndef LEN5_C_EN
     logic            except_raised;
@@ -127,7 +125,7 @@ module branch_unit #(
 
   // Link address adder
   // --------------------
-  assign link_addr        = rs_bu_curr_pc + (ILEN >> 3);
+  assign link_addr        = rs_bu_curr_pc + {32'b0, (ILEN >> 3)};
 
   // Prediction check
   // ----------------
@@ -147,7 +145,6 @@ module branch_unit #(
   // ----------------------------
   assign bu_outreg_in.rob_idx          = rs_bu_rob_idx;
   assign bu_outreg_in.res_mispredicted = res_mispredicted;
-  assign bu_outreg_in.res_taken        = res_taken;
   assign bu_outreg_in.link_addr        = link_addr;
 `ifndef LEN5_C_EN
   assign bu_outreg_in.except_raised = except_raised;

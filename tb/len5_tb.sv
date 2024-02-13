@@ -20,13 +20,13 @@ module len5_tb;
   localparam int unsigned ResetCycles = 10;
 
   // Boot program counter
-  localparam int unsigned BootPC = 64'h180;
+  localparam longint unsigned BootPC = 64'h180;
   localparam string MemDumpFile = "mem_dump.txt";
 
   // INTERNAL SIGNALS
   // ----------------
   // Memory file path
-  string mem_file = "firmware.hex";
+  string           mem_file = "firmware.hex";
 
   // Number of cycles to simulate
   longint unsigned num_cycles = 0;
@@ -68,12 +68,12 @@ module len5_tb;
   // LEN5 TB SYSTEM
   // --------------
   tb_bare #(
-    .MEM_DUMP_FILE  (MemDumpFile),
-    .BOOT_PC        (BootPC)
+    .MEM_DUMP_FILE(MemDumpFile),
+    .BOOT_PC      (BootPC)
   ) u_tb (
-    .clk_i          (clk),        // simulation clock
-    .rst_ni         (rst_n),      // simulation reset
-    .mem_file,      (mem_file),   // memory file, in ASCII HEX format
-    .num_cycles_i   (num_cycles)  // number of cycles to simulate
+    .clk_i       (clk),        // simulation clock
+    .rst_ni      (rst_n),      // simulation reset
+    .mem_file_i  (mem_file),   // memory file, in ASCII HEX format
+    .num_cycles_i(num_cycles)  // number of cycles to simulate
   );
 endmodule

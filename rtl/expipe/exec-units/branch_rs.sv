@@ -12,9 +12,6 @@
 // Author: Michele Caon
 // Date: 08/11/2019
 
-import len5_pkg::*;
-import expipe_pkg::*;
-
 module branch_rs #(
   parameter int unsigned DEPTH = 4,  // must be a power of 2
   localparam int unsigned RsIdxLen = $clog2(DEPTH)
@@ -24,44 +21,47 @@ module branch_rs #(
   input logic flush_i,
 
   /* Issue Stage */
-  input  logic                   issue_valid_i,
-  output logic                   issue_ready_o,
-  input  branch_ctl_t            issue_branch_type_i,
-  input  op_data_t               issue_rs1_i,
-  input  op_data_t               issue_rs2_i,
-  input  logic        [XLEN-1:0] issue_imm_value_i,
-  input  rob_idx_t               issue_dest_rob_idx_i,
-  input  logic        [XLEN-1:0] issue_curr_pc_i,
-  input  logic        [XLEN-1:0] issue_pred_target_i,
-  input  logic                   issue_pred_taken_i,
+  input  logic                                         issue_valid_i,
+  output logic                                         issue_ready_o,
+  input  expipe_pkg::branch_ctl_t                      issue_branch_type_i,
+  input  expipe_pkg::op_data_t                         issue_rs1_i,
+  input  expipe_pkg::op_data_t                         issue_rs2_i,
+  input  logic                    [len5_pkg::XLEN-1:0] issue_imm_value_i,
+  input  expipe_pkg::rob_idx_t                         issue_dest_rob_idx_i,
+  input  logic                    [len5_pkg::XLEN-1:0] issue_curr_pc_i,
+  input  logic                    [len5_pkg::XLEN-1:0] issue_pred_target_i,
+  input  logic                                         issue_pred_taken_i,
 
   /* Common Data Bus (CDB) */
-  input  logic      cdb_ready_i,
-  input  logic      cdb_valid_i,  // to know if the CDB is carrying valid data
-  output logic      cdb_valid_o,
-  input  cdb_data_t cdb_data_i,
-  output cdb_data_t cdb_data_o,
+  input  logic                  cdb_ready_i,
+  input  logic                  cdb_valid_i,  // to know if the CDB is carrying valid data
+  output logic                  cdb_valid_o,
+  input  expipe_pkg::cdb_data_t cdb_data_i,
+  output expipe_pkg::cdb_data_t cdb_data_o,
 
   /* Branch unit */
-  input  logic                   bu_valid_i,
-  input  logic                   bu_ready_i,
-  output logic                   bu_valid_o,
-  output logic                   bu_ready_o,
-  input  rob_idx_t               bu_rob_idx_i,
-  input  logic                   bu_res_mis_i,        // mispredcition result
-  input  logic        [XLEN-1:0] bu_link_addr_i,      // computed link address
+  input  logic                                         bu_valid_i,
+  input  logic                                         bu_ready_i,
+  output logic                                         bu_valid_o,
+  output logic                                         bu_ready_o,
+  input  expipe_pkg::rob_idx_t                         bu_rob_idx_i,
+  input  logic                                         bu_res_mis_i,        // mispredcition result
+  input  logic                    [len5_pkg::XLEN-1:0] bu_link_addr_i,      // computed link address
 `ifndef LEN5_C_EN
-  input  logic                   bu_except_raised_i,
+  input  logic                                         bu_except_raised_i,
 `endif  /* LEN5_C_EN */
-  output rob_idx_t               bu_rob_idx_o,
-  output logic        [XLEN-1:0] bu_rs1_o,
-  output logic        [XLEN-1:0] bu_rs2_o,
-  output logic        [XLEN-1:0] bu_imm_o,
-  output logic        [XLEN-1:0] bu_curr_pc_o,
-  output logic        [XLEN-1:0] bu_pred_target_o,
-  output logic                   bu_pred_taken_o,
-  output branch_ctl_t            bu_branch_type_o
+  output expipe_pkg::rob_idx_t                         bu_rob_idx_o,
+  output logic                    [len5_pkg::XLEN-1:0] bu_rs1_o,
+  output logic                    [len5_pkg::XLEN-1:0] bu_rs2_o,
+  output logic                    [len5_pkg::XLEN-1:0] bu_imm_o,
+  output logic                    [len5_pkg::XLEN-1:0] bu_curr_pc_o,
+  output logic                    [len5_pkg::XLEN-1:0] bu_pred_target_o,
+  output logic                                         bu_pred_taken_o,
+  output expipe_pkg::branch_ctl_t                      bu_branch_type_o
 );
+
+  import len5_pkg::*;
+  import expipe_pkg::*;
   // INTERNAL SIGNALS
   // ----------------
 
@@ -78,7 +78,6 @@ module branch_rs #(
   // Reservation station control
   logic push, pop, ex_accepted, save_res;
   logic fwd_rs1[DEPTH], fwd_rs2[DEPTH];
-  logic insert_rs1, insert_rs2;
   bu_op_t bu_op[DEPTH];
 
   // -------------------------------
@@ -116,7 +115,7 @@ module branch_rs #(
     foreach (curr_state[i]) begin
       case (curr_state[i])
         BU_S_EMPTY: begin  // push a new instruction
-          if (push && tail_idx == i) begin
+          if (push && tail_idx == i[RsIdxLen-1:0]) begin
             if (issue_rs1_i.ready && issue_rs2_i.ready) begin
               next_state[i] = BU_S_EX_REQ;
               bu_op[i]      = BU_OP_INSERT;
@@ -160,7 +159,7 @@ module branch_rs #(
           if (save_res && bu_rob_idx_i == data[i].dest_rob_idx) begin
             bu_op[i]      = BU_OP_SAVE_RES;
             next_state[i] = BU_S_COMPLETED;
-          end else if (ex_accepted && ex_idx == i) next_state[i] = BU_S_EX_WAIT;
+          end else if (ex_accepted && ex_idx == i[RsIdxLen-1:0]) next_state[i] = BU_S_EX_WAIT;
           else next_state[i] = BU_S_EX_REQ;
         end
         BU_S_EX_WAIT: begin  // wait for execution completion
@@ -170,7 +169,7 @@ module branch_rs #(
           end else next_state[i] = BU_S_EX_WAIT;
         end
         BU_S_COMPLETED: begin
-          if (pop && head_idx == i) next_state[i] = BU_S_EMPTY;
+          if (pop && head_idx == i[RsIdxLen-1:0]) next_state[i] = BU_S_EMPTY;
           else next_state[i] = BU_S_COMPLETED;
         end
         default: next_state[i] = BU_S_HALT;
@@ -276,8 +275,11 @@ module branch_rs #(
     .en_i   (head_cnt_en),
     .clr_i  (head_cnt_clr),
     .count_o(head_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
+    /* verilator lint_on PINCONNECTEMPTY */
   );
+
 
   // Tail counter pointing to the first empty entry
   modn_counter #(
@@ -288,7 +290,9 @@ module branch_rs #(
     .en_i   (tail_cnt_en),
     .clr_i  (tail_cnt_clr),
     .count_o(tail_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
+    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   // Execution counter pointing to the executing branch/jump instruction
@@ -300,7 +304,9 @@ module branch_rs #(
     .en_i   (ex_cnt_en),
     .clr_i  (ex_cnt_clr),
     .count_o(ex_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()             // not needed
+    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   // ----------

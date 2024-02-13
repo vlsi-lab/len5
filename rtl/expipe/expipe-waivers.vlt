@@ -1,0 +1,19 @@
+// Copyright 2022 Politecnico di Torino.
+// Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// File: vector-subsystem-waivers.vlt
+// Author:  Mattia Mirigaldi
+// Date: 12/02/2024
+// Description: Verilator waivers 
+
+`verilator_config
+// Warnings due to MAX_EU_N, in future version EU_N will be evualated by python template 
+lint_off -rule UNUSED -file "*/exec_stage.sv" -match "Bits of signal are not used: 'issue_valid_i'[7:4]"
+lint_off -rule UNUSED -file "*/exec_stage.sv" -match "Bits of signal are not used: 'cdb_ready_i'[7:4]"
+lint_off -rule UNDRIVEN -file "*/exec_stage.sv" -match "Bits of signal are not driven: 'issue_ready_o'[7:6]"
+lint_off -rule UNDRIVEN -file "*/exec_stage.sv" -match "Bits of signal are not driven: 'cdb_valid_o'[7:6]"
+lint_off -rule UNDRIVEN -file "*/exec_stage.sv" -match "Bits of signal are not driven: 'cdb_data_o'[583:438]"
+
+// Warning due to not inhibit all csr 
+lint_off -rule UNUSED -file "*/csrs.sv" -match "Bits of signal are not used: 'mcountinhibit'[31:7,1]"

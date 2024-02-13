@@ -21,13 +21,13 @@ module btb #(
     input logic                   clk_i,
     input logic                   rst_n_i,
     input logic                   flush_i,
-    input logic        [XLEN-1:0] pc_i,
+    input logic        [len5_pkg::XLEN-1:0] pc_i,
     input logic                   valid_i,
     input logic                   del_entry_i,
     input resolution_t            res_i,
 
     output logic                   hit_o,
-    output logic [XLEN-OFFSET-1:0] target_o
+    output logic [len5_pkg::XLEN-OFFSET-1:0] target_o
 );
 
   // Definitions

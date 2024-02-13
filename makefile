@@ -65,10 +65,7 @@ verilator-build: | .check-fusesoc
 questasim-sim: | .check-fusesoc
 	@echo "## Running simulation with QuestaSim..."
 	fusesoc run --no-export --target sim --tool modelsim $(FUSESOC_FLAGS) --build polito:len5:len5 2>&1 | tee build/build.log
-
-# Verilator
-# TODO: add verilator support to .core files
-
+	
 # Software
 # --------
 # Application from 'sw/applications'

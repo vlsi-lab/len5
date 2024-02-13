@@ -397,7 +397,7 @@ MAX_EU_N
 
   /* Load instruction data */
   typedef struct packed {
-    ldst_width_t     load_type;
+    ldst_width_t     load_type;       // byte, halfword, ...
     rob_idx_t        rs1_rob_idx;
     logic [XLEN-1:0] rs1_value;
     rob_idx_t        dest_rob_idx;
@@ -485,7 +485,6 @@ MAX_EU_N
   // Answer
   typedef struct packed {
     logic [BUFF_IDX_LEN-1:0] tag;
-    logic                    is_store;
     logic [XLEN-1:0]         result;
     logic                    except_raised;
     except_code_t            except_code;

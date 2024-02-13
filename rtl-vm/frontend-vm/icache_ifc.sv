@@ -20,13 +20,13 @@ module icache_ifc (
     input logic flush_i,
 
     // From/to IF
-    input  logic        [XLEN-1:0] pc_i,
+    input  logic        [len5_pkg::XLEN-1:0] pc_i,
     input  logic                   read_req_i,
     output icache_out_t            cache_out_o,
     output logic                   read_done_o,
 
     // From/to icache
-    output logic        [XLEN-1:0] addr_o,
+    output logic        [len5_pkg::XLEN-1:0] addr_o,
     output logic                   addr_valid_o,
     input  logic                   addr_ready_i,
     input  icache_out_t            data_i,

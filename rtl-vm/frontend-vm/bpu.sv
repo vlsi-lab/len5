@@ -21,7 +21,7 @@ module bpu #(
     input logic                   clk_i,
     input logic                   rst_n_i,
     input logic                   flush_i,
-    input logic        [XLEN-1:0] pc_i,
+    input logic        [len5_pkg::XLEN-1:0] pc_i,
     input resolution_t            res_i,
 
     output prediction_t pred_o
@@ -30,7 +30,7 @@ module bpu #(
   // Signal definitions
   logic btb_res_valid, btb_hit, btb_update, btb_del_entry;
   logic gshare_taken;
-  logic [XLEN-OFFSET-1:0] btb_target;
+  logic [len5_pkg::XLEN-OFFSET-1:0] btb_target;
 
   // Module instantiations
   gshare #(

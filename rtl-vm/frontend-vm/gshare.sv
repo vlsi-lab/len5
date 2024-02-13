@@ -21,7 +21,7 @@ module gshare #(
     input logic                   clk_i,
     input logic                   rst_n_i,
     input logic                   flush_i,
-    input logic        [XLEN-1:0] pc_i,
+    input logic        [len5_pkg::XLEN-1:0] pc_i,
     input resolution_t            res_i,
 
     output logic taken_o

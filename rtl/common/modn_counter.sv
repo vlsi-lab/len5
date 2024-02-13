@@ -27,7 +27,7 @@ module modn_counter #(
 );
 
   // Terminal count
-  assign tc_o = count_o == N - 1;
+  assign tc_o = int'(count_o) == N - 1;
 
   // Main counting process. The counter clears when reaching the threshold
   always_ff @(posedge clk_i or negedge rst_n_i) begin

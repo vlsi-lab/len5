@@ -15,9 +15,9 @@
 import len5_pkg::*;
 
 module presence_check (
-    input logic [XLEN-1:0] pc_i,
-    input logic [XLEN-1:0] prev_pc_i,
-    input logic [XLEN-1:0] line_pc_i,
+    input logic [len5_pkg::XLEN-1:0] pc_i,
+    input logic [len5_pkg::XLEN-1:0] prev_pc_i,
+    input logic [len5_pkg::XLEN-1:0] line_pc_i,
     input logic            line_valid_i,
 
     output logic here_o,

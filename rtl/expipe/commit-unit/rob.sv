@@ -12,9 +12,7 @@
 // Author: Michele Caon
 // Date: 14/07/2022
 
-import len5_pkg::XLEN;
-import len5_pkg::REG_IDX_LEN;
-import expipe_pkg::*;
+
 
 /**
  * @brief Reaorder Buffer
@@ -33,31 +31,34 @@ module rob #(
   /* Issue stage */
   input logic issue_valid_i,  // from upstream hardware
   output logic issue_ready_o,  // to upstream hardware
-  input rob_entry_t issue_data_i,
-  output rob_idx_t issue_tail_idx_o,  // the ROB entry where the new instruction is being allocated
-  input rob_idx_t issue_rs1_rob_idx_i,
-  input rob_idx_t issue_rs2_rob_idx_i,
+  input expipe_pkg::rob_entry_t issue_data_i,
+  output expipe_pkg::rob_idx_t issue_tail_idx_o,  // the ROB entry where the new instruction is being allocated
+  input expipe_pkg::rob_idx_t issue_rs1_rob_idx_i,
+  input expipe_pkg::rob_idx_t issue_rs2_rob_idx_i,
 
   /* Operands forwarding logic */
-  output logic            opfwd_rs1_valid_o,
-  output logic            opfwd_rs1_ready_o,
-  output logic [XLEN-1:0] opfwd_rs1_value_o,
-  output logic            opfwd_rs2_valid_o,
-  output logic            opfwd_rs2_ready_o,
-  output logic [XLEN-1:0] opfwd_rs2_value_o,
+  output logic                      opfwd_rs1_valid_o,
+  output logic                      opfwd_rs1_ready_o,
+  output logic [len5_pkg::XLEN-1:0] opfwd_rs1_value_o,
+  output logic                      opfwd_rs2_valid_o,
+  output logic                      opfwd_rs2_ready_o,
+  output logic [len5_pkg::XLEN-1:0] opfwd_rs2_value_o,
 
   /* Commit stage */
-  output logic       comm_valid_o,    // to downstream hardware
-  input  logic       comm_ready_i,    // from downstream hardware
-  output rob_entry_t comm_data_o,
-  output rob_idx_t   comm_head_idx_o, // ROB head idx to update register status
+  output logic                   comm_valid_o,    // to downstream hardware
+  input  logic                   comm_ready_i,    // from downstream hardware
+  output expipe_pkg::rob_entry_t comm_data_o,
+  output expipe_pkg::rob_idx_t   comm_head_idx_o, // ROB head idx to update register status
 
   /* Common data bus (CDB) */
-  input  logic      cdb_valid_i,
-  input  cdb_data_t cdb_data_i,
-  output logic      cdb_ready_o
+  input  logic                  cdb_valid_i,
+  input  expipe_pkg::cdb_data_t cdb_data_i,
+  output logic                  cdb_ready_o
 );
 
+  import expipe_pkg::*;
+  import len5_pkg::XLEN;
+  import len5_pkg::REG_IDX_LEN;
   // INTERNAL SIGNALS
   // ----------------
 
@@ -107,12 +108,12 @@ module rob #(
       end
     end else begin
       foreach (data[i]) begin
-        if (fifo_push && tail_idx == i) begin
+        if (fifo_push && tail_idx == i[$clog2(DEPTH)-1:0]) begin
           data_valid[i] <= 1'b1;
           data[i]       <= issue_data_i;
-        end else if (fifo_pop && head_idx == i) begin
+        end else if (fifo_pop && head_idx == i[$clog2(DEPTH)-1:0]) begin
           data_valid[i] <= 1'b0;
-        end else if (update_res && cdb_data_i.rob_idx == i) begin
+        end else if (update_res && cdb_data_i.rob_idx == i[ROB_IDX_LEN-1:0]) begin
           data[i].res_ready     <= 1'b1;
           data[i].res_value     <= cdb_data_i.res_value;
           data[i].except_raised <= cdb_data_i.except_raised;
@@ -134,7 +135,9 @@ module rob #(
     .en_i   (head_cnt_en),
     .clr_i  (head_cnt_clr),
     .count_o(head_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
+    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   modn_counter #(
@@ -145,7 +148,9 @@ module rob #(
     .en_i   (tail_cnt_en),
     .clr_i  (tail_cnt_clr),
     .count_o(tail_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
+    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   // --------------

@@ -9,61 +9,61 @@
 // specific language governing permissions and limitations under the License.
 //
 
-
-// LEN5 compilation switches
-import len5_config_pkg::*;
-import len5_pkg::*;
-import expipe_pkg::*;
-import fetch_pkg::prediction_t;
-import fetch_pkg::resolution_t;
-import csr_pkg::*;
-import memory_pkg::*;
-
 module backend (
   // Clock, reset, and flush
   input logic clk_i,
   input logic rst_n_i,
 
   // Frontend
-  input  logic                    fetch_valid_i,
-  input  logic                    fetch_ready_i,
-  output logic                    fetch_ready_o,
-  input  logic         [ILEN-1:0] fetch_instr_i,
-  input  prediction_t             fetch_pred_i,
-  input  logic                    fetch_except_raised_i,
-  input  except_code_t            fetch_except_code_i,
-  output logic                    fetch_mis_flush_o,
-  output logic                    fetch_except_flush_o,
-  output logic                    fetch_res_valid_o,
-  output resolution_t             fetch_res_o,
-  output logic                    fetch_except_raised_o,
-  output logic         [XLEN-1:0] fetch_except_pc_o,
+  input  logic                                        fetch_valid_i,
+  input  logic                                        fetch_ready_i,
+  output logic                                        fetch_ready_o,
+  input  logic                   [len5_pkg::ILEN-1:0] fetch_instr_i,
+  input  fetch_pkg::prediction_t                      fetch_pred_i,
+  input  logic                                        fetch_except_raised_i,
+  input  len5_pkg::except_code_t                      fetch_except_code_i,
+  output logic                                        fetch_mis_flush_o,
+  output logic                                        fetch_except_flush_o,
+  output logic                                        fetch_res_valid_o,
+  output fetch_pkg::resolution_t                      fetch_res_o,
+  output logic                                        fetch_except_raised_o,
+  output logic                   [len5_pkg::XLEN-1:0] fetch_except_pc_o,
 
   /* Memory system */
-  output logic                            mem_load_valid_o,
-  input  logic                            mem_load_ready_i,
-  input  logic                            mem_load_valid_i,
-  output logic                            mem_load_ready_o,
-  output logic                            mem_load_we_o,
-  output logic         [        XLEN-1:0] mem_load_addr_o,
-  output logic         [             3:0] mem_load_be_o,
-  input  logic         [        XLEN-1:0] mem_load_rdata_i,
-  input  logic         [BUFF_IDX_LEN-1:0] mem_load_tag_i,
-  input  logic                            mem_load_except_raised_i,
-  input  except_code_t                    mem_load_except_code_i,
+  output logic                                                mem_load_valid_o,
+  input  logic                                                mem_load_ready_i,
+  input  logic                                                mem_load_valid_i,
+  output logic                                                mem_load_ready_o,
+  output logic                                                mem_load_we_o,
+  output logic                   [        len5_pkg::XLEN-1:0] mem_load_addr_o,
+  output logic                   [                       7:0] mem_load_be_o,
+  output logic                   [len5_pkg::BUFF_IDX_LEN-1:0] mem_load_tag_o,
+  input  logic                   [        len5_pkg::XLEN-1:0] mem_load_rdata_i,
+  input  logic                   [len5_pkg::BUFF_IDX_LEN-1:0] mem_load_tag_i,
+  input  logic                                                mem_load_except_raised_i,
+  input  len5_pkg::except_code_t                              mem_load_except_code_i,
 
-  output logic                            mem_store_valid_o,
-  input  logic                            mem_store_ready_i,
-  input  logic                            mem_store_valid_i,
-  output logic                            mem_store_ready_o,
-  output logic                            mem_store_we_o,
-  output logic         [        XLEN-1:0] mem_store_addr_o,
-  output logic         [             3:0] mem_store_be_o,
-  input  logic         [        XLEN-1:0] mem_store_wdata_o,
-  output logic         [BUFF_IDX_LEN-1:0] mem_store_tag_o,
-  input  logic                            mem_store_except_raised_i,
-  input  except_code_t                    mem_store_except_code_i
+  output logic                                                mem_store_valid_o,
+  input  logic                                                mem_store_ready_i,
+  input  logic                                                mem_store_valid_i,
+  output logic                                                mem_store_ready_o,
+  output logic                                                mem_store_we_o,
+  output logic                   [        len5_pkg::XLEN-1:0] mem_store_addr_o,
+  output logic                   [                       7:0] mem_store_be_o,
+  output logic                   [        len5_pkg::XLEN-1:0] mem_store_wdata_o,
+  input  logic                   [len5_pkg::BUFF_IDX_LEN-1:0] mem_store_tag_i,
+  output logic                   [len5_pkg::BUFF_IDX_LEN-1:0] mem_store_tag_o,
+  input  logic                                                mem_store_except_raised_i,
+  input  len5_pkg::except_code_t                              mem_store_except_code_i
 );
+
+  import len5_config_pkg::*;
+  import len5_pkg::*;
+  import expipe_pkg::*;
+  import fetch_pkg::prediction_t;
+  import fetch_pkg::resolution_t;
+  import csr_pkg::*;
+  import memory_pkg::*;
 
   // ----------------
   // INTERNAL SIGNALS
@@ -71,30 +71,30 @@ module backend (
 
   // Issue logic <--> integer register status register
   // -------------------------------------------------
-  logic                                                il_int_regstat_valid;
-  logic                                                int_regstat_il_rs1_busy;
-  rob_idx_t                                            int_regstat_il_rs1_rob_idx;
-  logic                                                int_regstat_il_rs2_busy;
-  rob_idx_t                                            int_regstat_il_rs2_rob_idx;
-  logic              [   REG_IDX_LEN-1:0]              il_int_regstat_rd_idx;
-  rob_idx_t                                            il_int_regstat_rob_idx;
-  logic              [   REG_IDX_LEN-1:0]              il_int_regstat_rs1_idx;
-  logic              [   REG_IDX_LEN-1:0]              il_int_regstat_rs2_idx;
+  logic                                 il_int_regstat_valid;
+  logic                                 int_regstat_il_rs1_busy;
+  rob_idx_t                             int_regstat_il_rs1_rob_idx;
+  logic                                 int_regstat_il_rs2_busy;
+  rob_idx_t                             int_regstat_il_rs2_rob_idx;
+  logic            [   REG_IDX_LEN-1:0] il_int_regstat_rd_idx;
+  rob_idx_t                             il_int_regstat_rob_idx;
+  logic            [   REG_IDX_LEN-1:0] il_int_regstat_rs1_idx;
+  logic            [   REG_IDX_LEN-1:0] il_int_regstat_rs2_idx;
 
   // Integer register status register <--> commit logic
   // --------------------------------------------------
-  logic                                                comm_intrs_valid;
+  logic                                 comm_intrs_valid;
 
   // Issue logic <--> integer register file
   // --------------------------------------
-  logic              [          XLEN-1:0]              intrf_il_rs1_value;
-  logic              [          XLEN-1:0]              intrf_il_rs2_value;
-  logic              [   REG_IDX_LEN-1:0]              il_intrf_rs1_idx;
-  logic              [   REG_IDX_LEN-1:0]              il_intrf_rs2_idx;
+  logic            [          XLEN-1:0] intrf_il_rs1_value;
+  logic            [          XLEN-1:0] intrf_il_rs2_value;
+  logic            [   REG_IDX_LEN-1:0] il_intrf_rs1_idx;
+  logic            [   REG_IDX_LEN-1:0] il_intrf_rs2_idx;
 
   // Integer register file <--> commit logic
   // ---------------------------------------
-  logic                                                comm_intrf_valid;
+  logic                                 comm_intrf_valid;
 
   // Issue logic <--> floating-point register status register
   // --------------------------------------------------------
@@ -143,9 +143,9 @@ module backend (
 
   // Issue stage <--> execution units
   // --------------------------------
-  logic                                 ex_issue_ready                          [EU_N];
+  logic            [      MAX_EU_N-1:0] ex_issue_ready;
   logic                                 ex_issue_mis;
-  logic                                 il_ex_valid                             [EU_N];
+  logic            [      MAX_EU_N-1:0] il_ex_valid;
   logic            [MAX_EU_CTL_LEN-1:0] issue_ex_eu_ctl;
   op_data_t                             issue_ex_rs1;
   op_data_t                             issue_ex_rs2;
@@ -157,14 +157,13 @@ module backend (
 
   // Issue stage <--> CSRs
   // ---------------------
-  logic                                 csr_il_mstatus_tsr;
   csr_priv_t                            csr_il_priv_mode;
 
   // Execution stage <--> CDB
   // ------------------------
-  logic            [            EU_N-1] cdb_ex_ready;
-  logic            [            EU_N-1] ex_cdb_valid;
-  cdb_data_t       [            EU_N-1] ex_cdb_data;
+  logic            [      MAX_EU_N-1:0] cdb_ex_ready;
+  logic            [      MAX_EU_N-1:0] ex_cdb_valid;
+  cdb_data_t       [      MAX_EU_N-1:0] ex_cdb_data;
 
   // Execution stage <--> commit stage
   // ---------------------------------
@@ -173,8 +172,7 @@ module backend (
 
   // Execution stage <--> CSRs
   // -------------------------
-  logic            [  FCSR_FRM_LEN-1:0] csr_ex_frm;
-  logic            [ SATP_MODE_LEN-1:0] csr_ex_vm_mode;
+  //logic            [  FCSR_FRM_LEN-1:0] csr_ex_frm;
 
   // CDB <--> commit stage
   // ---------------------
@@ -197,12 +195,11 @@ module backend (
   // Commit logic <--> CSRs
   // ----------------------
   logic                                 comm_csr_valid;
-  logic                                 csr_comm_ready;
   logic            [          XLEN-1:0] csr_comm_data;
   logic                                 csr_comm_acc_exc;
   csr_mtvec_t                           csr_comm_mtvec;
   comm_csr_instr_t                      comm_csr_comm_insn;
-  logic                                 comm_csr_comm_jb;
+  //logic                                 comm_csr_comm_jb; // TODO: check
   csr_op_t                              comm_csr_op;
   logic            [    FUNCT3_LEN-1:0] comm_csr_funct3;
   logic            [  CSR_ADDR_LEN-1:0] comm_csr_addr;
@@ -322,8 +319,7 @@ module backend (
     .issue_rs2_busy_o   (int_regstat_il_rs2_busy),
     .issue_rs2_rob_idx_o(int_regstat_il_rs2_rob_idx),
     .comm_valid_i       (comm_intrs_valid),
-    .comm_rd_idx_i      (comm_rf_rd_idx),
-    .comm_head_idx_i    (comm_rs_head_idx)
+    .comm_rd_idx_i      (comm_rf_rd_idx)
   );
 
   // Integer register file
@@ -423,6 +419,7 @@ module backend (
     .mem_load_we_o           (mem_load_we_o),
     .mem_load_addr_o         (mem_load_addr_o),
     .mem_load_be_o           (mem_load_be_o),
+    .mem_load_tag_o          (mem_load_tag_o),
     .mem_load_rdata_i        (mem_load_rdata_i),
     .mem_load_tag_i          (mem_load_tag_i),
     .mem_load_except_raised_i(mem_load_except_raised_i),
@@ -437,6 +434,7 @@ module backend (
     .mem_store_be_o           (mem_store_be_o),
     .mem_store_wdata_o        (mem_store_wdata_o),
     .mem_store_tag_o          (mem_store_tag_o),
+    .mem_store_tag_i          (mem_store_tag_i),
     .mem_store_except_raised_i(mem_store_except_raised_i),
     .mem_store_except_code_i  (mem_store_except_code_i)
   );
@@ -508,7 +506,6 @@ module backend (
 
     .csr_valid_o      (comm_csr_valid),
     .csr_data_i       (csr_comm_data),
-    .csr_acc_exc_i    (csr_comm_acc_exc),
     .csr_mtvec_i      (csr_comm_mtvec),
     .csr_comm_insn_o  (comm_csr_comm_insn),
     .csr_op_o         (comm_csr_op),
@@ -529,11 +526,9 @@ module backend (
     .valid_i    (comm_csr_valid),
     .comm_insn_i(comm_csr_comm_insn),
     .comm_op_i  (comm_csr_op),
-    .funct3_i   (comm_csr_funct3),
     .addr_i     (comm_csr_addr),
     .rs1_idx_i  (comm_csr_rs1_idx),
     .data_i     (comm_csr_data),
-    .exc_data_i (comm_csr_except_code),
     .rd_idx_i   (comm_csr_rd_idx),
     .data_o     (csr_comm_data),
     .acc_exc_o  (csr_comm_acc_exc),

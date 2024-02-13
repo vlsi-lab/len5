@@ -19,9 +19,6 @@
  *          link instructions. When a 'ret' instruction is detected, the latest
  *          return address is fetched and used as the next value for the PC.
  */
-
-import len5_pkg::*;
-
 module ras #(
   parameter int unsigned RAS_DEPTH = 4  // number of recent return addresses to buffer
 ) (
@@ -29,11 +26,13 @@ module ras #(
   input logic rst_n_i,
 
   // From the branch unit
-  input  logic            push_i,
-  input  logic            pop_i,
-  input  logic [XLEN-1:0] ret_addr_i,
-  output logic [XLEN-1:0] ret_addr_o
+  input  logic                      push_i,
+  input  logic                      pop_i,
+  input  logic [len5_pkg::XLEN-1:0] ret_addr_i,
+  output logic [len5_pkg::XLEN-1:0] ret_addr_o
 );
+
+  import len5_pkg::*;
   localparam int unsigned IdxW = $clog2(RAS_DEPTH);
 
   // INTERNAL SIGNALS
@@ -69,7 +68,9 @@ module ras #(
     .clr_i  (1'b0),
     .up_dn_i(new_cnt_up),
     .count_o(new_idx),
-    .tc_o   ()             // unused
+    /* verilator lint_off PINCONNECTEMPTY */
+    .tc_o   ()             // not needed
+    /* verilator lint_off PINCONNECTEMPTY */
   );
   assign last_idx   = new_idx - 1;
 

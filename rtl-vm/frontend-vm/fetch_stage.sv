@@ -25,7 +25,7 @@ module fetch_stage #(
     input logic flush_i,
 
     // From/to PC gen stage
-    input  logic [XLEN-1:0] pc_i,
+    input  logic [len5_pkg::XLEN-1:0] pc_i,
     output logic            fetch_ready_o,
 
     // From/to i-cache

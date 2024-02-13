@@ -12,15 +12,6 @@
 // Author: Michele Caon
 // Date: 03/11/2021
 
-// Data types and parameters
-import len5_config_pkg::*;
-import len5_pkg::*;
-import csr_pkg::*;
-import instr_pkg::*;
-import expipe_pkg::*;
-import memory_pkg::PPN_LEN;
-import memory_pkg::asid_t;
-
 module csrs (
   // Clock and reset
   input logic clk_i,
@@ -30,26 +21,32 @@ module csrs (
   input logic valid_i,
 
   // Control from commit logic
-  input comm_csr_instr_t                  comm_insn_i,  // committing instruction type
-  input csr_op_t                          comm_op_i,
-  input logic            [FUNCT3_LEN-1:0] funct3_i,
+  input expipe_pkg::comm_csr_instr_t comm_insn_i,  // committing instruction type
+  input csr_pkg::csr_op_t            comm_op_i,
 
   // CSR address and data to/from commit logic
   input logic [CSR_ADDR_LEN-1:0] addr_i,
   input logic [REG_IDX_LEN-1:0] rs1_idx_i,  // source register or unsigned immediate
-  input logic [XLEN-1:0] data_i,  // data to write to the CSR
-  input except_code_t exc_data_i,  // exception data (e.g., FPU exceptions)
+  input logic [len5_pkg::XLEN-1:0] data_i,  // data to write to the CSR
   input logic [REG_IDX_LEN-1:0] rd_idx_i,  // destination register
-  output csr_t data_o,
+  output csr_pkg::csr_t data_o,
   output logic acc_exc_o,  // ILLEGAL INSTRUCTION flag (invalid address or access permission)
-  output csr_mtvec_t mtvec_o,  // exception base address and mode
+  output csr_pkg::csr_mtvec_t mtvec_o,  // exception base address and mode
 
   // Data to the FPU
   // output logic [FCSR_FRM_LEN-1:0] fpu_frm_o,  // dynamic rounding mode
 
   // Data to the load/store unit
-  output csr_priv_t priv_mode_o  // current privilege mode
+  output csr_pkg::csr_priv_t priv_mode_o  // current privilege mode
 );
+
+  import len5_config_pkg::*;
+  import len5_pkg::*;
+  import csr_pkg::*;
+  import instr_pkg::*;
+  import expipe_pkg::*;
+  import memory_pkg::PPN_LEN;
+  import memory_pkg::asid_t;
 
   // CSR read and write values and control
   logic                          csr_rd_en;
@@ -277,7 +274,7 @@ module csrs (
           csr_rd_val = hpmcounter6;
         end
         CSR_MCOUNTEREN: begin
-          csr_rd_val = mcounteren;
+          csr_rd_val = {32'b0, mcounteren};
         end
         CSR_MSCRATCH: begin
           if (priv_mode >= PRIV_MODE_M) csr_rd_val = mscratch;

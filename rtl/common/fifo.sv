@@ -85,10 +85,10 @@ module fifo #(
       end
     end else begin
       foreach (data[i]) begin
-        if (fifo_push && tail_cnt == i) begin
+        if (fifo_push && tail_cnt == i[$clog2(DEPTH)-1:0]) begin
           data_valid[i] <= 1'b1;
           data[i]       <= data_i;
-        end else if (fifo_pop && head_cnt == i) begin
+        end else if (fifo_pop && head_cnt == i[$clog2(DEPTH)-1:0]) begin
           data_valid[i] <= 1'b0;
         end
       end
@@ -117,7 +117,9 @@ module fifo #(
     .en_i   (head_cnt_en),
     .clr_i  (head_cnt_clr),
     .count_o(head_cnt),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
+    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   modn_counter #(
@@ -128,7 +130,9 @@ module fifo #(
     .en_i   (tail_cnt_en),
     .clr_i  (tail_cnt_clr),
     .count_o(tail_cnt),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
+    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   // ----------

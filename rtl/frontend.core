@@ -11,16 +11,22 @@ filesets:
    depend:
     - polito:len5:packages
    files:
-    - pc_gen.sv
-    - fetch_mem_if.sv
-    - fetch_stage.sv
-    - bpu.sv
-    - btb.sv
-    - gshare.sv
-    - ras.sv
+    - frontend/pc_gen.sv
+    - frontend/fetch_mem_if.sv
+    - frontend/fetch_stage.sv
+    - frontend/bpu.sv
+    - frontend/btb.sv
+    - frontend/gshare.sv
+    - frontend/ras.sv
    file_type: systemVerilogSource
+
+ verilator-waivers:
+   files:
+    - frontend/frontend-waivers.vlt
+   file_type: vlt
 
 targets:
     default:
         filesets:
         - frontend-rtl
+        - tool_verilator ? (verilator-waivers)

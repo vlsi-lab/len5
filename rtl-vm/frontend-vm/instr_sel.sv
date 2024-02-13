@@ -24,7 +24,7 @@ module instr_sel (
     input line_src_t                       line_sel_i,
 
     output logic [ILEN-1:0] instruction_o,
-    output logic [XLEN-1:0] curr_pc_o
+    output logic [len5_pkg::XLEN-1:0] curr_pc_o
 );
 
   // Logic declarations

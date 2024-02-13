@@ -12,10 +12,6 @@
 // Author: Michele Caon
 // Date: 19/08/2022
 
-import len5_config_pkg::*;
-import len5_pkg::*;
-import expipe_pkg::*;
-
 module arith_rs #(
   parameter int unsigned DEPTH = 4,  // must be a power of 2
   parameter int unsigned EU_CTL_LEN = 4,
@@ -28,34 +24,38 @@ module arith_rs #(
 
 
   /* Issue Stage */
-  input  logic                      issue_valid_i,
-  output logic                      issue_ready_o,
-  input  logic     [EU_CTL_LEN-1:0] issue_eu_ctl_i,
-  input  op_data_t                  issue_rs1_i,
-  input  op_data_t                  issue_rs2_i,
-  input  rob_idx_t                  issue_dest_rob_idx_i,
+  input  logic                                  issue_valid_i,
+  output logic                                  issue_ready_o,
+  input  logic                 [EU_CTL_LEN-1:0] issue_eu_ctl_i,
+  input  expipe_pkg::op_data_t                  issue_rs1_i,
+  input  expipe_pkg::op_data_t                  issue_rs2_i,
+  input  expipe_pkg::rob_idx_t                  issue_dest_rob_idx_i,
 
   /* CDB */
-  input  logic      cdb_ready_i,
-  input  logic      cdb_valid_i,  // to know if the CDB is carrying valid data
-  output logic      cdb_valid_o,
-  input  cdb_data_t cdb_data_i,
-  output cdb_data_t cdb_data_o,
+  input  logic                  cdb_ready_i,
+  input  logic                  cdb_valid_i,  // to know if the CDB is carrying valid data
+  output logic                  cdb_valid_o,
+  input  expipe_pkg::cdb_data_t cdb_data_i,
+  output expipe_pkg::cdb_data_t cdb_data_o,
 
   /* Execution unit */
-  input  logic                          eu_ready_i,
-  input  logic                          eu_valid_i,
-  output logic                          eu_valid_o,
-  output logic                          eu_ready_o,
-  input  rob_idx_t                      eu_rob_idx_i,
-  input  logic         [      XLEN-1:0] eu_result_i,
-  input  logic                          eu_except_raised_i,
-  input  except_code_t                  eu_except_code_i,
-  output logic         [EU_CTL_LEN-1:0] eu_ctl_o,
-  output logic         [      XLEN-1:0] eu_rs1_o,
-  output logic         [      XLEN-1:0] eu_rs2_o,
-  output rob_idx_t                      eu_rob_idx_o
+  input  logic                                        eu_ready_i,
+  input  logic                                        eu_valid_i,
+  output logic                                        eu_valid_o,
+  output logic                                        eu_ready_o,
+  input  expipe_pkg::rob_idx_t                        eu_rob_idx_i,
+  input  logic                   [len5_pkg::XLEN-1:0] eu_result_i,
+  input  logic                                        eu_except_raised_i,
+  input  len5_pkg::except_code_t                      eu_except_code_i,
+  output logic                   [    EU_CTL_LEN-1:0] eu_ctl_o,
+  output logic                   [len5_pkg::XLEN-1:0] eu_rs1_o,
+  output logic                   [len5_pkg::XLEN-1:0] eu_rs2_o,
+  output expipe_pkg::rob_idx_t                        eu_rob_idx_o
 );
+
+  import len5_config_pkg::*;
+  import len5_pkg::*;
+  import expipe_pkg::*;
   // INTERNAL SIGNALS
   // ----------------
 
@@ -130,7 +130,7 @@ module arith_rs #(
     foreach (curr_state[i]) begin
       unique case (curr_state[i])
         ARITH_S_EMPTY: begin  // insert a new instruction
-          if (insert && new_idx == i) begin
+          if (insert && new_idx == i[RsIdxLen-1:0]) begin
             if (issue_rs1_i.ready && issue_rs2_i.ready) begin
               next_state[i] = ARITH_S_EX_REQ;
               arith_op[i]   = ARITH_OP_INSERT;
@@ -189,7 +189,7 @@ module arith_rs #(
           if (save_res && eu_rob_idx_i == data[i].dest_rob_idx) begin
             arith_op[i]   = ARITH_OP_SAVE_RES;
             next_state[i] = ARITH_S_COMPLETED;
-          end else if (ex_accepted && ex_idx == i) next_state[i] = ARITH_S_EX_WAIT;
+          end else if (ex_accepted && ex_idx == i[RsIdxLen-1:0]) next_state[i] = ARITH_S_EX_WAIT;
           else next_state[i] = ARITH_S_EX_REQ;
         end
         ARITH_S_EX_WAIT: begin  // wait for execution completion
@@ -199,7 +199,7 @@ module arith_rs #(
           end else next_state[i] = ARITH_S_EX_WAIT;
         end
         ARITH_S_COMPLETED: begin
-          if (remove && cdb_idx == i) next_state[i] = ARITH_S_EMPTY;
+          if (remove && cdb_idx == i[RsIdxLen-1:0]) next_state[i] = ARITH_S_EMPTY;
           else next_state[i] = ARITH_S_COMPLETED;
         end
         default: next_state[i] = ARITH_S_HALT;
@@ -327,7 +327,9 @@ module arith_rs #(
   ) new_sel (
     .lines_i(empty),
     .enc_o  (new_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .valid_o()
+    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   // Execution
@@ -336,7 +338,9 @@ module arith_rs #(
   ) ex_sel (
     .lines_i(ready_ex),
     .enc_o  (ex_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .valid_o()
+    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   // CDB access
@@ -345,7 +349,9 @@ module arith_rs #(
   ) cdb_sel (
     .lines_i(ready_cdb),
     .enc_o  (cdb_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .valid_o()
+    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   // ----------

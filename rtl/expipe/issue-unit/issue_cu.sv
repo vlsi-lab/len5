@@ -12,8 +12,6 @@
 // Author: Michele Caon
 // Date: 17/08/2022
 
-import expipe_pkg::*;
-
 module issue_cu (
   input logic clk_i,
   input logic rst_n_i,
@@ -28,11 +26,10 @@ module issue_cu (
   input  logic iq_except_raised_i,
 
   // Issue stage <--> CU
-  input  issue_type_t issue_type_i,         // type of operation needed
-  input  logic        issue_rs1_ready_i,    // for CSR instructions
-  output logic        issue_res_ready_o,
-  output logic        issue_res_sel_rs1_o,
-  output logic        issue_fetch_except_o,
+  input  expipe_pkg::issue_type_t issue_type_i,        // type of operation needed
+  input  logic                    issue_rs1_ready_i,   // for CSR instructions
+  output logic                    issue_res_ready_o,
+  output logic                    issue_res_sel_rs1_o,
 
   // Execution stage <--> CU
   input  logic ex_ready_i,
@@ -47,6 +44,8 @@ module issue_cu (
   input  logic comm_resume_i,
   output logic comm_jb_instr_o
 );
+
+  import expipe_pkg::*;
   // INTERNAL SIGNALS
   // ----------------
 
@@ -201,16 +200,15 @@ module issue_cu (
   // hardware. This may represent the critical path.
   always_comb begin : cu_out_eval
     // Default values
-    iq_ready_o           = 1'b0;
-    mis_flush_o          = 1'b0;
-    issue_res_ready_o    = 1'b0;
-    issue_res_sel_rs1_o  = 1'b0;
-    issue_fetch_except_o = 1'b0;
-    ex_valid_o           = 1'b0;
-    int_regstat_valid_o  = 1'b0;
+    iq_ready_o          = 1'b0;
+    mis_flush_o         = 1'b0;
+    issue_res_ready_o   = 1'b0;
+    issue_res_sel_rs1_o = 1'b0;
+    ex_valid_o          = 1'b0;
+    int_regstat_valid_o = 1'b0;
     // fp_regstat_valid_o = 1'b0;
-    comm_valid_o         = 1'b0;
-    comm_jb_instr_o      = 1'b0;
+    comm_valid_o        = 1'b0;
+    comm_jb_instr_o     = 1'b0;
 
     case (curr_state)
       S_RESET:       ;  // use default values
@@ -269,8 +267,7 @@ module issue_cu (
         comm_valid_o = 1'b1;
       end
       S_FETCH_EXCEPT: begin
-        comm_valid_o         = 1'b1;
-        issue_fetch_except_o = 1'b1;
+        comm_valid_o = 1'b1;
       end
       S_FLUSH: begin
         mis_flush_o = 1'b1;

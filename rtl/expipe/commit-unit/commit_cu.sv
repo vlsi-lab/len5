@@ -12,33 +12,25 @@
 // Author: Michele Caon
 // Date: 25/11/2021
 
-import len5_config_pkg::*;
-import len5_pkg::*;
-import expipe_pkg::*;
-import csr_pkg::*;
-import instr_pkg::*;
-
 module commit_cu (
   // Clock and reset
   input logic clk_i,
   input logic rst_n_i,
 
   // Commit logic <--> CU
-  input  comm_type_t    comm_type_i,      // from commit decoder
-  input  logic          mispredict_i,     // branch misprediction
-  output logic          comm_reg_en_o,    // commit register enable
-  output logic          comm_reg_clr_o,   // commit register clear
-  output comm_rd_sel_t  comm_rd_sel_o,    // rd is link address
-  output logic          comm_jb_instr_o,  // committing a jump/branch
-  output comm_csr_sel_t comm_csr_sel_o,   // select PC as CSR data
+  input  expipe_pkg::comm_type_t    comm_type_i,      // from commit decoder
+  input  logic                      mispredict_i,     // branch misprediction
+  output logic                      comm_reg_en_o,    // commit register enable
+  output logic                      comm_reg_clr_o,   // commit register clear
+  output expipe_pkg::comm_rd_sel_t  comm_rd_sel_o,    // rd is link address
+  output logic                      comm_jb_instr_o,  // committing a jump/branch
+  output expipe_pkg::comm_csr_sel_t comm_csr_sel_o,   // select PC as CSR data
 
   // ROB <--> CU
-  input  logic         valid_i,
-  output logic         ready_o,
-  input  instr_t       instr_i,
-  input  logic         res_ready_i,
-  input  logic         except_raised_i,
-  input  except_code_t except_code_i,
+  input  logic                   valid_i,
+  output logic                   ready_o,
+  input  logic                   res_ready_i,
+  input  len5_pkg::except_code_t except_code_i,
 
   // CU <--> integer register file and status
   output logic int_rs_valid_o,
@@ -48,14 +40,11 @@ module commit_cu (
   // output logic fp_rs_valid_o,
   // output logic fp_rf_valid_o,
 
-  // CU <--> store buffer
-  output logic sb_exec_store_o,  // pop the store instruction from the store buffer
-
   // CU <--> CSRs
   output logic csr_valid_o,
   output logic csr_override_o,  // unconditionally access the requested CSR
-  output comm_csr_instr_t csr_comm_insn_o,  // committing instruction type
-  output logic [CSR_ADDR_LEN-1:0] csr_addr_o,
+  output expipe_pkg::comm_csr_instr_t csr_comm_insn_o,  // committing instruction type
+  output logic [csr_pkg::CSR_ADDR_LEN-1:0] csr_addr_o,
 
   // CU <--> others
   input  logic fe_ready_i,
@@ -64,6 +53,12 @@ module commit_cu (
   output logic except_flush_o,      // flush everything after exception
   output logic issue_resume_o       // resume after stall
 );
+
+  import len5_config_pkg::*;
+  import len5_pkg::*;
+  import expipe_pkg::*;
+  import csr_pkg::*;
+  import instr_pkg::*;
 
   // INTERNAL SIGNALS
   // ----------------
@@ -266,7 +261,6 @@ module commit_cu (
     int_rf_valid_o     = 1'b0;
     // fp_rs_valid_o = 1'b0;
     // fp_rf_valid_o = 1'b0;
-    sb_exec_store_o    = 1'b0;
     csr_valid_o        = 1'b0;
     csr_comm_insn_o    = COMM_CSR_INSTR_TYPE_NONE;
     fe_except_raised_o = 1'b0;
@@ -453,8 +447,8 @@ module commit_cu (
 `ifndef SYNTHESIS
 `ifndef VERILATOR
   always @(posedge clk_i) begin
-    $display($sformatf("valid_i: %b | instr: %h | type: %s | state: %s", valid_i, instr_i,
-                       comm_type_i.name(), curr_state.name()));
+    $display($sformatf("valid_i: %b | type: %s | state: %s", valid_i, comm_type_i.name(),
+                       curr_state.name()));
   end
 `endif  /* VERILATOR */
 `endif  /* SYNTHESIS */

@@ -62,7 +62,7 @@ package fetch_pkg;
 
   // Memory interface answer spill cell data type
   typedef struct packed {
-    logic [XLEN-1:0] instr;
+    logic [ILEN-1:0] instr;
     prediction_t     pred_data;
     logic            except_raised;
     except_code_t    except_code;
@@ -79,7 +79,7 @@ package fetch_pkg;
 
   // G-share branch predictor history length and counters intial value
   localparam int unsigned HLEN = BPU_HLEN;
-  localparam c2b_t INIT_C2B = c2b_t'(BPU_INIT_C2B);
+  localparam c2b_t INIT_C2B = WT;
 
   // Branch target buffer bits
   localparam int unsigned BTB_BITS = BPU_BTB_BITS;

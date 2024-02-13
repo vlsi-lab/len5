@@ -12,16 +12,10 @@
 // Author: Marco Andorno
 // Date: 07/10/2019
 
-import len5_pkg::*;
-import memory_pkg::*;
-import expipe_pkg::*;
-import fetch_pkg::*;
-
 module fetch_stage #(
   parameter int unsigned HLEN = 4,
   parameter int unsigned BTB_BITS = 4,
-  parameter int unsigned BOOT_PC = 64'h0,
-  parameter c2b_t INIT_C2B = WNT,
+  parameter longint unsigned BOOT_PC = 64'h0,
   parameter int unsigned MEMIF_FIFO_DEPTH = 2  // equal to the max number of outstanding requests the memory can accept
 ) (
   input logic clk_i,
@@ -30,35 +24,37 @@ module fetch_stage #(
   input logic flush_bpu_i,
 
   // From/to memory
-  input  logic                            instr_valid_i,
-  input  logic                            instr_ready_i,
-  output logic                            instr_ready_o,
-  output logic                            instr_valid_o,
-  output logic                            instr_we_o,
-  input  logic         [        XLEN-1:0] instr_rdata_i,        // old: ins_mem_ans_i.value
-  input  logic         [BUFF_IDX_LEN-1:0] instr_tag_i,          // old: ins_mem_ans_i.tag
-  output logic         [        XLEN-1:0] instr_addr_o,         // old: ins_mem_req_o.addr
-  output logic         [BUFF_IDX_LEN-1:0] instr_tag_o,          // old: ins_mem_req_o.tag
-  input  logic                            instr_except_raised,
-  input  except_code_t                    instr_except_code,
+  input  logic                                         instr_valid_i,
+  input  logic                                         instr_ready_i,
+  output logic                                         instr_ready_o,
+  output logic                                         instr_valid_o,
+  output logic                                         instr_we_o,
+  input  logic                    [len5_pkg::ILEN-1:0] instr_rdata_i,
+  output logic                    [len5_pkg::XLEN-1:0] instr_addr_o,
+  input  logic                                         instr_except_raised_i,
+  input  fetch_pkg::except_code_t                      instr_except_code_i,
 
   // From/to instruction decode
-  input  logic         issue_ready_i,
-  output logic         issue_valid_o,
-  output instr_t       issue_instr_o,
-  output prediction_t  issue_pred_o,
-  output logic         issue_except_raised_o,
-  output except_code_t issue_except_code_o,
+  input  logic                    issue_ready_i,
+  output logic                    issue_valid_o,
+  output len5_pkg::instr_t        issue_instr_o,
+  output fetch_pkg::prediction_t  issue_pred_o,
+  output logic                    issue_except_raised_o,
+  output fetch_pkg::except_code_t issue_except_code_o,
 
   // From branch unit
-  output logic        bu_ready_o,
-  input  logic        bu_res_valid_i,
-  input  resolution_t bu_res_i,
+  output logic                   bu_ready_o,
+  input  logic                   bu_res_valid_i,
+  input  fetch_pkg::resolution_t bu_res_i,
 
   // From commit unit
-  input logic            comm_except_raised_i,
-  input logic [XLEN-1:0] comm_except_pc_i
+  input logic                      comm_except_raised_i,
+  input logic [len5_pkg::XLEN-1:0] comm_except_pc_i
 );
+
+  import len5_pkg::XLEN;
+  import fetch_pkg::prediction_t;
+  import fetch_pkg::INIT_C2B;
 
   // INTERNAL SIGNALS
   // ----------------
@@ -111,7 +107,8 @@ module fetch_stage #(
     .comm_except_pc_i    (comm_except_pc_i),
     .bu_res_valid_i      (bu_res_valid_i),
     .bu_res_i            (bu_res_i),
-    .pred_i              (curr_pred),
+    .pred_target_i       (curr_pred.target),
+    .pred_taken_i        (curr_pred.taken),
     .mem_ready_i         (memif_pcgen_ready),
     .valid_o             (pcgen_memif_valid),
     .bu_ready_o          (bu_ready_o),
@@ -141,11 +138,9 @@ module fetch_stage #(
     .instr_valid_o        (instr_valid_o),
     .instr_we_o           (instr_we_o),
     .instr_rdata_i        (instr_rdata_i),
-    .instr_tag_i          (instr_tag_i),
     .instr_addr_o         (instr_addr_o),
-    .instr_tag_o          (instr_tag_o),
-    .instr_except_raised_i(instr_except_raised),
-    .instr_except_code    (instr_except_code)
+    .instr_except_raised_i(instr_except_raised_i),
+    .instr_except_code_i  (instr_except_code_i)
   );
 
 endmodule

@@ -12,11 +12,6 @@
 // Author: Michele Caon
 // Date: 20/11/2019
 
-import len5_config_pkg::*;
-import expipe_pkg::*;
-import len5_pkg::*;
-import fetch_pkg::resolution_t;
-import csr_pkg::*;
 
 module commit_stage (
   input logic clk_i,
@@ -27,32 +22,33 @@ module commit_stage (
   output logic except_flush_o,  // flush after exception
 
   // Data to frontend
-  input  logic            fe_ready_i,
-  output logic            fe_except_raised_o,
-  output logic [XLEN-1:0] fe_except_pc_o,
+  input  logic                      fe_ready_i,
+  output logic                      fe_except_raised_o,
+  output logic [len5_pkg::XLEN-1:0] fe_except_pc_o,
 
   // Issue logic <--> commit stage
-  input  logic                  issue_valid_i,
-  output logic                  issue_ready_o,
-  input  rob_entry_t            issue_data_i,
-  input  logic                  issue_jb_instr_i,
-  output rob_idx_t              issue_tail_idx_o,
-  input  rob_idx_t              issue_rs1_rob_idx_i,
-  output logic                  issue_rs1_ready_o,
-  output logic       [XLEN-1:0] issue_rs1_value_o,
-  input  rob_idx_t              issue_rs2_rob_idx_i,
-  output logic                  issue_rs2_ready_o,
-  output logic       [XLEN-1:0] issue_rs2_value_o,
-  output logic                  issue_resume_o,       // resume execution after stall
+  input  logic                                        issue_valid_i,
+  output logic                                        issue_ready_o,
+  input  expipe_pkg::rob_entry_t                      issue_data_i,
+  input  logic                                        issue_jb_instr_i,
+  output expipe_pkg::rob_idx_t                        issue_tail_idx_o,
+  input  expipe_pkg::rob_idx_t                        issue_rs1_rob_idx_i,
+  output logic                                        issue_rs1_ready_o,
+  output logic                   [len5_pkg::XLEN-1:0] issue_rs1_value_o,
+  input  expipe_pkg::rob_idx_t                        issue_rs2_rob_idx_i,
+  output logic                                        issue_rs2_ready_o,
+  output logic                   [len5_pkg::XLEN-1:0] issue_rs2_value_o,
+  // resume execution after stall
+  output logic                                        issue_resume_o,
 
   /* Common data bus (CDB) */
-  input  logic      cdb_valid_i,
-  input  cdb_data_t cdb_data_i,
-  output logic      cdb_ready_o,
+  input  logic                  cdb_valid_i,
+  input  expipe_pkg::cdb_data_t cdb_data_i,
+  output logic                  cdb_ready_o,
 
   // Commit logic <--> store buffer
-  output logic     sb_spec_instr_o,   // there are in-flight jump/branch instructions
-  output rob_idx_t sb_rob_head_idx_o,
+  output logic                 sb_spec_instr_o,   // there are in-flight jump/branch instructions
+  output expipe_pkg::rob_idx_t sb_rob_head_idx_o,
 
   // Commit logic <--> register files and status
   output logic int_rs_valid_o,
@@ -61,26 +57,31 @@ module commit_stage (
   // output logic fp_rf_valid_o,
 
   // Data to the register status registers
-  output rob_idx_t rs_head_idx_o,
+  output expipe_pkg::rob_idx_t rs_head_idx_o,
 
   // Data to the register files
-  output logic [REG_IDX_LEN-1:0] rd_idx_o,   // the index of the destination register (rd)
-  output logic [       XLEN-1:0] rd_value_o, // the value to be stored in rd
+  output logic [len5_pkg::REG_IDX_LEN-1:0] rd_idx_o,   // the index of the destination register (rd)
+  output logic [       len5_pkg::XLEN-1:0] rd_value_o, // the value to be stored in rd
 
   // CSRs
   output logic csr_valid_o,
-  input csr_t csr_data_i,
-  input logic csr_acc_exc_i,  // CSR illegal instruction or access permission denied
-  input csr_mtvec_t csr_mtvec_i,  // mtvec data
-  output comm_csr_instr_t csr_comm_insn_o,  // committing instruction type
-  output csr_op_t csr_op_o,
-  output logic [FUNCT3_LEN-1:0] csr_funct3_o,
-  output logic [CSR_ADDR_LEN-1:0] csr_addr_o,
-  output logic [REG_IDX_LEN-1:0] csr_rs1_idx_o,
-  output logic [XLEN-1:0] csr_data_o,
-  output except_code_t csr_except_code_o,
-  output logic [REG_IDX_LEN-1:0] csr_rd_idx_o
+  input csr_pkg::csr_t csr_data_i,
+  input csr_pkg::csr_mtvec_t csr_mtvec_i,  // mtvec data
+  output expipe_pkg::comm_csr_instr_t csr_comm_insn_o,  // committing instruction type
+  output csr_pkg::csr_op_t csr_op_o,
+  output logic [len5_pkg::FUNCT3_LEN-1:0] csr_funct3_o,
+  output logic [csr_pkg::CSR_ADDR_LEN-1:0] csr_addr_o,
+  output logic [len5_pkg::REG_IDX_LEN-1:0] csr_rs1_idx_o,
+  output logic [len5_pkg::XLEN-1:0] csr_data_o,
+  output len5_pkg::except_code_t csr_except_code_o,
+  output logic [len5_pkg::REG_IDX_LEN-1:0] csr_rd_idx_o
 );
+
+  import len5_config_pkg::*;
+  import expipe_pkg::*;
+  import len5_pkg::*;
+  import csr_pkg::*;
+  import fetch_pkg::resolution_t;
 
   // INTERNAL SIGNALS
   // ----------------
@@ -283,8 +284,7 @@ module commit_stage (
   commit_decoder u_comm_decoder (
     .instruction_i  (inreg_data_out.data.instruction),
     .except_raised_i(inreg_data_out.data.except_raised),
-    .comm_type_o    (cd_comm_type),
-    .csr_op_o       (cd_csr_op)
+    .comm_type_o    (cd_comm_type)
   );
 
   // COMMIT CONTROL UNIT
@@ -307,15 +307,12 @@ module commit_stage (
     .comm_csr_sel_o    (cu_csr_sel),
     .valid_i           (inreg_cu_valid),
     .ready_o           (cu_inreg_ready),
-    .instr_i           (inreg_data_out.data.instruction),
     .res_ready_i       (inreg_data_out.data.res_ready),
-    .except_raised_i   (inreg_data_out.data.except_raised),
     .except_code_i     (inreg_data_out.data.except_code),
     .int_rs_valid_o    (int_rs_valid_o),
     .int_rf_valid_o    (int_rf_valid_o),
     // .fp_rs_valid_o     (fp_rs_valid_o),
     // .fp_rf_valid_o     (fp_rf_valid_o),
-    .sb_exec_store_o   (sb_exec_store_o),
     .csr_valid_o       (csr_valid_o),
     .csr_override_o    (cu_csr_override),
     .csr_comm_insn_o   (csr_comm_insn_o),
@@ -382,7 +379,7 @@ module commit_stage (
   assign jb_instr_cnt_clr = cu_mis_flush;
   assign jb_instr_cnt_up  = issue_jb_instr_i;
   updown_counter #(
-    .W(ROB_IDX_LEN)
+    .WIDTH(ROB_IDX_LEN)
   ) u_jb_instr_counter (
     .clk_i  (clk_i),
     .rst_n_i(rst_n_i),
@@ -390,7 +387,9 @@ module commit_stage (
     .clr_i  (jb_instr_cnt_clr),
     .up_dn_i(jb_instr_cnt_up),
     .count_o(jb_instr_cnt),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()                   // not needed
+    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   // -----------------

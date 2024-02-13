@@ -13,13 +13,8 @@
 // Date: 12/11/2019
 
 /*
- * NOTE: ADD RS3!
+ * TODO: ADD RS3!
  */
-
-import len5_pkg::XLEN;
-import len5_pkg::FREG_NUM;
-import len5_pkg::FREG_IDX_LEN;
-import expipe_pkg::*;
 
 module fp_rf (
   input logic clk_i,
@@ -30,15 +25,20 @@ module fp_rf (
   // output  logic                       comm_ready_o,
 
   // Data from the commit logic (result write port)
-  input logic [FREG_IDX_LEN-1:0] comm_rd_idx_i,
-  input logic [        XLEN-1:0] comm_rd_value_i,
+  input logic [len5_pkg::FREG_IDX_LEN-1:0] comm_rd_idx_i,
+  input logic [        len5_pkg::XLEN-1:0] comm_rd_value_i,
 
   // Data to the issue stage (operands read ports)
-  input  logic [FREG_IDX_LEN-1:0] issue_rs1_idx_i,
-  input  logic [FREG_IDX_LEN-1:0] issue_rs2_idx_i,
-  output logic [        XLEN-1:0] issue_rs1_value_o,
-  output logic [        XLEN-1:0] issue_rs2_value_o
+  input  logic [len5_pkg::FREG_IDX_LEN-1:0] issue_rs1_idx_i,
+  input  logic [len5_pkg::FREG_IDX_LEN-1:0] issue_rs2_idx_i,
+  output logic [        len5_pkg::XLEN-1:0] issue_rs1_value_o,
+  output logic [        len5_pkg::XLEN-1:0] issue_rs2_value_o
 );
+
+  import len5_pkg::XLEN;
+  import len5_pkg::FREG_NUM;
+  import len5_pkg::FREG_IDX_LEN;
+  import expipe_pkg::*;
 
   // DEFINITIONS
 

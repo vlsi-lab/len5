@@ -12,33 +12,33 @@
 // Author: Michele Caon
 // Date: 13/11/2019
 
-import len5_config_pkg::*;
-import len5_pkg::*;
-import expipe_pkg::*;
-import memory_pkg::*;
-import csr_pkg::*;
-import instr_pkg::*;
-
 module issue_decoder (
   // Instruction from the issue logic
-  input instr_t    instruction_i,  // the issuing instruction
-  input csr_priv_t priv_mode_i,    // current privilege mode
+  input len5_pkg::instr_t   instruction_i,  // the issuing instruction
+  input csr_pkg::csr_priv_t priv_mode_i,    // current privilege mode
 
   // Issue decoder <--> issue CU
-  output issue_type_t issue_type_o,  // issue operation type
+  output expipe_pkg::issue_type_t issue_type_o,  // issue operation type
 
   // Information to the issue logic
-  output except_code_t except_code_o,  // exception code to send to the ROB
-  output issue_eu_t    assigned_eu_o,  // assigned EU
-  output logic         skip_eu_o,      // do not assign to any EU
-  output eu_ctl_t      eu_ctl_o,       // controls for the assigned EU
-  output logic         rs1_req_o,      // rs1 fetch is required
-  output logic         rs1_is_pc_o,    // rs1 is the current PC (for AUIPC)
-  output logic         rs2_req_o,      // rs2 fetch is required
-  output logic         rs2_is_imm_o,   // replace rs2 value with imm. (for i-type ALU instr.)
+  output len5_pkg::except_code_t except_code_o,  // exception code to send to the ROB
+  output expipe_pkg::issue_eu_t assigned_eu_o,  // assigned EU
+  output logic skip_eu_o,  // do not assign to any EU
+  output expipe_pkg::eu_ctl_t eu_ctl_o,  // controls for the assigned EU
+  output logic rs1_req_o,  // rs1 fetch is required
+  output logic rs1_is_pc_o,  // rs1 is the current PC (for AUIPC)
+  output logic rs2_req_o,  // rs2 fetch is required
+  output logic rs2_is_imm_o,  // replace rs2 value with imm. (for i-type ALU instr.)
   //   output logic         rs3_req_o,      // rs3 (S, D only) fetch is required
-  output imm_format_t  imm_format_o    // immediate format
+  output expipe_pkg::imm_format_t imm_format_o  // immediate format
 );
+
+  import len5_config_pkg::*;
+  import len5_pkg::*;
+  import expipe_pkg::*;
+  import memory_pkg::*;
+  import csr_pkg::*;
+  import instr_pkg::*;
 
   // INTERNAL SIGNALS
   // ----------------
@@ -720,7 +720,7 @@ module issue_decoder (
 `ifndef SYNTHESIS
 `ifndef VERILATOR
   /* Assertions here */
-`endif /* VERILATOR */
-`endif /* SYNTHESIS */
+`endif  /* VERILATOR */
+`endif  /* SYNTHESIS */
 
 endmodule

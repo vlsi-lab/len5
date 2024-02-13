@@ -14,22 +14,19 @@
 
 // THIS FILE IS ONYL A TEMPLATE, THE COMMIT LOGIC IS NOT IMPLEMENTED YET, SINCE IT REQUIRES ALL THE PROCESSOR PARTS TO BE FUNCTIONAL
 
-import expipe_pkg::*;
-import csr_pkg::*;
-import instr_pkg::*;
-import len5_pkg::ILEN;
-import len5_pkg::OPCODE_LEN;
-import len5_pkg::instr_t;
-
 module commit_decoder (
   // Data from the commit logic
-  input instr_t instruction_i,
-  input logic   except_raised_i,
-
+  input  len5_pkg::instr_t       instruction_i,
+  input  logic                   except_raised_i,
   // Control to the commit logic
-  output comm_type_t comm_type_o,
-  output csr_op_t    csr_op_o
+  output expipe_pkg::comm_type_t comm_type_o
 );
+
+  import len5_pkg::ILEN;
+  import len5_pkg::OPCODE_LEN;
+  import expipe_pkg::*;
+  import csr_pkg::*;
+  import instr_pkg::*;
   // INTERNAL SIGNALS
   // ----------------
   comm_type_t comm_type;

@@ -16,8 +16,6 @@
  * NOTE: ADD RS3!
  */
 
-import expipe_pkg::*;
-
 module fp_regstat #(
   parameter  int unsigned REG_NUM   = 32,              // power of 2
   // Dependent parameters: do NOT override
@@ -31,23 +29,24 @@ module fp_regstat #(
 
   // Data from/to the issue logic
   input logic [RegIdxLen-1:0] issue_rd_idx_i,  // destination register of the issuing instruction
-  input rob_idx_t issue_rob_idx_i,  // allocated ROB index
+  input expipe_pkg::rob_idx_t issue_rob_idx_i,  // allocated ROB index
 
   input logic [RegIdxLen-1:0] issue_rs1_idx_i,  // first source register index
   input logic [RegIdxLen-1:0] issue_rs2_idx_i,  // second source register index
   output logic issue_rs1_busy_o,  // rs1 value is in the ROB or has to be computed
-  output rob_idx_t issue_rs1_rob_idx_o,  // the index of the ROB where the result is found
+  output expipe_pkg::rob_idx_t issue_rs1_rob_idx_o,  // the index of the ROB where the result is found
   output logic issue_rs2_busy_o,  // rs1 value is in the ROB or has to be computed
-  output rob_idx_t issue_rs2_rob_idx_o,  // the index of the ROB where the result is found
+  output expipe_pkg::rob_idx_t issue_rs2_rob_idx_o,  // the index of the ROB where the result is found
 
   // Handshake from/to the commit logic
   input logic comm_valid_i,
 
   // Data from the commit logic
-  input logic     [RegIdxLen-1:0] comm_rd_idx_i,   // destination register of the committing instr.
-  input rob_idx_t                 comm_head_idx_i  // head entry of the ROB
+  input logic [RegIdxLen-1:0] comm_rd_idx_i,  // destination register of the committing instr.
+  input expipe_pkg::rob_idx_t comm_head_idx_i  // head entry of the ROB
 );
 
+  import expipe_pkg::*;
   // DEFINITIONS
 
   // Register status data

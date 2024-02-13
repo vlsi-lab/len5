@@ -19,11 +19,15 @@ package len5_config_pkg;
   // GLOBAL CONFIGURATION
   // --------------------
   // Boot memory translation mode
-  typedef enum logic [1:0] {BARE, SV39, SV48} boot_mode_t;
-  localparam boot_mode_t BOOT_VM_MODE = BARE; // BARE|SV39|SV48
+  typedef enum logic [1:0] {
+    BARE,
+    SV39,
+    SV48
+  } boot_mode_t;
+  localparam boot_mode_t BOOT_VM_MODE = BARE;  // BARE|SV39|SV48
 
   // Boot program counter
-  localparam logic[63:0] BOOT_PC = 64'h180;
+  localparam logic [63:0] BOOT_PC = 64'h180;
 
   // MEMORY-MAPPED DEVICES
   // ---------------------
@@ -32,13 +36,13 @@ package len5_config_pkg;
   // This mask defines the address range that is reserved to memory-mapped
   // devices. Store-to-load forwarding (see below) in this region is not
   // performed.
-  localparam logic[63:0] MMAP_MASK = 64'h000000000000ffff; // 64kiB by default
+  localparam logic [63:0] MMAP_MASK = 64'h000000000000ffff;  // 64kiB by default
 
   // TB Serial interface base address
-  localparam logic[63:0] SERIAL_ADDR = 'h10000;
+  localparam logic [63:0] SERIAL_ADDR = 'h10000;
 
   // TB exit register address (stop the simulation when written)
-  localparam logic[63:0] EXIT_ADDR = 'h10000;
+  localparam logic [63:0] EXIT_ADDR = 'h10000;
 
   // MEMORY EMULATOR PARAMETERS
   // --------------------------
@@ -54,13 +58,6 @@ package len5_config_pkg;
   // -------------------
   // BPU g-share predictor global history length
   localparam int unsigned BPU_HLEN = 4;
-  typedef enum {
-    SNT,
-    WNT,
-    WT,
-    ST
-  } bpu_init_c2b_t;
-  localparam bpu_init_c2b_t BPU_INIT_C2B = WT;
   // BPU Branch Target Buffer (BTB) addressing bits (the remaining ones are used
   // as tag)
   localparam int unsigned BPU_BTB_BITS = 4;
@@ -90,16 +87,16 @@ package len5_config_pkg;
   // ------------------
 
   // ALU
-  localparam bit ALU_SPILL_SKIP = 1'b1; // make the ALU fully combinational
+  localparam bit ALU_SPILL_SKIP = 1'b1;  // make the ALU fully combinational
 
   // Branch Unit
-  localparam bit BU_SPILL_SKIP = 1'b1; // make the target address adder fully combinational
+  localparam bit BU_SPILL_SKIP = 1'b1;  // make the target address adder fully combinational
 
   // Load-store Unit
-  localparam bit LSU_SPILL_SKIP = 1'b1; // make address adder fully combinational
+  localparam bit LSU_SPILL_SKIP = 1'b1;  // make address adder fully combinational
 
   // Commit Stage
-  localparam bit COMMIT_SPILL_SKIP = 1'b1; // directly connect the commit CU to the ROB output
+  localparam bit COMMIT_SPILL_SKIP = 1'b1;  // directly connect the commit CU to the ROB output
 
   // -----------------
   // FEATURES SWITCHES

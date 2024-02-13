@@ -39,19 +39,19 @@ module backend_vm (
     output logic fetch_ready_o,
 
     // Front-end data
-    input  logic         [XLEN-1:0] fetch_curr_pc_i,
+    input  logic         [len5_pkg::XLEN-1:0] fetch_curr_pc_i,
     input  logic         [ILEN-1:0] fetch_instr_i,
-    input  logic         [XLEN-1:0] fetch_pred_target_i,
+    input  logic         [len5_pkg::XLEN-1:0] fetch_pred_target_i,
     input  logic                    fetch_pred_taken_i,
     input  logic                    fetch_except_raised_i,
     input  except_code_t            fetch_except_code_i,
-    output logic         [XLEN-1:0] fetch_res_pc_o,
-    output logic         [XLEN-1:0] fetch_res_target_o,
+    output logic         [len5_pkg::XLEN-1:0] fetch_res_pc_o,
+    output logic         [len5_pkg::XLEN-1:0] fetch_res_target_o,
     output logic                    fetch_res_taken_o,
     output logic                    fetch_res_valid_o,
     output logic                    fetch_res_mispredict_o,
     output logic                    fetch_except_raised_o,
-    output logic         [XLEN-1:0] fetch_except_pc_o,
+    output logic         [len5_pkg::XLEN-1:0] fetch_except_pc_o,
 
     // TLB
     input  dtlb_lsq_ans_t dtlb_ans_i,

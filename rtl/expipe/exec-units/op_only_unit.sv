@@ -17,12 +17,6 @@
  * is provided as result to the reaorder buffer.
  */
 
-import len5_config_pkg::*;
-import len5_pkg::XLEN;
-import expipe_pkg::ROB_IDX_LEN;
-import expipe_pkg::cdb_data_t;
-import expipe_pkg::rob_idx_t;
-
 module op_only_unit #(
   parameter int unsigned RS_DEPTH = 4,  // must be a power of 2
 
@@ -39,10 +33,10 @@ module op_only_unit #(
   output logic issue_ready_o,
 
   // Data from the decode stage
-  input logic                rs1_ready_i,
-  input rob_idx_t            rs1_idx_i,
-  input logic     [XLEN-1:0] rs1_value_i,
-  input rob_idx_t            dest_idx_i,
+  input logic                                      rs1_ready_i,
+  input expipe_pkg::rob_idx_t                      rs1_idx_i,
+  input logic                 [len5_pkg::XLEN-1:0] rs1_value_i,
+  input expipe_pkg::rob_idx_t                      dest_idx_i,
 
   // Hanshake from/to the CDB
   input  logic cdb_ready_i,
@@ -50,9 +44,12 @@ module op_only_unit #(
   output logic cdb_valid_o,
 
   // Data from/to the CDB
-  input  cdb_data_t cdb_data_i,
-  output cdb_data_t cdb_data_o
+  input  expipe_pkg::cdb_data_t cdb_data_i,
+  output expipe_pkg::cdb_data_t cdb_data_o
 );
+
+  import len5_config_pkg::*;
+  import expipe_pkg::*;
 
   // Instantiate reservation station
   // -------------------------------

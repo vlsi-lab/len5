@@ -9,17 +9,6 @@
 // specific language governing permissions and limitations under the License.
 //
 
-import len5_config_pkg::*;
-import len5_pkg::XLEN;
-import len5_pkg::ILEN;
-import len5_pkg::except_code_t;
-import len5_pkg::instr_t;
-import len5_pkg::BUFF_IDX_LEN;
-import memory_pkg::*;
-import expipe_pkg::*;
-import fetch_pkg::mem_if_ans_reg_t;
-import fetch_pkg::prediction_t;
-
 module fetch_mem_if #(
   // At least the number of requests that the memory can accept simultaneously
   parameter int unsigned MAX_MEM_OUTSTANDING_REQUESTS = 2
@@ -29,32 +18,36 @@ module fetch_mem_if #(
   input logic flush_i,
 
   // Fetch unit (BPU and PC generator)
-  input  logic        fetch_valid_i,
-  output logic        fetch_ready_o,
-  input  prediction_t fetch_pred_i,   // contains the current PC
+  input  logic                   fetch_valid_i,
+  output logic                   fetch_ready_o,
+  input  fetch_pkg::prediction_t fetch_pred_i,   // contains the current PC
 
   // Issue stage
-  output logic         issue_valid_o,
-  input  logic         issue_ready_i,
-  output instr_t       issue_instr_o,
-  output prediction_t  issue_pred_o,           // contains the served PC
-  output logic         issue_except_raised_o,
-  output except_code_t issue_except_code_o,
+  output logic                   issue_valid_o,
+  input  logic                   issue_ready_i,
+  output len5_pkg::instr_t       issue_instr_o,
+  output fetch_pkg::prediction_t issue_pred_o,           // contains the served PC
+  output logic                   issue_except_raised_o,
+  output len5_pkg::except_code_t issue_except_code_o,
 
   // Memory
-  input  logic                            instr_valid_i,
-  input  logic                            instr_ready_i,
-  output logic                            instr_ready_o,
-  output logic                            instr_valid_o,
-  output logic                            instr_we_o,
-  input  logic         [        XLEN-1:0] instr_rdata_i,          // old: ins_mem_ans_i.value
-  input  logic         [BUFF_IDX_LEN-1:0] instr_tag_i,            // old: ins_mem_ans_i.tag
-  output logic         [        XLEN-1:0] instr_addr_o,           // old: ins_mem_req_o.addr
-  output logic         [BUFF_IDX_LEN-1:0] instr_tag_o,            // old: ins_mem_req_o.tag
-  input  logic                            instr_except_raised_i,
-  input  except_code_t                    instr_except_code
+  input  logic                                        instr_valid_i,
+  input  logic                                        instr_ready_i,
+  output logic                                        instr_ready_o,
+  output logic                                        instr_valid_o,
+  output logic                                        instr_we_o,
+  input  logic                   [len5_pkg::ILEN-1:0] instr_rdata_i,
+  output logic                   [len5_pkg::XLEN-1:0] instr_addr_o,
+  input  logic                                        instr_except_raised_i,
+  input  len5_pkg::except_code_t                      instr_except_code_i
 );
 
+  import fetch_pkg::mem_if_ans_reg_t;
+  import fetch_pkg::prediction_t;
+  import len5_pkg::ILEN;
+  import len5_config_pkg::*;
+  import memory_pkg::*;
+  import expipe_pkg::*;
   // INTERNAL SIGNALS
   // ----------------
   prediction_t req_reg_out;
@@ -120,7 +113,7 @@ module fetch_mem_if #(
   assign ans_reg_in.instr         = instr_rdata_i[ILEN-1:0];
   assign ans_reg_in.pred_data     = pred_fifo_out;
   assign ans_reg_in.except_raised = instr_except_raised_i;
-  assign ans_reg_in.except_code   = instr_except_code;
+  assign ans_reg_in.except_code   = instr_except_code_i;
 
   spill_cell_flush #(
     .DATA_T(mem_if_ans_reg_t),
@@ -141,11 +134,11 @@ module fetch_mem_if #(
   // OUTPUT EVALUATION
   // -----------------
 
-  // Memory request
-  assign instr_tag_o           = '0;
-  assign instr_addr_o          = req_reg_out.pc;
-  assign instr_except_raised   = '0;
+  // Only read from mem
   assign instr_we_o            = 1'b0;
+
+  // Memory request
+  assign instr_addr_o          = req_reg_out.pc;
 
   // Fetched instruction
   assign issue_instr_o.raw     = ans_reg_out.instr;

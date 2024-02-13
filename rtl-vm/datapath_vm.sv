@@ -17,7 +17,7 @@ import memory_pkg::*;
 import csr_pkg::csr_priv_t;
 
 module datapath_vm #(
-    parameter [XLEN-1:0] BOOT_PC = 'h0
+    parameter [len5_pkg::XLEN-1:0] BOOT_PC = 'h0
 ) (
     // Clock and reset
     input logic clk_i,

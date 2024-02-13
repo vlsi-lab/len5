@@ -13,25 +13,27 @@
 // Date: 2/8/2019
 `ifndef BTB_SV
 `define BTB_SV
-import len5_pkg::*;
-import fetch_pkg::*;
-
 
 /* verilator lint_off BLKLOOPINIT */
+
 module btb #(
   parameter int unsigned BTB_BITS = 4
 ) (
-  input logic                   clk_i,
-  input logic                   rst_n_i,
-  input logic                   flush_i,
-  input logic        [XLEN-1:0] curr_pc_i,
-  input logic                   valid_i,
-  input logic                   del_entry_i,
-  input resolution_t            res_i,
+  input logic                      clk_i,
+  input logic                      rst_n_i,
+  input logic                      flush_i,
+  input logic [len5_pkg::XLEN-1:0] curr_pc_i,
+  input logic                      valid_i,
+  input logic                      del_entry_i,
+  input       [          XLEN-1:0] res_pc_i,
+  input       [          XLEN-1:0] res_target_i,
 
-  output logic                   hit_o,
-  output logic [XLEN-OFFSET-1:0] target_o
+  output logic                                        hit_o,
+  output logic [len5_pkg::XLEN-fetch_pkg::OFFSET-1:0] target_o
 );
+
+  import len5_pkg::*;
+  import fetch_pkg::*;
 
   // Definitions
   localparam int unsigned BtbRows = 1 << BTB_BITS;
@@ -50,8 +52,8 @@ module btb #(
   // Branch Target Buffer (BTB)
   // --------------------------
   // Write
-  assign addr_w = res_i.pc[BTB_BITS+OFFSET-1:OFFSET];
-  assign tag_w  = res_i.pc[XLEN-1:BTB_BITS+OFFSET];
+  assign addr_w = res_pc_i[BTB_BITS+OFFSET-1:OFFSET];
+  assign tag_w  = res_pc_i[XLEN-1:BTB_BITS+OFFSET];
 
   always_comb begin : btb_update
     // By default, store previous value
@@ -64,7 +66,7 @@ module btb #(
       end else begin
         btb_d[addr_w].valid  = 1'b1;
         btb_d[addr_w].tag    = tag_w;
-        btb_d[addr_w].target = res_i.target[XLEN-1:OFFSET];
+        btb_d[addr_w].target = res_target_i[XLEN-1:OFFSET];
       end
     end
   end

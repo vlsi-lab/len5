@@ -12,14 +12,6 @@
 // Author: Michele Caon, Walid Walid
 // Date: 17/11/2021
 
-import len5_config_pkg::*;
-import len5_pkg::*;
-import expipe_pkg::*;
-import fetch_pkg::resolution_t;
-import memory_pkg::mem_req_t;
-import memory_pkg::mem_ans_t;
-import csr_pkg::SATP_MODE_LEN;
-
 module exec_stage (
   // Clock, reset, and flush
   input logic clk_i,
@@ -28,64 +20,69 @@ module exec_stage (
   input logic except_flush_i,
 
   // Fetch stage
-  input  logic        fe_ready_i,
-  output logic        fe_res_valid_o,
-  output resolution_t fe_res_o,
+  input  logic                   fe_ready_i,
+  output logic                   fe_res_valid_o,
+  output fetch_pkg::resolution_t fe_res_o,
 
   // ISSUE STAGE
-  input logic [MAX_EU_N-1:0] issue_valid_i,  // valid to each RS
-  output logic [MAX_EU_N-1:0] issue_ready_o,  // ready from each RS
-  input eu_ctl_t issue_eu_ctl_i,  // controls for the associated EU
-  input op_data_t issue_rs1_i,  // rs1 value, ROB index and availability
-  input op_data_t issue_rs2_i,  // rs1 value, ROB index and availability
-  input  logic     [XLEN-1:0] issue_imm_value_i,              // the value of the immediate field (for st and branches)
-  input rob_idx_t issue_rob_idx_i,  // the location of the ROB assigned to the instruction
-  input logic [XLEN-1:0] issue_curr_pc_i,  // the PC of the current issuing instr (branches only)
-  input  logic     [XLEN-1:0] issue_pred_target_i,// predicted target of the current issuing instr (branches only)
+  input logic [len5_config_pkg::MAX_EU_N-1:0] issue_valid_i,  // valid to each RS
+  output logic [len5_config_pkg::MAX_EU_N-1:0] issue_ready_o,  // ready from each RS
+  input expipe_pkg::eu_ctl_t issue_eu_ctl_i,  // controls for the associated EU
+  input expipe_pkg::op_data_t issue_rs1_i,  // rs1 value, ROB index and availability
+  input expipe_pkg::op_data_t issue_rs2_i,  // rs1 value, ROB index and availability
+  input  logic     [len5_pkg::XLEN-1:0] issue_imm_value_i,              // the value of the immediate field (for st and branches)
+  input expipe_pkg::rob_idx_t issue_rob_idx_i,  // the location of the ROB assigned to the instruction
+  input logic [len5_pkg::XLEN-1:0] issue_curr_pc_i,  // the PC of the current issuing instr (branches only)
+  input  logic     [len5_pkg::XLEN-1:0] issue_pred_target_i,// predicted target of the current issuing instr (branches only)
   input  logic                issue_pred_taken_i, // predicted taken bit of the current issuing instr (branches only)
   output logic issue_mis_o,
 
   // COMMON DATA BUS (CDB)
-  input  logic      [MAX_EU_N-1:0] cdb_ready_i,  // from the CDB arbiter
-  input  logic                     cdb_valid_i,  // CDB data is valid
-  output logic      [MAX_EU_N-1:0] cdb_valid_o,  // to the CDB arbiter
-  input  cdb_data_t                cdb_data_i,
-  output cdb_data_t [MAX_EU_N-1:0] cdb_data_o,
+  input logic [len5_config_pkg::MAX_EU_N-1:0] cdb_ready_i,  // from the CDB arbiter
+  input logic cdb_valid_i,  // CDB data is valid
+  output logic [len5_config_pkg::MAX_EU_N-1:0] cdb_valid_o,  // to the CDB arbiter
+  input expipe_pkg::cdb_data_t cdb_data_i,
+  output expipe_pkg::cdb_data_t [len5_config_pkg::MAX_EU_N-1:0] cdb_data_o,
 
   // ROB AND CSRs
-  input logic     comm_sb_spec_instr_i,
-  input rob_idx_t comm_sb_rob_head_idx_i,
+  input logic                 comm_sb_spec_instr_i,
+  input expipe_pkg::rob_idx_t comm_sb_rob_head_idx_i,
   // input logic     [FCSR_FRM_LEN-1:0] csr_frm_i,               // global rounding mode for the FPU
 
   // MEMORY SYSTEM
   // -------------
-  output logic                            mem_load_valid_o,
-  input  logic                            mem_load_ready_i,
-  input  logic                            mem_load_valid_i,
-  output logic                            mem_load_ready_o,
-  output logic                            mem_load_we_o,
-  output logic         [        XLEN-1:0] mem_load_addr_o,
-  output logic         [             3:0] mem_load_be_o,
-  output logic         [BUFF_IDX_LEN-1:0] mem_load_tag_o,
-  input  logic         [        XLEN-1:0] mem_load_rdata_i,
-  input  logic         [BUFF_IDX_LEN-1:0] mem_load_tag_i,
-  input  logic                            mem_load_except_raised_i,
-  input  except_code_t                    mem_load_except_code_i,
+  output logic                                                mem_load_valid_o,
+  input  logic                                                mem_load_ready_i,
+  input  logic                                                mem_load_valid_i,
+  output logic                                                mem_load_ready_o,
+  output logic                                                mem_load_we_o,
+  output logic                   [        len5_pkg::XLEN-1:0] mem_load_addr_o,
+  output logic                   [                       7:0] mem_load_be_o,
+  output logic                   [len5_pkg::BUFF_IDX_LEN-1:0] mem_load_tag_o,
+  input  logic                   [        len5_pkg::XLEN-1:0] mem_load_rdata_i,
+  input  logic                   [len5_pkg::BUFF_IDX_LEN-1:0] mem_load_tag_i,
+  input  logic                                                mem_load_except_raised_i,
+  input  len5_pkg::except_code_t                              mem_load_except_code_i,
 
-  output logic                            mem_store_valid_o,
-  input  logic                            mem_store_ready_i,
-  input  logic                            mem_store_valid_i,
-  output logic                            mem_store_ready_o,
-  output logic                            mem_store_we_o,
-  output logic         [        XLEN-1:0] mem_store_addr_o,
-  output logic         [             3:0] mem_store_be_o,
-  input  logic         [        XLEN-1:0] mem_store_wdata_o,
-  output logic         [BUFF_IDX_LEN-1:0] mem_store_tag_o,
-  input  logic         [BUFF_IDX_LEN-1:0] mem_store_tag_i,
-  input  logic                            mem_store_except_raised_i,
-  input  except_code_t                    mem_store_except_code_i
+  output logic                                                mem_store_valid_o,
+  input  logic                                                mem_store_ready_i,
+  input  logic                                                mem_store_valid_i,
+  output logic                                                mem_store_ready_o,
+  output logic                                                mem_store_we_o,
+  output logic                   [        len5_pkg::XLEN-1:0] mem_store_addr_o,
+  output logic                   [                       7:0] mem_store_be_o,
+  output logic                   [        len5_pkg::XLEN-1:0] mem_store_wdata_o,
+  output logic                   [len5_pkg::BUFF_IDX_LEN-1:0] mem_store_tag_o,
+  input  logic                   [len5_pkg::BUFF_IDX_LEN-1:0] mem_store_tag_i,
+  input  logic                                                mem_store_except_raised_i,
+  input  len5_pkg::except_code_t                              mem_store_except_code_i
 );
 
+  import len5_config_pkg::*;
+  import len5_pkg::*;
+  import expipe_pkg::*;
+  import fetch_pkg::*;
+  import memory_pkg::*;
 
   // ---------------
   // LOAD/STORE UNIT
@@ -138,7 +135,6 @@ module exec_stage (
     .mem_store_be_o           (mem_store_be_o),
     .mem_store_we_o           (mem_store_we_o),
     .mem_store_addr_o         (mem_store_addr_o),
-    .mem_store_rdata_i        (mem_store_rdata_i),
     .mem_store_tag_o          (mem_store_tag_o),
     .mem_store_wdata_o        (mem_store_wdata_o),
     .mem_store_tag_i          (mem_store_tag_i),

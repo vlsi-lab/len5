@@ -41,11 +41,11 @@ module store_buffer (
     input logic [LDST_TYPE_LEN-1:0] store_type_i,
     input logic rs1_ready_i,  // first operand already fetched from RF/ROB
     input rob_idx_t rs1_idx_i,
-    input logic [XLEN-1:0] rs1_value_i,
+    input logic [len5_pkg::XLEN-1:0] rs1_value_i,
     input logic rs2_ready_i,  // second operand already fetched from RF/ROB
     input rob_idx_t rs2_idx_i,
-    input logic [XLEN-1:0] rs2_value_i,
-    input logic [XLEN-1:0] imm_value_i,  // The immediate field of the load instruction
+    input logic [len5_pkg::XLEN-1:0] rs2_value_i,
+    input logic [len5_pkg::XLEN-1:0] imm_value_i,  // The immediate field of the load instruction
     input rob_idx_t dest_idx_i,
 
     // Handshake from/to the virtual address adder
@@ -55,12 +55,12 @@ module store_buffer (
     output logic vadder_ready_o,
 
     // Data from/to the virtual address adder
-    input logic [XLEN-1:0] vadder_vaddr_i,
+    input logic [len5_pkg::XLEN-1:0] vadder_vaddr_i,
     input logic [STBUFF_TAG_W-1:0] vadder_idx_i,
     input vadder_except_t vadder_except_i,  // LD_ADDR_MISALIGNED or LD_PAGE_FAULT exceptions
     output logic vadder_isstore_o,
-    output logic [XLEN-1:0] rs1_value_o,
-    output logic [XLEN-1:0] imm_value_o,
+    output logic [len5_pkg::XLEN-1:0] rs1_value_o,
+    output logic [len5_pkg::XLEN-1:0] imm_value_o,
     output logic [STBUFF_TAG_W-1:0] vadder_idx_o,
     output logic [LDST_TYPE_LEN-1:0] vadder_sttype_o,
 
@@ -91,14 +91,14 @@ module store_buffer (
     input  logic [DCACHE_L1_LINE_A_LEN-1:0] dcache_lineaddr_i,
     input  logic [        STBUFF_TAG_W-1:0] dcache_idx_i,
     output logic                            dcache_isstore_o,
-    output logic [                XLEN-1:0] dcache_paddr_o,
-    output logic [                XLEN-1:0] dcache_value_o,
+    output logic [                len5_pkg::XLEN-1:0] dcache_paddr_o,
+    output logic [                len5_pkg::XLEN-1:0] dcache_value_o,
     output logic [        STBUFF_TAG_W-1:0] dcache_idx_o,
     output logic [       LDST_TYPE_LEN-1:0] dcache_sttype_o,
 
     // Data from/to the load buffer
-    input logic [XLEN-1:0] vfwd_vaddr_i,
-    input logic [XLEN-1:0] pfwd_paddr_i,
+    input logic [len5_pkg::XLEN-1:0] vfwd_vaddr_i,
+    input logic [len5_pkg::XLEN-1:0] pfwd_paddr_i,
     input logic [LDST_TYPE_LEN-1:0] vfwd_ldtype_i,
     input logic [LDST_TYPE_LEN-1:0] pfwd_ldtype_i,
     input logic [STBUFF_TAG_W:0] vfwd_older_stores_i,
@@ -109,8 +109,8 @@ module store_buffer (
     output logic vfwd_depfree_o,
     output logic pfwd_hit_o,
     output logic pfwd_depfree_o,
-    output logic [XLEN-1:0] vfwd_value_o,
-    output logic [XLEN-1:0] pfwd_value_o,
+    output logic [len5_pkg::XLEN-1:0] vfwd_value_o,
+    output logic [len5_pkg::XLEN-1:0] pfwd_value_o,
 
     // Commit logic <--> store buffer
     input logic cl_pop_store_i,  // pop the head store iunstruction in the store buffer
@@ -124,7 +124,7 @@ module store_buffer (
 
     // Data from/to the CDB
     input  rob_idx_t             cdb_idx_i,
-    input  logic      [XLEN-1:0] cdb_res_value_i,
+    input  logic      [len5_pkg::XLEN-1:0] cdb_res_value_i,
     input  logic                 cdb_except_raised_i,
     output cdb_data_t            cdb_data_o
 );

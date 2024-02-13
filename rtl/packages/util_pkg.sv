@@ -12,12 +12,12 @@
 // Author: Matteo Perotti
 // Date: 02/09/2019
 
-package util;
+package util_pkg;
 
-// binary multipliers for Bytes
-`define B *1
-`define KiB *1024`B
-`define MiB *1024`KiB
-`define GiB *1024`MiB
-`define TiB *1024`GiB
+  // binary multipliers for Bytes
+  `define B *1
+  `define KB *1024`B
+  `define MB *1024`KB
+  `define GB *1024`MB
+  `define TB *1024`GB
 endpackage

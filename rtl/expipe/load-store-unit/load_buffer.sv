@@ -12,14 +12,6 @@
 // Author: Michele Caon
 // Date: 15/07/2022
 
-import len5_config_pkg::*;
-import len5_pkg::XLEN;
-import len5_pkg::STBUFF_TAG_W;
-import len5_pkg::except_code_t;
-import len5_pkg::BUFF_IDX_LEN;
-import expipe_pkg::*;
-import memory_pkg::*;
-
 /**
  * @brief   Bare-metal load buffer.
  *
@@ -36,52 +28,58 @@ module load_buffer #(
   input logic flush_i,
 
   /* Issue stage */
-  input  logic                   issue_valid_i,
-  output logic                   issue_ready_o,
-  input  ldst_width_t            issue_type_i,         // byte, halfword, ...
-  input  op_data_t               issue_rs1_i,          // base address
-  input  logic        [XLEN-1:0] issue_imm_i,          // offset
-  input  rob_idx_t               issue_dest_rob_idx_i,
+  input  logic                                         issue_valid_i,
+  output logic                                         issue_ready_o,
+  input  expipe_pkg::ldst_width_t                      issue_type_i,         // byte, halfword, ...
+  input  expipe_pkg::op_data_t                         issue_rs1_i,          // base address
+  input  logic                    [len5_pkg::XLEN-1:0] issue_imm_i,          // offset
+  input  expipe_pkg::rob_idx_t                         issue_dest_rob_idx_i,
 
   /* Common data bus (CDB) */
-  input  logic      cdb_valid_i,
-  input  logic      cdb_ready_i,
-  output logic      cdb_valid_o,
-  input  cdb_data_t cdb_data_i,
-  output cdb_data_t cdb_data_o,
+  input  logic                  cdb_valid_i,
+  input  logic                  cdb_ready_i,
+  output logic                  cdb_valid_o,
+  input  expipe_pkg::cdb_data_t cdb_data_i,
+  output expipe_pkg::cdb_data_t cdb_data_o,
 
   /* Address adder */
-  input  logic       adder_valid_i,
-  input  logic       adder_ready_i,
-  output logic       adder_valid_o,
-  output logic       adder_ready_o,
-  input  adder_ans_t adder_ans_i,
-  output adder_req_t adder_req_o,
+  input  logic                   adder_valid_i,
+  input  logic                   adder_ready_i,
+  output logic                   adder_valid_o,
+  output logic                   adder_ready_o,
+  input  expipe_pkg::adder_ans_t adder_ans_i,
+  output expipe_pkg::adder_req_t adder_req_o,
 
   /* Store buffer */
-  input logic                    sb_latest_valid_i,
-  input logic [STBUFF_TAG_W-1:0] sb_latest_idx_i,
-  input logic                    sb_oldest_completed_i,
-  input logic [STBUFF_TAG_W-1:0] sb_oldest_idx_i,
+  input logic                              sb_latest_valid_i,
+  input logic [len5_pkg::STBUFF_TAG_W-1:0] sb_latest_idx_i,
+  input logic                              sb_oldest_completed_i,
+  input logic [len5_pkg::STBUFF_TAG_W-1:0] sb_oldest_idx_i,
 
   /* Level-zero cache */
-  input logic            l0_valid_i,
-  input       [XLEN-1:0] l0_value_i,
+  input logic                      l0_valid_i,
+  input       [len5_pkg::XLEN-1:0] l0_value_i,
 
   /* Memory system */
-  output logic                            mem_valid_o,
-  input  logic                            mem_ready_i,
-  input  logic                            mem_valid_i,
-  output logic                            mem_ready_o,
-  output logic                            mem_we_o,
-  output logic         [        XLEN-1:0] mem_addr_o,           // old: data_mem_req_o.addr
-  output logic         [             3:0] mem_be_o,             // old: data_mem_req_o.ls_type
-  output logic         [BUFF_IDX_LEN-1:0] mem_tag_o,            // old: data_mem_req_o.tag
-  input  logic         [        XLEN-1:0] mem_rdata_i,          // old: data_mem_ans_i.value
-  output logic         [BUFF_IDX_LEN-1:0] mem_tag_i,            // old: data_mem_ans_i.tag
-  input  logic                            mem_except_raised_i,
-  input  except_code_t                    mem_except_code_i
+  output logic                                                mem_valid_o,
+  input  logic                                                mem_ready_i,
+  input  logic                                                mem_valid_i,
+  output logic                                                mem_ready_o,
+  output logic                                                mem_we_o,
+  output logic                   [        len5_pkg::XLEN-1:0] mem_addr_o,
+  output logic                   [                       7:0] mem_be_o,
+  output logic                   [len5_pkg::BUFF_IDX_LEN-1:0] mem_tag_o,
+  input  logic                   [        len5_pkg::XLEN-1:0] mem_rdata_i,
+  input  logic                   [len5_pkg::BUFF_IDX_LEN-1:0] mem_tag_i,
+  input  logic                                                mem_except_raised_i,
+  input  len5_pkg::except_code_t                              mem_except_code_i
 );
+
+  import len5_pkg::*;
+  import len5_config_pkg::*;
+  import expipe_pkg::*;
+  import memory_pkg::*;
+
 
   // INTERNAL SIGNALS
   // ----------------
@@ -146,7 +144,7 @@ module load_buffer #(
     foreach (curr_state[i]) begin
       case (curr_state[i])
         LOAD_S_EMPTY: begin  // push
-          if (push && tail_idx == i) begin
+          if (push && tail_idx == i[IdxW-1:0]) begin
             lb_op[i] = LOAD_OP_PUSH;
             if (issue_rs1_i.ready) next_state[i] = LOAD_S_ADDR_REQ;
             else next_state[i] = LOAD_S_RS1_PENDING;
@@ -159,7 +157,7 @@ module load_buffer #(
           end else next_state[i] = LOAD_S_RS1_PENDING;
         end
         LOAD_S_ADDR_REQ: begin  // save address (from adder)
-          if (save_addr && adder_ans_i.tag == i) begin
+          if (save_addr && adder_ans_i.tag == i[IdxW-1:0]) begin
             if (adder_ans_i.except_raised) begin
               lb_op[i]      = LOAD_OP_ADDR_EXCEPT;
               next_state[i] = LOAD_S_COMPLETED;
@@ -167,11 +165,11 @@ module load_buffer #(
               lb_op[i]      = LOAD_OP_SAVE_ADDR;
               next_state[i] = LOAD_S_MEM_REQ;
             end
-          end else if (addr_idx == i && addr_accepted) next_state[i] = LOAD_S_ADDR_WAIT;
+          end else if (addr_idx == i[IdxW-1:0] && addr_accepted) next_state[i] = LOAD_S_ADDR_WAIT;
           else next_state[i] = LOAD_S_ADDR_REQ;
         end
         LOAD_S_ADDR_WAIT: begin
-          if (save_addr && adder_ans_i.tag == i) begin
+          if (save_addr && adder_ans_i.tag == i[IdxW-1:0]) begin
             if (adder_ans_i.except_raised) begin
               lb_op[i]      = LOAD_OP_ADDR_EXCEPT;
               next_state[i] = LOAD_S_COMPLETED;
@@ -193,34 +191,34 @@ module load_buffer #(
         end
         LOAD_S_MEM_REQ: begin  // save memory value (from memory)
           if (LEN5_STORE_LOAD_FWD_EN != '0) begin
-            if (l0_valid_i && mem_idx == i) begin
+            if (l0_valid_i && mem_idx == i[IdxW-1:0]) begin
               lb_op[i]      = LOAD_OP_SAVE_CACHED;
               next_state[i] = LOAD_S_COMPLETED;
-            end else if (save_mem && mem_tag_i == i) begin
+            end else if (save_mem && mem_tag_i == i[IdxW-1:0]) begin
               if (mem_except_raised_i) begin
                 lb_op[i] = LOAD_OP_MEM_EXCEPT;
               end else begin
                 lb_op[i] = LOAD_OP_SAVE_MEM;
               end
               next_state[i] = LOAD_S_COMPLETED;
-            end else if (mem_accepted && mem_idx == i) begin
+            end else if (mem_accepted && mem_idx == i[IdxW-1:0]) begin
               next_state[i] = LOAD_S_MEM_WAIT;
             end else next_state[i] = LOAD_S_MEM_REQ;
           end else begin
-            if (save_mem && mem_tag_i == i) begin
+            if (save_mem && mem_tag_i == i[IdxW-1:0]) begin
               if (mem_except_raised_i) begin
                 lb_op[i] = LOAD_OP_MEM_EXCEPT;
               end else begin
                 lb_op[i] = LOAD_OP_SAVE_MEM;
               end
               next_state[i] = LOAD_S_COMPLETED;
-            end else if (mem_accepted && mem_idx == i) begin
+            end else if (mem_accepted && mem_idx == i[IdxW-1:0]) begin
               next_state[i] = LOAD_S_MEM_WAIT;
             end else next_state[i] = LOAD_S_MEM_REQ;
           end
         end
         LOAD_S_MEM_WAIT: begin
-          if (save_mem && mem_tag_i == i) begin
+          if (save_mem && mem_tag_i == i[IdxW-1:0]) begin
             if (mem_except_raised_i) begin
               lb_op[i] = LOAD_OP_MEM_EXCEPT;
             end else begin
@@ -230,7 +228,7 @@ module load_buffer #(
           end else next_state[i] = LOAD_S_MEM_WAIT;
         end
         LOAD_S_COMPLETED: begin
-          if (pop && head_idx == i) next_state[i] = LOAD_S_EMPTY;
+          if (pop && head_idx == i[IdxW-1:0]) next_state[i] = LOAD_S_EMPTY;
           else next_state[i] = LOAD_S_COMPLETED;
         end
         default: next_state[i] = LOAD_S_HALT;
@@ -253,7 +251,7 @@ module load_buffer #(
   // happens, the dependency information is cleared.
   always_comb begin : store_dep_ctl
     foreach (store_dep[i]) begin
-      store_dep_set[i] = push & (tail_idx == i) & sb_latest_valid_i;
+      store_dep_set[i] = push & (tail_idx == i[IdxW-1:0]) & sb_latest_valid_i;
       store_dep_clr[i] = sb_oldest_completed_i & (sb_oldest_idx_i == store_dep_idx[i]);
     end
   end
@@ -337,6 +335,9 @@ module load_buffer #(
   // OUTPUT EVALUATION
   // -----------------
 
+  // write enable set to 0 since only read from mem
+  assign mem_we_o                 = 1'b0;
+
   /* Issue stage */
   assign issue_ready_o            = curr_state[tail_idx] == LOAD_S_EMPTY;
 
@@ -365,7 +366,6 @@ module load_buffer #(
     end
   endgenerate
   assign mem_ready_o = 1'b1;
-  assign mem_be_o    = data[mem_idx].load_type;
   generate
     if (ONLY_DOUBLEWORD_MEM_ACCESSES != 0) begin : gen_mem_addr_d
       assign mem_addr_o = {data[mem_idx].imm_addr_value[XLEN-1:3], 3'b000};
@@ -375,6 +375,8 @@ module load_buffer #(
   endgenerate
   assign mem_tag_o = mem_idx;
   assign mem_we_o  = 1'b0;
+  // read the whole doubleword from mem, then LEN5 internally select the requested bytes
+  assign mem_be_o  = 8'b1111_1111;
   // -------------
   // BYTE SELECTOR
   // -------------
@@ -412,7 +414,9 @@ module load_buffer #(
     .en_i   (head_cnt_en),
     .clr_i  (head_cnt_clr),
     .count_o(head_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
+    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   modn_counter #(
@@ -423,7 +427,9 @@ module load_buffer #(
     .en_i   (tail_cnt_en),
     .clr_i  (tail_cnt_clr),
     .count_o(tail_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
+    /* verilator lint_off PINCONNECTEMPTY */
   );
 
   modn_counter #(
@@ -434,7 +440,9 @@ module load_buffer #(
     .en_i   (addr_cnt_en),
     .clr_i  (addr_cnt_clr),
     .count_o(addr_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
+    /* verilator lint_off PINCONNECTEMPTY */
   );
 
   modn_counter #(
@@ -445,7 +453,9 @@ module load_buffer #(
     .en_i   (mem_cnt_en),
     .clr_i  (mem_cnt_clr),
     .count_o(mem_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()              // not needed
+    /* verilator lint_off PINCONNECTEMPTY */
   );
 
   // ----------

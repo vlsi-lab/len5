@@ -11,7 +11,6 @@
 // File: fetch_stage.sv
 // Author: Marco Andorno
 // Date: 07/10/2019
-
 import len5_pkg::*;
 import expipe_pkg::*;
 import memory_pkg::*;
@@ -26,11 +25,11 @@ module Control
   	output  logic             	flush_i,
 
 	// For back end :CU
-  	output  satp_mode_t       	vm_mode_i,
+  	output  csr_pkg::satp_mode_t       	vm_mode_i,
 
 	// To the main control :CU
   	input  	logic             	main_cu_stall_o,
-	input   logic [ILEN-1:0] 	ins_in,
+	input   logic [len5_pkg::ILEN-1:0] 	ins_in,
 	output  logic 				stall,
 
   	// From/to i-cache  :I$
@@ -38,11 +37,11 @@ module Control
 
 	// For pc_gen from or to back end// Input from intruction cache :I$
   	input   logic             	except_i,
-  	input   logic [XLEN-1:0]  	except_pc_i,
+  	input   logic [len5_pkg::XLEN-1:0]  	except_pc_i,
 
   	// Data from intruction fetch unit cache // Fix_it from backend i.e., input from data cahce :D$
   	input   logic             	except_raised_i,
-  	input   except_code_t     	except_code_i,
+  	input  len5_pkg::except_code_t     	except_code_i,
 
 	// From main unit
    	output  logic               abort_i,

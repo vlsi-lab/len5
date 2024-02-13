@@ -12,10 +12,6 @@
 // Author: Michele Caon
 // Date: 17/11/2021
 
-import len5_config_pkg::*;
-import len5_pkg::*;
-import expipe_pkg::*;
-
 module alu_unit #(
   parameter int unsigned RS_DEPTH = 4,  // must be a power of 2,
 
@@ -28,20 +24,24 @@ module alu_unit #(
   input logic flush_i,
 
   // Issue stage
-  input  logic     issue_valid_i,
-  output logic     issue_ready_o,
-  input  alu_ctl_t issue_eu_ctl_i,
-  input  op_data_t issue_rs1_i,
-  input  op_data_t issue_rs2_i,
-  input  rob_idx_t issue_dest_rob_idx_i,
+  input  logic                 issue_valid_i,
+  output logic                 issue_ready_o,
+  input  expipe_pkg::alu_ctl_t issue_eu_ctl_i,
+  input  expipe_pkg::op_data_t issue_rs1_i,
+  input  expipe_pkg::op_data_t issue_rs2_i,
+  input  expipe_pkg::rob_idx_t issue_dest_rob_idx_i,
 
   // CDB
-  input  logic      cdb_ready_i,
-  input  logic      cdb_valid_i,  // to know if the CDB is carrying valid data
-  output logic      cdb_valid_o,
-  input  cdb_data_t cdb_data_i,
-  output cdb_data_t cdb_data_o
+  input  logic                  cdb_ready_i,
+  input  logic                  cdb_valid_i,  // to know if the CDB is carrying valid data
+  output logic                  cdb_valid_o,
+  input  expipe_pkg::cdb_data_t cdb_data_i,
+  output expipe_pkg::cdb_data_t cdb_data_o
 );
+
+  import len5_config_pkg::*;
+  import len5_pkg::*;
+  import expipe_pkg::*;
 
   // ALU handshake
   logic                          rs_alu_valid;

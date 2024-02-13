@@ -19,7 +19,7 @@ import len5_pkg::*;
 import memory_pkg::*;
 
 module cache_L2_system_emulator #(
-  parameter int unsigned MEM_FILE_PATH = "memory.txt"
+  parameter string MEM_FILE_PATH = "memory.txt"
 ) (
   // Main
   input  logic           clk_i,

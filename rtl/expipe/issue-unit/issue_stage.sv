@@ -11,12 +11,6 @@
 // File: issue_stage.sv
 // Author: Michele Caon
 // Date: 17/11/2021
-
-import len5_config_pkg::*;
-import len5_pkg::*;
-import expipe_pkg::*;
-import csr_pkg::csr_priv_t;
-
 module issue_stage (
   // Clock, reset, and flush
   input logic clk_i,
@@ -24,32 +18,32 @@ module issue_stage (
   input logic flush_i,
 
   // Fetch unit
-  input  logic                    fetch_valid_i,
-  output logic                    fetch_ready_o,
-  input  logic         [XLEN-1:0] fetch_curr_pc_i,
-  input  logic         [ILEN-1:0] fetch_instr_i,
-  input  logic         [XLEN-1:0] fetch_pred_target_i,
-  input  logic                    fetch_pred_taken_i,
-  input  logic                    fetch_except_raised_i,
-  input  except_code_t            fetch_except_code_i,
-  output logic                    fetch_mis_flush_o,
+  input  logic                                        fetch_valid_i,
+  output logic                                        fetch_ready_o,
+  input  logic                   [len5_pkg::XLEN-1:0] fetch_curr_pc_i,
+  input  logic                   [len5_pkg::ILEN-1:0] fetch_instr_i,
+  input  logic                   [len5_pkg::XLEN-1:0] fetch_pred_target_i,
+  input  logic                                        fetch_pred_taken_i,
+  input  logic                                        fetch_except_raised_i,
+  input  len5_pkg::except_code_t                      fetch_except_code_i,
+  output logic                                        fetch_mis_flush_o,
 
   // Integer register status register
   output logic int_regstat_valid_o,
   input logic int_regstat_rs1_busy_i,  // rs1 value is in the ROB or has to be computed
-  input rob_idx_t int_regstat_rs1_rob_idx_i,  // the index of the ROB where the result is found
+  input expipe_pkg::rob_idx_t int_regstat_rs1_rob_idx_i,  // the index of the ROB where the result is found
   input logic int_regstat_rs2_busy_i,  // rs1 value is in the ROB or has to be computed
-  input rob_idx_t int_regstat_rs2_rob_idx_i,  // the index of the ROB where the result is found
-  output  logic [REG_IDX_LEN-1:0] int_regstat_rd_idx_o,       // destination register of the issuing instruction
-  output rob_idx_t int_regstat_rob_idx_o,  // allocated ROB index
-  output logic [REG_IDX_LEN-1:0] int_regstat_rs1_idx_o,  // first source register index
-  output logic [REG_IDX_LEN-1:0] int_regstat_rs2_idx_o,  // second source register index
+  input expipe_pkg::rob_idx_t int_regstat_rs2_rob_idx_i,  // the index of the ROB where the result is found
+  output  logic [len5_pkg::REG_IDX_LEN-1:0] int_regstat_rd_idx_o,       // destination register of the issuing instruction
+  output expipe_pkg::rob_idx_t int_regstat_rob_idx_o,  // allocated ROB index
+  output logic [len5_pkg::REG_IDX_LEN-1:0] int_regstat_rs1_idx_o,  // first source register index
+  output logic [len5_pkg::REG_IDX_LEN-1:0] int_regstat_rs2_idx_o,  // second source register index
 
   // Integer register file
-  input  logic [       XLEN-1:0] intrf_rs1_value_i,  // value of the first operand
-  input  logic [       XLEN-1:0] intrf_rs2_value_i,  // value of the second operand
-  output logic [REG_IDX_LEN-1:0] intrf_rs1_idx_o,    // RF address of the first operand
-  output logic [REG_IDX_LEN-1:0] intrf_rs2_idx_o,    // RF address of the second operand
+  input  logic [       len5_pkg::XLEN-1:0] intrf_rs1_value_i,  // value of the first operand
+  input  logic [       len5_pkg::XLEN-1:0] intrf_rs2_value_i,  // value of the second operand
+  output logic [len5_pkg::REG_IDX_LEN-1:0] intrf_rs1_idx_o,    // RF address of the first operand
+  output logic [len5_pkg::REG_IDX_LEN-1:0] intrf_rs2_idx_o,    // RF address of the second operand
 
   // // Floating-point register status register
   // output  logic                   fp_regstat_valid_o,
@@ -57,47 +51,51 @@ module issue_stage (
   // input   rob_idx_t               fp_regstat_rs1_rob_idx_i,  // the index of the ROB where the result is found
   // input   logic                   fp_regstat_rs2_busy_i,     // rs1 value is in the ROB or has to be computed
   // input   rob_idx_t               fp_regstat_rs2_rob_idx_i,  // the index of the ROB where the result is found
-  // output  logic [REG_IDX_LEN-1:0] fp_regstat_rd_idx_o,       // destination register of the issuing instruction
+  // output  logic [len5_pkg::REG_IDX_LEN-1:0] fp_regstat_rd_idx_o,       // destination register of the issuing instruction
   // output  rob_idx_t               fp_regstat_rob_idx_o,      // allocated ROB index
-  // output  logic [REG_IDX_LEN-1:0] fp_regstat_rs1_idx_o,      // first source register index
-  // output  logic [REG_IDX_LEN-1:0] fp_regstat_rs2_idx_o,      // second source register index
+  // output  logic [len5_pkg::REG_IDX_LEN-1:0] fp_regstat_rs1_idx_o,      // first source register index
+  // output  logic [len5_pkg::REG_IDX_LEN-1:0] fp_regstat_rs2_idx_o,      // second source register index
 
   // // Floating-point register file data
-  // input   logic [XLEN-1:0]        fprf_rs1_value_i,       // value of the first operand
-  // input   logic [XLEN-1:0]        fprf_rs2_value_i,       // value of the second operand
-  // output  logic [REG_IDX_LEN-1:0] fprf_rs1_idx_o,         // RF address of the first operand
-  // output  logic [REG_IDX_LEN-1:0] fprf_rs2_idx_o,         // RF address of the second operand
+  // input   logic [len5_pkg::XLEN-1:0]        fprf_rs1_value_i,       // value of the first operand
+  // input   logic [len5_pkg::XLEN-1:0]        fprf_rs2_value_i,       // value of the second operand
+  // output  logic [len5_pkg::REG_IDX_LEN-1:0] fprf_rs1_idx_o,         // RF address of the first operand
+  // output  logic [len5_pkg::REG_IDX_LEN-1:0] fprf_rs2_idx_o,         // RF address of the second operand
 
   // Execution pipeline
-  input logic [MAX_EU_N-1:0] ex_ready_i,  // ready signal from each reservation station
+  input logic [len5_config_pkg::MAX_EU_N-1:0] ex_ready_i,  // ready signal from each reservation station
   input logic ex_mis_i,  // misprediction from the branch unit
-  output logic [MAX_EU_N-1:0] ex_valid_o,  // valid signal to each reservation station
-  output eu_ctl_t ex_eu_ctl_o,  // controls for the associated EU
-  output op_data_t ex_rs1_o,
-  output op_data_t ex_rs2_o,
-  output logic [XLEN-1:0] ex_imm_value_o,  // the value of the immediate field (for st and branches)
-  output rob_idx_t ex_rob_idx_o,  // the location of the ROB assigned to the instruction
-  output logic [XLEN-1:0] ex_curr_pc_o,  // the PC of the current issuing instr (branches only)
-  output logic [XLEN-1:0] ex_pred_target_o,  // predicted target of the current issuing branch instr
+  output logic [len5_config_pkg::MAX_EU_N-1:0] ex_valid_o,  // valid signal to each reservation station
+  output expipe_pkg::eu_ctl_t ex_eu_ctl_o,  // controls for the associated EU
+  output expipe_pkg::op_data_t ex_rs1_o,
+  output expipe_pkg::op_data_t ex_rs2_o,
+  output logic [len5_pkg::XLEN-1:0] ex_imm_value_o,  // the value of the immediate field (for st and branches)
+  output expipe_pkg::rob_idx_t ex_rob_idx_o,  // the location of the ROB assigned to the instruction
+  output logic [len5_pkg::XLEN-1:0] ex_curr_pc_o,  // the PC of the current issuing instr (branches only)
+  output logic [len5_pkg::XLEN-1:0] ex_pred_target_o,  // predicted target of the current issuing branch instr
   output logic ex_pred_taken_o,  // predicted taken bit of the current issuing branch instr
 
   // Commit stage
   input logic comm_ready_i,  // the ROB has an empty entry available
   output logic comm_valid_o,  // a new instruction can be issued
   input logic comm_resume_i,  // resume after stall
-  input rob_idx_t comm_tail_idx_i,  // the entry of the ROB allocated for the new instr
-  output rob_entry_t comm_data_o,  // data to the ROB
+  input expipe_pkg::rob_idx_t comm_tail_idx_i,  // the entry of the ROB allocated for the new instr
+  output expipe_pkg::rob_entry_t comm_data_o,  // data to the ROB
   output logic comm_jb_instr_o,  // the issuing instruction is a jump/branch
-  output rob_idx_t comm_rs1_rob_idx_o,
+  output expipe_pkg::rob_idx_t comm_rs1_rob_idx_o,
   input logic comm_rs1_ready_i,
-  input logic [XLEN-1:0] comm_rs1_value_i,
-  output rob_idx_t comm_rs2_rob_idx_o,
+  input logic [len5_pkg::XLEN-1:0] comm_rs1_value_i,
+  output expipe_pkg::rob_idx_t comm_rs2_rob_idx_o,
   input logic comm_rs2_ready_i,
-  input logic [XLEN-1:0] comm_rs2_value_i,
+  input logic [len5_pkg::XLEN-1:0] comm_rs2_value_i,
 
   // CSRs
-  input csr_priv_t csr_priv_mode_i  // current privilege mode
+  input csr_pkg::csr_priv_t csr_priv_mode_i  // current privilege mode
 );
+
+  import len5_config_pkg::*;
+  import len5_pkg::*;
+  import expipe_pkg::*;
 
   // INTERNAL SIGNALS
 
@@ -136,12 +134,7 @@ module issue_stage (
 
   // Issue queue <--> issue logic
   logic                        cu_iq_ready;
-  logic         [    XLEN-1:0] iq_il_curr_pc;
-  logic         [    ILEN-1:0] iq_il_instr;
-  logic         [    XLEN-1:0] iq_il_pred_target;
-  logic                        iq_il_pred_taken;
-  logic                        iq_cu_except_raised;
-  except_code_t                iq_il_except_code;
+  logic iq_cu_except_raised;
 
   // Issue logic <--> CU
   logic                        iq_cu_valid;
@@ -149,7 +142,6 @@ module issue_stage (
   logic                        cu_mis_flush;
   logic                        cu_il_res_ready;
   logic                        cu_il_res_sel_rs1;
-  logic                        cu_il_sel_fetch_except;
   logic                        cu_il_ex_valid;
   logic                        il_cu_ex_ready;
 
@@ -164,7 +156,7 @@ module issue_stage (
   // -------
   // MODULES
   // -------
-  //                              /  ISSUE REGISTER  \.
+  //                              /  ISSUE REGISTER  \
   // fetch stage > ISSUE QUEUE > {   ISSUE DECODER    } > execution/commit
   //                              \     ISSUE CU     /
   //                               \ OPERANDS FETCH /
@@ -248,7 +240,7 @@ module issue_stage (
     iq_data_out.instruction.j.imm10,
     1'b0
   };
-  assign instr_imm_rs1_value = {54'h0, iq_data_out.instruction.r.rs1};
+  assign instr_imm_rs1_value = {59'h0, iq_data_out.instruction.r.rs1};
 
   // Immediate MUX
   always_comb begin : imm_mux
@@ -315,7 +307,6 @@ module issue_stage (
     .issue_rs1_ready_i   (rs1_ready),
     .issue_res_ready_o   (cu_il_res_ready),
     .issue_res_sel_rs1_o (cu_il_res_sel_rs1),
-    .issue_fetch_except_o(cu_il_sel_fetch_except),
     .ex_ready_i          (il_cu_ex_ready),
     .ex_mis_i            (ex_mis_i),
     .ex_valid_o          (cu_il_ex_valid),

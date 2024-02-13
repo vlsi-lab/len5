@@ -12,10 +12,6 @@
 // Author: Michele Caon
 // Date: 11/11/2019
 
-import expipe_pkg::*;
-import len5_pkg::XLEN;
-import len5_config_pkg::MAX_EU_N;
-
 module cdb (
   input logic clk_i,
   input logic rst_n_i,
@@ -26,32 +22,34 @@ module cdb (
   output logic max_prio_ready_o,
 
   // Data from the maximum priority EU
-  input cdb_data_t max_prio_data_i,
+  input expipe_pkg::cdb_data_t max_prio_data_i,
 
   // Handshake from/to the reservation stations
-  input  logic [MAX_EU_N-2:0] rs_valid_i,
-  output logic [MAX_EU_N-2:0] rs_ready_o,
+  input  logic [len5_config_pkg::MAX_EU_N-2:0] rs_valid_i,
+  output logic [len5_config_pkg::MAX_EU_N-2:0] rs_ready_o,
 
   // Data from the reservation stations or issue queue.
-  input cdb_data_t [MAX_EU_N-2:0] rs_data_i,
+  input expipe_pkg::cdb_data_t [len5_config_pkg::MAX_EU_N-2:0] rs_data_i,
 
   // Handshake from/to the ROB
   input logic rob_ready_i,
 
   // Output valid and data (to multiple units)
-  output logic      valid_o,
-  output cdb_data_t data_o
+  output logic                  valid_o,
+  output expipe_pkg::cdb_data_t data_o
 );
 
-  // DEFINITIONS
-  logic                         rob_valid_k;
+  import expipe_pkg::*;
+  import len5_pkg::XLEN;
+  import len5_config_pkg::MAX_EU_N;
+  import expipe_pkg::cdb_data_t;
 
   // CDB MUX
-  cdb_data_t                    low_prio_mux_data;
+  cdb_data_t                        low_prio_mux_data;
 
   // Served unit index
-  logic                         served_max_prio;
-  logic      [$clog2(EU_N)-1:0] served;
+  logic                             served_max_prio;
+  logic      [$clog2(MAX_EU_N)-1:0] served;
 
   // -----------
   // CDB ARBITER
@@ -86,8 +84,5 @@ module cdb (
   assign data_o            = (served_max_prio) ? max_prio_data_i : low_prio_mux_data;
 
   // Low priority MUX
-  assign low_prio_mux_data = rs_data_i[served-1];
-  assign rs_data_o         = rs_data_i[served-1];
-  assign max_prio_data_o   = max_prio_data_i;
-
+  assign low_prio_mux_data = rs_data_i[int'(served)-1];
 endmodule

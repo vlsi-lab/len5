@@ -39,11 +39,11 @@ module load_store_unit (
     input logic     [LDST_TYPE_LEN-1:0] ldst_type_i,
     input logic                         rs1_ready_i,
     input rob_idx_t                     rs1_idx_i,
-    input logic     [         XLEN-1:0] rs1_value_i,
+    input logic     [         len5_pkg::XLEN-1:0] rs1_value_i,
     input logic                         rs2_ready_i,
     input rob_idx_t                     rs2_idx_i,
-    input logic     [         XLEN-1:0] rs2_value_i,
-    input logic     [         XLEN-1:0] imm_value_i,
+    input logic     [         len5_pkg::XLEN-1:0] rs2_value_i,
+    input logic     [         len5_pkg::XLEN-1:0] imm_value_i,
     input rob_idx_t                     dest_idx_i,
 
     // Handshake and data from/to the TLB

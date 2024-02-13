@@ -12,12 +12,6 @@
 // Author: Michele Caon
 // Date: 15/07/2022
 
-import len5_config_pkg::*;
-import len5_pkg::BUFF_IDX_LEN;
-import expipe_pkg::*;
-import len5_pkg::*;
-import memory_pkg::*;
-
 /**
  * @brief   Bare-metal load-store unit.
  *
@@ -35,57 +29,63 @@ module load_store_unit #(
   input logic except_flush_i,
 
   /* Issue stage */
-  input  logic                   issue_lb_valid_i,
-  input  logic                   issue_sb_valid_i,
-  output logic                   issue_lb_ready_o,
-  output logic                   issue_sb_ready_o,
-  input  ldst_width_t            issue_type_i,         // byte, halfword, ...
-  input  op_data_t               issue_rs1_i,          // base address
-  input  op_data_t               issue_rs2_i,          // data to store
-  input  logic        [XLEN-1:0] issue_imm_i,          // offset
-  input  rob_idx_t               issue_dest_rob_idx_i,
+  input  logic                                         issue_lb_valid_i,
+  input  logic                                         issue_sb_valid_i,
+  output logic                                         issue_lb_ready_o,
+  output logic                                         issue_sb_ready_o,
+  input  expipe_pkg::ldst_width_t                      issue_type_i,         // byte, halfword, ...
+  input  expipe_pkg::op_data_t                         issue_rs1_i,          // base address
+  input  expipe_pkg::op_data_t                         issue_rs2_i,          // data to store
+  input  logic                    [len5_pkg::XLEN-1:0] issue_imm_i,          // offset
+  input  expipe_pkg::rob_idx_t                         issue_dest_rob_idx_i,
 
   /* Commit stage */
-  input logic     comm_spec_instr_i,
-  input rob_idx_t comm_rob_head_idx_i,
+  input logic                 comm_spec_instr_i,
+  input expipe_pkg::rob_idx_t comm_rob_head_idx_i,
 
   /* Common data bus (CDB) */
-  input  logic      cdb_valid_i,
-  input  logic      cdb_lb_ready_i,
-  input  logic      cdb_sb_ready_i,
-  output logic      cdb_lb_valid_o,
-  output logic      cdb_sb_valid_o,
-  input  cdb_data_t cdb_data_i,
-  output cdb_data_t cdb_lb_data_o,
-  output cdb_data_t cdb_sb_data_o,
+  input  logic                  cdb_valid_i,
+  input  logic                  cdb_lb_ready_i,
+  input  logic                  cdb_sb_ready_i,
+  output logic                  cdb_lb_valid_o,
+  output logic                  cdb_sb_valid_o,
+  input  expipe_pkg::cdb_data_t cdb_data_i,
+  output expipe_pkg::cdb_data_t cdb_lb_data_o,
+  output expipe_pkg::cdb_data_t cdb_sb_data_o,
 
   /* Memory system */
-  output logic                            mem_load_valid_o,
-  input  logic                            mem_load_ready_i,
-  input  logic                            mem_load_valid_i,
-  output logic                            mem_load_ready_o,
-  output logic                            mem_load_we_o,
-  output logic         [        XLEN-1:0] mem_load_addr_o,
-  output logic         [             3:0] mem_load_be_o,
-  output logic         [BUFF_IDX_LEN-1:0] mem_load_tag_o,
-  input  logic         [        XLEN-1:0] mem_load_rdata_i,
-  input  logic         [BUFF_IDX_LEN-1:0] mem_load_tag_i,
-  input  logic                            mem_load_except_raised_i,
-  input  except_code_t                    mem_load_except_code_i,
+  output logic                                                mem_load_valid_o,
+  input  logic                                                mem_load_ready_i,
+  input  logic                                                mem_load_valid_i,
+  output logic                                                mem_load_ready_o,
+  output logic                                                mem_load_we_o,
+  output logic                   [        len5_pkg::XLEN-1:0] mem_load_addr_o,
+  output logic                   [                       7:0] mem_load_be_o,
+  output logic                   [len5_pkg::BUFF_IDX_LEN-1:0] mem_load_tag_o,
+  input  logic                   [        len5_pkg::XLEN-1:0] mem_load_rdata_i,
+  input  logic                   [len5_pkg::BUFF_IDX_LEN-1:0] mem_load_tag_i,
+  input  logic                                                mem_load_except_raised_i,
+  input  len5_pkg::except_code_t                              mem_load_except_code_i,
 
-  output logic                            mem_store_valid_o,
-  input  logic                            mem_store_ready_i,
-  input  logic                            mem_store_valid_i,
-  output logic                            mem_store_ready_o,
-  output logic                            mem_store_we_o,
-  output logic         [        XLEN-1:0] mem_store_addr_o,
-  output logic         [             3:0] mem_store_be_o,
-  input  logic         [        XLEN-1:0] mem_store_wdata_o,
-  output logic         [BUFF_IDX_LEN-1:0] mem_store_tag_o,
-  input  logic         [BUFF_IDX_LEN-1:0] mem_store_tag_i,
-  input  logic                            mem_store_except_raised_i,
-  input  except_code_t                    mem_store_except_code_i
+  output logic                                                mem_store_valid_o,
+  input  logic                                                mem_store_ready_i,
+  input  logic                                                mem_store_valid_i,
+  output logic                                                mem_store_ready_o,
+  output logic                                                mem_store_we_o,
+  output logic                   [        len5_pkg::XLEN-1:0] mem_store_addr_o,
+  output logic                   [                       7:0] mem_store_be_o,
+  output logic                   [        len5_pkg::XLEN-1:0] mem_store_wdata_o,
+  output logic                   [len5_pkg::BUFF_IDX_LEN-1:0] mem_store_tag_o,
+  input  logic                   [len5_pkg::BUFF_IDX_LEN-1:0] mem_store_tag_i,
+  input  logic                                                mem_store_except_raised_i,
+  input  len5_pkg::except_code_t                              mem_store_except_code_i
 );
+
+  import len5_config_pkg::*;
+  import expipe_pkg::*;
+  import len5_pkg::*;
+  import memory_pkg::*;
+
   // PARAMETERS
   localparam int unsigned StIdxW = $clog2(SB_DEPTH);
   localparam int unsigned L0TagW = XLEN - StIdxW;
@@ -257,10 +257,9 @@ module load_store_unit #(
       assign sb_l0_addr  = mem_store_addr_o;
       assign sb_l0_idx   = mem_store_tag_i;
       assign lb_l0_addr  = mem_load_addr_o;
-      assign lb_l0_width = mem_load_be_o;
-      l0_cache #(
-        .STBUFF_DEPTH(SB_DEPTH)
-      ) u_l0_cache (
+      // TODO: make the cache compatible with the bytes enable signal
+      assign lb_l0_width = mem_load_be_o[3:0];
+      l0_cache u_l0_cache (
         .clk_i      (clk_i),
         .rst_n_i    (rst_n_i),
         .flush_i    (except_flush_i),

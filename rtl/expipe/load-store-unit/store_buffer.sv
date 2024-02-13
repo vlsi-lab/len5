@@ -12,13 +12,6 @@
 // Author: Michele Caon
 // Date: 15/07/2022
 
-import len5_config_pkg::*;
-import len5_pkg::XLEN;
-import len5_pkg::except_code_t;
-import len5_pkg::BUFF_IDX_LEN;
-import expipe_pkg::*;
-import memory_pkg::*;
-
 /**
  * @brief   Bare-metal store buffer.
  *
@@ -29,39 +22,39 @@ module store_buffer #(
   parameter  int unsigned DEPTH  = 4,
   /* Dependent parameters: do NOT override */
   localparam int unsigned IdxW   = $clog2(DEPTH),
-  localparam int unsigned L0TagW = XLEN - IdxW
+  localparam int unsigned L0TagW = len5_pkg::XLEN - IdxW
 ) (
   input logic clk_i,
   input logic rst_n_i,
   input logic flush_i,
 
   /* Issue stage */
-  input  logic                   issue_valid_i,
-  output logic                   issue_ready_o,
-  input  ldst_width_t            issue_type_i,         // byte, halfword, ...
-  input  op_data_t               issue_rs1_i,          // base address
-  input  op_data_t               issue_rs2_i,          // data to store
-  input  logic        [XLEN-1:0] issue_imm_i,          // offset
-  input  rob_idx_t               issue_dest_rob_idx_i,
+  input  logic                                         issue_valid_i,
+  output logic                                         issue_ready_o,
+  input  expipe_pkg::ldst_width_t                      issue_type_i,         // byte, halfword, ...
+  input  expipe_pkg::op_data_t                         issue_rs1_i,          // base address
+  input  expipe_pkg::op_data_t                         issue_rs2_i,          // data to store
+  input  logic                    [len5_pkg::XLEN-1:0] issue_imm_i,          // offset
+  input  expipe_pkg::rob_idx_t                         issue_dest_rob_idx_i,
 
   /* Commit stage */
-  input logic     comm_spec_instr_i,   // there are older jump/branch in-fligh instructions
-  input rob_idx_t comm_rob_head_idx_i,
+  input logic comm_spec_instr_i,  // there are older jump/branch in-fligh instructions
+  input expipe_pkg::rob_idx_t comm_rob_head_idx_i,
 
   /* Common data bus (CDB) */
-  input  logic      cdb_valid_i,
-  input  logic      cdb_ready_i,
-  output logic      cdb_valid_o,
-  input  cdb_data_t cdb_data_i,
-  output cdb_data_t cdb_data_o,
+  input  logic                  cdb_valid_i,
+  input  logic                  cdb_ready_i,
+  output logic                  cdb_valid_o,
+  input  expipe_pkg::cdb_data_t cdb_data_i,
+  output expipe_pkg::cdb_data_t cdb_data_o,
 
   /* Address adder */
-  input  logic       adder_valid_i,
-  input  logic       adder_ready_i,
-  output logic       adder_valid_o,
-  output logic       adder_ready_o,
-  input  adder_ans_t adder_ans_i,
-  output adder_req_t adder_req_o,
+  input  logic                   adder_valid_i,
+  input  logic                   adder_ready_i,
+  output logic                   adder_valid_o,
+  output logic                   adder_ready_o,
+  input  expipe_pkg::adder_ans_t adder_ans_i,
+  output expipe_pkg::adder_req_t adder_req_o,
 
   /* Load buffer (for load-after-store dependencies) */
   output logic            lb_latest_valid_o,      // the latest store tag is valid
@@ -70,27 +63,32 @@ module store_buffer #(
   output logic [IdxW-1:0] lb_oldest_idx_o,        // tag of the oldest active store
 
   /* Level-zero cache control (store-to-load forwarding) */
-  input  logic        [  IdxW-1:0] l0_idx_i,     // requested entry
-  output logic        [L0TagW-1:0] l0_tag_o,     // cached store tag
-  output logic                     l0_cached_o,  // the entry is cached
-  output ldst_width_t              l0_width_o,   // cached value width
-  output logic        [  XLEN-1:0] l0_value_o,   // cached value
+  input  logic                    [          IdxW-1:0] l0_idx_i,     // requested entry
+  output logic                    [        L0TagW-1:0] l0_tag_o,     // cached store tag
+  output logic                                         l0_cached_o,  // the entry is cached
+  output expipe_pkg::ldst_width_t                      l0_width_o,   // cached value width
+  output logic                    [len5_pkg::XLEN-1:0] l0_value_o,   // cached value
 
   /* Memory system */
-  output logic                            mem_valid_o,
-  input  logic                            mem_ready_i,
-  input  logic                            mem_valid_i,
-  output logic                            mem_ready_o,
-  output logic                            mem_we_o,
-  output logic         [        XLEN-1:0] mem_addr_o,
-  output logic         [             3:0] mem_be_o,
-  input  logic         [        XLEN-1:0] mem_wdata_o,
-  output logic         [BUFF_IDX_LEN-1:0] mem_tag_o,
-  input  logic         [BUFF_IDX_LEN-1:0] mem_tag_i,
-  input  logic                            mem_except_raised_i,
-  input  except_code_t                    mem_except_code_i
+  output logic                                        mem_valid_o,
+  input  logic                                        mem_ready_i,
+  input  logic                                        mem_valid_i,
+  output logic                                        mem_ready_o,
+  output logic                                        mem_we_o,
+  output logic                   [len5_pkg::XLEN-1:0] mem_addr_o,
+  output logic                   [               7:0] mem_be_o,
+  output logic                   [len5_pkg::XLEN-1:0] mem_wdata_o,
+  output logic                   [  BUFF_IDX_LEN-1:0] mem_tag_o,
+  input  logic                   [  BUFF_IDX_LEN-1:0] mem_tag_i,
+  input  logic                                        mem_except_raised_i,
+  input  len5_pkg::except_code_t                      mem_except_code_i
 );
 
+  import len5_config_pkg::*;
+  import len5_pkg::XLEN;
+  import len5_pkg::BUFF_IDX_LEN;
+  import expipe_pkg::*;
+  import memory_pkg::*;
   // INTERNAL SIGNALS
   // ----------------
 
@@ -166,7 +164,7 @@ module store_buffer #(
     foreach (curr_state[i]) begin
       case (curr_state[i])
         STORE_S_CACHED: begin  // push
-          if (push && tail_idx == i) begin
+          if (push && tail_idx == i[IdxW-1:0]) begin
             sb_op[i] = STORE_OP_PUSH;
             if (issue_rs1_i.ready && issue_rs2_i.ready) next_state[i] = STORE_S_ADDR_REQ;
             else if (!issue_rs1_i.ready && issue_rs2_i.ready) next_state[i] = STORE_S_RS1_PENDING;
@@ -175,7 +173,7 @@ module store_buffer #(
           end else next_state[i] = STORE_S_CACHED;
         end
         STORE_S_EMPTY: begin  // push
-          if (push && tail_idx == i) begin
+          if (push && tail_idx == i[IdxW-1:0]) begin
             sb_op[i] = STORE_OP_PUSH;
             if (issue_rs1_i.ready && issue_rs2_i.ready) next_state[i] = STORE_S_ADDR_REQ;
             else if (!issue_rs1_i.ready && issue_rs2_i.ready) next_state[i] = STORE_S_RS1_PENDING;
@@ -210,16 +208,16 @@ module store_buffer #(
           end else next_state[i] = STORE_S_RS2_PENDING;
         end
         STORE_S_ADDR_REQ: begin  // save address (from adder)
-          if (save_addr && adder_ans_i.tag == i) begin
+          if (save_addr && adder_ans_i.tag == i[IdxW-1:0]) begin
             sb_op[i] = STORE_OP_SAVE_ADDR;
             if (adder_ans_i.except_raised) next_state[i] = STORE_S_COMPLETED;
             else if (data[i].speculative) next_state[i] = STORE_S_WAIT_ROB;
             else next_state[i] = STORE_S_MEM_REQ;
-          end else if (addr_idx == i && addr_accepted) next_state[i] = STORE_S_ADDR_WAIT;
+          end else if (addr_idx == i[IdxW-1:0] && addr_accepted) next_state[i] = STORE_S_ADDR_WAIT;
           else next_state[i] = STORE_S_ADDR_REQ;
         end
         STORE_S_ADDR_WAIT: begin
-          if (save_addr && adder_ans_i.tag == i) begin
+          if (save_addr && adder_ans_i.tag == i[IdxW-1:0]) begin
             sb_op[i] = STORE_OP_SAVE_ADDR;
             if (adder_ans_i.except_raised) next_state[i] = STORE_S_COMPLETED;
             else if (data[i].speculative) next_state[i] = STORE_S_WAIT_ROB;
@@ -232,21 +230,21 @@ module store_buffer #(
           end else next_state[i] = STORE_S_WAIT_ROB;
         end
         STORE_S_MEM_REQ: begin  // wait for commit
-          if (mem_tag_i == i && mem_done) begin
+          if (mem_tag_i == i[IdxW-1:0] && mem_done) begin
             sb_op[i]      = STORE_OP_SAVE_MEM;
             next_state[i] = STORE_S_COMPLETED;
-          end else if (mem_idx == i && mem_accepted) begin
+          end else if (mem_idx == i[IdxW-1:0] && mem_accepted) begin
             next_state[i] = STORE_S_MEM_WAIT;
           end else next_state[i] = STORE_S_MEM_REQ;
         end
         STORE_S_MEM_WAIT: begin
-          if (mem_tag_i == i && mem_done) begin
+          if (mem_tag_i == i[IdxW-1:0] && mem_done) begin
             sb_op[i]      = STORE_OP_SAVE_MEM;
             next_state[i] = STORE_S_COMPLETED;
           end else next_state[i] = STORE_S_MEM_WAIT;
         end
         STORE_S_COMPLETED: begin
-          if (pop && head_idx == i) begin
+          if (pop && head_idx == i[IdxW-1:0]) begin
             if (LEN5_STORE_LOAD_FWD_EN != 0) begin
               next_state[i] = STORE_S_CACHED;
             end else begin
@@ -332,6 +330,20 @@ module store_buffer #(
     else if (push) latest_idx <= tail_idx;
   end
 
+  // Synchrounous assign of byte enable signal
+  always_ff @(posedge clk_i or negedge rst_n_i) begin : byte_en_assign
+    if (!rst_n_i) mem_be_o <= '0;
+    else
+      case (data[mem_idx].store_type)
+        LS_BYTE, LS_BYTE_U:         mem_be_o <= 8'b0000_0001;
+        LS_HALFWORD, LS_HALFWORD_U: mem_be_o <= 8'b0000_0011;
+        LS_WORD, LS_WORD_U:         mem_be_o <= 8'b0000_1111;
+        LS_DOUBLEWORD:              mem_be_o <= 8'b1111_1111;
+        default:                    mem_be_o <= '0;
+      endcase
+  end
+
+
   // -----------------
   // OUTPUT EVALUATION
   // -----------------
@@ -363,9 +375,9 @@ module store_buffer #(
 
   /* Load buffer */
   assign lb_latest_valid_o        = !empty;
-  assign lb_latest_tag_o          = latest_idx;
+  assign lb_latest_idx_o          = latest_idx;
   assign lb_oldest_completed_o    = mem_done;
-  assign lb_oldest_tag_o          = mem_tag_i;
+  assign lb_oldest_idx_o          = mem_tag_i;
 
   /* Level-zero cache */
   generate
@@ -387,7 +399,6 @@ module store_buffer #(
   assign mem_ready_o = 1'b1;
   assign mem_we_o    = 1'b1;
   assign mem_tag_o   = mem_idx;
-  assign mem_be_o    = data[mem_idx].store_type;
   assign mem_addr_o  = data[mem_idx].imm_addr_value;
   assign mem_wdata_o = data[mem_idx].rs2_value;
 
@@ -404,7 +415,9 @@ module store_buffer #(
     .en_i   (head_cnt_en),
     .clr_i  (head_cnt_clr),
     .count_o(head_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
+    /* verilator lint_off PINCONNECTEMPTY */
   );
 
   // Tail counter pointing to the first empty entry
@@ -416,7 +429,9 @@ module store_buffer #(
     .en_i   (tail_cnt_en),
     .clr_i  (tail_cnt_clr),
     .count_o(tail_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
+    /* verilator lint_off PINCONNECTEMPTY */
   );
 
   // Address counter pointing to the next instruction proceeding to address
@@ -429,7 +444,9 @@ module store_buffer #(
     .en_i   (addr_cnt_en),
     .clr_i  (addr_cnt_clr),
     .count_o(addr_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
+    /* verilator lint_off PINCONNECTEMPTY */
   );
 
   // Memory access counter pointing to the next store performing a memory
@@ -442,7 +459,9 @@ module store_buffer #(
     .en_i   (mem_cnt_en),
     .clr_i  (mem_cnt_clr),
     .count_o(mem_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()              // not needed
+    /* verilator lint_off PINCONNECTEMPTY */
   );
 
   // ----------

@@ -12,9 +12,6 @@
 // Author: Michele Caon
 // Date: 10/11/2021
 
-import len5_pkg::*;
-import expipe_pkg::*;
-
 module mult #(
   parameter int unsigned PIPE_DEPTH = 4,  // number of pipeline levels (>0)
 
@@ -32,15 +29,18 @@ module mult #(
   output logic ready_o,
 
   // Data from/to the reservation station unit
-  input  logic         [EU_CTL_LEN-1:0] ctl_i,
-  input  rob_idx_t                      rob_idx_i,
-  input  logic         [      XLEN-1:0] rs1_value_i,
-  input  logic         [      XLEN-1:0] rs2_value_i,
-  output rob_idx_t                      rob_idx_o,
-  output logic         [      XLEN-1:0] result_o,
-  output logic                          except_raised_o,
-  output except_code_t                  except_code_o
+  input  logic                   [    EU_CTL_LEN-1:0] ctl_i,
+  input  expipe_pkg::rob_idx_t                        rob_idx_i,
+  input  logic                   [len5_pkg::XLEN-1:0] rs1_value_i,
+  input  logic                   [len5_pkg::XLEN-1:0] rs2_value_i,
+  output expipe_pkg::rob_idx_t                        rob_idx_o,
+  output logic                   [len5_pkg::XLEN-1:0] result_o,
+  output logic                                        except_raised_o,
+  output len5_pkg::except_code_t                      except_code_o
 );
+
+  import len5_pkg::*;
+  import expipe_pkg::*;
 
   // MULT output
   logic     [     XLEN-1:0] result;

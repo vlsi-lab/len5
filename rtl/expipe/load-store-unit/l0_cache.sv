@@ -11,11 +11,6 @@
 // File: l0_cache.sv
 // Author: Michele Caon
 // Date: 05/10/2022
-
-import len5_config_pkg::*;
-import len5_pkg::*;
-import expipe_pkg::ldst_width_t;
-
 /**
  * @brief "Level-zero cache"
  *
@@ -26,27 +21,30 @@ import expipe_pkg::ldst_width_t;
  *          the load without accessing the memory.
  */
 module l0_cache #(
-  parameter  int unsigned STBUFF_DEPTH,
   /* Dependent parameters: do NOT override */
-  localparam int unsigned StIdxW       = $clog2(STBUFF_DEPTH),
-  localparam int unsigned TagW         = XLEN - StIdxW
+  localparam int unsigned StIdxW = $clog2(len5_pkg::STBUFF_DEPTH),
+  localparam int unsigned TagW   = (len5_pkg::XLEN) - StIdxW
 ) (
-  input  logic                     clk_i,
-  input  logic                     rst_n_i,
-  input  logic                     flush_i,      // flush after exception
-  input  logic                     st_valid_i,   // store instruction valid
-  input  logic        [  XLEN-1:0] st_addr_i,    // store address
-  input  logic        [StIdxW-1:0] st_idx_i,     // store buffer index
-  input  logic        [  TagW-1:0] st_tag_i,     // cache store tag
-  input  logic                     st_cached_i,  // the store instruction is cached
-  input  ldst_width_t              st_width_i,   // cached store width
-  input  logic        [  XLEN-1:0] st_value_i,   // cached store value
-  input  logic        [  XLEN-1:0] ld_addr_i,    // load address
-  input  ldst_width_t              ld_width_i,   // load width
-  output logic        [StIdxW-1:0] st_idx_o,     // store buffer tag
-  output logic                     ld_valid_o,   // forwarding succeeded
-  output logic        [  XLEN-1:0] ld_value_o    // cached value
+  input logic clk_i,
+  input logic rst_n_i,
+  input logic flush_i,  // flush after exception
+  input logic st_valid_i,  // store instruction valid
+  input logic [len5_pkg::XLEN-1:0] st_addr_i,  // store address
+  input logic [StIdxW-1:0] st_idx_i,  // store buffer index
+  input logic [TagW-1:0] st_tag_i,  // cache store tag
+  input logic st_cached_i,  // the store instruction is cached
+  input expipe_pkg::ldst_width_t st_width_i,  // cached store width
+  input logic [len5_pkg::XLEN-1:0] st_value_i,  // cached store value
+  input logic [len5_pkg::XLEN-1:0] ld_addr_i,  // load address
+  input expipe_pkg::ldst_width_t ld_width_i,  // load width
+  output logic [StIdxW-1:0] st_idx_o,  // store buffer tag
+  output logic ld_valid_o,  // forwarding succeeded
+  output logic [len5_pkg::XLEN-1:0] ld_value_o  // cached value
 );
+
+  import len5_config_pkg::*;
+  import len5_pkg::*;
+
   // INTERNAL SIGNALS
   // ----------------
   // Cache data

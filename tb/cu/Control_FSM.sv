@@ -42,7 +42,7 @@ module Control
 
   	// Data from intruction fetch unit cache // Fix_it from backend i.e., input from data cahce :D$
   	input   logic             	except_raised_i,
-  	input   except_code_t     	except_code_i,
+  	input  len5_pkg::except_code_t     	except_code_i,
 
 	input   logic 				commit_head_cnt,
 

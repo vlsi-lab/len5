@@ -11,10 +11,6 @@
 // File: op_only_rs.sv
 // Author: Michele Caon
 // Date: 17/11/2021
-
-import len5_pkg::*;
-import expipe_pkg::*;
-
 module op_only_rs #(
   parameter int unsigned RS_DEPTH = 4,  // must be a power of 2
 
@@ -32,10 +28,10 @@ module op_only_rs #(
 
   // Data from the decode stage
   // input   logic [OP_ONLY_CTL_LEN-1:0]    ctl_i,
-  input logic                rs1_ready_i,
-  input rob_idx_t            rs1_idx_i,
-  input logic     [XLEN-1:0] rs1_value_i,
-  input rob_idx_t            dest_idx_i,
+  input logic                                      rs1_ready_i,
+  input expipe_pkg::rob_idx_t                      rs1_idx_i,
+  input logic                 [len5_pkg::XLEN-1:0] rs1_value_i,
+  input expipe_pkg::rob_idx_t                      dest_idx_i,
 
   // Hanshake from/to the CDB
   input  logic cdb_ready_i,
@@ -43,9 +39,12 @@ module op_only_rs #(
   output logic cdb_valid_o,
 
   // Data from/to the CDB
-  input  cdb_data_t cdb_data_i,
-  output cdb_data_t cdb_data_o
+  input  expipe_pkg::cdb_data_t cdb_data_i,
+  output expipe_pkg::cdb_data_t cdb_data_o
 );
+
+  import len5_pkg::*;
+  import expipe_pkg::*;
 
   // DEFINITIONS
   localparam int unsigned RsIdxLen = $clog2(RS_DEPTH);  //3 reservation station address width
@@ -192,7 +191,9 @@ module op_only_rs #(
     .en_i   (head_cnt_en),
     .clr_i  (head_cnt_clr),
     .count_o(head_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // Not needed
+    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   modn_counter #(
@@ -203,7 +204,9 @@ module op_only_rs #(
     .en_i   (tail_cnt_en),
     .clr_i  (tail_cnt_clr),
     .count_o(tail_idx),
+    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // Not needed
+    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   // -----------------
@@ -227,7 +230,7 @@ module op_only_rs #(
   endproperty
   a_op_not_ready :
   assert property (p_op_not_ready);
-`endif /* VERILATOR */
-`endif /* SYNTHESIS */
+`endif  /* VERILATOR */
+`endif  /* SYNTHESIS */
 
 endmodule
