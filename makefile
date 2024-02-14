@@ -45,13 +45,6 @@ lint: | .check-fusesoc
 	@echo "## Running static analysis..."
 	fusesoc run --no-export --target lint polito:len5:len5
 
-# Check RTL code
-.PHONY: check
-check: | .check-fusesoc
-	@echo "## Checking RTL code..."
-	fusesoc run --no-export --target format polito:len5:len5
-	fusesoc run --no-export --target lint polito:len5:len5
-
 # RTL simulation
 # --------------
 # Build Verilator model
@@ -105,6 +98,18 @@ run-helloworld-questasim: questasim-sim app-helloworld | .check-fusesoc
 	cd ./build/vlsi_polito_len5_0/sim-modelsim; \
 	make run PLUSARGS="c firmware=../../../sw/applications/hello_world.hex"; \
 	cd ../../..;
+
+# Check that nothing is broken
+# ----------------------------
+.PHONE: check
+check: | .check-fusesoc
+	@echo "## Checking software build..."
+	$(MAKE) app PROJECT=hello_world BUILD_DIR=$(BUILD_DIR)
+	@echo "## Checking RTL..."
+	fusesoc run --no-export --target format polito:len5:len5
+	fusesoc run --no-export --target lint polito:len5:len5
+	$(MAKE) verilator-build
+	@echo "\033[1;32mSUCCESS: all checks passed!\033[0m"
 
 # Utilities
 # ---------
