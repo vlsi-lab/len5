@@ -66,7 +66,7 @@ module commit_decoder (
 
         // Store instructions
         // ------------------
-        SB, SD, SH: comm_type = COMM_TYPE_STORE;
+        SB, SD, SH, SW: comm_type = COMM_TYPE_STORE;
 
         // Jump instructions
         // -----------------

@@ -1,30 +1,213 @@
 [*]
 [*] GTKWave Analyzer v3.3.118 (w)1999-2023 BSI
-[*] Wed Feb 14 15:49:42 2024
+[*] Wed Feb 14 20:15:54 2024
 [*]
 [dumpfile] "/home/michi/Documents/phd/poli/len-5-integration/build/polito_len5_len5_0.1.0/sim-verilator/logs/waves.fst"
-[dumpfile_mtime] "Wed Feb 14 15:43:39 2024"
-[dumpfile_size] 4056591
+[dumpfile_mtime] "Wed Feb 14 20:03:58 2024"
+[dumpfile_size] 7459113
 [savefile] "/home/michi/Documents/phd/poli/len-5-integration/tb/misc/verilator-waves.gtkw"
-[timestart] 0
+[timestart] 56
 [size] 1912 993
-[pos] 3 3
-*-3.300000 13 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -1 -1
+*-3.300000 84 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.tb_bare.
 [treeopen] TOP.tb_bare.u_datapath.
 [treeopen] TOP.tb_bare.u_datapath.u_backend.
+[treeopen] TOP.tb_bare.u_datapath.u_backend.fetch_pred_i.
+[treeopen] TOP.tb_bare.u_datapath.u_backend.u_cdb.data_o.
+[treeopen] TOP.tb_bare.u_datapath.u_backend.u_cdb.rs_data_i(2).
+[treeopen] TOP.tb_bare.u_datapath.u_backend.u_commit_stage.comm_reg_data.data.
+[treeopen] TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_comm_decoder.
+[treeopen] TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_commit_cu.
+[treeopen] TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.
+[treeopen] TOP.tb_bare.u_datapath.u_backend.u_exec_stage.
+[treeopen] TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.
 [sst_width] 267
-[signals_width] 166
+[signals_width] 396
 [sst_expanded] 1
-[sst_vpaned_height] 274
+[sst_vpaned_height] 256
 @28
 TOP.tb_bare.u_datapath.clk_i
 TOP.tb_bare.u_datapath.rst_n_i
 TOP.tb_bare.u_datapath.u_backend.fetch_valid_i
 TOP.tb_bare.u_datapath.u_backend.fetch_ready_o
 TOP.tb_bare.u_datapath.u_backend.fetch_ready_i
-@29
 TOP.tb_bare.u_datapath.u_backend.fetch_res_valid_o
+@800200
+-BACKEND
+@22
+TOP.tb_bare.u_datapath.u_backend.fetch_instr_i[31:0]
+TOP.tb_bare.u_datapath.u_backend.fetch_pred_i.pc[63:0]
+@c00200
+-ALU UNIT
+@28
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.issue_valid_i
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.issue_ready_o
+@100000028
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.issue_eu_ctl_i[3:0]
+@22
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.issue_dest_rob_idx_i[2:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.cdb_valid_i
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.cdb_valid_o
+@22
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.cdb_data_o.rob_idx[2:0]
+@c00200
+-ALU
+@28
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.u_alu.valid_i
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.u_alu.ready_o
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.u_alu.rob_idx_i[2:0]
+@22
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.u_alu.rs1_i[63:0]
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.u_alu.rs2_i[63:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.u_alu.valid_o
+@22
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.u_alu.result_o[63:0]
+@1401200
+-ALU
+-ALU UNIT
+@800200
+-CDB
+@28
+TOP.tb_bare.u_datapath.u_backend.u_cdb.max_prio_valid_i
+TOP.tb_bare.u_datapath.u_backend.u_cdb.rs_valid_i[6:0]
+TOP.tb_bare.u_datapath.u_backend.u_cdb.max_prio_ready_o
+TOP.tb_bare.u_datapath.u_backend.u_cdb.rs_ready_o[6:0]
+@22
+TOP.tb_bare.u_datapath.u_backend.u_cdb.data_o.res_value[63:0]
+TOP.tb_bare.u_datapath.u_backend.u_cdb.data_o.rob_idx[2:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_cdb.data_o.except_raised
+TOP.tb_bare.u_datapath.u_backend.u_cdb.rob_ready_i
+@800200
+-CDB ARBITER
+@28
+TOP.tb_bare.u_datapath.u_backend.u_cdb.u_cdb_arbiter.max_prio_valid_i
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.cdb_ready_i
+TOP.tb_bare.u_datapath.u_backend.u_cdb.u_cdb_arbiter.valid_i[6:0]
+TOP.tb_bare.u_datapath.u_backend.u_cdb.u_cdb_arbiter.max_prio_ready_o
+TOP.tb_bare.u_datapath.u_backend.u_cdb.u_cdb_arbiter.ready_o[6:0]
+TOP.tb_bare.u_datapath.u_backend.u_cdb.u_cdb_arbiter.rob_valid_o
+TOP.tb_bare.u_datapath.u_backend.u_cdb.u_cdb_arbiter.rob_ready_i
+@22
+TOP.tb_bare.u_datapath.u_backend.u_cdb.u_cdb_arbiter.served_o[2:0]
+@1000200
+-CDB ARBITER
+-CDB
+@800200
+-COMMIT STAGE
+-COMMIT CU
+@100000028
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_commit_cu.curr_state[4:0]
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_commit_cu.comm_type_i[3:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_comm_decoder.except_raised_i
+@22
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_comm_decoder.instruction_i.raw[31:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_commit_cu.res_ready_i
+@1000200
+-COMMIT CU
+@28
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.issue_valid_i
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.issue_ready_o
+@22
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.issue_data_i.instr_pc[63:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.cdb_valid_i
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.cdb_ready_o
+@22
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.cdb_data_i.res_value[63:0]
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.cdb_data_i.rob_idx[2:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.cdb_data_i.except_raised
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.int_rf_valid_o
+@22
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.rd_idx_o[4:0]
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.rd_value_o[63:0]
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.comm_reg_data.data.instr_pc[63:0]
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.comm_reg_data.rob_idx[2:0]
+@c00200
+-ROB
+@28
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.cdb_valid_i
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.cdb_ready_o
+@22
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.cdb_data_i.res_value[63:0]
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.cdb_data_i.rob_idx[2:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.cdb_data_i.except_raised
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.comm_valid_o
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.comm_ready_i
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.comm_head_idx_o[2:0]
+@1401200
+-ROB
+@1000200
+-COMMIT STAGE
+-BACKEND
+@28
+TOP.tb_bare.clk_i
+@c00200
+-MEM INSTR INTERFACE
+@28
+TOP.tb_bare.u_datapath.instr_req_o
+TOP.tb_bare.u_datapath.instr_we_o
+@22
+TOP.tb_bare.u_datapath.instr_addr_o[63:0]
+@28
+TOP.tb_bare.u_datapath.instr_gnt_i
+TOP.tb_bare.u_datapath.instr_rvalid_i
+@22
+TOP.tb_bare.u_datapath.instr_rdata_i[31:0]
+@28
+TOP.tb_bare.u_datapath.instr_except_raised_i
+@100000028
+TOP.tb_bare.u_datapath.instr_except_code_i[4:0]
+@1401200
+-MEM INSTR INTERFACE
+@800200
+-MEM LOAD INTERFACE
+@28
+TOP.tb_bare.u_datapath.data_load_req_o
+TOP.tb_bare.u_datapath.data_load_we_o
+@22
+TOP.tb_bare.u_datapath.data_load_be_o[7:0]
+@23
+TOP.tb_bare.u_datapath.data_load_addr_o[63:0]
+@28
+TOP.tb_bare.u_datapath.data_load_tag_o[1:0]
+TOP.tb_bare.u_datapath.data_load_gnt_i
+TOP.tb_bare.u_datapath.data_load_rvalid_i
+@22
+TOP.tb_bare.u_datapath.data_load_rdata_i[63:0]
+@28
+TOP.tb_bare.u_datapath.data_load_tag_i[1:0]
+TOP.tb_bare.u_datapath.data_load_except_raised_i
+@100000028
+TOP.tb_bare.u_datapath.data_load_except_code_i[4:0]
+@1000200
+-MEM LOAD INTERFACE
+@c00200
+-MEM STORE INTERFACE
+@28
+TOP.tb_bare.u_datapath.data_store_req_o
+TOP.tb_bare.u_datapath.data_store_we_o
+@22
+TOP.tb_bare.u_datapath.data_store_be_o[7:0]
+TOP.tb_bare.u_datapath.data_store_addr_o[63:0]
+TOP.tb_bare.u_datapath.data_store_wdata_o[63:0]
+@28
+TOP.tb_bare.u_datapath.data_store_tag_o[1:0]
+TOP.tb_bare.u_datapath.data_store_gnt_i
+TOP.tb_bare.u_datapath.data_store_rvalid_i
+TOP.tb_bare.u_datapath.data_store_tag_i[1:0]
+TOP.tb_bare.u_datapath.data_store_except_raised_i
+@100000028
+TOP.tb_bare.u_datapath.data_store_except_code_i[4:0]
+@1401200
+-MEM STORE INTERFACE
 [pattern_trace] 1
 [pattern_trace] 0

@@ -84,5 +84,5 @@ module cdb (
   assign data_o            = (served_max_prio) ? max_prio_data_i : low_prio_mux_data;
 
   // Low priority MUX
-  assign low_prio_mux_data = rs_data_i[int'(served)-1];
+  assign low_prio_mux_data = rs_data_i[served];
 endmodule

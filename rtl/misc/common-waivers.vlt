@@ -15,6 +15,7 @@ lint_off -rule UNUSED -file "*/fifo_nohs.sv" -match "Signal is not used: 'rst_n_
 lint_off -rule UNUSED -file "*/fifo_nohs.sv" -match "Signal is not used: 'flush_i'"
 lint_off -rule UNUSED -file "*/fifo_nohs.sv" -match "Signal is not used: 'push_i'"
 lint_off -rule UNUSED -file "*/fifo_nohs.sv" -match "Signal is not used: 'pop_i'"
+lint_off -rule UNUSED -file "*/fifo_nohs.sv" -match "Signal is not used: 'data_valid'"
 
 // Warnings due to generate
 lint_off -rule UNUSED -file "*/spill_cell_ext.sv" -match "Signal is not used: 'clk_i'"

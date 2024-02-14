@@ -39,21 +39,21 @@ module cdb_arbiter (
   import expipe_pkg::*;
 
   // DEFINITIONS
-  logic [MAX_EU_N-2:0] rem_valid_a, msk_valid_a;
+  logic [MAX_EU_N-2:0] rem_valid_q, msk_valid_d;
 
   // Valid MUX
-  logic [          MAX_EU_N-2:0] mux_valid_a;
+  logic [          MAX_EU_N-2:0] mux_valid;
 
   // Valid priority encoder + decoder
   logic [$clog2(MAX_EU_N-1)-1:0] enc_out;
-  logic [  $clog2(MAX_EU_N)-1:0] served_temp;
-  logic [          MAX_EU_N-2:0] dec_valid_a;
+  logic                          enc_valid;
+  logic [          MAX_EU_N-2:0] dec_valid_d;
 
   // ---------
   // VALID MUX
   // ---------
   // If there's no remaining valid signal, than select the new valids from the input
-  assign mux_valid_a = (|rem_valid_a) ? rem_valid_a : valid_i;
+  assign mux_valid = (|rem_valid_q) ? rem_valid_q : valid_i;
 
   // ----------------------
   // VALID PRIORITY ENCODER
@@ -61,19 +61,16 @@ module cdb_arbiter (
   prio_enc_inv #(
     .N(MAX_EU_N - 1)
   ) vaild_prio_enc (
-    .lines_i(mux_valid_a),
+    .lines_i(mux_valid),
     .enc_o  (enc_out),
-    /* verilator lint_off PINCONNECTEMPTY */
-    .valid_o()              // not needed
-    /* verilator lint_on PINCONNECTEMPTY */
+    .valid_o(enc_valid)
   );
-  assign served_temp = enc_out + 1;
 
   // Decoder:
   always_comb begin : valid_dec
-    dec_valid_a = '0;  // all zeros by default
-    if (|mux_valid_a) begin  // if at least one valid is active
-      dec_valid_a[served_temp] = 1'b1;
+    dec_valid_d = '0;  // all zeros by default
+    if (enc_valid) begin  // if at least one valid is active
+      dec_valid_d[enc_out] = 1'b1;
     end
   end
 
@@ -82,39 +79,39 @@ module cdb_arbiter (
   // -------------------
   always_comb begin : valid_msk_logic
     // If the maximum priority line is active, keep all other requests
-    if (max_prio_valid_i) msk_valid_a = mux_valid_a;
+    if (max_prio_valid_i) msk_valid_d = mux_valid;
     // Otherwise keep all but the currently served one
     else
-      msk_valid_a = mux_valid_a & ~dec_valid_a;
+      msk_valid_d = mux_valid & ~dec_valid_d;
   end
 
   // -----------------
   // OUTPUT GENERATION
   // -----------------
   // Output valid
-  assign rob_valid_o = max_prio_valid_i | (|dec_valid_a);
+  assign rob_valid_o      = max_prio_valid_i | (|dec_valid_d);
 
   // Output ready
-  always_comb begin : ready_gen
-    ready_o          = '0;  // by default, no input is served
-    max_prio_ready_o = 1'b1;  // the maximum priority channel is always served
-    if (!max_prio_valid_i && rob_ready_i) ready_o = dec_valid_a;  // notify the unit being served
+  assign max_prio_ready_o = 1'b1;  // the maximum priority channel is always served
+  always_comb begin : ready_mux
+    if (!max_prio_valid_i && rob_ready_i) ready_o = dec_valid_d;  // notify the unit being served
+    else ready_o = '0;  // by default, no input is served
   end
 
   // Output served index
   assign served_max_prio_o = max_prio_valid_i;
-  assign served_o          = served_temp;
+  assign served_o          = enc_out;
 
   // ------------------------
   // REMAINING VALID REGISTER
   // ------------------------
   always_ff @(posedge clk_i or negedge rst_n_i) begin : last_served_reg
     if (!rst_n_i) begin
-      rem_valid_a <= 0;
+      rem_valid_q <= 0;
     end else if (flush_i) begin
-      rem_valid_a <= 0;
+      rem_valid_q <= 0;
     end else begin
-      rem_valid_a <= msk_valid_a;
+      rem_valid_q <= msk_valid_d;
     end
   end
 

@@ -44,16 +44,6 @@ package len5_config_pkg;
   // TB exit register address (stop the simulation when written)
   localparam logic [63:0] EXIT_ADDR = 'h10000;
 
-  // MEMORY EMULATOR PARAMETERS
-  // --------------------------
-
-  // Raise access fault on load from empty (uninitialized) memory location
-  //`define MEM_EMU_RAISE_READ_ACCESS_FAULT
-
-  // Skip instruction and/or data output registers
-  localparam bit MEM_EMU_SKIP_INSTR_OUT_REG = 1'b1;
-  localparam bit MEM_EMU_SKIP_DATA_OUT_REG = 1'b1;
-
   // FRONTEND PARAMETERS
   // -------------------
   // BPU g-share predictor global history length

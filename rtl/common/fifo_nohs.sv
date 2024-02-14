@@ -83,10 +83,10 @@ module fifo_nohs #(
           end
         end else begin
           foreach (data[i]) begin
-            if (push_i && tail_cnt == i) begin
+            if (push_i && tail_cnt == i[$clog2(DEPTH)-1:0]) begin
               data_valid[i] <= 1'b1;
               data[i]       <= data_i;
-            end else if (pop_i && head_cnt == i) begin
+            end else if (pop_i && head_cnt == i[$clog2(DEPTH)-1:0]) begin
               data_valid[i] <= 1'b0;
             end
           end

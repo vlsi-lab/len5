@@ -17,6 +17,7 @@ lint_off -rule UNUSED -file "*/load_buffer.sv" -match "Bits of signal are not us
 lint_off -rule UNUSED -file "*/load_buffer.sv" -match "Signal is not used: 'byte_offs'"
 lint_off -rule UNUSED -file "*/store_buffer.sv" -match "Bits of signal are not used: 'cdb_data_i'[5:0]"
 lint_off -rule PINCONNECTEMPTY -file "*/backend.sv" -match "Cell pin connected by name with empty reference: 'csr_exc_o'"
+lint_off -rule PINCONNECTEMPTY -file "*/cdb_arbiter.sv" -match "Cell pin connected by name with empty reference: 'valid_o'"
 lint_off -rule UNDRIVEN -file "*/exec_stage.sv" -match "Bits of signal are not driven: 'issue_ready_o'[7:6]"
 lint_off -rule UNDRIVEN -file "*/exec_stage.sv" -match "Bits of signal are not driven: 'cdb_valid_o'[7:6]"
 lint_off -rule UNDRIVEN -file "*/exec_stage.sv" -match "Bits of signal are not driven: 'cdb_data_o'[583:438]"

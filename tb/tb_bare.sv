@@ -38,7 +38,8 @@ module tb_bare #(
   // the number of its pipeline stages, plus the two internal registers of
   // the output spill cell, if implemented. The fetch stage must buffer the
   // same number of requests.
-  localparam int unsigned FetchMemIfFifoDepth = MemPipeNum + ((MEM_EMU_SKIP_INSTR_OUT_REG) ? 0 : 2);
+  localparam bit MemEmuSkipInstrOutReg = 1'b0;
+  localparam int unsigned FetchMemIfFifoDepth = MemPipeNum + ((MemEmuSkipInstrOutReg) ? 0 : 2);
 
   // INTERNAL SIGNALS
   // ----------------
@@ -270,8 +271,8 @@ module tb_bare #(
   memory_bare_emu #(
     .DUMP_PERIOD      (MemDumpT),
     .PIPE_NUM         (MemPipeNum),
-    .SKIP_INS_ANS_REG (MEM_EMU_SKIP_INSTR_OUT_REG),
-    .SKIP_DATA_ANS_REG(MEM_EMU_SKIP_DATA_OUT_REG)
+    .SKIP_INS_ANS_REG (MemEmuSkipInstrOutReg),
+    .SKIP_DATA_ANS_REG(1'b0)
   ) u_memory_bare_emu (
     .clk_i                     (clk_i),
     .rst_n_i                   (rst_ni),
