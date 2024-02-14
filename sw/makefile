@@ -4,7 +4,7 @@
 
 # General configuration
 MAKE			?= make
-BUILD_DIR		?= ./build
+BUILD_DIR		?= ../build/sw
 
 # Target application
 PROJECT			?= hello_world
@@ -18,12 +18,13 @@ INC_DIRS 		:= $(sort $(dir $(SRCS)))
 INC_DIRS_GCC	:= $(addprefix -I ,$(INCLUDE_DIRS))
 
 ###  RISC-V C toolchain
+# TODO: REMOVE -mstrict-align ONCE UNALIGNED ACCESS IS SUPPORTED
 RISCV_EXE_PREFIX           	?= riscv64-unknown-elf
 ISA_STRING					?= rv64izicsr
 ABI_STRING					?= lp64
 CFLAGS			:= -march=$(ISA_STRING) \
 				   -mabi=$(ABI_STRING) \
-				   -mstrict-align \ # TODO: REMOVE WHEN UNALIGNED ACCESS IS SUPPORTED
+				   -mstrict-align \
 				   -nostartfiles \
 				   -O0 \
 				   -g \
@@ -40,13 +41,6 @@ LDFLAGS			:= -T $(LINKER) \
 				   -fdata-sections \
 				   -specs=nano.specs
 ARFLAGS			:= rcus # s replaces ranlib
-
-# GCC configuration
-#LIB_CRT                    = $(wildcard src/crt0.S)
-#LIB_CRT                    += $(wildcard src/irq.S)
-#LIB_BASE                   = $(wildcard src/*.c)
-#LIB_RUNTIME                =
-#LIB_DRIVERS                += $(wildcard /*.c)
 
 # LEN5 software support
 LIB_SRCS		:= device/crt/crt0.S \
@@ -118,6 +112,7 @@ $(BUILD_DIR)/%.o: ./%.S
 	@echo "LDFLAGS:     $(LDFLAGS)"
 
 # Clean-up
+.PHONY: clean
 clean:
 	$(RM) -r $(BUILD_DIR)/*/*.elf
 	$(RM) -r $(BUILD_DIR)/*/*.o

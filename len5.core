@@ -31,9 +31,14 @@ filesets:
     - tb/memory/memory_if.sv
     - tb/memory/memory_bare_emu.sv
     - tb/tb_bare.sv
-    - tb/verilator/len5_tb.cpp: {file_type: cppSource}
-    - tb/verilator/tb_macros.hh: {file_type: cppSource, is_include_file: true}
     file_type: systemVerilogSource
+
+  verilator-bare-tb:
+    files:
+    - tb/verilator/len5_tb.cpp
+    - tb/verilator/tb_macros.cpp
+    - tb/verilator/tb_macros.hh: {is_include_file: true}
+    file_type: cppSource
 
   questasim-bare-tb:
     files:
@@ -60,9 +65,14 @@ targets:
     filesets_append:
     - rtl-bare-tb
     - tool_modelsim ? (questasim-bare-tb)
+    - tool_verilator ? (verilator-bare-tb)
     toplevel: 
       - tool_verilator ? (tb_bare)
       - "!tool_verilator ? (tb_len5)"
+    parameters:
+    - firmware
+    - max_cycles
+    - tool_verilator ? (log_level)
     tools:
       modelsim:
         vlog_options:
@@ -148,13 +158,3 @@ parameters:
     datatype: int
     description: Maximum number of simulation cycles (halt the simulation when reached).
     paramtype: plusarg
-  SYNTHESIS:
-    datatype: bool
-    paramtype: vlogdefine
-    description: |
-      Can isolate code that is (or is not) meant for Synthesis/Simulation only
-  POSTLAYOUT:
-    datatype: bool
-    paramtype: vlogdefine
-    description: |
-      Can isolate code that is (or is not) meant for post-layout simulation only

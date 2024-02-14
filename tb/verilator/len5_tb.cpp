@@ -17,7 +17,7 @@
 #include <verilated.h>
 #include <verilated_fst_c.h>
 
-#include "Vlen5.h"
+#include "Vtb_bare.h"
 #include "tb_macros.hh"
 
 // Default parameters
@@ -31,8 +31,13 @@
 TbLogger logger;
 
 // Simulation cycles
-vluint64_t sim_cycles = 0; 
+vluint64_t sim_cycles = 0;
 
+// Function prototypes
+void clkGen(Vtb_bare *dut);
+void rstDut(Vtb_bare *dut, vluint64_t sim_time);
+
+// Main function
 int main(int argc, char **argv, char **env) {
     // TODO: parse command line arguments with getopt
     char firmware_file[256] = "firmware.hex";
@@ -47,7 +52,7 @@ int main(int argc, char **argv, char **env) {
     logger.setSimContext(cntx);
 
     // Instantiate the DUT
-    Vlen5 *dut = new Vlen5(cntx);
+    Vtb_bare *dut = new Vtb_bare(cntx);
 
     // FST trace file
     VerilatedFstC *m_trace = new VerilatedFstC;
@@ -104,16 +109,14 @@ int main(int argc, char **argv, char **env) {
 }
 
 // Clock generator
-void clkGen(Vcarus_top *dut)
-{
+void clkGen(Vtb_bare *dut) {
     dut->clk_i ^= 1;
 }
 
 // Reset generator
-void rstDut(Vcarus_top *dut, vluint64_t sim_time)
-{
+void rstDut(Vtb_bare *dut, vluint64_t sim_time) {
     dut->rst_ni = 1;
-    if (sim_time > 1 && sim_time < END_OF_RESET_TIME)
+    if (sim_time > 1 && sim_time < (RESET_CYCLES << 1))
     {
         dut->rst_ni = 0;
     }

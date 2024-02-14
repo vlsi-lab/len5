@@ -11,21 +11,20 @@
 MAKE           	?= make
 BUILD_DIR	   	?= $(realpath .)/build
 
-# Get the absolute path
-mkfile_path 	:= $(shell dirname "$(realpath $(firstword $(MAKEFILE_LIST)))")
-
-# VARIABLES
-# ---------
 # Software build configuration
 PROJECT  ?= hello_world
 
-ifndef CONDA_DEFAULT_ENV
-$(info USING VENV)
-PYTHON  = $(PWD)/$(VENV)/python
-else
-$(info USING MINICONDA $(CONDA_DEFAULT_ENV))
-PYTHON  := $(shell which python)
-endif
+# RTL simulation
+FIRMWARE		?= $(BUILD_DIR)/sw/main.hex
+MAX_CYCLES		?= 1000000
+LOG_LEVEL		?= LOG_MEDIUM
+
+# VARIABLES
+# ---------
+# RTL simulation files
+SIM_CORE_FILES 	:= $(shell find rtl -type f -name "*.core")
+SIM_HDL_FILES 	:= $(shell find rtl -type f -name "*.v" -o -name "*.sv" -o -name "*.svh")
+SIM_CPP_FILES	:= $(shell find tb/verilator -type f -name "*.cpp" -o -name "*.hh")
 
 #######################
 # ----- TARGETS ----- #
@@ -54,11 +53,23 @@ check: | .check-fusesoc
 
 # RTL simulation
 # --------------
-# Verilator
+# Build Verilator model
+# Re-run every time the necessary files (.core, RTL, CPP) change
 .PHONY: verilator-build
-verilator-build: | .check-fusesoc
+verilator-build: $(BUILD_DIR)/.verilator.lock
+$(BUILD_DIR)/.verilator.lock: $(SIM_CORE_FILES) $(SIM_HDL_FILES) $(SIM_CPP_FILES) | .check-fusesoc
 	@echo "## Building simulation model with Verilator..."
 	fusesoc run --no-export --target sim --tool verilator $(FUSESOC_FLAGS) --build polito:len5:len5 2>&1 | tee build/build.log
+	touch $@
+
+# Run Verilator simulation
+.PHONY: verilator-run
+verilator-run: $(BUILD_DIR)/.verilator.lock
+	fusesoc run --no-export --target sim --tool verilator --run $(FUSESOC_FLAGS) epfl:heeperator:heeperator \
+		--log_level=$(LOG_LEVEL) \
+		--firmware=$(FIRMWARE) \
+		--max_cycles=$(MAX_CYCLES) \
+		$(FUSESOC_ARGS) 2>&1 | tee build/sim.log
 
 # QuestaSim
 .PHONY: questasim-sim
@@ -112,3 +123,8 @@ clean-sim:
 .PHONY: clean-app
 clean-app:
 	$(MAKE) -C sw clean
+
+.PHONY: .print
+.print:
+	@echo "SIM_HDL_FILES: $(SIM_HDL_FILES)"
+	@echo "SIM_CPP_FILES: $(SIM_CPP_FILES)"

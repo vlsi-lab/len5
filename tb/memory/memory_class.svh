@@ -22,6 +22,12 @@ import len5_pkg::HWWIDTH;
 import len5_pkg::DWWIDTH;
 import len5_pkg::LWIDTH;
 
+typedef enum int unsigned {
+  FILE_MODE_READ,
+  FILE_MODE_READ_BINARY,
+  FILE_MODE_WRITE
+} file_mode_t;
+
 class memory_class;
   // File info
   const local string                     memory_file_path;
@@ -51,14 +57,14 @@ class memory_class;
   endfunction : new
 
   // Open the memory file
-  local function void OpenMemFile(string path, string mode = "r");
+  local function void OpenMemFile(string path, file_mode_t mode);
     // NOTE: prevent Verilator error about mode width in $fopen()
     case (mode)
-      "rb": this.fd = $fopen(path, "rb");
-      "w": this.fd = $fopen(path, "w");
-      "r": this.fd = $fopen(path, "r");
+      FILE_MODE_READ: this.fd = $fopen(path, "r");
+      FILE_MODE_READ_BINARY: this.fd = $fopen(path, "rb");
+      FILE_MODE_WRITE: this.fd = $fopen(path, "w");
       default: begin
-        $display("ERROR: $fopen() mode '%s' not supported", mode);
+        $display("ERROR: $fopen() mode '%d' not supported", mode);
       end
     endcase
     if (this.fd == 0) begin
@@ -90,7 +96,7 @@ class memory_class;
     logic [       7:0] frame_buff   [512];  // read 512 bytes at a time
 
     // Open the memory file as binary
-    this.OpenMemFile(path, "rb");
+    this.OpenMemFile(path, FILE_MODE_READ_BINARY);
 
     // Store the memory bytes
     do begin
@@ -133,7 +139,7 @@ class memory_class;
     logic [WWIDTH-1:0] data;
 
     // Open the memory file
-    OpenMemFile(path, "r");
+    OpenMemFile(path, FILE_MODE_READ);
 
     // Scan each line and load the data into the memory array
     while (!$feof(
@@ -374,7 +380,7 @@ class memory_class;
     logic [WWIDTH-1:0] w;
     baddr = '0;
     // Open the output file
-    OpenMemFile(out_path, "w");
+    OpenMemFile(out_path, FILE_MODE_WRITE);
 
     // Check if the memory is empty
     if (this.mem.first(baddr) == 0) begin
