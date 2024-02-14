@@ -1,4 +1,7 @@
+.section .text
 .global main
+.balign 4
+
 main:
     addi x1, zero, 15
     sd x1, 136(x0)

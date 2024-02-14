@@ -79,17 +79,17 @@ questasim-sim: $(BUILD_DIR)/main.hex | .check-fusesoc $(BUILD_DIR)/
 # Software
 # --------
 # Application from 'sw/applications'
+# NOTE: the -B option to make forces recompilation everytime, which is needed since PROJECT is user-defined
 .PHONY: app
-app: $(BUILD_DIR)/main.hex
-$(BUILD_DIR)/main.hex: $(BUILD_DIR)/
+app: | $(BUILD_DIR)/
 	@echo "## Building application '$(PROJECT)'"
-	$(MAKE) -C sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR)
+	$(MAKE) -BC sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR)
 
 # Simple test application
 .PHONY: app-helloworld
 app-helloworld:
 	@echo "## Building helloworld application"
-	$(MAKE) -C sw PROJECT=hello_world BUILD_DIR=$(BUILD_DIR)
+	$(MAKE) -BC sw PROJECT=hello_world BUILD_DIR=$(BUILD_DIR)
 
 # Compile example applicationa and run RTL simulation
 .PHONY: app-helloworld-questasim

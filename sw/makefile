@@ -27,7 +27,6 @@ CFLAGS			:= -march=$(ISA_STRING) \
 				   -mstrict-align \
 				   -nostartfiles \
 				   -O0 \
-				   -g \
 				   -Wall 
 LDFLAGS			:= -T $(LINKER) \
 				   -static \
@@ -65,8 +64,8 @@ LIB_OBJS		:= $(filter %.o,\
 .PHONY: app
 app: $(BUILD_DIR)/main.hex $(BUILD_DIR)/main.disasm
 
-$(BUILD_DIR)/%: $(BUILD_DIR)/applications/$(PROJECT)/%
-	ln -sr $< $@
+$(BUILD_DIR)/main.%: $(BUILD_DIR)/applications/$(PROJECT)/main.%
+	cp $< $@
 
 # ASCII .hex firmware
 $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf
