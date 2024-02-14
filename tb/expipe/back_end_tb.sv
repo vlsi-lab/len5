@@ -8,7 +8,7 @@ import csr_pkg::*;
 
 module Back_end_tb; // comment
 
-// To the main control 
+// To the main control
     logic    main_cu_stall_o;
 
     logic clk_i;
@@ -28,7 +28,7 @@ module Back_end_tb; // comment
 	logic            except_raised_i;
 	except_code_t    except_code_i;
 
-	// Data to the FE 
+	// Data to the FE
 	logic [XLEN-1:0]  res_pc_o;
   	logic [XLEN-1:0]  res_target_o;
   	logic             res_taken_o;
@@ -72,7 +72,7 @@ initial begin
 	dcache_ans_i.valid = 0;
 
 	line.tag = 'h0;
-	line.idx = 'h0; 
+	line.idx = 'h0;
 	dcache_wup_i.line_addr=line;
 	dcache_wup_i.valid=0;
 
@@ -95,7 +95,7 @@ initial begin
     #10 flush_i = 0;
     #10 curr_pc_i = 'h0000000000000002;
 
-    #600 $finish;
+    #600 $finish();
 end
 
 // ---
@@ -104,7 +104,7 @@ end
 
 back_end Back_end_IQL
 (
-    // To the main control 
+    // To the main control
     .main_cu_stall_o(main_cu_stall_o),
 
     .clk_i (clk_i),
@@ -124,7 +124,7 @@ back_end Back_end_IQL
     .except_raised_i (except_raised_i),
     .except_code_i (except_code_i),
 
-	// Data to the FE 
+	// Data to the FE
 	.res_pc_o(res_pc_o),
   	.res_target_o(res_target_o),
   	.res_taken_o(res_taken_o),
@@ -142,5 +142,5 @@ back_end Back_end_IQL
 
 );
 
-    
+
 endmodule

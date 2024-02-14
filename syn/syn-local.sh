@@ -14,7 +14,7 @@ export TERM=xterm-256color
 
 # Launch synthesis
 cd $SYN_DIR
-clear 
+clear
 rm -rf work
 rm -rf logs
 rm -rf reports

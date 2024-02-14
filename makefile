@@ -1,174 +1,149 @@
 ####################
 # ----- INFO ----- #
 ####################
-# Compile LEN5 RTL source files
+# Makefile to generate the LEN5 processor files and build the design with fusesoc
+
+#############################
+# ----- CONFIGURATION ----- #
+#############################
+
+# General configuration
+MAKE           	?= make
+BUILD_DIR	   	?= $(realpath .)/build
+
+# Software build configuration
+PROJECT  ?= hello_world
+
+# RTL simulation
+FIRMWARE		?= $(BUILD_DIR)/main.hex
+MAX_CYCLES		?= 1000000
+LOG_LEVEL		?= LOG_MEDIUM
 
 # VARIABLES
 # ---------
+# RTL simulation files
+SIM_CORE_FILES 	:= $(shell find . -type f -name "*.core")
+SIM_HDL_FILES 	:= $(shell find rtl -type f -name "*.v" -o -name "*.sv" -o -name "*.svh")
+SIM_HDL_FILES 	+= $(shell find tb -type f -name "*.v" -o -name "*.sv" -o -name "*.svh")
+SIM_CPP_FILES	:= $(shell find tb/verilator -type f -name "*.cpp" -o -name "*.hh")
 
-# Set Bash as default shell ('source' allows passing options to sourced scrips)
-SHELL			:= /bin/bash
+#######################
+# ----- TARGETS ----- #
+#######################
 
-# Paths
-ROOT 			:= $(realpath .)
-BUILD_DIR 		?= $(ROOT)/build
-HW_BUILD_DIR	:= $(BUILD_DIR)/hw
-SW_BUILD_DIR    := $(BUILD_DIR)/sw
-VWORK 			?= $(HW_BUILD_DIR)/len5
+# HDL source
+# ----------
+# Format code
+.PHONY: format
+format: | .check-fusesoc
+	@echo "## Formatting RTL code..."
+	fusesoc run --no-export --target format polito:len5:len5
 
-# LEN5 HDL files
-PKG_SRCS 		:= 	$(ROOT)/include/len5_pkg.sv \
-					$(ROOT)/include/csr_pkg.sv \
-					$(ROOT)/include/fetch_pkg.sv \
-					$(ROOT)/include/expipe_pkg.sv \
-					$(ROOT)/include/memory_pkg.sv
-# NOTE: currently compile non virtual memory source only
-MODULES_SRCS 	:= 	$(shell find $(ROOT)/src/ -type f -name '*.sv' -not -path "$(ROOT)/src/**-vm/*" -not -path "$(ROOT)/src/**_vm.sv" -not -path "$(ROOT)/src/memory/*")
-HW_INCS			:= 	$(shell find $(ROOT)/src/ $(ROOT)/include/ -type f -name "*.svh")
-TB_SRCS 		:= 	$(ROOT)/tb/tb_with_l2cemu.sv \
-					$(ROOT)/tb/tb_bare.sv \
-					$(ROOT)/tb/memory/cache_L2_system_emulator.sv \
-					$(ROOT)/tb/memory/memory_if.sv \
-					$(ROOT)/tb/memory/memory_bare_emu.sv
-TB_INCS			:= 	$(shell find $(ROOT)/tb/ -type f -name "*.svh")
-ifdef CUSTOM_SRC_DIR
-CUSTOM_PKGS		?= 	$(shell grep --include=\*.sv -rlE "^package \w+;" $(CUSTOM_SRC_DIR))
-CUSTOM_SRCS 	?=	$(shell find $(CUSTOM_SRC_DIR) -type f -name '*.sv')
-endif
+# Static analysis
+.PHONY: lint
+lint: | .check-fusesoc
+	@echo "## Running static analysis..."
+	fusesoc run --no-export --target lint polito:len5:len5
 
-# LEN5 test files
-SW_DIR			:= $(ROOT)/len5-software
-TEST_DIR 		:= $(SW_DIR)/test-programs
-TEST_SRCS		:= $(shell grep -rlE '(int|void)[ ]+main[ ]*\(.*\)|main:' $(TEST_DIR)/src/)
-TESTS			:= $(addprefix tests/,$(basename $(notdir $(TEST_SRCS))))
-
-# vlog options
-GLOBAL_OPT		:= 	-svinputport=compat \
-					-hazards \
-					-vmake \
-					+incdir+$(ROOT)/include \
-					+incdir+$(ROOT)/tb/memory
-UVM_OPT			:= +define+UVM_REPORT_DISABLE_FILE
-PKG_OPT			:=
-MODULE_OPT		:=
-TB_OPT			:=
-
-# SystemVerilog compiler
-VLOG			:= vlog -pedanticerrors -work $(VWORK) $(GLOBAL_OPT) $(UVM_OPT)
-VLOG 			+= $(VLOG_ARGS) # from environment
-
-###########################
-# ----- BUILD RULES ----- #
-###########################
-
-# Aliases
-# -------
-.PHONY: all
-all: hw sw
-.PHONY: hw
-hw: tb
-.PHONY: sw
-sw: test-files
-
-# Hardware
-# --------
-# Packages
-.PHONY: packages
-packages: $(HW_BUILD_DIR)/.cache/.pkg_done
-$(HW_BUILD_DIR)/.cache/.pkg_done: $(HW_BUILD_DIR)/.cache/pkg_list.f $(HW_INCS) | .check-vlog
-	@echo "## Compiling LEN5 files..."
-	$(VLOG) $(PKG_OPT) -F $<
+# RTL simulation
+# --------------
+# Build Verilator model
+# Re-run every time the necessary files (.core, RTL, CPP) change
+.PHONY: verilator-build
+verilator-build: $(BUILD_DIR)/.verilator.lock
+$(BUILD_DIR)/.verilator.lock: $(SIM_CORE_FILES) $(SIM_HDL_FILES) $(SIM_CPP_FILES) | .check-fusesoc $(BUILD_DIR)/
+	@echo "## Building simulation model with Verilator..."
+	fusesoc run --no-export --target sim --tool verilator $(FUSESOC_FLAGS) --build polito:len5:len5
 	touch $@
-$(HW_BUILD_DIR)/.cache/pkg_list.f: $(PKG_SRCS) | $(HW_BUILD_DIR)/.cache
-	@echo "## Assembling list of updated LEN5 packages..."
-	@printf '%s\n' $? > $@
 
-# Modules
-.PHONY: modules
-modules: $(HW_BUILD_DIR)/.cache/.mod_done
-$(HW_BUILD_DIR)/.cache/.mod_done : $(HW_BUILD_DIR)/.cache/src_list.f $(HW_BUILD_DIR)/.cache/.pkg_done $(HW_INCS) | .check-vlog
-	@echo "## Compiling LEN5 modules..."
-	$(VLOG) $(MODULE_OPT) -F $<
-	touch $@
-$(HW_BUILD_DIR)/.cache/src_list.f: $(MODULES_SRCS) | $(HW_BUILD_DIR)/.cache
-	@echo "## Assembling list of updated LEN5 modules..."
-	@printf '%s\n' $? > $@
+# Run Verilator simulation
+.PHONY: verilator-sim
+verilator-sim: $(BUILD_DIR)/.verilator.lock $(BUILD_DIR)/main.hex | .check-fusesoc
+	fusesoc run --no-export --target sim --tool verilator --run $(FUSESOC_FLAGS) polito:len5:len5 \
+		--log_level=$(LOG_LEVEL) \
+		--firmware=$(FIRMWARE) \
+		--max_cycles=$(MAX_CYCLES) \
+		$(FUSESOC_ARGS)
 
-# Testbench
-.PHONY: tb
-tb: $(HW_BUILD_DIR)/.cache/.tb_done
-$(HW_BUILD_DIR)/.cache/.tb_done: $(HW_BUILD_DIR)/.cache/tb_list.f $(TB_INCS) $(HW_BUILD_DIR)/.cache/.mod_done $(HW_INCS) | .check-vlog
-	@echo "## Compiling LEN5 testbench..."
-	$(VLOG) $(MODULE_OPT) -F $<
-	touch $@
-$(HW_BUILD_DIR)/.cache/tb_list.f: $(TB_SRCS) | $(HW_BUILD_DIR)/.cache
-	@echo "## Assembling list of updated LEN5 testbench files..."
-	@printf '%s\n' $? > $@
+# Open dumped waveform with GTKWave
+.PHONY: verilator-waves
+verilator-waves: $(BUILD_DIR)/sim-common/waves.fst | .check-gtkwave
+	gtkwave -a tb/misc/verilator-waves.gtkw $<
 
-# Custom files
-.PHONY: custom-src
-custom-src: $(HW_BUILD_DIR)/.cache/.custom_done 
-$(HW_BUILD_DIR)/.cache/.custom_done: $(HW_BUILD_DIR)/.cache/custom_list.f $(HW_BUILD_DIR)/.cache/.pkg_done $(HW_INCS) | .check-vlog
-	@echo "## Compiling custom modules..."
-	$(VLOG) $(MODULE_OPT) -F $<
-	touch $@
-$(HW_BUILD_DIR)/.cache/custom_list.f: $(CUSTOM_PKGS) $(CUSTOM_SRCS) | $(HW_BUILD_DIR)/.cache
-	@echo "Assembling list of updated custom modules..."
-	@printf '%s\n' $? > $@
-
-# QuestaSim library
-$(VWORK): | .check-vlog
-	@echo "## Creating library '$@'..."
-	mkdir -p $(@D)
-	vlib $(VWORK)
-
-# Check if vlog is available
-.PHONY: .check-vlog
-.check-vlog:
-	@if [ ! `which vlog` ]; then \
-	printf -- "### ERROR: 'vlog' is not in PATH. Did you run the initialization script?\n" >&2; \
-	exit 1; fi
-
+# QuestaSim
+.PHONY: questasim-sim
+questasim-sim: $(BUILD_DIR)/main.hex | .check-fusesoc $(BUILD_DIR)/
+	@echo "## Running simulation with QuestaSim..."
+	fusesoc run --no-export --target sim --tool modelsim $(FUSESOC_FLAGS) --build polito:len5:len5 2>&1 | tee build/build.log
+	
 # Software
 # --------
-# Test programs
-.PHONY: test-files
-test-files:
-	@echo "## Compiling LEN5 test files"
-	$(MAKE) BUILD_DIR=$(SW_BUILD_DIR) -C $(SW_DIR) all
-.PHONY: $(TESTS)
-$(TESTS):
-	@echo "## Compiling test '$@'..."
-	$(MAKE) BUILD_DIR=$(SW_BUILD_DIR) -C $(SW_DIR) $@
+# Application from 'sw/applications'
+.PHONY: app
+app: $(BUILD_DIR)/main.hex
+$(BUILD_DIR)/main.hex: $(BUILD_DIR)/
+	@echo "## Building application '$(PROJECT)'"
+	$(MAKE) -C sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR)
 
-.PHONY: print-tests
-print-tests:
-	$(MAKE) -C $(SW_DIR) print-tests
+# Simple test application
+.PHONY: app-helloworld
+app-helloworld:
+	@echo "## Building helloworld application"
+	$(MAKE) -C sw PROJECT=hello_world BUILD_DIR=$(BUILD_DIR)
 
-# Directories
-# -----------
-$(BUILD_DIR) $(HW_BUILD_DIR) $(HW_BUILD_DIR)/.cache:
+# Compile example applicationa and run RTL simulation
+.PHONY: app-helloworld-questasim
+run-helloworld-questasim: questasim-sim app-helloworld | .check-fusesoc
+	@echo "## Running helloworld application"
+	cd ./build/vlsi_polito_len5_0/sim-modelsim; \
+	make run PLUSARGS="c firmware=../../../sw/applications/hello_world.hex"; \
+	cd ../../..;
+
+# Check that nothing is broken
+# ----------------------------
+.PHONE: check
+check: | .check-fusesoc
+	@echo "## Checking software build..."
+	$(MAKE) app PROJECT=hello_world BUILD_DIR=$(BUILD_DIR)
+	@echo "## Checking RTL..."
+	fusesoc run --no-export --target format polito:len5:len5
+	fusesoc run --no-export --target lint polito:len5:len5
+	$(MAKE) verilator-build
+	@echo "\033[1;32mSUCCESS: all checks passed!\033[0m"
+
+# Utilities
+# ---------
+# Check if fusesoc is available
+.PHONY: .check-fusesoc
+.check-fusesoc:
+	@if [ ! `which fusesoc` ]; then \
+	printf -- "### ERROR: 'fusesoc' is not in PATH. Is the correct conda environment active?\n" >&2; \
+	exit 1; fi
+
+# Check if GTKWave is available
+.PHONY: .check-gtkwave
+.check-gtkwave:
+	@if [ ! `which gtkwave` ]; then \
+	printf -- "### ERROR: 'gtkwave' is not in PATH. Is the correct conda environment active?\n" >&2; \
+	exit 1; fi
+
+# Create new directories
+%/:
 	mkdir -p $@
-	
-# Clean rules
-# -----------
+
+# Clean-up
 .PHONY: clean
-clean:
-	if [ -d $(VWORK) ]; then vdel -lib $(VWORK) -all; fi
-	$(RM) -r $(HW_BUILD_DIR)
-	$(MAKE) BUILD_DIR=$(SW_BUILD_DIR) -C $(SW_DIR) clean
+clean: clean-app clean-sim
 
-.PHONY: clean-all
-clean-all:
-	$(RM) -r $(BUILD_DIR)
+.PHONY: clean-sim
+clean-sim:
+	@rm -rf build
 
-# Debug
-.test:
-	@echo $(ROOT)
-	@echo $(TEST_DIR)
-.list:
-	@echo "Packages:"
-	@printf ' - %s\n' $(PKG_SRCS)
-	@echo
-	@echo "Source files:"
-	@printf ' - %s\n' $(MODULES_SRCS)
+.PHONY: clean-app
+clean-app:
+	$(MAKE) -C sw clean
+
+.PHONY: .print
+.print:
+	@echo "SIM_HDL_FILES: $(SIM_HDL_FILES)"
+	@echo "SIM_CPP_FILES: $(SIM_CPP_FILES)"

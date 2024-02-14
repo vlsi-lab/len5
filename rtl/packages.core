@@ -1,0 +1,31 @@
+CAPI=2:
+# Copyright 2024 POLITO
+# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+name: "polito:len5:packages:0.1.0"
+description: "LEN5 CPU pacakge components"
+
+filesets:
+  len5-packages:
+    files:
+    - packages/util_pkg.sv
+    - packages/len5_config_pkg.sv
+    - packages/len5_pkg.sv
+    - packages/instr_pkg.sv
+    - packages/csr_pkg.sv
+    - packages/fetch_pkg.sv
+    - packages/expipe_pkg.sv
+    - packages/memory_pkg.sv
+    file_type: systemVerilogSource
+
+  verilator-waivers:
+    files:
+    - packages/packages-waivers.vlt
+    file_type: vlt
+
+targets:
+  default: &default
+    filesets:
+    - len5-packages
+    - tool_verilator ? (verilator-waivers)

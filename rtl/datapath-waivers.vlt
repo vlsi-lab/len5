@@ -1,0 +1,20 @@
+// Copyright 2022 Politecnico di Torino.
+// Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// File: vector-subsystem-waivers.vlt
+// Author:  Mattia Mirigaldi
+// Date: 12/02/2024
+// Description: Verilator waivers 
+
+`verilator_config
+
+// Signals not driven, will be implemented in future versions
+lint_off -rule UNUSED -file "*/datapath.sv" -match "Signal is not used: 'irq_i'"
+lint_off -rule UNUSED -file "*/datapath.sv" -match "Signal is not used: 'fetch_enable_i'"
+lint_off -rule UNDRIVEN -file "*/datapath.sv" -match "Signal is not driven: 'irq_ack_o'"
+lint_off -rule UNDRIVEN -file "*/datapath.sv" -match "Signal is not driven: 'irq_id_o'"
+lint_off -rule UNDRIVEN -file "*/datapath.sv" -match "Signal is not driven: 'core_sleep_o'"
+
+
+

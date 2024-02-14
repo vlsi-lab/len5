@@ -1,0 +1,32 @@
+CAPI=2:
+# Copyright 2024 POLITO
+# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+name: "polito:len5:frontend:0.1.0"
+description: " LEN5 CPU frontend components"
+
+filesets:
+ frontend-rtl:
+   depend:
+    - polito:len5:packages
+   files:
+    - frontend/pc_gen.sv
+    - frontend/fetch_mem_if.sv
+    - frontend/fetch_stage.sv
+    - frontend/bpu.sv
+    - frontend/btb.sv
+    - frontend/gshare.sv
+    - frontend/ras.sv
+   file_type: systemVerilogSource
+
+ verilator-waivers:
+   files:
+    - frontend/frontend-waivers.vlt
+   file_type: vlt
+
+targets:
+    default:
+        filesets:
+        - frontend-rtl
+        - tool_verilator ? (verilator-waivers)

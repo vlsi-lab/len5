@@ -67,7 +67,7 @@ initial begin
     #10 flush_i = 0;
     #10 except_pc_i = 'h0000000000000002;
 
-    #600 $finish;
+    #600 $finish();
 end
 
 // ---
@@ -99,7 +99,7 @@ front_end #(.HLEN(4),.BTB_BITS(4)) u_Front_end
 
   // For pc_gen from or to back end
   .except_i			(except_i),
-  .except_pc_i		(except_pc_i)   
+  .except_pc_i		(except_pc_i)
 );
-    
+
 endmodule

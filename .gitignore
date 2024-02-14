@@ -30,8 +30,6 @@ syn/reports/
 ## jekyll files ##
 # folder in which the processed site is put
 _site/
-# install path for bundled gems
-vendor/
 # bundle config directory 
 .bundle/
 

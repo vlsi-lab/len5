@@ -1,0 +1,181 @@
+CAPI=2:
+# Copyright 2024 POLITO
+# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# File: heeperator.core
+# Author: Mattia Mirigaldi, Michele Caon
+# Date: 24/01/2024
+# Description: LEN5 top-level core file
+
+name: "polito:len5:len5:0.1.0"
+description: "LEN5: out-of-order superscalar CPU"
+
+filesets:
+  rtl-bare:
+    files:
+    - rtl/datapath.sv
+    file_type: systemVerilogSource
+    depend:
+    - polito:len5:packages
+    - polito:len5:common
+    - polito:len5:frontend
+    - polito:len5:expipe
+
+  rtl-bare-tb:
+    depend:
+    - polito:len5:packages
+    files:
+    - tb/memory/memory_class: {is_include_file : true}
+    - tb/memory/memory_ans_pkg.sv
+    - tb/memory/memory_if.sv
+    - tb/memory/memory_bare_emu.sv
+    - tb/tb_bare.sv
+    file_type: systemVerilogSource
+
+  verilator-bare-tb:
+    files:
+    - tb/verilator/len5_tb.cpp
+    - tb/verilator/tb_macros.cpp
+    - tb/verilator/tb_macros.hh: {is_include_file: true}
+    file_type: cppSource
+
+  questasim-bare-tb:
+    files:
+    file_type: systemVerilogSource
+
+  verilator-waivers:
+   files:
+   - tb/tb-waivers.vlt
+   - rtl/datapath-waivers.vlt
+   file_type: vlt
+
+scripts:
+  # Create log directory
+  prepare_dirs:
+    cmd:
+    - mkdir
+    - -p
+    - logs
+  
+  # Copy simulation waveforms in common directory
+  copy_waves:
+    cmd:
+    - bash
+    - ../../../scripts/sim/copy-waves.sh
+    - logs/waves.fst
+    - logs/waves-0.vcd
+
+targets:
+  # Default target
+  default: &default
+    filesets:
+    - rtl-bare
+    - tool_verilator ? (verilator-waivers)
+    toplevel: datapath
+
+  # RTL simulation
+  sim:
+    <<: *default
+    default_tool: modelsim
+    filesets_append:
+    - rtl-bare-tb
+    - tool_modelsim ? (questasim-bare-tb)
+    - tool_verilator ? (verilator-bare-tb)
+    toplevel: 
+      - tool_verilator ? (tb_bare)
+      - "!tool_verilator ? (tb_len5)"
+    parameters:
+    - firmware
+    - max_cycles
+    - tool_verilator ? (log_level)
+    hooks:
+      pre_run:
+      - prepare_dirs
+      post_run:
+      - copy_waves
+    tools:
+      modelsim:
+        vlog_options:
+        - -override_timescale 1ns/1ps
+        - -suppress vlog-2583
+        - -suppress vlog-2577
+        - -pedanticerrors
+        - -define MODELSIM
+        - -svinputport=compat
+        - -hazards
+        - -vmake
+      verilator:
+        mode: cc
+        verilator_options:
+        - '--cc'
+        - '--assert'
+        - '--trace'
+        - '--trace-fst'
+        - '--trace-structs'
+        - '--trace-max-array 128'
+        - '--x-assign unique'
+        - '--x-initial unique'
+        - '--report-unoptflat'
+        - '--exe'
+        - 'len5_tb.cpp'
+        - '-Wall'
+        - '-Wpedantic'
+        - '-CFLAGS "-Wall -g"'
+
+  # Format HDL with Verible
+  format:
+    filesets:
+    - rtl-bare
+    - rtl-bare-tb
+    toplevel: datapath
+    description: Format source files using verible-verilog-format
+    default_tool: veribleformat
+    tools:
+      veribleformat:
+        verible_format_args:
+        - '--assignment_statement_alignment=align'
+        - '--case_items_alignment=align'
+        - '--formal_parameters_indentation=indent'
+        - '--named_parameter_alignment=align'
+        - '--named_parameter_indentation=indent'
+        - '--named_port_alignment=align'
+        - '--named_port_indentation=indent'
+        - '--port_declarations_alignment=align'
+        - '--port_declarations_indentation=indent'
+        - '--assignment_statement_alignment=align'
+        - '--module_net_variable_alignment=align'
+        - '--inplace'
+
+  # Static analysis with Verible
+  lint:
+    filesets:
+    - rtl-bare
+    - rtl-bare-tb
+    toplevel: datapath
+    description: Perform static analysis using Verible
+    default_tool: veriblelint
+    tools:
+      veriblelint:
+        ruleset: default
+        verible_lint_args:
+        - '--waiver_files=../../../rtl/misc/verible-lint.waiver'
+        rules:
+        - 'line-length=length:160'
+
+# Parameters
+parameters:
+  log_level:
+    datatype: str
+    description: |
+      Set the log level. Admitted values: LOG_NONE|LOG_LOW|LOG_MEDIUM|LOG_HIGH|LOG_FULL|LOG_DEBUG.
+      Errors and configuration messages are always printed.
+    paramtype: cmdlinearg
+  firmware:
+    datatype: str
+    description: Firmware (in HEX format) to load into the system SRAM.
+    paramtype: plusarg
+  max_cycles:
+    datatype: int
+    description: Maximum number of simulation cycles (halt the simulation when reached).
+    paramtype: plusarg

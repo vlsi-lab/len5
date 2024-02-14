@@ -13,13 +13,11 @@
 // Date: 21/08/2022
 
 interface memory_if (
-    input   logic   clk
+  input logic clk
 );
-    // Interface signals
+  // Interface signals
 
-    // TB port
-    modport tb_port (
-        input   clk
-    );
-    
-endinterface // memory_if
+  // TB port
+  modport tb_port(input clk);
+
+endinterface  // memory_if

@@ -12,290 +12,365 @@
 // Author: Michele Caon
 // Date: 17/08/2022
 
-/* Import UVM macros and package */
-`include "uvm_macros.svh"
-import uvm_pkg::*;
+module tb_bare #(
+  parameter string           MEM_DUMP_FILE = "mem_dump.txt",
+  parameter longint unsigned BOOT_PC       = 64'h0
+) (
+  input logic clk_i,  // simulation clock
+  input logic rst_ni  // simulation reset
+);
 
-`include "len5_config.svh"
+  import len5_pkg::*;
+  import expipe_pkg::*;
+  import memory_pkg::*;
+  import csr_pkg::*;
+  import len5_config_pkg::*;
 
-import len5_pkg::*;
-import expipe_pkg::*;
-import memory_pkg::*;
-import csr_pkg::*;
+  // ----------------
+  // TB CONFIGURATION
+  // ----------------
+  // Memory emulator configuration
+  localparam int unsigned MemDumpT = 0;  // memory dump period (in cycles, 0 to disable)
+  localparam int unsigned MemPipeNum = 0;  // memory latency
 
-module tb_bare;
-    // ----------------
-    // TB CONFIGURATION
-    // ----------------
+  // Datapath configuration
+  // NOTE: the memory can accept a number of outstanding requests equal to
+  // the number of its pipeline stages, plus the two internal registers of
+  // the output spill cell, if implemented. The fetch stage must buffer the
+  // same number of requests.
+  localparam int unsigned FetchMemIfFifoDepth = MemPipeNum + ((MEM_EMU_SKIP_INSTR_OUT_REG) ? 0 : 2);
 
-    // Boot program counter
-    localparam  FETCH_BOOT_PC   = `BOOT_PC;
+  // INTERNAL SIGNALS
+  // ----------------
+  // Memory file path
+  string                              mem_file = "firmware.hex";
 
-    // Serial monitor and exit register address
-    localparam  MON_MEM_ADDR    = `SERIAL_ADDR;
-    localparam  EXIT_ADDR       = `EXIT_ADDR;
+  // Number of cycles to simulate
+  longint unsigned                    num_cycles = 0;
 
-    // Memory emulator configuration
-    localparam string MEM_DUMP_FILE = "mem_dump.txt";
-    localparam  MEM_DUMP_T          = 0; // memory dump period (in cycles, 0 to disable)
-    localparam  MEM_PIPE_NUM        = 0; // memory latency
-    localparam  MEM_SKIP_INS_REG    = MEM_EMU_SKIP_INSTR_OUT_REG; // skip instruction output register
-    localparam  MEM_SKIP_DATA_REG   = MEM_EMU_SKIP_DATA_OUT_REG;  // skip data output register
+  // Number of cycles to simulate
+  longint unsigned                    curr_cycle = 0;
 
-    // Datapath configuration
-    // NOTE: the memory can accept a number of outstanding requests equal to
-    // the number of its pipeline stages, plus the two internal registers of
-    // the output spill cell, if implemented. The fetch stage must buffer the
-    // same number of requests.
-    localparam  FETCH_MEMIF_FIFO_DEPTH  = MEM_PIPE_NUM + ((MEM_SKIP_INS_REG) ? 0 : 2);
+  // Serial monitor string
+  string                              serial_str;
 
-    // INTERNAL SIGNALS
-    // ----------------
+  // Mmeory monitor
+  longint unsigned                    num_instr_loads = 0;
+  longint unsigned                    num_data_loads = 0;
+  longint unsigned                    num_data_stores = 0;
 
-    // Input memory file (binary)
-    string      mem_file = "memory.mem";
+  // Mmeory Emulator <--> Datapath
+  logic                               dp2mem_flush;
+  logic                               dp2mem_instr_valid;
+  logic                               mem2dp_instr_ready;
+  logic                               dp2mem_instr_ready;
+  logic                               mem2dp_instr_valid;
+  logic            [        XLEN-1:0] dp2mem_instr_addr;
+  logic            [        ILEN-1:0] mem2dp_instr_rdata;
+  logic                               mem2dp_instr_except_raised;
+  except_code_t                       mem2dp_instr_except_code;
 
-    // Number of cycles to simulate
-    longint unsigned    num_cycles = 0;    // 0: no boundary
-    longint unsigned    curr_cycle = 0;
+  logic                               dp2mem_load_valid;
+  logic                               mem2dp_load_ready;
+  logic                               mem2dp_load_valid;
+  logic                               dp2mem_load_ready;
+  logic            [        XLEN-1:0] dp2mem_load_addr;
+  logic            [             7:0] dp2mem_load_be;
+  logic            [BUFF_IDX_LEN-1:0] dp2mem_load_tag;
+  logic            [        XLEN-1:0] mem2dp_load_rdata;
+  logic            [BUFF_IDX_LEN-1:0] mem2dp_load_tag;
+  logic                               mem2dp_load_except_raised;
+  except_code_t                       mem2dp_load_except_code;
 
-    // Clock and reset
-    logic       clk, rst_n;
+  logic                               dp2mem_store_valid;
+  logic                               mem2dp_store_ready;
+  logic                               dp2mem_store_ready;
+  logic                               mem2dp_store_valid;
+  logic                               dp2mem_store_we;
+  logic            [        XLEN-1:0] dp2mem_store_addr;
+  logic            [BUFF_IDX_LEN-1:0] dp2mem_store_tag;
+  logic            [             7:0] dp2mem_store_be;
+  logic            [        XLEN-1:0] dp2mem_store_wdata;
+  logic            [BUFF_IDX_LEN-1:0] mem2dp_store_tag;
+  logic                               mem2dp_store_except_raised;
+  except_code_t                       mem2dp_store_except_code;
 
-    // Stop flag
-    logic       tb_stop = 1'b0;
+  // ----
+  // BODY
+  // ----
 
-    // Serial monitor string
-    string      serial_str;
+  // Command-line options and configuration
+  // --------------------------------------
+  initial begin
+    // Set the firmware file path
+    $value$plusargs("firmware=%s", mem_file);
 
-    // Mmeory monitor
-    longint unsigned    num_instr_loads = 0;
-    longint unsigned    num_data_loads  = 0;
-    longint unsigned    num_data_stores = 0;
+    // Set the number of cycles to simulate
+    $value$plusargs("max_cycles=%d", num_cycles);
 
-    // Mmeory Emulator <--> Datapath
-    logic       ins_mem_dp_valid;
-    logic       ins_mem_dp_ready;
-    logic       dp_ins_mem_valid;
-    logic       dp_ins_mem_ready;
-    mem_ans_t   ins_mem_dp_ans;
-    mem_req_t   dp_ins_mem_req;
-    logic       data_mem_dp_valid;
-    logic       data_mem_dp_ready;
-    logic       dp_data_mem_valid;
-    logic       dp_data_mem_ready;
-    mem_ans_t   data_mem_dp_ans;
-    mem_req_t   dp_data_mem_req;
+    // Print firmware file being used
+    $display("[TB] Firmware: %s", mem_file);
 
-    // ----
-    // BODY
-    // ----
+    // Print the number of cycles to simulate
+    $display("[TB] Number of cycles to simulate: %0d", num_cycles);
 
-    // Command-line options and configuration
-    // --------------------------------------
-    initial begin
-        // Set the memory file path
-        if ($value$plusargs("MEM_FILE=%s", mem_file)) begin
-            `uvm_info("CMDLINE", "Updated memory file", UVM_HIGH);
-        end
-        
-        // Set the number of cycles to simulate
-        if ($value$plusargs("N=%d", num_cycles)) begin
-            `uvm_info("CMDLINE", "Updated number of simulation cycles", UVM_HIGH);
-        end
+    // Print boot program counter
+    $display("[TB] Boot program counter: 0x%x", BOOT_PC);
 
-        /* Print boot program counter */
-        `uvm_info("CONFIG", $sformatf("Boot program counter: 0x%x", `BOOT_PC), UVM_INFO);
+    // Print memory file being used
+    $display("[TB] Memory image: %s", mem_file);
 
-        /* Print the number of simulation cycles */
-        `uvm_info("CONFIG", $sformatf("Number of simulation cycles: %0d", num_cycles), UVM_INFO);
+    // Print the serial monitor base address
+    $display("[TB] Serial monitor memory address: 0x%h", SERIAL_ADDR);
 
-        /* Print memory file being used */
-        `uvm_info("CONFIG", $sformatf("Memory image: %s", mem_file), UVM_INFO);
-
-        /* Print the serial monitor base address */
-        `uvm_info("CONFIG", $sformatf("Serial monitor memory address: 0x%h", MON_MEM_ADDR), UVM_INFO);
-
-        /* Print M extension information */
-        `uvm_info("CONFIG", $sformatf("M extension: %s", `ifdef LEN5_M_EN "YES" `else "NO" `endif), UVM_INFO);
-        
-        /* Print FP extension information */
-        `uvm_info("CONFIG", $sformatf("D extension: %s", `ifdef LEN5_FP_EN "YES" `else "NO" `endif), UVM_INFO);
-    end
-
-    // Clock and reset generation
-    // --------------------------
-    initial begin
-        clk         = 1'b1;
-        rst_n       = 1'b0;
-        
-        #10 rst_n = 1'b1;
-
-        fork
-            begin
-                if (num_cycles > 0) begin
-                    repeat (num_cycles) begin
-                        @(posedge clk);
-                        curr_cycle += 1;
-                    end
-                    $stop;
-                end
-            end
-
-            begin
-                @(posedge tb_stop);
-                repeat (10) @(posedge clk);
-                `uvm_info("TB", "Stopping simulation", UVM_INFO);
-                printReport();
-                $stop;
-            end
-        join
-    end
-    always #5 clk   = ~clk;
-
-    // Memory monitor
-    // --------------
-    // Track the number of issued memory requests
-    always_ff @( posedge clk ) begin : mem_monitor
-        if (dp_data_mem_valid && data_mem_dp_ready) begin
-            case (dp_data_mem_req.acc_type)
-                MEM_ACC_LD:     num_data_loads++;
-                MEM_ACC_ST:     num_data_stores++;
-                default: begin
-                    `uvm_error("TB MEM MONITOR", $sformatf("Detected invalid data memory request at 0x%h", dp_data_mem_req.addr));
-                end
-            endcase
-        end
-        if (dp_ins_mem_valid && ins_mem_dp_ready) begin
-            if (dp_ins_mem_req.acc_type == MEM_ACC_INSTR) begin
-                num_instr_loads++;
-            end else begin
-                `uvm_error("TB MEM MONITOR", $sformatf("Detected invalid instruction memory request at 0x%h", dp_data_mem_req.addr));
-            end
-        end
-    end
-
-    // Serial monitor
-    // --------------
-    always_ff @( posedge clk ) begin : serial_monitor
-        byte c;
-
-        // Sniff SERIAL ADDRESS and print content
-        if (dp_data_mem_valid && dp_data_mem_req.addr == MON_MEM_ADDR && dp_data_mem_req.acc_type == MEM_ACC_ST) begin
-            c = dp_data_mem_req.value[7:0];
-            if (c == "\n") begin
-                `uvm_info("TB SERIAL MONITOR", $sformatf("Detected newline:         [0x%h]", c), UVM_HIGH);
-            end else if (c == "\0") begin
-                `uvm_info("TB SERIAL MONITOR", $sformatf("Detected end of string:   [0x%h]", c), UVM_HIGH);
-            end else begin
-                `uvm_info("TB SERIAL MONITOR", $sformatf("Detected character:     %c [0x%h]", c, c), UVM_HIGH);
-            end
-
-            // Check for end-of-string
-            if ((c == "\0" || c == "\n") && serial_str.len() > 0) begin
-                `uvm_info("TB SERIAL MONITOR", $sformatf("Received string: \"%s\"", serial_str), UVM_LOW);
-                serial_str = "";
-            end else begin
-                serial_str = {serial_str, c};
-            end
-        end
-    end
-
-    // Exit monitor
-    // ------------
-    // Stop the simulation after a certain memory location is written
-    always_ff @( posedge clk ) begin : exit_monitor
-        byte c;
-
-        if (dp_data_mem_valid && dp_data_mem_req.addr == EXIT_ADDR && dp_data_mem_req.acc_type == MEM_ACC_ST) begin
-            c = dp_data_mem_req.value[7:0];
-            `uvm_info("TB EXIT MONITOR", $sformatf("Program exit with code: 0x%h", c), UVM_INFO);
-            tb_stop <= 1'b1;
-        end else tb_stop <= 0;
-    end
-
-    // -------
-    // MODULES
-    // -------
-
-    // LEN5 BAREMETAL DATAPATH
-    // -----------------------
-    datapath #(
-        .FETCH_MEMIF_FIFO_DEPTH (FETCH_MEMIF_FIFO_DEPTH ),
-        .BOOT_PC                (FETCH_BOOT_PC)
-    ) u_datapath (
-    	.clk_i            (clk               ),
-        .rst_n_i          (rst_n             ),
-        .mem_flush_o      (dp_mem_flush      ),
-        .ins_mem_valid_i  (ins_mem_dp_valid  ),
-        .ins_mem_ready_i  (ins_mem_dp_ready  ),
-        .ins_mem_valid_o  (dp_ins_mem_valid  ),
-        .ins_mem_ready_o  (dp_ins_mem_ready  ),
-        .ins_mem_ans_i    (ins_mem_dp_ans    ),
-        .ins_mem_req_o    (dp_ins_mem_req    ),
-        .data_mem_valid_i (data_mem_dp_valid ),
-        .data_mem_ready_i (data_mem_dp_ready ),
-        .data_mem_valid_o (dp_data_mem_valid ),
-        .data_mem_ready_o (dp_data_mem_ready ),
-        .data_mem_ans_i   (data_mem_dp_ans   ),
-        .data_mem_req_o   (dp_data_mem_req   )
+    // Print M extension information
+    $display("[TB] M extension: %s",
+             `ifdef LEN5_M_EN "YES"
+             `else
+             "NO"
+             `endif
     );
 
-    // MEMORY EMULATOR
-    // ---------------
-    memory_bare_emu #(
-        .DUMP_PERIOD        (MEM_DUMP_T        ),
-        .PIPE_NUM           (MEM_PIPE_NUM      ),
-        .SKIP_INS_ANS_REG   (MEM_SKIP_INS_REG  ),
-        .SKIP_DATA_ANS_REG  (MEM_SKIP_DATA_REG )
-    ) u_memory_bare_emu (
-    	.clk_i           (clk               ),
-        .rst_n_i         (rst_n             ),
-        .flush_i         (dp_mem_flush      ),
-        .mem_file_i      (mem_file          ),
-        .mem_dump_file_i (MEM_DUMP_FILE     ),
-        .ins_valid_i     (dp_ins_mem_valid  ),
-        .ins_ready_i     (dp_ins_mem_ready  ),
-        .ins_valid_o     (ins_mem_dp_valid  ),
-        .ins_ready_o     (ins_mem_dp_ready  ),
-        .ins_req_i       (dp_ins_mem_req    ),
-        .ins_ans_o       (ins_mem_dp_ans    ),
-        .data_valid_i    (dp_data_mem_valid ),
-        .data_ready_i    (dp_data_mem_ready ),
-        .data_valid_o    (data_mem_dp_valid ),
-        .data_ready_o    (data_mem_dp_ready ),
-        .data_req_i      (dp_data_mem_req   ),
-        .data_ans_o      (data_mem_dp_ans   )
+    // Print FP extension information
+    $display("[TB] D extension: %s",
+             `ifdef LEN5_FP_EN "YES"
+             `else
+             "NO"
+             `endif
     );
-    
-    // ---------
-    // FUNCTIONS
-    // ---------
 
-    // Print simulation report
-    function void printReport();
-        automatic longint unsigned  num_mem_requests    = num_instr_loads + num_data_loads + num_data_stores;
+    if (num_cycles <= 0) begin
+      $fatal("Maximum simulation cycles is lower or equal to 0. Exiting...");
+    end
 
-    `uvm_info("TB REPORT", "EXECUTION REPORT", UVM_INFO);
-    `ifndef LEN5_CSR_HPMCOUNTERS_EN
-        `uvm_info("TB REPORT", "NOTE: extra performance counters not available since 'LEN5_CSR_HPMCOUNTERS_EN' is not defined", UVM_MEDIUM);
-    `endif /* LEN5_CSR_HPMCOUNTERS_EN */
-        `uvm_info("TB REPORT", $sformatf("- current TB cycle:                      %0d", curr_cycle), UVM_INFO);
-        `uvm_info("TB REPORT", $sformatf("- total CPU cycles:                      %0d", u_datapath.u_backend.u_csrs.mcycle), UVM_INFO);
-        `uvm_info("TB REPORT", $sformatf("- retired instructions:                  %0d", u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
-    `ifdef LEN5_CSR_HPMCOUNTERS_EN
-        `uvm_info("TB REPORT", $sformatf("  > retired branch/jump instructions:    %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4, real'(u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
-        `uvm_info("TB REPORT", $sformatf("    + jumps:                             %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter3, real'(u_datapath.u_backend.u_csrs.hpmcounter3) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
-        `uvm_info("TB REPORT", $sformatf("    + branches:                          %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter4, real'(u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
-        `uvm_info("TB REPORT", $sformatf("  > retired load/store instructions:     %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6, real'(u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
-        `uvm_info("TB REPORT", $sformatf("    + loads:                             %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter5, real'(u_datapath.u_backend.u_csrs.hpmcounter5) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
-        `uvm_info("TB REPORT", $sformatf("    + stores:                            %0d (%0.1f%%)", u_datapath.u_backend.u_csrs.hpmcounter6, real'(u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret), UVM_INFO);
-    `endif /* LEN5_CSR_HPMCOUNTERS_EN */
-        `uvm_info("TB REPORT", $sformatf("- average IPC:                           %0.2f", real'(u_datapath.u_backend.u_csrs.minstret) / curr_cycle), UVM_INFO);
-        `uvm_info("TB REPORT", $sformatf("- memory requests:                       %0d", num_data_loads + num_data_stores + num_instr_loads), UVM_INFO);
-        `uvm_info("TB REPORT", $sformatf("  > load instr. memory requests:         %0d (%0.2f%%)", num_instr_loads, real'(num_instr_loads) * 100 / num_mem_requests), UVM_INFO);
-        `uvm_info("TB REPORT", $sformatf("  > load data memory requests :          %0d (%0.2f%%)", num_data_loads, real'(num_data_loads) * 100 / num_mem_requests), UVM_INFO);
-        `uvm_info("TB REPORT", $sformatf("  > store data memory requests :         %0d (%0.2f%%)", num_data_stores, real'(num_data_stores) * 100 / num_mem_requests), UVM_INFO);
-    endfunction: printReport
+  end
+
+  // Watchdog
+  // --------
+  //logic clk = 1'b0;
+  //always #5 clk = ~clk;
+  always_ff @(posedge clk_i) begin
+    curr_cycle <= curr_cycle + 1;
+    if (curr_cycle >= num_cycles) begin
+      $fatal("[%t] Simulation timeout. Exiting...", $time);
+    end
+  end
+
+
+  // Memory monitor
+  // --------------
+  // Track the number of issued memory requests
+  always_ff @(posedge clk_i) begin : mem_monitor
+    if (dp2mem_load_valid && mem2dp_load_ready) begin
+      num_data_loads <= num_data_loads + 1;
+    end
+    if (dp2mem_store_valid && mem2dp_store_ready) begin
+      num_data_stores <= num_data_stores + 1;
+    end
+    if (dp2mem_instr_valid && mem2dp_instr_ready) begin
+      num_instr_loads <= num_instr_loads + 1;
+    end
+  end
+
+  // Serial monitor
+  // --------------
+  always_ff @(posedge clk_i) begin : serial_monitor
+    byte c;
+
+    // Sniff SERIAL ADDRESS and print content
+    if (dp2mem_store_valid && dp2mem_store_addr == SERIAL_ADDR) begin
+      c <= dp2mem_store_wdata[7:0];
+      if (c == "\n") begin
+        $display("Detected newline:         [0x%h]", c);
+      end else if (c == 8'b0) begin  // null character \0 decode to all 0 byte
+        $display("Detected end of string:   [0x%h]", c);
+      end else begin
+        $display("Detected character:     %c [0x%h]", c, c);
+      end
+
+      // Check for end-of-string
+      if ((c == 8'b0 || c == "\n") && serial_str.len() > 0) begin // null character \0 decode to all 0 byte
+        $display("Received string: \"%s\"", serial_str);
+        serial_str <= "";
+      end else begin
+        serial_str <= {serial_str, c};
+      end
+    end
+  end
+
+  // Exit monitor
+  // ------------
+  // Stop the simulation after a certain memory location is written
+  always_ff @(posedge clk_i) begin : exit_monitor
+    byte c;
+
+    if (dp2mem_store_valid && dp2mem_store_addr == EXIT_ADDR) begin
+      c <= dp2mem_store_wdata[7:0];
+      $display("Program exit with code: 0x%h", c);
+      printReport();
+      $stop();
+    end
+  end
+
+  // -------
+  // MODULES
+  // -------
+
+  // LEN5 BAREMETAL DATAPATH
+  // -----------------------
+  datapath #(
+    .FETCH_MEMIF_FIFO_DEPTH(FetchMemIfFifoDepth),
+    .BOOT_PC               (BOOT_PC)
+  ) u_datapath (
+    .clk_i                     (clk_i),
+    .rst_n_i                   (rst_ni),
+    .mem_flush_o               (dp2mem_flush),
+    .instr_req_o               (dp2mem_instr_valid),
+    .instr_gnt_i               (mem2dp_instr_ready),
+    .instr_rvalid_i            (mem2dp_instr_valid),
+    .instr_rready_o            (dp2mem_instr_ready),
+    .instr_we_o                (),
+    .instr_addr_o              (dp2mem_instr_addr),
+    .instr_rdata_i             (mem2dp_instr_rdata),
+    .instr_except_raised_i     (mem2dp_instr_except_raised),
+    .instr_except_code_i       (mem2dp_instr_except_code),
+    .data_load_req_o           (dp2mem_load_valid),
+    .data_load_gnt_i           (mem2dp_load_ready),
+    .data_load_rvalid_i        (mem2dp_load_valid),
+    .data_load_rready_o        (dp2mem_load_ready),
+    .data_load_we_o            (),
+    .data_load_addr_o          (dp2mem_load_addr),
+    .data_load_be_o            (dp2mem_load_be),
+    .data_load_tag_o           (dp2mem_load_tag),
+    .data_load_rdata_i         (mem2dp_load_rdata),
+    .data_load_tag_i           (mem2dp_load_tag),
+    .data_load_except_raised_i (mem2dp_load_except_raised),
+    .data_load_except_code_i   (mem2dp_load_except_code),
+    .data_store_req_o          (dp2mem_store_valid),
+    .data_store_gnt_i          (mem2dp_store_ready),
+    .data_store_rvalid_i       (dp2mem_store_ready),
+    .data_store_rready_o       (mem2dp_store_valid),
+    .data_store_we_o           (dp2mem_store_we),
+    .data_store_addr_o         (dp2mem_store_addr),
+    .data_store_tag_o          (dp2mem_store_tag),
+    .data_store_be_o           (dp2mem_store_be),
+    .data_store_wdata_o        (dp2mem_store_wdata),
+    .data_store_tag_i          (mem2dp_store_tag),
+    .data_store_except_raised_i(mem2dp_store_except_raised),
+    .data_store_except_code_i  (mem2dp_store_except_code),
+    .irq_i                     (),
+    .irq_ack_o                 (),
+    .irq_id_o                  (),
+    .fetch_enable_i            (),
+    .core_sleep_o              ()
+  );
+
+  // MEMORY EMULATOR
+  // ---------------
+  memory_bare_emu #(
+    .DUMP_PERIOD      (MemDumpT),
+    .PIPE_NUM         (MemPipeNum),
+    .SKIP_INS_ANS_REG (MEM_EMU_SKIP_INSTR_OUT_REG),
+    .SKIP_DATA_ANS_REG(MEM_EMU_SKIP_DATA_OUT_REG)
+  ) u_memory_bare_emu (
+    .clk_i                     (clk_i),
+    .rst_n_i                   (rst_ni),
+    .flush_i                   (dp2mem_flush),
+    .mem_file_i                (mem_file),
+    .mem_dump_file_i           (MEM_DUMP_FILE),
+    .instr_valid_i             (dp2mem_instr_valid),
+    .instr_valid_o             (mem2dp_instr_valid),
+    .instr_ready_o             (mem2dp_instr_ready),
+    .instr_ready_i             (dp2mem_instr_ready),
+    .instr_addr_i              (dp2mem_instr_addr),
+    .instr_rdata_o             (mem2dp_instr_rdata),
+    .instr_except_raised_o     (mem2dp_instr_except_raised),
+    .instr_except_code_o       (mem2dp_instr_except_code),
+    .data_load_valid_i         (dp2mem_load_valid),
+    .data_load_valid_o         (mem2dp_load_ready),
+    .data_load_ready_o         (mem2dp_load_valid),
+    .data_load_ready_i         (dp2mem_load_ready),
+    .data_load_addr_i          (dp2mem_load_addr),
+    .data_load_be_i            (dp2mem_load_be),
+    .data_load_tag_i           (dp2mem_load_tag),
+    .data_load_rdata_o         (mem2dp_load_rdata),
+    .data_load_tag_o           (mem2dp_load_tag),
+    .data_load_except_raised_o (mem2dp_load_except_raised),
+    .data_load_except_code_o   (mem2dp_load_except_code),
+    .data_store_valid_i        (dp2mem_store_valid),
+    .data_store_valid_o        (mem2dp_store_ready),
+    .data_store_ready_o        (dp2mem_store_ready),
+    .data_store_ready_i        (mem2dp_store_valid),
+    .data_store_we_i           (dp2mem_store_we),
+    .data_store_addr_i         (dp2mem_store_addr),
+    .data_store_tag_i          (dp2mem_store_tag),
+    .data_store_be_i           (dp2mem_store_be),
+    .data_store_wdata_i        (dp2mem_store_wdata),
+    .data_store_tag_o          (mem2dp_store_tag),
+    .data_store_except_raised_o(mem2dp_store_except_raised),
+    .data_store_except_code_o  (mem2dp_store_except_code)
+  );
+
+  // ---------
+  // FUNCTIONS
+  // ---------
+
+  // Print simulation report
+  function automatic void printReport();
+    automatic
+    longint unsigned
+    num_mem_requests = num_instr_loads + num_data_loads + num_data_stores;
+
+    $display("EXECUTION REPORT");
+`ifndef LEN5_CSR_HPMCOUNTERS_EN
+    $display(
+        "NOTE: extra performance counters not available since 'LEN5_CSR_HPMCOUNTERS_EN' is not defined");
+`endif  /* LEN5_CSR_HPMCOUNTERS_EN */
+    $display("- current TB cycle:                      %0d", curr_cycle);
+    $display("- total CPU cycles:                      %0d", u_datapath.u_backend.u_csrs.mcycle);
+    $display("- retired instructions:                  %0d", u_datapath.u_backend.u_csrs.minstret);
+`ifdef LEN5_CSR_HPMCOUNTERS_EN
+    $display(
+        $sformatf(
+            "  > retired branch/jump instructions:    %0d (%0.1f%%)",
+            u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4,
+            real'(u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret));
+    $display(
+        $sformatf(
+            "    + jumps:                             %0d (%0.1f%%)",
+            u_datapath.u_backend.u_csrs.hpmcounter3,
+            real'(u_datapath.u_backend.u_csrs.hpmcounter3) * 100 / u_datapath.u_backend.u_csrs.minstret));
+    $display(
+        $sformatf(
+            "    + branches:                          %0d (%0.1f%%)",
+            u_datapath.u_backend.u_csrs.hpmcounter4,
+            real'(u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret));
+    $display(
+        $sformatf(
+            "  > retired load/store instructions:     %0d (%0.1f%%)",
+            u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6,
+            real'(u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret));
+    $display(
+        $sformatf(
+            "    + loads:                             %0d (%0.1f%%)",
+            u_datapath.u_backend.u_csrs.hpmcounter5,
+            real'(u_datapath.u_backend.u_csrs.hpmcounter5) * 100 / u_datapath.u_backend.u_csrs.minstret));
+    $display(
+        $sformatf(
+            "    + stores:                            %0d (%0.1f%%)",
+            u_datapath.u_backend.u_csrs.hpmcounter6,
+            real'(u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret));
+`endif  /* LEN5_CSR_HPMCOUNTERS_EN */
+    $display("- average IPC:                           %0.2f",
+             real'(u_datapath.u_backend.u_csrs.minstret) / curr_cycle);
+    $display("- memory requests:                       %0d",
+             num_data_loads + num_data_stores + num_instr_loads);
+    $display("  > load instr. memory requests:         %0d (%0.2f%%)", num_instr_loads,
+             real'(num_instr_loads) * 100 / num_mem_requests);
+    $display("  > load data memory requests :          %0d (%0.2f%%)", num_data_loads,
+             real'(num_data_loads) * 100 / num_mem_requests);
+    $display("  > store data memory requests :         %0d (%0.2f%%)", num_data_stores,
+             real'(num_data_stores) * 100 / num_mem_requests);
+  endfunction : printReport
 
 endmodule

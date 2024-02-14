@@ -1,0 +1,51 @@
+// Copyright 2022 Politecnico di Torino.
+// Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// File: vector-subsystem-waivers.vlt
+// Author:  Mattia Mirigaldi
+// Date: 12/02/2024
+// Description: Verilator waivers for NM-Carus
+
+`verilator_config
+// Signals not used inside class but used outside when declared an object of the class
+lint_off -rule UNUSED -file "*/memory_class.svh" -match "Signal is not used: 'read_halfword'"
+lint_off -rule UNUSED -file "*/memory_class.svh" -match "Signal is not used: 'read_word'"
+lint_off -rule UNUSED -file "*/memory_class.svh" -match "Signal is not used: 'read_doubleword'"
+lint_off -rule UNUSED -file "*/memory_class.svh" -match "Signal is not used: 'read_line'"
+
+lint_off -rule UNUSED -file "*/memory_bare_emu.sv" -match "Signal is not used: 'mem_dump_file_i'"
+
+// Not used since always load doubleword from mem  
+lint_off -rule UNUSED -file "*/memory_bare_emu.sv" -match "Signal is not used: 'data_load_be_i'"
+
+// Warnings due to generate (PIPE_NUM may be 0)
+lint_off -rule UNUSED -file "*/memory_bare_emu.sv" -match "Signal is not used: 'instr_pipe_en'"
+lint_off -rule UNUSED -file "*/memory_bare_emu.sv" -match "Signal is not used: 'data_load_pipe_en'"
+lint_off -rule UNUSED -file "*/memory_bare_emu.sv" -match "Signal is not used: 'data_store_pipe_en'"
+
+// Pins not used
+lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'instr_we_o'"
+lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'data_load_we_o'"
+
+// Pins not used, but will be used in future versions
+lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'irq_i'"
+lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'irq_ack_o'"
+lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'irq_id_o'"
+lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'fetch_enable_i'"
+lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'core_sleep_o'"
+
+//mcountinhibit waive
+
+
+
+//// WAIVE
+//
+//%Warning-UNUSED: ../../../rtl/expipe/exec-units/arith_rs.sv:38:33: Bits of signal are not used: 'cdb_data_i'[5:0] 
+//                                                                 : ... In instance tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.u_arith_rs
+//   38 |   input  expipe_pkg::cdb_data_t cdb_data_i,
+//      |                                 ^~~~~~~~~~
+//
+//      %Warning-UNUSED: ../../../rtl/expipe/exec-units/branch_unit.sv:93:30: Bits of signal are not used: 'bu_outreg_out'[65]
+//                                                                    : ... In instance tb_bare.u_datapath.u_backend.u_exec_stage.u_branch_unit
+//   93 |   bu_out_reg_t bu_outreg_in, bu_outreg_out;
