@@ -91,7 +91,7 @@ module csrs (
   csr_mhartid_t                  mhartid;
   // MSTATUS
   csr_mstatus_t                  mstatus;
-  logic [1:0]                    mstatus_mpp;
+  logic               [     1:0] mstatus_mpp;
   logic                          mstatus_mpie;
   logic                          mstatus_mie;
   // MTVEC

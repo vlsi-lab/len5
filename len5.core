@@ -50,6 +50,22 @@ filesets:
    - rtl/datapath-waivers.vlt
    file_type: vlt
 
+scripts:
+  # Create log directory
+  prepare_dirs:
+    cmd:
+    - mkdir
+    - -p
+    - logs
+  
+  # Copy simulation waveforms in common directory
+  copy_waves:
+    cmd:
+    - bash
+    - ../../../scripts/sim/copy-waves.sh
+    - logs/waves.fst
+    - logs/waves-0.vcd
+
 targets:
   # Default target
   default: &default
@@ -73,6 +89,11 @@ targets:
     - firmware
     - max_cycles
     - tool_verilator ? (log_level)
+    hooks:
+      pre_run:
+      - prepare_dirs
+      post_run:
+      - copy_waves
     tools:
       modelsim:
         vlog_options:

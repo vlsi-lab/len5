@@ -43,7 +43,7 @@ class memory_file_class #(
 
         /* Check address aligment */
         if (addr[1:0] != 2'b00) begin
-            $error($sformatf("Address 0x%h is NOT aligned on 32 bits", addr));
+            $error("Address 0x%h is NOT aligned on 32 bits", addr);
             return 1;
         end
 
@@ -65,7 +65,7 @@ class memory_file_class #(
     function bit FileReadW(logic [AWIDTH-1:0] addr);
         // Check the address alignment
         if (addr[1:0] != 2'b00) begin
-            $error($sformatf("Address 0x%h is NOT aligned on 32 bits", addr));
+            $error("Address 0x%h is NOT aligned on 32 bits", addr);
             return 1;
         end
 
@@ -73,7 +73,7 @@ class memory_file_class #(
 
         // Find the requested word in memory
         if (FileFindW(addr)) begin
-            $error($sformatf("Cannot find word at address 0x%h", addr));
+            $error("Cannot find word at address 0x%h", addr);
             return 1;
         end
 
@@ -92,7 +92,7 @@ class memory_file_class #(
 
         // Check address alignment
         if (addr[2:0] != 3'b000) begin
-            $error($sformatf("Address 0x%h is NOT aligned on 64 bits", addr));
+            $error("Address 0x%h is NOT aligned on 64 bits", addr);
             return 1; // exit
         end
 
@@ -100,14 +100,14 @@ class memory_file_class #(
 
         // Read lower word
         if (FileFindW(addr)) begin
-            $error($sformatf("Cannot find word at address 0x%h", addr));
+            $error("Cannot find word at address 0x%h", addr);
             return 1;
         end
         dw[WWIDTH-1:0]  = this.word_buf;
 
         // Read upper word
         if (FileFindW(addr | 64'h04)) begin
-            $error($sformatf("Cannot find word at address 0x%h", addr | 64'h4));
+            $error("Cannot find word at address 0x%h", addr | 64'h4);
             return 1;
         end
         dw[DWWIDTH-1:WWIDTH]    = this.word_buf;
@@ -127,7 +127,7 @@ class memory_file_class #(
 
         /* Check address aligment */
         if (addr[5:0] != 9'b000000) begin
-            $error($sformatf("Address 0x%h is NOT aligned on 32 bits", addr));
+            $error("Address 0x%h is NOT aligned on 32 bits", addr);
             return 1;
         end
 
@@ -136,7 +136,7 @@ class memory_file_class #(
         /* Read sixteen words from the memory */
         for (int i = 0; i < LWIDTH/WWIDTH; i++) begin
             if (FileFindW(addr + (i << 2))) begin
-                $error($sformatf("Cannot find word at address 0x%h", addr + (i << 2)));
+                $error("Cannot find word at address 0x%h", addr + (i << 2));
                 return 1;
             end
             line[WWIDTH*i +: WWIDTH] = this.word_buf;
@@ -165,7 +165,7 @@ class memory_file_class #(
 
         // Check address alignment
         if (addr[1:0] != 2'b00) begin
-            $error($sformatf("Address 0x%h is NOT aligned on 32 bits", addr));
+            $error("Address 0x%h is NOT aligned on 32 bits", addr);
             return 1; // exit
         end
 
@@ -178,7 +178,7 @@ class memory_file_class #(
         if (!FileFindW(addr)) begin
             // Go back one line
             if ($fseek(this.fd, -this.file_line.len(), 1)) begin
-                $error("fseek() failed");
+                $fatal("fseek() failed");
             end
             // Update the line content
             $fwrite(this.fd, line_buf);
@@ -194,7 +194,7 @@ class memory_file_class #(
     function bit FileWriteDW(logic [AWIDTH-1:0] addr, logic [DWWIDTH-1:0] data);
         /* Check address alignment */
         if (addr[2:0] != 3'b000) begin
-            $error($sformatf("Address 0x%h is NOT aligned on 64 bits", addr));
+            $error("Address 0x%h is NOT aligned on 64 bits", addr);
             return 1; // exit
         end
 
@@ -210,7 +210,7 @@ class memory_file_class #(
     function bit FileWriteLine(logic [AWIDTH-1:0] addr, logic [LWIDTH-1:0] data);
         /* Check address aligment */
         if (addr[5:0] != 9'b000000) begin
-            $error($sformatf("Address 0x%h is NOT aligned on 512 bits", addr));
+            $error("Address 0x%h is NOT aligned on 512 bits", addr);
             return 1;
         end
 

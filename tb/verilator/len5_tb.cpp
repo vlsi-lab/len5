@@ -40,7 +40,6 @@ void rstDut(Vtb_bare *dut, vluint64_t sim_time);
 // Main function
 int main(int argc, char **argv, char **env) {
     // TODO: parse command line arguments with getopt
-    char firmware_file[256] = "firmware.hex";
     logger.setLogLvl(LOG_HIGH);
 
     // Create simulation context
@@ -61,17 +60,15 @@ int main(int argc, char **argv, char **env) {
 
     // Print simulation configuration
     TB_CONFIG("Log level set to %u", logger.getLogLvl());
-    TB_CONFIG("Firmware file: %s", firmware_file);
     TB_CONFIG("Boot PC: 0x%x", BOOT_PC);
     TB_CONFIG("Reset cycles: %u", RESET_CYCLES);
     TB_CONFIG("Memory dump file: %s", MEM_DUMP_FILE);
     TB_CONFIG("Max simulation time: %u", MAX_SIM_TIME);
+    TB_CONFIG("FST filename: %s", FST_FILENAME);
 
     // Initialize the DUT
     dut->rst_ni = 0;
     dut->clk_i = 1;
-    dut->mem_file_i = firmware_file;
-    dut->num_cycles_i = MAX_SIM_TIME;
     
     // Start simulation
     long unsigned int sim_time = 0;

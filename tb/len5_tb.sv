@@ -25,32 +25,12 @@ module len5_tb;
 
   // INTERNAL SIGNALS
   // ----------------
-  // Memory file path
-  string           mem_file = "firmware.hex";
-
-  // Number of cycles to simulate
-  longint unsigned num_cycles = 0;
-
   // Clock and reset
   logic clk, rst_n;
 
   // ----
   // BODY
   // ----
-
-  // Command-line options and configuration
-  // --------------------------------------
-  initial begin
-    // Set the firmware file path
-    if ($value$plusargs("firmware=%s", mem_file)) begin
-      $display("Updated firmware");
-    end
-
-    // Set the number of cycles to simulate
-    if ($value$plusargs("N=%d", num_cycles)) begin
-      $display("Updated number of simulation cycles");
-    end
-  end
 
   // Clock and reset generation
   // --------------------------
@@ -72,8 +52,6 @@ module len5_tb;
     .BOOT_PC      (BootPC)
   ) u_tb (
     .clk_i       (clk),        // simulation clock
-    .rst_ni      (rst_n),      // simulation reset
-    .mem_file_i  (mem_file),   // memory file, in ASCII HEX format
-    .num_cycles_i(num_cycles)  // number of cycles to simulate
+    .rst_ni      (rst_n)       // simulation reset
   );
 endmodule

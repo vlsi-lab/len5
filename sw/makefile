@@ -4,7 +4,7 @@
 
 # General configuration
 MAKE			?= make
-BUILD_DIR		?= ../build/sw
+BUILD_DIR		?= build
 
 # Target application
 PROJECT			?= hello_world

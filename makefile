@@ -15,15 +15,16 @@ BUILD_DIR	   	?= $(realpath .)/build
 PROJECT  ?= hello_world
 
 # RTL simulation
-FIRMWARE		?= $(BUILD_DIR)/sw/main.hex
+FIRMWARE		?= $(BUILD_DIR)/main.hex
 MAX_CYCLES		?= 1000000
 LOG_LEVEL		?= LOG_MEDIUM
 
 # VARIABLES
 # ---------
 # RTL simulation files
-SIM_CORE_FILES 	:= $(shell find rtl -type f -name "*.core")
+SIM_CORE_FILES 	:= $(shell find . -type f -name "*.core")
 SIM_HDL_FILES 	:= $(shell find rtl -type f -name "*.v" -o -name "*.sv" -o -name "*.svh")
+SIM_HDL_FILES 	+= $(shell find tb -type f -name "*.v" -o -name "*.sv" -o -name "*.svh")
 SIM_CPP_FILES	:= $(shell find tb/verilator -type f -name "*.cpp" -o -name "*.hh")
 
 #######################
@@ -57,23 +58,28 @@ check: | .check-fusesoc
 # Re-run every time the necessary files (.core, RTL, CPP) change
 .PHONY: verilator-build
 verilator-build: $(BUILD_DIR)/.verilator.lock
-$(BUILD_DIR)/.verilator.lock: $(SIM_CORE_FILES) $(SIM_HDL_FILES) $(SIM_CPP_FILES) | .check-fusesoc
+$(BUILD_DIR)/.verilator.lock: $(SIM_CORE_FILES) $(SIM_HDL_FILES) $(SIM_CPP_FILES) | .check-fusesoc $(BUILD_DIR)/
 	@echo "## Building simulation model with Verilator..."
-	fusesoc run --no-export --target sim --tool verilator $(FUSESOC_FLAGS) --build polito:len5:len5 2>&1 | tee build/build.log
+	fusesoc run --no-export --target sim --tool verilator $(FUSESOC_FLAGS) --build polito:len5:len5
 	touch $@
 
 # Run Verilator simulation
-.PHONY: verilator-run
-verilator-run: $(BUILD_DIR)/.verilator.lock
-	fusesoc run --no-export --target sim --tool verilator --run $(FUSESOC_FLAGS) epfl:heeperator:heeperator \
+.PHONY: verilator-sim
+verilator-sim: $(BUILD_DIR)/.verilator.lock $(BUILD_DIR)/main.hex | .check-fusesoc
+	fusesoc run --no-export --target sim --tool verilator --run $(FUSESOC_FLAGS) polito:len5:len5 \
 		--log_level=$(LOG_LEVEL) \
 		--firmware=$(FIRMWARE) \
 		--max_cycles=$(MAX_CYCLES) \
-		$(FUSESOC_ARGS) 2>&1 | tee build/sim.log
+		$(FUSESOC_ARGS)
+
+# Open dumped waveform with GTKWave
+.PHONY: verilator-waves
+verilator-waves: $(BUILD_DIR)/sim-common/waves.fst | .check-gtkwave
+	gtkwave -a tb/misc/verilator-waves.gtkw $<
 
 # QuestaSim
 .PHONY: questasim-sim
-questasim-sim: | .check-fusesoc
+questasim-sim: $(BUILD_DIR)/main.hex | .check-fusesoc $(BUILD_DIR)/
 	@echo "## Running simulation with QuestaSim..."
 	fusesoc run --no-export --target sim --tool modelsim $(FUSESOC_FLAGS) --build polito:len5:len5 2>&1 | tee build/build.log
 	
@@ -81,7 +87,8 @@ questasim-sim: | .check-fusesoc
 # --------
 # Application from 'sw/applications'
 .PHONY: app
-app:
+app: $(BUILD_DIR)/main.hex
+$(BUILD_DIR)/main.hex: $(BUILD_DIR)/
 	@echo "## Building application '$(PROJECT)'"
 	$(MAKE) -C sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR)
 
@@ -106,6 +113,13 @@ run-helloworld-questasim: questasim-sim app-helloworld | .check-fusesoc
 .check-fusesoc:
 	@if [ ! `which fusesoc` ]; then \
 	printf -- "### ERROR: 'fusesoc' is not in PATH. Is the correct conda environment active?\n" >&2; \
+	exit 1; fi
+
+# Check if GTKWave is available
+.PHONY: .check-gtkwave
+.check-gtkwave:
+	@if [ ! `which gtkwave` ]; then \
+	printf -- "### ERROR: 'gtkwave' is not in PATH. Is the correct conda environment active?\n" >&2; \
 	exit 1; fi
 
 # Create new directories

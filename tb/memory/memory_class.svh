@@ -82,10 +82,13 @@ class memory_class;
     string path = this.memory_file_path;
     string ext = path.substr(path.len() - 3, path.len() - 1);
     // Choose the memory load method based on the file extension
-    if ( (ext.compare("txt") == 0) || (ext.compare("hex") == 0) ) begin
+    if (ext.compare("txt") == 0) begin
       return this.LoadMemTxt();
+    end else if (ext.compare("hex") == 0) begin
+      return this.LoadMemHex();
+    end else begin
+      return this.LoadMemBin(offs);
     end
-    return this.LoadMemBin(offs);
   endfunction : LoadMem
 
   // Load the memory content from a memory dump file (e.g., the output of 'objcopy -O binary')
@@ -160,6 +163,18 @@ class memory_class;
     $display("Loaded %0d bytes (%0d words)", this.mem.num(), this.mem.num() >> 2);
     return this.mem.num();
   endfunction : LoadMemTxt
+  
+  // Load the memory content from a text file ('address data' pairs)
+  local function int LoadMemHex();
+    string path = this.memory_file_path;
+
+    // Load memory file content
+    $readmemh(path, this.mem);
+
+    // Return the number of loaded bytes
+    $display("Loaded %0d bytes (%0d words)", this.mem.num(), this.mem.num() >> 2);
+    return this.mem.num();
+  endfunction : LoadMemHex
 
   // READ FUNCTIONS
   // --------------

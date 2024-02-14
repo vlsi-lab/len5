@@ -16,10 +16,8 @@ module tb_bare #(
   parameter string           MEM_DUMP_FILE = "mem_dump.txt",
   parameter longint unsigned BOOT_PC       = 64'h0
 ) (
-  input logic            clk_i,        // simulation clock
-  input logic            rst_ni,       // simulation reset
-  input string           mem_file_i,   // memory file, in ASCII HEX format
-  input longint unsigned num_cycles_i  // number of cycles to simulate
+  input logic clk_i,  // simulation clock
+  input logic rst_ni  // simulation reset
 );
 
   import len5_pkg::*;
@@ -44,6 +42,12 @@ module tb_bare #(
 
   // INTERNAL SIGNALS
   // ----------------
+  // Memory file path
+  string                              mem_file = "firmware.hex";
+
+  // Number of cycles to simulate
+  longint unsigned                    num_cycles = 0;
+
   // Number of cycles to simulate
   longint unsigned                    curr_cycle = 0;
 
@@ -98,34 +102,45 @@ module tb_bare #(
   // Command-line options and configuration
   // --------------------------------------
   initial begin
-    /* Print boot program counter */
-    $display($sformatf("Boot program counter: 0x%x", BOOT_PC));
+    // Set the firmware file path
+    $value$plusargs("firmware=%s", mem_file);
 
-    /* Print memory file being used */
-    $display($sformatf("Memory image: %s", mem_file_i));
+    // Set the number of cycles to simulate
+    $value$plusargs("max_cycles=%d", num_cycles);
 
-    /* Print the serial monitor base address */
-    $display($sformatf("Serial monitor memory address: 0x%h", SERIAL_ADDR));
+    // Print firmware file being used
+    $display("[TB] Firmware: %s", mem_file);
 
-    /* Print M extension information */
-    $display($sformatf("M extension: %s",
-                       `ifdef LEN5_M_EN "YES"
-                       `else
-                       "NO"
-                       `endif
-                       ));
+    // Print the number of cycles to simulate
+    $display("[TB] Number of cycles to simulate: %0d", num_cycles);
 
-    /* Print FP extension information */
-    $display($sformatf("D extension: %s",
-                       `ifdef LEN5_FP_EN "YES"
-                       `else
-                       "NO"
-                       `endif
-                       ));
+    // Print boot program counter
+    $display("[TB] Boot program counter: 0x%x", BOOT_PC);
 
-    if (num_cycles_i <= 0) begin
-      $error("Simulation time is lower or equal to 0. Exiting...");
-      $stop();
+    // Print memory file being used
+    $display("[TB] Memory image: %s", mem_file);
+
+    // Print the serial monitor base address
+    $display("[TB] Serial monitor memory address: 0x%h", SERIAL_ADDR);
+
+    // Print M extension information
+    $display("[TB] M extension: %s",
+             `ifdef LEN5_M_EN "YES"
+             `else
+             "NO"
+             `endif
+    );
+
+    // Print FP extension information
+    $display("[TB] D extension: %s",
+             `ifdef LEN5_FP_EN "YES"
+             `else
+             "NO"
+             `endif
+    );
+
+    if (num_cycles <= 0) begin
+      $fatal("Maximum simulation cycles is lower or equal to 0. Exiting...");
     end
 
   end
@@ -136,9 +151,8 @@ module tb_bare #(
   //always #5 clk = ~clk;
   always_ff @(posedge clk_i) begin
     curr_cycle <= curr_cycle + 1;
-    if (curr_cycle >= num_cycles_i) begin
-      $error("[%t] Simulation timeout. Exiting...", $time);
-      $stop();
+    if (curr_cycle >= num_cycles) begin
+      $fatal("[%t] Simulation timeout. Exiting...", $time);
     end
   end
 
@@ -167,16 +181,16 @@ module tb_bare #(
     if (dp2mem_store_valid && dp2mem_store_addr == SERIAL_ADDR) begin
       c <= dp2mem_store_wdata[7:0];
       if (c == "\n") begin
-        $display($sformatf("Detected newline:         [0x%h]", c));
+        $display("Detected newline:         [0x%h]", c);
       end else if (c == 8'b0) begin  // null character \0 decode to all 0 byte
-        $display($sformatf("Detected end of string:   [0x%h]", c));
+        $display("Detected end of string:   [0x%h]", c);
       end else begin
-        $display($sformatf("Detected character:     %c [0x%h]", c, c),);
+        $display("Detected character:     %c [0x%h]", c, c);
       end
 
       // Check for end-of-string
       if ((c == 8'b0 || c == "\n") && serial_str.len() > 0) begin // null character \0 decode to all 0 byte
-        $display($sformatf("Received string: \"%s\"", serial_str));
+        $display("Received string: \"%s\"", serial_str);
         serial_str <= "";
       end else begin
         serial_str <= {serial_str, c};
@@ -192,7 +206,7 @@ module tb_bare #(
 
     if (dp2mem_store_valid && dp2mem_store_addr == EXIT_ADDR) begin
       c <= dp2mem_store_wdata[7:0];
-      $display($sformatf("Program exit with code: 0x%h", c));
+      $display("Program exit with code: 0x%h", c);
       printReport();
       $stop();
     end
@@ -262,7 +276,7 @@ module tb_bare #(
     .clk_i                     (clk_i),
     .rst_n_i                   (rst_ni),
     .flush_i                   (dp2mem_flush),
-    .mem_file_i                (mem_file_i),
+    .mem_file_i                (mem_file),
     .mem_dump_file_i           (MEM_DUMP_FILE),
     .instr_valid_i             (dp2mem_instr_valid),
     .instr_valid_o             (mem2dp_instr_valid),
@@ -310,55 +324,53 @@ module tb_bare #(
     $display("EXECUTION REPORT");
 `ifndef LEN5_CSR_HPMCOUNTERS_EN
     $display(
-        "NOTE: extra performance counters not available since 'LEN5_CSR_HPMCOUNTERS_EN' is not defined",);
+        "NOTE: extra performance counters not available since 'LEN5_CSR_HPMCOUNTERS_EN' is not defined");
 `endif  /* LEN5_CSR_HPMCOUNTERS_EN */
-    $display($sformatf("- current TB cycle:                      %0d", curr_cycle),);
-    $display($sformatf("- total CPU cycles:                      %0d",
-                       u_datapath.u_backend.u_csrs.mcycle));
-    $display($sformatf("- retired instructions:                  %0d",
-                       u_datapath.u_backend.u_csrs.minstret));
+    $display("- current TB cycle:                      %0d", curr_cycle);
+    $display("- total CPU cycles:                      %0d", u_datapath.u_backend.u_csrs.mcycle);
+    $display("- retired instructions:                  %0d", u_datapath.u_backend.u_csrs.minstret);
 `ifdef LEN5_CSR_HPMCOUNTERS_EN
     $display(
         $sformatf(
             "  > retired branch/jump instructions:    %0d (%0.1f%%)",
             u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4,
-            real'(u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret),);
+            real'(u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret));
     $display(
         $sformatf(
             "    + jumps:                             %0d (%0.1f%%)",
             u_datapath.u_backend.u_csrs.hpmcounter3,
-            real'(u_datapath.u_backend.u_csrs.hpmcounter3) * 100 / u_datapath.u_backend.u_csrs.minstret),);
+            real'(u_datapath.u_backend.u_csrs.hpmcounter3) * 100 / u_datapath.u_backend.u_csrs.minstret));
     $display(
         $sformatf(
             "    + branches:                          %0d (%0.1f%%)",
             u_datapath.u_backend.u_csrs.hpmcounter4,
-            real'(u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret),);
+            real'(u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret));
     $display(
         $sformatf(
             "  > retired load/store instructions:     %0d (%0.1f%%)",
             u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6,
-            real'(u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret),);
+            real'(u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret));
     $display(
         $sformatf(
             "    + loads:                             %0d (%0.1f%%)",
             u_datapath.u_backend.u_csrs.hpmcounter5,
-            real'(u_datapath.u_backend.u_csrs.hpmcounter5) * 100 / u_datapath.u_backend.u_csrs.minstret),);
+            real'(u_datapath.u_backend.u_csrs.hpmcounter5) * 100 / u_datapath.u_backend.u_csrs.minstret));
     $display(
         $sformatf(
             "    + stores:                            %0d (%0.1f%%)",
             u_datapath.u_backend.u_csrs.hpmcounter6,
-            real'(u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret),);
+            real'(u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret));
 `endif  /* LEN5_CSR_HPMCOUNTERS_EN */
-    $display($sformatf("- average IPC:                           %0.2f",
-                       real'(u_datapath.u_backend.u_csrs.minstret) / curr_cycle));
-    $display($sformatf("- memory requests:                       %0d",
-                       num_data_loads + num_data_stores + num_instr_loads));
-    $display($sformatf("  > load instr. memory requests:         %0d (%0.2f%%)", num_instr_loads,
-                       real'(num_instr_loads) * 100 / num_mem_requests));
-    $display($sformatf("  > load data memory requests :          %0d (%0.2f%%)", num_data_loads,
-                       real'(num_data_loads) * 100 / num_mem_requests));
-    $display($sformatf("  > store data memory requests :         %0d (%0.2f%%)", num_data_stores,
-                       real'(num_data_stores) * 100 / num_mem_requests));
+    $display("- average IPC:                           %0.2f",
+             real'(u_datapath.u_backend.u_csrs.minstret) / curr_cycle);
+    $display("- memory requests:                       %0d",
+             num_data_loads + num_data_stores + num_instr_loads);
+    $display("  > load instr. memory requests:         %0d (%0.2f%%)", num_instr_loads,
+             real'(num_instr_loads) * 100 / num_mem_requests);
+    $display("  > load data memory requests :          %0d (%0.2f%%)", num_data_loads,
+             real'(num_data_loads) * 100 / num_mem_requests);
+    $display("  > store data memory requests :         %0d (%0.2f%%)", num_data_stores,
+             real'(num_data_stores) * 100 / num_mem_requests);
   endfunction : printReport
 
 endmodule
