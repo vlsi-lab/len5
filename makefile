@@ -81,7 +81,8 @@ questasim-sim: $(BUILD_DIR)/main.hex | .check-fusesoc $(BUILD_DIR)/
 # Application from 'sw/applications'
 # NOTE: the -B option to make forces recompilation everytime, which is needed since PROJECT is user-defined
 .PHONY: app
-app: | $(BUILD_DIR)/
+app: $(BUILD_DIR)/main.hex
+$(BUILD_DIR)/main.hex: | $(BUILD_DIR)/
 	@echo "## Building application '$(PROJECT)'"
 	$(MAKE) -BC sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR)
 

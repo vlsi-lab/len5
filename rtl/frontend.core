@@ -22,7 +22,7 @@ filesets:
 
  verilator-waivers:
    files:
-    - frontend/frontend-waivers.vlt
+    - misc/frontend-waivers.vlt
    file_type: vlt
 
 targets:

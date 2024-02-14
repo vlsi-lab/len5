@@ -1,0 +1,29 @@
+CAPI=2:
+# Copyright 2024 Politecnico di Torino
+# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+name: "polito:len5:datapath:0.1.0"
+description: "LEN5 CPU datapath"
+
+filesets:
+  rtl-bare:
+    files:
+    - datapath.sv
+    file_type: systemVerilogSource
+    depend:
+    - polito:len5:packages
+    - polito:len5:common
+
+  verilator-waivers:
+    files:
+    - misc/datapath-waivers.vlt
+    file_type: vlt
+
+targets:
+  # Default target
+  default: &default
+    filesets:
+    - rtl-bare
+    - tool_verilator ? (verilator-waivers)
+    toplevel: datapath

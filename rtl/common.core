@@ -35,7 +35,7 @@ filesets:
 
   verilator-waivers:
    files:
-    - common/common-waivers.vlt
+    - misc/common-waivers.vlt
    file_type: vlt
 
 targets:

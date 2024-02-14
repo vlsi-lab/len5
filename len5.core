@@ -13,14 +13,12 @@ description: "LEN5: out-of-order superscalar CPU"
 
 filesets:
   rtl-bare:
-    files:
-    - rtl/datapath.sv
-    file_type: systemVerilogSource
     depend:
     - polito:len5:packages
     - polito:len5:common
     - polito:len5:frontend
     - polito:len5:expipe
+    - polito:len5:datapath
 
   rtl-bare-tb:
     depend:
@@ -45,10 +43,9 @@ filesets:
     file_type: systemVerilogSource
 
   verilator-waivers:
-   files:
-   - tb/tb-waivers.vlt
-   - rtl/datapath-waivers.vlt
-   file_type: vlt
+    files:
+    - tb/misc/tb-waivers.vlt
+    file_type: vlt
 
 scripts:
   # Create log directory
@@ -117,11 +114,11 @@ targets:
         - '--x-assign unique'
         - '--x-initial unique'
         - '--report-unoptflat'
+        - '-GBOOT_PC=384' # 0x180
         - '--exe'
         - 'len5_tb.cpp'
         - '-Wall'
         - '-Wpedantic'
-        - '-CFLAGS "-Wall -g"'
 
   # Format HDL with Verible
   format:

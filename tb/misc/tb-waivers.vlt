@@ -8,6 +8,9 @@
 // Description: Verilator waivers for NM-Carus
 
 `verilator_config
+// Top-level parameter width
+lint_off -rule WIDTH -file "*/tb_bare.sv" -match "Operator VAR 'BOOT_PC' expects 64 bits on the Initial value, but Initial value's CONST '32'h180' generates 32 bits."
+
 // Signals not used inside class but used outside when declared an object of the class
 lint_off -rule UNUSED -file "*/memory_class.svh" -match "Signal is not used: 'read_halfword'"
 lint_off -rule UNUSED -file "*/memory_class.svh" -match "Signal is not used: 'read_word'"
@@ -34,18 +37,3 @@ lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected b
 lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'irq_id_o'"
 lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'fetch_enable_i'"
 lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'core_sleep_o'"
-
-//mcountinhibit waive
-
-
-
-//// WAIVE
-//
-//%Warning-UNUSED: ../../../rtl/expipe/exec-units/arith_rs.sv:38:33: Bits of signal are not used: 'cdb_data_i'[5:0] 
-//                                                                 : ... In instance tb_bare.u_datapath.u_backend.u_exec_stage.u_alu_unit.u_arith_rs
-//   38 |   input  expipe_pkg::cdb_data_t cdb_data_i,
-//      |                                 ^~~~~~~~~~
-//
-//      %Warning-UNUSED: ../../../rtl/expipe/exec-units/branch_unit.sv:93:30: Bits of signal are not used: 'bu_outreg_out'[65]
-//                                                                    : ... In instance tb_bare.u_datapath.u_backend.u_exec_stage.u_branch_unit
-//   93 |   bu_out_reg_t bu_outreg_in, bu_outreg_out;
