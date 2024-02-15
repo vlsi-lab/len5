@@ -58,7 +58,7 @@ $(BUILD_DIR)/.verilator.lock: $(SIM_CORE_FILES) $(SIM_HDL_FILES) $(SIM_CPP_FILES
 
 # Run Verilator simulation
 .PHONY: verilator-sim
-verilator-sim: $(BUILD_DIR)/.verilator.lock $(BUILD_DIR)/main.hex | .check-fusesoc
+verilator-sim: $(BUILD_DIR)/.verilator.lock | app .check-fusesoc
 	fusesoc run --no-export --target sim --tool verilator --run $(FUSESOC_FLAGS) polito:len5:len5 \
 		--log_level=$(LOG_LEVEL) \
 		--firmware=$(FIRMWARE) \
@@ -72,7 +72,7 @@ verilator-waves: $(BUILD_DIR)/sim-common/waves.fst | .check-gtkwave
 
 # QuestaSim
 .PHONY: questasim-sim
-questasim-sim: $(BUILD_DIR)/main.hex | .check-fusesoc $(BUILD_DIR)/
+questasim-sim: | app .check-fusesoc $(BUILD_DIR)/
 	@echo "## Running simulation with QuestaSim..."
 	fusesoc run --no-export --target sim --tool modelsim $(FUSESOC_FLAGS) --build polito:len5:len5 2>&1 | tee build/build.log
 	
@@ -81,8 +81,7 @@ questasim-sim: $(BUILD_DIR)/main.hex | .check-fusesoc $(BUILD_DIR)/
 # Application from 'sw/applications'
 # NOTE: the -B option to make forces recompilation everytime, which is needed since PROJECT is user-defined
 .PHONY: app
-app: $(BUILD_DIR)/main.hex
-$(BUILD_DIR)/main.hex: | $(BUILD_DIR)/
+app: | $(BUILD_DIR)/
 	@echo "## Building application '$(PROJECT)'"
 	$(MAKE) -BC sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR)
 

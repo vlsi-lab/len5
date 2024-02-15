@@ -330,20 +330,6 @@ module store_buffer #(
     else if (push) latest_idx <= tail_idx;
   end
 
-  // Synchrounous assign of byte enable signal
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : byte_en_assign
-    if (!rst_n_i) mem_be_o <= '0;
-    else
-      case (data[mem_idx].store_type)
-        LS_BYTE, LS_BYTE_U:         mem_be_o <= 8'b0000_0001;
-        LS_HALFWORD, LS_HALFWORD_U: mem_be_o <= 8'b0000_0011;
-        LS_WORD, LS_WORD_U:         mem_be_o <= 8'b0000_1111;
-        LS_DOUBLEWORD:              mem_be_o <= 8'b1111_1111;
-        default:                    mem_be_o <= '0;
-      endcase
-  end
-
-
   // -----------------
   // OUTPUT EVALUATION
   // -----------------
@@ -401,6 +387,17 @@ module store_buffer #(
   assign mem_tag_o   = mem_idx;
   assign mem_addr_o  = data[mem_idx].imm_addr_value;
   assign mem_wdata_o = data[mem_idx].rs2_value;
+
+  // Byte enable
+  always_comb begin : mux_byte_en
+    unique case (data[mem_idx].store_type)
+      LS_BYTE, LS_BYTE_U:         mem_be_o = 8'b0000_0001;
+      LS_HALFWORD, LS_HALFWORD_U: mem_be_o = 8'b0000_0011;
+      LS_WORD, LS_WORD_U:         mem_be_o = 8'b0000_1111;
+      LS_DOUBLEWORD:              mem_be_o = 8'b1111_1111;
+      default:                    mem_be_o = 8'b0000_0000;
+    endcase
+  end
 
   // --------
   // COUNTERS

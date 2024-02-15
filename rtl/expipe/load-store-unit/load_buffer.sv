@@ -57,8 +57,9 @@ module load_buffer #(
   input logic [len5_pkg::STBUFF_TAG_W-1:0] sb_oldest_idx_i,
 
   /* Level-zero cache */
-  input logic                      l0_valid_i,
-  input       [len5_pkg::XLEN-1:0] l0_value_i,
+  input  logic                      l0_valid_i,
+  input  logic [len5_pkg::XLEN-1:0] l0_value_i,
+  output expipe_pkg::ldst_width_t   l0_width_o,
 
   /* Memory system */
   output logic                                                mem_valid_o,
@@ -375,8 +376,21 @@ module load_buffer #(
   endgenerate
   assign mem_tag_o = mem_idx;
   assign mem_we_o  = 1'b0;
-  // read the whole doubleword from mem, then LEN5 internally select the requested bytes
-  assign mem_be_o  = 8'b1111_1111;
+
+  // Byte enable
+  always_comb begin : mux_byte_en
+    unique case (data[mem_idx].load_type)
+      LS_BYTE, LS_BYTE_U:         mem_be_o = 8'b0000_0001;
+      LS_HALFWORD, LS_HALFWORD_U: mem_be_o = 8'b0000_0011;
+      LS_WORD, LS_WORD_U:         mem_be_o = 8'b0000_1111;
+      LS_DOUBLEWORD:              mem_be_o = 8'b1111_1111;
+      default:                    mem_be_o = 8'b0000_0000;
+    endcase
+  end
+
+  // Cache L0
+  assign l0_width_o = data[mem_idx].load_type;
+
   // -------------
   // BYTE SELECTOR
   // -------------

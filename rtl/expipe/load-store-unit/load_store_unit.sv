@@ -113,10 +113,10 @@ module load_store_unit #(
   logic [StIdxW-1:0] sb_l0_idx;
   logic [L0TagW-1:0] sb_l0_tag;
   logic              sb_l0_cached;
-  logic [       3:0] sb_l0_width;
+  ldst_width_t       sb_l0_width;
   logic [  XLEN-1:0] sb_l0_value;
   logic [  XLEN-1:0] lb_l0_addr;
-  logic [       3:0] lb_l0_width;
+  ldst_width_t       lb_l0_width;
   logic [StIdxW-1:0] l0_sb_idx;
   logic              l0_lb_valid;
   logic [  XLEN-1:0] l0_lb_value;
@@ -156,6 +156,7 @@ module load_store_unit #(
     .adder_req_o          (lb_adder_req),
     .l0_valid_i           (l0_lb_valid),
     .l0_value_i           (l0_lb_value),
+    .l0_width_o           (lb_l0_width),
     .mem_valid_o          (mem_load_valid_o),
     .mem_ready_i          (mem_load_ready_i),
     .mem_valid_i          (mem_load_valid_i),
@@ -257,8 +258,6 @@ module load_store_unit #(
       assign sb_l0_addr  = mem_store_addr_o;
       assign sb_l0_idx   = mem_store_tag_i;
       assign lb_l0_addr  = mem_load_addr_o;
-      // TODO: make the cache compatible with the bytes enable signal
-      assign lb_l0_width = mem_load_be_o[3:0];
       l0_cache u_l0_cache (
         .clk_i      (clk_i),
         .rst_n_i    (rst_n_i),
@@ -281,7 +280,6 @@ module load_store_unit #(
       assign sb_l0_addr  = '0;
       assign sb_l0_idx   = '0;
       assign lb_l0_addr  = '0;
-      assign lb_l0_width = '0;
       assign l0_sb_idx   = '0;
       assign l0_lb_valid = '0;
       assign l0_lb_value = '0;

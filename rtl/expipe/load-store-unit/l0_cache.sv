@@ -53,7 +53,7 @@ module l0_cache #(
     logic [TagW-1:0]   tag;
     logic [StIdxW-1:0] st_idx;
   } l0_cache_t;
-  l0_cache_t              data       [STBUFF_DEPTH];
+  l0_cache_t [STBUFF_DEPTH-1:0] data;
 
   // Address and tag
   logic      [StIdxW-1:0] st_idx;

@@ -309,9 +309,10 @@ class memory_class;
   // 2 - access fault
 
   // Write a byte
-  function void WriteB(logic [AWIDTH-1:0] addr, logic [BWIDTH-1:0] data);
+  function int WriteB(logic [AWIDTH-1:0] addr, logic [BWIDTH-1:0] data);
     // Replace the requested byte in memory
     this.mem[addr] = data;
+    return 0;
   endfunction : WriteB
 
   // Write a halfword
@@ -327,7 +328,7 @@ class memory_class;
     // Store the bytes
     for (int i = 0; i < (HWWIDTH >> 3); i++) begin
       baddr = addr + {32'b0, i};
-      WriteB(baddr, data[BWIDTH*(i+1)-1-:BWIDTH]);
+      if (0 != WriteB(baddr, data[BWIDTH*(i+1)-1-:BWIDTH])) return 2;
     end
     return 0;
   endfunction : WriteHW
@@ -345,7 +346,7 @@ class memory_class;
     // Store the bytes
     for (int i = 0; i < (WWIDTH >> 3); i++) begin
       baddr = addr + {32'b0, i};
-      WriteB(baddr, data[BWIDTH*(i+1)-1-:BWIDTH]);
+      if (0 != WriteB(baddr, data[BWIDTH*(i+1)-1-:BWIDTH])) return 2;
     end
     return 0;
   endfunction : WriteW
@@ -363,7 +364,7 @@ class memory_class;
     // Store the bytes
     for (int i = 0; i < (DWWIDTH >> 3); i++) begin
       baddr = addr + {32'b0, i};
-      WriteB(baddr, data[BWIDTH*(i+1)-1-:BWIDTH]);
+      if (0 != WriteB(baddr, data[BWIDTH*(i+1)-1-:BWIDTH])) return 2;
     end
     return 0;
   endfunction : WriteDW
@@ -381,7 +382,7 @@ class memory_class;
     // Store the bytes
     for (int i = 0; i < (LWIDTH >> 3); i++) begin
       baddr = addr + {32'b0, i};
-      WriteB(baddr, data[BWIDTH*(i+1)-1-:BWIDTH]);
+      if (0 != WriteB(baddr, data[BWIDTH*(i+1)-1-:BWIDTH])) return 2;
     end
     return 0;
   endfunction : WriteLine

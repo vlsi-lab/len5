@@ -14,9 +14,6 @@
 
 # NOTE: this file is based on Newlib (libgloss) crt0 implementation
 
-# Switches and macros
-#include "len5_switches.h"
-
 # Bare-metal entry point
 .section .text.start
 .global _start
@@ -47,11 +44,9 @@ _start:
     csrw mtvec, a0
 
     # Constructors and destructors
-#ifndef LEN5_SKIP_CRT0_LIBC_INIT_ARRAY
     la a0, __libc_fini_array # register global termination functions
     call atexit # to be called upon exit
     call __libc_init_array # Run global initialization functions
-#endif
 
     # Call main
     lw a0, 0(sp) # a0 = argc

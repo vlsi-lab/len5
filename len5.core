@@ -25,7 +25,6 @@ filesets:
     - polito:len5:packages
     files:
     - tb/memory/memory_class: {is_include_file : true}
-    - tb/memory/memory_ans_pkg.sv
     - tb/memory/memory_if.sv
     - tb/memory/memory_bare_emu.sv
     - tb/tb_bare.sv

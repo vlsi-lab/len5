@@ -47,7 +47,7 @@ module commit_decoder (
 
     // No exceptions raised
     else begin
-      unique casez (instruction_i.raw)
+      casez (instruction_i.raw)
         // Intructions committing to the integer RF
         // ----------------------------------------
         ADD, ADDI, ADDIW, ADDW,
@@ -58,8 +58,7 @@ module commit_decoder (
         MUL, MULH, MULHSU, MULHU, MULW,
         REM, REMU, REMUW, REMW,
         DIV, DIVU, DIVUW, DIVW,
-        LUI, AUIPC
-        :
+        LUI, AUIPC:
         comm_type = COMM_TYPE_INT_RF;
 
         LB, LBU, LD, LH, LHU, LUI, LW, LWU: comm_type = COMM_TYPE_LOAD;

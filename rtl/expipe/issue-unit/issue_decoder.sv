@@ -420,6 +420,7 @@ module issue_decoder (
       SB: begin
         issue_type  = ISSUE_TYPE_STORE;
         assigned_eu = EU_STORE_BUFFER;
+        eu_ctl.lsu  = LS_BYTE;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         imm_format  = IMM_TYPE_S;
@@ -427,6 +428,7 @@ module issue_decoder (
       SH: begin
         issue_type  = ISSUE_TYPE_STORE;
         assigned_eu = EU_STORE_BUFFER;
+        eu_ctl.lsu  = LS_HALFWORD;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         imm_format  = IMM_TYPE_S;
@@ -434,6 +436,7 @@ module issue_decoder (
       SW: begin
         issue_type  = ISSUE_TYPE_STORE;
         assigned_eu = EU_STORE_BUFFER;
+        eu_ctl.lsu  = LS_WORD;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         imm_format  = IMM_TYPE_S;
@@ -441,6 +444,7 @@ module issue_decoder (
       SD: begin
         issue_type  = ISSUE_TYPE_STORE;
         assigned_eu = EU_STORE_BUFFER;
+        eu_ctl.lsu  = LS_DOUBLEWORD;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         imm_format  = IMM_TYPE_S;

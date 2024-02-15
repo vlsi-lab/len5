@@ -22,7 +22,7 @@ module memory_bare_emu #(
 ) (
   input logic clk_i,
   input logic rst_n_i,
-  input logic flush_i,
+  input logic instr_flush_i,
 
   input string mem_file_i,
   input string mem_dump_file_i,
@@ -66,21 +66,40 @@ module memory_bare_emu #(
 );
 
   import len5_config_pkg::*;
-  import memory_ans_pkg::*;
   import memory_pkg::*;
   import len5_pkg::*;
   import expipe_pkg::*;
 
   // INTERNAL SIGNALS
   // ----------------
+  // Answer from the memory
+  typedef struct packed {
+    logic [len5_pkg::ILEN-1:0] read;           // instruction read
+    logic                      except_raised;
+    len5_pkg::except_code_t    except_code;
+  } instr_mem_ans_t;
+
+  typedef struct packed {
+    logic [len5_pkg::BUFF_IDX_LEN-1:0] tag;            // instruction tag
+    logic [len5_pkg::XLEN-1:0]         read;           // data read
+    logic                              except_raised;
+    len5_pkg::except_code_t            except_code;
+  } dload_mem_ans_t;
+
+  typedef struct packed {
+    logic [len5_pkg::BUFF_IDX_LEN-1:0] tag;            // instruction tag
+    logic                              except_raised;
+    len5_pkg::except_code_t            except_code;
+  } dstore_mem_ans_t;
+
+  // Memory answer to the core
+  instr_mem_ans_t  instr_rsp;
+  dload_mem_ans_t  data_load_rsp;
+  dstore_mem_ans_t data_store_rsp;
+
   // Instruction and data memory
   memory_class i_mem, d_mem;  // memory objects (the memory array itself is a static member)
   int i_ret, dl_ret, ds_ret;  // memory emulator return value
-
-  // Memory answer to the core
-  instr_mem_ans_t  instr_ans_o;
-  dload_mem_ans_t  data_load_ans_o;
-  dstore_mem_ans_t data_store_ans_o;
 
   // Pipeline registers
   logic            instr_pipe_en;
@@ -154,52 +173,69 @@ module memory_bare_emu #(
 
 
   // DATA LOAD REQUEST
-  // ------------
-  always_ff @(negedge clk_i) begin : p_data_load_mem_req
+  // -----------------
+  always_ff @(posedge clk_i) begin : p_data_load_mem_req
+    data_load_pipe_valid[0]             <= data_load_valid_i;
     data_load_pipe_reg[0].tag           <= data_load_tag_i;
     data_load_pipe_reg[0].read          <= 'h0;
     data_load_pipe_reg[0].except_raised <= 1'b0;
     data_load_pipe_reg[0].except_code   <= E_UNKNOWN;
 
     if (data_load_valid_i) begin  // Memory always ready to answer (data_load_ready_o = 1)
-      // Load the whole doubleword, then LEN5 internally select the wanted bytes
-      dl_ret                     <= d_mem.ReadDW(data_load_addr_i);
-      data_load_pipe_reg[0].read <= d_mem.read_doubleword;
-
-      // Exception handling
-      case (dl_ret)
-        0: data_load_pipe_reg[0].except_raised <= 1'b0;
-        1: begin : address_misaligned
-          data_load_pipe_reg[0].except_raised <= 1'b1;
-          data_load_pipe_reg[0].except_code   <= E_LD_ADDR_MISALIGNED;
+      case (data_load_be_i)
+        8'b0000_0001: begin
+          dl_ret                     <= d_mem.ReadB(data_load_addr_i);
+          data_load_pipe_reg[0].read <= {56'h0, d_mem.read_byte};
         end
-        2: begin : access_fault
-          //`ifndef MEM_EMU_RAISE_READ_ACCESS_FAULT
-          //          data_ans.except_raised <= 1'b0;
-          //          data_ans.value         <= '0;
-          //`else
-          data_load_pipe_reg[0].except_raised <= 1'b1;
-          data_load_pipe_reg[0].except_code   <= E_LD_ACCESS_FAULT;
-          //`endif  /* MEM_EMU_RAISE_READ_ACCESS_FAULT */
+        8'b0000_0011: begin
+          dl_ret                     <= d_mem.ReadHW(data_load_addr_i);
+          data_load_pipe_reg[0].read <= {48'h0, d_mem.read_halfword};
+        end
+        8'b0000_1111: begin
+          dl_ret                     <= d_mem.ReadW(data_load_addr_i);
+          data_load_pipe_reg[0].read <= {32'h0, d_mem.read_word};
+        end
+        8'b1111_1111: begin
+          dl_ret                     <= d_mem.ReadDW(data_load_addr_i);
+          data_load_pipe_reg[0].read <= d_mem.read_doubleword;
         end
         default: begin
-          data_load_pipe_reg[0].except_raised <= 1'b1;
-          data_load_pipe_reg[0].except_code   <= E_UNKNOWN;
+          $fatal("Unsupported data load request");
         end
       endcase
     end
   end
 
+  // Exception handling
+  always_comb begin : load_exc_handling
+    case (dl_ret)
+      0: data_load_pipe_reg[0].except_raised = 1'b0;
+      1: begin : address_misaligned
+        data_load_pipe_reg[0].except_raised = data_load_pipe_valid[0];
+        data_load_pipe_reg[0].except_code   = E_LD_ADDR_MISALIGNED;
+      end
+      2: begin : access_fault
+        data_load_pipe_reg[0].except_raised = data_load_pipe_valid[0];
+        data_load_pipe_reg[0].except_code   = E_LD_ACCESS_FAULT;
+      end
+      default: begin
+        data_load_pipe_reg[0].except_raised = data_load_pipe_valid[0];
+        data_load_pipe_reg[0].except_code   = E_UNKNOWN;
+      end
+    endcase
+  end
+
   // DATA STORE REQUEST
-  // ------------
-  always_ff @(negedge clk_i) begin : p_data_store_mem_req
+  // ------------------
+  always_ff @(posedge clk_i) begin : p_data_store_mem_req
+    data_store_pipe_valid[0]             <= data_store_valid_i;
     data_store_pipe_reg[0].tag           <= data_store_tag_i;
     data_store_pipe_reg[0].except_raised <= 1'b0;
     data_store_pipe_reg[0].except_code   <= E_UNKNOWN;
     if (data_store_valid_i && data_store_we_i) begin
       case (data_store_be_i)
         8'b0000_0001: begin
-          d_mem.WriteB(data_store_addr_i, data_store_wdata_i[7:0]);
+          ds_ret <= d_mem.WriteB(data_store_addr_i, data_store_wdata_i[7:0]);
         end
         8'b0000_0011: begin
           ds_ret <= d_mem.WriteHW(data_store_addr_i, data_store_wdata_i[15:0]);
@@ -215,25 +251,23 @@ module memory_bare_emu #(
         end
       endcase
     end
-    // Exception handling
+  end
+
+  // Exception handling
+  always_comb begin : store_exc_handling
     case (ds_ret)
-      0: data_store_pipe_reg[0].except_raised <= 1'b0;
+      0: data_store_pipe_reg[0].except_raised = 1'b0;
       1: begin : address_misaligned
-        data_store_pipe_reg[0].except_raised <= 1'b1;
-        data_store_pipe_reg[0].except_code   <= E_ST_ADDR_MISALIGNED;
+        data_store_pipe_reg[0].except_raised = data_store_pipe_valid[0];
+        data_store_pipe_reg[0].except_code   = E_ST_ADDR_MISALIGNED;
       end
       2: begin : access_fault
-        //`ifndef MEM_EMU_RAISE_READ_ACCESS_FAULT
-        //          data_ans.except_raised <= 1'b0;
-        //          data_ans.value         <= '0;
-        //`else
-        data_store_pipe_reg[0].except_raised <= 1'b1;
-        data_store_pipe_reg[0].except_code   <= E_ST_ACCESS_FAULT;
-        //`endif  /* MEM_EMU_RAISE_READ_ACCESS_FAULT */
+        data_store_pipe_reg[0].except_raised = data_store_pipe_valid[0];
+        data_store_pipe_reg[0].except_code   = E_ST_ACCESS_FAULT;
       end
       default: begin
-        data_store_pipe_reg[0].except_raised <= 1'b1;
-        data_store_pipe_reg[0].except_code   <= E_UNKNOWN;
+        data_store_pipe_reg[0].except_raised = data_store_pipe_valid[0];
+        data_store_pipe_reg[0].except_code   = E_UNKNOWN;
       end
     endcase
   end
@@ -241,14 +275,10 @@ module memory_bare_emu #(
   // Memory pipeline registers
   // -------------------------
   // NOTE: These emulate high-latency memory accesses
-  assign instr_pipe_valid[0]      = instr_valid_i;
-  assign instr_pipe_en            = instr_ready_o;
-
-  assign data_load_pipe_valid[0]  = data_load_valid_i;
-  assign data_load_pipe_en        = data_load_ready_o;
-
-  assign data_store_pipe_valid[0] = data_store_valid_i;
-  assign data_store_pipe_en       = data_store_ready_o;
+  assign instr_pipe_valid[0] = instr_valid_i;
+  assign instr_pipe_en       = instr_ready_o;
+  assign data_load_pipe_en   = data_load_ready_o;
+  assign data_store_pipe_en  = data_store_ready_o;
 
   generate
     for (genvar i = 1; i < PIPE_NUM + 1; i++) begin : gen_mem_pipe_reg
@@ -260,15 +290,11 @@ module memory_bare_emu #(
           data_load_pipe_reg[i]    <= '0;
           data_store_pipe_valid[i] <= 1'b0;
           data_store_pipe_reg[i]   <= '0;
-        end else if (flush_i) begin
-          instr_pipe_valid[i]      <= 1'b0;
-          instr_pipe_reg[i]        <= '0;
-          data_load_pipe_valid[i]  <= 1'b0;
-          data_load_pipe_reg[i]    <= '0;
-          data_store_pipe_valid[i] <= 1'b0;
-          data_store_pipe_reg[i]   <= '0;
         end else begin
-          if (instr_pipe_en) begin
+          if (instr_flush_i) begin
+            instr_pipe_valid[i] <= 1'b0;
+            instr_pipe_reg[i]   <= '0;
+          end else if (instr_pipe_en) begin
             instr_pipe_valid[i] <= instr_pipe_valid[i-1];
             instr_pipe_reg[i]   <= instr_pipe_reg[i-1];
           end
@@ -293,13 +319,13 @@ module memory_bare_emu #(
   ) u_ins_out_reg (
     .clk_i  (clk_i),
     .rst_n_i(rst_n_i),
-    .flush_i(flush_i),
+    .flush_i(instr_flush_i),
     .valid_i(instr_pipe_valid[PIPE_NUM]),
     .ready_i(instr_ready_i),
     .valid_o(instr_valid_o),
     .ready_o(instr_ready_o),
     .data_i (instr_pipe_reg[PIPE_NUM]),
-    .data_o (instr_ans_o)
+    .data_o (instr_rsp)
   );
 
   spill_cell_flush #(
@@ -308,13 +334,13 @@ module memory_bare_emu #(
   ) u_data_load_out_reg (
     .clk_i  (clk_i),
     .rst_n_i(rst_n_i),
-    .flush_i(flush_i),
+    .flush_i(1'b0),
     .valid_i(data_load_pipe_valid[PIPE_NUM]),
     .ready_i(data_load_ready_i),
     .valid_o(data_load_valid_o),
     .ready_o(data_load_ready_o),
     .data_i (data_load_pipe_reg[PIPE_NUM]),
-    .data_o (data_load_ans_o)
+    .data_o (data_load_rsp)
   );
 
   spill_cell_flush #(
@@ -323,29 +349,29 @@ module memory_bare_emu #(
   ) u_data_store_out_reg (
     .clk_i  (clk_i),
     .rst_n_i(rst_n_i),
-    .flush_i(flush_i),
+    .flush_i(1'b0),
     .valid_i(data_store_pipe_valid[PIPE_NUM]),
     .ready_i(data_store_ready_i),
     .valid_o(data_store_valid_o),
     .ready_o(data_store_ready_o),
     .data_i (data_store_pipe_reg[PIPE_NUM]),
-    .data_o (data_store_ans_o)
+    .data_o (data_store_rsp)
   );
 
   // From struct instr_ans_t to output ports
-  assign instr_rdata_o              = instr_ans_o.read;
-  assign instr_except_raised_o      = instr_ans_o.except_raised;
-  assign instr_except_code_o        = instr_ans_o.except_code;
+  assign instr_rdata_o              = instr_rsp.read;
+  assign instr_except_raised_o      = instr_rsp.except_raised;
+  assign instr_except_code_o        = instr_rsp.except_code;
 
   // From struct dload_ans_t to output ports
-  assign data_load_tag_o            = data_load_ans_o.tag;
-  assign data_load_rdata_o          = data_load_ans_o.read;
-  assign data_load_except_raised_o  = data_load_ans_o.except_raised;
-  assign data_load_except_code_o    = data_load_ans_o.except_code;
+  assign data_load_tag_o            = data_load_rsp.tag;
+  assign data_load_rdata_o          = data_load_rsp.read;
+  assign data_load_except_raised_o  = data_load_rsp.except_raised;
+  assign data_load_except_code_o    = data_load_rsp.except_code;
 
   // From struct dstore_ans_t to output ports
-  assign data_store_tag_o           = data_store_ans_o.tag;
-  assign data_store_except_raised_o = data_store_ans_o.except_raised;
-  assign data_store_except_code_o   = data_store_ans_o.except_code;
+  assign data_store_tag_o           = data_store_rsp.tag;
+  assign data_store_except_raised_o = data_store_rsp.except_raised;
+  assign data_store_except_code_o   = data_store_rsp.except_code;
 
 endmodule
