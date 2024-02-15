@@ -14,6 +14,10 @@
 
 # NOTE: this file is based on Newlib (libgloss) crt0 implementation
 
+# This flags prevents the startup process from fetching argc and argv from the
+# uninitialized top of the stack.
+#define NO_ARGC_ARGV
+
 # Bare-metal entry point
 .section .text.start
 .global _start
@@ -29,7 +33,6 @@ _start:
 
     # Initialize stack pointer
     la sp, _sp # provided by linker script
-    mv  s0, sp # s0 = sp
 
     # Clear the bss segment
     la a0, __bss_start # bss sections begin (from linker script)
@@ -49,8 +52,13 @@ _start:
     call __libc_init_array # Run global initialization functions
 
     # Call main
+#ifdef NO_ARGC_ARGV
+    li a0, 0 # a0 = 0
+    li a1, 0 # a1 = 0
+#else
     lw a0, 0(sp) # a0 = argc
     addi a1, sp, __SIZEOF_POINTER__ # a1 = argv
+#endif // NO_ARGC_ARGV
     li a2, 0 # a2 = 0 (envp = NULL)
     call main  # jump to main and save position to ra
     tail exit
