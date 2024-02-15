@@ -39,6 +39,7 @@ filesets:
 
   questasim-bare-tb:
     files:
+    - tb/len5_tb.sv
     file_type: systemVerilogSource
 
   verilator-waivers:

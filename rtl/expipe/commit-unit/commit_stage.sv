@@ -12,7 +12,6 @@
 // Author: Michele Caon
 // Date: 20/11/2019
 
-
 module commit_stage (
   input logic clk_i,
   input logic rst_n_i,

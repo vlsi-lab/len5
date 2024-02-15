@@ -33,6 +33,7 @@ _start:
 
     # Initialize stack pointer
     la sp, _sp # provided by linker script
+    mv s0, sp # save stack pointer to s0
 
     # Clear the bss segment
     la a0, __bss_start # bss sections begin (from linker script)

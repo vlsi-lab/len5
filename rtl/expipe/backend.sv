@@ -222,6 +222,8 @@ module backend (
     .rst_n_i(rst_n_i),
     .flush_i(except_flush),
 
+    .fetch_mis_flush_o    (fetch_mis_flush_o),
+
     .fetch_valid_i        (fetch_valid_i),
     .fetch_ready_o        (fetch_ready_o),
     .fetch_curr_pc_i      (fetch_pred_i.pc),
@@ -230,7 +232,6 @@ module backend (
     .fetch_pred_taken_i   (fetch_pred_i.taken),
     .fetch_except_raised_i(fetch_except_raised_i),
     .fetch_except_code_i  (fetch_except_code_i),
-    .fetch_mis_flush_o    (fetch_mis_flush_o),
 
     .int_regstat_valid_o      (il_int_regstat_valid),
     .int_regstat_rs1_busy_i   (int_regstat_il_rs1_busy),
