@@ -3,6 +3,7 @@
 .balign 4
 
 main:
-    addi x1, zero, 15
-    sd x1, 136(x0)
-    ld x2, 136(x0)
+    addi t0, zero, 15
+    sd t1, 136(x0)
+    ld t0, 136(x0)
+    ret
