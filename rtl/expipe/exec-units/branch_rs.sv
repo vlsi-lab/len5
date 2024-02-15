@@ -275,9 +275,7 @@ module branch_rs #(
     .en_i   (head_cnt_en),
     .clr_i  (head_cnt_clr),
     .count_o(head_idx),
-    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
-    /* verilator lint_on PINCONNECTEMPTY */
   );
 
 
@@ -290,9 +288,7 @@ module branch_rs #(
     .en_i   (tail_cnt_en),
     .clr_i  (tail_cnt_clr),
     .count_o(tail_idx),
-    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
-    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   // Execution counter pointing to the executing branch/jump instruction
@@ -304,9 +300,7 @@ module branch_rs #(
     .en_i   (ex_cnt_en),
     .clr_i  (ex_cnt_clr),
     .count_o(ex_idx),
-    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()             // not needed
-    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   // ----------

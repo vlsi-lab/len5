@@ -49,7 +49,7 @@ _start:
     call __libc_init_array # Run global initialization functions
 
     # Call main
-    lw a0, 0(sp) # a0 = argc
+    lw a0, 0(sp) # a0 = argc  
     addi a1, sp, __SIZEOF_POINTER__ # a1 = argv
     li a2, 0 # a2 = 0 (envp = NULL)
     call main  # jump to main and save position to ra

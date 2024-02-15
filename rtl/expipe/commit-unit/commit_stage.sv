@@ -383,9 +383,7 @@ module commit_stage (
     .clr_i  (jb_instr_cnt_clr),
     .up_dn_i(jb_instr_cnt_up),
     .count_o(jb_instr_cnt),
-    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()                   // not needed
-    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   // -----------------

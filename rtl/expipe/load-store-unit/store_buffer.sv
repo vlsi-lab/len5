@@ -412,9 +412,9 @@ module store_buffer #(
     .en_i   (head_cnt_en),
     .clr_i  (head_cnt_clr),
     .count_o(head_idx),
-    /* verilator lint_off PINCONNECTEMPTY */
+    
     .tc_o   ()               // not needed
-    /* verilator lint_off PINCONNECTEMPTY */
+    
   );
 
   // Tail counter pointing to the first empty entry
@@ -426,9 +426,7 @@ module store_buffer #(
     .en_i   (tail_cnt_en),
     .clr_i  (tail_cnt_clr),
     .count_o(tail_idx),
-    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
-    /* verilator lint_off PINCONNECTEMPTY */
   );
 
   // Address counter pointing to the next instruction proceeding to address
@@ -441,9 +439,7 @@ module store_buffer #(
     .en_i   (addr_cnt_en),
     .clr_i  (addr_cnt_clr),
     .count_o(addr_idx),
-    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
-    /* verilator lint_off PINCONNECTEMPTY */
   );
 
   // Memory access counter pointing to the next store performing a memory
@@ -456,9 +452,7 @@ module store_buffer #(
     .en_i   (mem_cnt_en),
     .clr_i  (mem_cnt_clr),
     .count_o(mem_idx),
-    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()              // not needed
-    /* verilator lint_off PINCONNECTEMPTY */
   );
 
   // ----------

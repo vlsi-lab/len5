@@ -101,9 +101,7 @@ module int_regstat #(
         .clr_i  (busy_cnt_clr),
         .up_dn_i(busy_cnt_up[i]),
         .count_o(busy_cnt[i]),
-        /* verilator lint_off PINCONNECTEMPTY */
         .tc_o   ()                 // not needed
-        /* verilator lint_off PINCONNECTEMPTY */
       );
     end
   endgenerate

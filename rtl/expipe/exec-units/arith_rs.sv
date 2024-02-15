@@ -327,9 +327,7 @@ module arith_rs #(
   ) new_sel (
     .lines_i(empty),
     .enc_o  (new_idx),
-    /* verilator lint_off PINCONNECTEMPTY */
     .valid_o()
-    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   // Execution
@@ -338,9 +336,7 @@ module arith_rs #(
   ) ex_sel (
     .lines_i(ready_ex),
     .enc_o  (ex_idx),
-    /* verilator lint_off PINCONNECTEMPTY */
     .valid_o()
-    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   // CDB access
@@ -349,9 +345,7 @@ module arith_rs #(
   ) cdb_sel (
     .lines_i(ready_cdb),
     .enc_o  (cdb_idx),
-    /* verilator lint_off PINCONNECTEMPTY */
     .valid_o()
-    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   // ----------

@@ -67,9 +67,7 @@ module fifo_comb_ready #(
     .en_i   (head_cnt_en),
     .clr_i  (head_cnt_clr),
     .count_o(head_cnt),
-    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
-    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   modn_counter #(
@@ -80,9 +78,7 @@ module fifo_comb_ready #(
     .en_i   (tail_cnt_en),
     .clr_i  (tail_cnt_clr),
     .count_o(tail_cnt),
-    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
-    /* verilator lint_off PINCONNECTEMPTY */
   );
 
   // -----------------

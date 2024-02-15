@@ -428,9 +428,7 @@ module load_buffer #(
     .en_i   (head_cnt_en),
     .clr_i  (head_cnt_clr),
     .count_o(head_idx),
-    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
-    /* verilator lint_on PINCONNECTEMPTY */
   );
 
   modn_counter #(
@@ -441,9 +439,7 @@ module load_buffer #(
     .en_i   (tail_cnt_en),
     .clr_i  (tail_cnt_clr),
     .count_o(tail_idx),
-    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
-    /* verilator lint_off PINCONNECTEMPTY */
   );
 
   modn_counter #(
@@ -454,9 +450,7 @@ module load_buffer #(
     .en_i   (addr_cnt_en),
     .clr_i  (addr_cnt_clr),
     .count_o(addr_idx),
-    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()               // not needed
-    /* verilator lint_off PINCONNECTEMPTY */
   );
 
   modn_counter #(
@@ -467,9 +461,7 @@ module load_buffer #(
     .en_i   (mem_cnt_en),
     .clr_i  (mem_cnt_clr),
     .count_o(mem_idx),
-    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()              // not needed
-    /* verilator lint_off PINCONNECTEMPTY */
   );
 
   // ----------

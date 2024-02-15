@@ -68,9 +68,7 @@ module ras #(
     .clr_i  (1'b0),
     .up_dn_i(new_cnt_up),
     .count_o(new_idx),
-    /* verilator lint_off PINCONNECTEMPTY */
     .tc_o   ()             // not needed
-    /* verilator lint_off PINCONNECTEMPTY */
   );
   assign last_idx   = new_idx - 1;
 

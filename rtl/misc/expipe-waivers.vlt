@@ -27,3 +27,13 @@ lint_off -rule UNOPTFLAT -file "*/address_adder.sv" -match "Signal unoptimizable
 
 // Warning due to not inhibit all high performance counters 
 lint_off -rule UNUSED -file "*/csrs.sv" -match "Bits of signal are not used: 'mcountinhibit'[31:7,1]"
+
+// Warning due to unused pin
+lint_off -rule PINCONNECTEMPTY -file "*/commit_stage.sv" -match "Cell pin connected by name with empty reference: 'tc_o'"
+lint_off -rule PINCONNECTEMPTY -file "*/rob.sv" -match "Cell pin connected by name with empty reference: 'tc_o'"
+lint_off -rule PINCONNECTEMPTY -file "*/arith_rs.sv" -match "Cell pin connected by name with empty reference: 'valid_o'"
+lint_off -rule PINCONNECTEMPTY -file "*/branch_rs.sv" -match "Cell pin connected by name with empty reference: 'tc_o'"
+lint_off -rule PINCONNECTEMPTY -file "*/op_only_rs.sv" -match "Cell pin connected by name with empty reference: 'tc_o'"
+lint_off -rule PINCONNECTEMPTY -file "*/load_buffer.sv" -match "Cell pin connected by name with empty reference: 'tc_o'"
+lint_off -rule PINCONNECTEMPTY -file "*/store_buffer.sv" -match "Cell pin connected by name with empty reference: 'tc_o'"
+lint_off -rule PINCONNECTEMPTY -file "*/int_regstat.sv" -match "Cell pin connected by name with empty reference: 'tc_o'"
