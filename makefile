@@ -58,7 +58,7 @@ $(BUILD_DIR)/.verilator.lock: $(SIM_CORE_FILES) $(SIM_HDL_FILES) $(SIM_CPP_FILES
 
 # Run Verilator simulation
 .PHONY: verilator-sim
-verilator-sim: $(BUILD_DIR)/.verilator.lock | app .check-fusesoc
+verilator-sim: $(BUILD_DIR)/.verilator.lock | .check-fusesoc
 	fusesoc run --no-export --target sim --tool verilator --run $(FUSESOC_FLAGS) polito:len5:len5 \
 		--log_level=$(LOG_LEVEL) \
 		--firmware=$(FIRMWARE) \

@@ -31,7 +31,6 @@ CFLAGS			:= -march=$(ISA_STRING) \
 LDFLAGS			:= -T $(LINKER) \
 				   -static \
 				   -L $(RISCV)/$(RISCV_EXE_PREFIX)/lib \
-				   -Wl,--gc-sections \
 				   -lc \
 				   -lm \
 				   -lgcc \
