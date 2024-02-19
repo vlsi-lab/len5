@@ -14,7 +14,7 @@
 
 module commit_stage (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
 
   // Flush signal
   output logic ex_mis_flush_o,  // flush after misprediction
@@ -156,7 +156,7 @@ module commit_stage (
     .DEPTH(ROB_DEPTH)
   ) u_rob (
     .clk_i              (clk_i),
-    .rst_n_i            (rst_n_i),
+    .rst_ni             (rst_ni),
     .flush_i            (cu_mis_flush),
     .issue_valid_i      (issue_valid_i),
     .issue_ready_o      (issue_ready_o),
@@ -192,7 +192,7 @@ module commit_stage (
     .SKIP  (COMMIT_SPILL_SKIP)
   ) u_input_reg (
     .clk_i      (clk_i),
-    .rst_n_i    (rst_n_i),
+    .rst_ni     (rst_ni),
     .flush_i    (cu_mis_flush),
     .valid_i    (rob_reg_valid),
     .ready_i    (cu_inreg_ready),
@@ -257,8 +257,8 @@ module commit_stage (
 
   // COMMITTING INSTRUCTION REGISTER
   // -------------------------------
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : comm_reg
-    if (!rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin : comm_reg
+    if (!rst_ni) begin
       comm_reg_data   <= 'h0;
       comm_reg_csr_op <= CSR_OP_CSRRW;
       comm_reg_valid  <= 1'b0;
@@ -292,7 +292,7 @@ module commit_stage (
 
   commit_cu u_commit_cu (
     .clk_i             (clk_i),
-    .rst_n_i           (rst_n_i),
+    .rst_ni            (rst_ni),
     .comm_type_i       (cd_comm_type),
     .mispredict_i      (inreg_cu_mispredicted),
     .comm_reg_en_o     (comm_reg_en),
@@ -377,7 +377,7 @@ module commit_stage (
     .WIDTH(ROB_IDX_LEN)
   ) u_jb_instr_counter (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .en_i   (jb_instr_cnt_en),
     .clr_i  (jb_instr_cnt_clr),
     .up_dn_i(jb_instr_cnt_up),
@@ -418,27 +418,26 @@ module commit_stage (
 `ifndef SYNTHESIS
 `ifndef VERILATOR
   property p_no_except;
-    @(posedge clk_i) disable iff (!rst_n_i) ex_mis_flush_o |=> !fe_except_raised_o
+    @(posedge clk_i) disable iff (!rst_ni) ex_mis_flush_o |=> !fe_except_raised_o
   endproperty
   a_no_except :
   assert property (p_no_except)
-  else
-    $display($sformatf("WARNING: Committing exception: %s", comm_reg_data.data.except_code.name()));
+  else $display("WARNING: Committing exception: %s", comm_reg_data.data.except_code.name());
   // ISR address
   property p_except;
-    @(posedge clk_i) disable iff (!rst_n_i) fe_except_raised_o |->
+    @(posedge clk_i) disable iff (!rst_ni) fe_except_raised_o |->
       fe_except_pc_o == ((comm_reg_data.data.except_code << 2) + (csr_mtvec_i.base << 2))
   endproperty
   a_except :
   assert property (p_except);
   // Detect deadlock (watchdog timer)
   property p_watchdog;
-    @(posedge clk_i) disable iff (!rst_n_i) u_commit_cu.curr_state == u_commit_cu.IDLE |->
+    @(posedge clk_i) disable iff (!rst_ni) u_commit_cu.curr_state == u_commit_cu.IDLE |->
       ##[1:100] u_commit_cu.curr_state != u_commit_cu.IDLE
   endproperty
   // The number of jump/branch instructions must never overflow
   property p_jb_instr;
-    @(posedge clk_i) disable iff (!rst_n_i) sync_accept_on (ex_mis_flush_o | except_flush_o) jb_instr_cnt_en |-> ##1
+    @(posedge clk_i) disable iff (!rst_ni) sync_accept_on (ex_mis_flush_o | except_flush_o) jb_instr_cnt_en |-> ##1
             (jb_instr_cnt == $past(
         jb_instr_cnt
     ) - 1) || (jb_instr_cnt == $past(
@@ -451,11 +450,9 @@ module commit_stage (
   assert property (p_watchdog)
   else
     $display(
-        $sformatf(
-            "IDLE timeout | pc: %h | instr: %h",
-            comm_reg_data.data.instr_pc,
-            comm_reg_data.data.instruction.raw
-        )
+        "IDLE timeout | pc: %h | instr: %h",
+        comm_reg_data.data.instr_pc,
+        comm_reg_data.data.instruction.raw
     );
 `endif  /* VERILATOR */
 `endif  /* SYNTHESIS */

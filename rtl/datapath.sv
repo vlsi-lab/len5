@@ -4,7 +4,7 @@ module datapath #(
 ) (
   // Clock and reset
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
 
   output logic mem_flush_o,
 
@@ -95,7 +95,7 @@ module datapath #(
     .MEMIF_FIFO_DEPTH(FETCH_MEMIF_FIFO_DEPTH)
   ) u_fetch_stage (
     .clk_i                (clk_i),
-    .rst_n_i              (rst_n_i),
+    .rst_ni               (rst_ni),
     .flush_i              (be_fe_mis_flush),
     .flush_bpu_i          (be_fe_except_flush),
     .instr_valid_i        (instr_rvalid_i),
@@ -125,7 +125,7 @@ module datapath #(
   // --------
   backend u_backend (
     .clk_i                (clk_i),
-    .rst_n_i              (rst_n_i),
+    .rst_ni               (rst_ni),
     .fetch_valid_i        (fe_be_valid),
     .fetch_ready_i        (fe_be_bu_ready),
     .fetch_ready_o        (be_fe_ready),

@@ -20,7 +20,7 @@ module btb #(
   parameter int unsigned BTB_BITS = 4
 ) (
   input logic                      clk_i,
-  input logic                      rst_n_i,
+  input logic                      rst_ni,
   input logic                      flush_i,
   input logic [len5_pkg::XLEN-1:0] curr_pc_i,
   input logic                      valid_i,
@@ -71,8 +71,8 @@ module btb #(
     end
   end
 
-  always_ff @(posedge clk_i or negedge rst_n_i) begin
-    if (!rst_n_i) begin : btb_async_rst
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin : btb_async_rst
       for (int i = 0; i < BtbRows; i++) begin
         btb_q[i] <= '0;
       end

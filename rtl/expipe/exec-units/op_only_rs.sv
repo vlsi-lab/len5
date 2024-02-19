@@ -19,7 +19,7 @@ module op_only_rs #(
 ) (
   // Clock, reset, and flush
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   // Handshake from/to issue arbiter
@@ -132,8 +132,8 @@ module op_only_rs #(
   // -------------------------------
   // RESERVATION STATION FIFO UPDATE
   // -------------------------------
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : rs_fifo_update
-    if (!rst_n_i) begin  // Asynchronous reset
+  always_ff @(posedge clk_i or negedge rst_ni) begin : rs_fifo_update
+    if (!rst_ni) begin  // Asynchronous reset
       foreach (rs_data[i]) begin
         rs_data[i] <= 0;
       end
@@ -187,7 +187,7 @@ module op_only_rs #(
     .N(RS_DEPTH)
   ) head_counter (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .en_i   (head_cnt_en),
     .clr_i  (head_cnt_clr),
     .count_o(head_idx),
@@ -198,7 +198,7 @@ module op_only_rs #(
     .N(RS_DEPTH)
   ) tail_counter (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .en_i   (tail_cnt_en),
     .clr_i  (tail_cnt_clr),
     .count_o(tail_idx),
@@ -222,7 +222,7 @@ module op_only_rs #(
 `ifndef VERILATOR
   // Check that assigned instructions are missing their operand
   property p_op_not_ready;
-    @(posedge clk_i) disable iff (!rst_n_i) issue_valid_i |-> !rs1_ready_i;
+    @(posedge clk_i) disable iff (!rst_ni) issue_valid_i |-> !rs1_ready_i;
   endproperty
   a_op_not_ready :
   assert property (p_op_not_ready);

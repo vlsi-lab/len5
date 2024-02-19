@@ -11,7 +11,7 @@ module Back_end_tb;
     logic    main_cu_stall_o;
 
     logic clk_i;
-	logic rst_n_i;
+	logic rst_ni;
 	logic flush_i;
 	satp_mode_t         vm_mode_i;
 
@@ -50,7 +50,7 @@ always #10 instruction_i = instruction_i + 1;
 initial begin
     //$monitor("Time = %0t -- instruction = 0x%8x, fetch ready = %0b", $time, instruction_i, fetch_ready_o);
     clk_i = 1;
-    rst_n_i = 1;
+    rst_ni = 1;
     flush_i = 0;
     fetch_valid_i = 0;
 
@@ -83,8 +83,8 @@ initial begin
     except_code_i = E_I_ACCESS_FAULT;
 
         // reset
-    #2 rst_n_i = 0;
-    #10 rst_n_i = 1;
+    #2 rst_ni = 0;
+    #10 rst_ni = 1;
 
     #10 fetch_valid_i = 1;
     #20 fetch_valid_i = 0;
@@ -107,7 +107,7 @@ back_end Back_end_IQL
     .main_cu_stall_o(main_cu_stall_o),
 
     .clk_i (clk_i),
-    .rst_n_i (rst_n_i),
+    .rst_ni (rst_ni),
     .flush_i (flush_i),
 	.vm_mode_i(vm_mode_i),
 

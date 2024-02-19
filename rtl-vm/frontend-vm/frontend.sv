@@ -22,7 +22,7 @@ module frontend #(
     parameter [len5_pkg::XLEN-1:0] BOOT_PC = 'h0
 ) (
     input logic clk_i,
-    input logic rst_n_i,
+    input logic rst_ni,
     input logic flush_i,
 
     // From/to i-cache
@@ -66,7 +66,7 @@ module frontend #(
       .BTB_BITS(BTB_BITS)
   ) fetch_stage_u (
       .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
+      .rst_ni(rst_ni),
       .flush_i(flush_i),
 
       // From/to PC gen stage
@@ -101,7 +101,7 @@ module frontend #(
       .BOOT_PC(BOOT_PC)
   ) pc_gen_u (
       .clk_i        (clk_i),
-      .rst_n_i      (rst_n_i),
+      .rst_ni      (rst_ni),
       .except_i     (except_i),
       .except_pc_i  (except_pc_i),
       .res_i        (res_i),

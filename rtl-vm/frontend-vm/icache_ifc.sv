@@ -16,7 +16,7 @@ import len5_pkg::*;
 
 module icache_ifc (
     input logic clk_i,
-    input logic rst_n_i,
+    input logic rst_ni,
     input logic flush_i,
 
     // From/to IF
@@ -38,8 +38,8 @@ module icache_ifc (
   logic [XLEN-1:0] saved_pc;
   logic addr_sel;
 
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : addr_reg
-    if (!rst_n_i) begin : async_rst
+  always_ff @(posedge clk_i or negedge rst_ni) begin : addr_reg
+    if (!rst_ni) begin : async_rst
       saved_pc <= '0;
     end else begin
       if (read_req_i) begin
@@ -63,9 +63,9 @@ module icache_ifc (
   state_t present_state, next_state;
 
   // State transition
-  always_ff @(posedge clk_i or negedge rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
     // Async reset
-    if (~rst_n_i) begin
+    if (~rst_ni) begin
       present_state <= RESET;
     end else begin
       if (flush_i) begin

@@ -14,7 +14,7 @@ module fetch_mem_if #(
   parameter int unsigned MAX_MEM_OUTSTANDING_REQUESTS = 2
 ) (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   // Fetch unit (BPU and PC generator)
@@ -77,7 +77,7 @@ module fetch_mem_if #(
     .SKIP  (FETCH_REQ_SPILL_SKIP)
   ) u_req_reg (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .flush_i(flush_i),
     .valid_i(fetch_valid_i),
     .ready_i(instr_ready_i),
@@ -98,7 +98,7 @@ module fetch_mem_if #(
     .DEPTH (MAX_MEM_OUTSTANDING_REQUESTS)
   ) u_pred_fifo (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .flush_i(flush_i),
     .push_i (pred_fifo_push),
     .pop_i  (pred_fifo_pop),
@@ -120,7 +120,7 @@ module fetch_mem_if #(
     .SKIP  (FETCH_ANS_SPILL_SKIP)
   ) u_ans_reg (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .flush_i(flush_i),
     .valid_i(instr_valid_i),
     .ready_i(issue_ready_i),

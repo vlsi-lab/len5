@@ -22,7 +22,7 @@
 module spill_cell_flush_cu (
   // Clock, reset, and flush
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   // Handshaking signals
@@ -162,8 +162,8 @@ module spill_cell_flush_cu (
   end
 
   // State update
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : cu_state_upd
-    if (!rst_n_i) curr_state <= RESET;  // asynchronous reset
+  always_ff @(posedge clk_i or negedge rst_ni) begin : cu_state_upd
+    if (!rst_ni) curr_state <= RESET;  // asynchronous reset
     else if (flush_i) curr_state <= NO_DATA;  // synchronous flush
     else curr_state <= next_state;  // normal behaviour
   end

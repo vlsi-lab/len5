@@ -18,7 +18,7 @@
 
 module fp_rf (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
 
   // Handshake from the commit logic
   input logic comm_valid_i,
@@ -49,8 +49,8 @@ module fp_rf (
   // REGISTER FILE WRITE PORT
   // ------------------------
   // Synchronous write
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : res_write_port
-    if (!rst_n_i) begin  // Asynchronous reset
+  always_ff @(posedge clk_i or negedge rst_ni) begin : res_write_port
+    if (!rst_ni) begin  // Asynchronous reset
       for (int i = 0; i < FREG_NUM; i++) begin
         rf_data[i] <= 0;
       end

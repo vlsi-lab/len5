@@ -82,19 +82,15 @@ module byte_selector (
       assert (!byte_off[0])
       else
         $error(
-            $sformatf(
-                "HALFOWORD instr. with misaligned byte offset '%b' proceeded to cache. This must be avoided!",
-                byte_off
-            )
+            "HALFOWORD instr. with misaligned byte offset '%b' proceeded to cache. This must be avoided!",
+            byte_off
         );
       LS_WORD, LS_WORD_U:
       assert (byte_off[1:0] == 2'b00)
       else
         $error(
-            $sformatf(
-                "WORD instr. with misaligned byte offset '%b' proceeded to cache. This must be avoided!",
-                byte_off
-            )
+            "WORD instr. with misaligned byte offset '%b' proceeded to cache. This must be avoided!",
+            byte_off
         );
       default: ;
     endcase

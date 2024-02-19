@@ -21,7 +21,7 @@ module datapath_vm #(
 ) (
     // Clock and reset
     input logic clk_i,
-    input logic rst_n_i,
+    input logic rst_ni,
 
     // Datapath <--> L2$ emulator
     input  logic           l2c_l2arb_req_rdy_i,
@@ -120,7 +120,7 @@ module datapath_vm #(
 
   main_cu u_main_cu (
       .clk_i             (clk_i),
-      .rst_n_i           (rst_n_i),
+      .rst_ni           (rst_ni),
       .fe_ins_i          (fe_cu_instr),
       .fe_except_raised_i(fe_cu_except_raised),
       .be_stall_i        (be_cu_stall),
@@ -152,7 +152,7 @@ module datapath_vm #(
       .BOOT_PC(BOOT_PC)
   ) u_frontend (
       .clk_i                (clk_i),
-      .rst_n_i              (rst_n_i),
+      .rst_ni              (rst_ni),
       .flush_i              (cu_others_flush),
       .addr_o               (fe_icache_req.vaddr),
       .addr_valid_o         (fe_icache_req.valid),
@@ -179,7 +179,7 @@ module datapath_vm #(
 
   backend_vm u_backend (
       .clk_i                 (clk_i),
-      .rst_n_i               (rst_n_i),
+      .rst_ni               (rst_ni),
       .flush_i               (cu_others_flush),
       .main_cu_stall_o       (be_cu_stall),
       .main_cu_resume_o      (be_cu_resume),
@@ -222,7 +222,7 @@ module datapath_vm #(
 
   memory_system_with_ssram u_memory_system (
       .clk_i (clk_i),
-      .rst_ni(rst_n_i),
+      .rst_ni(rst_ni),
 
       .flush_i            (cu_mem_flush),
       .abort_i            (cu_mem_abort),

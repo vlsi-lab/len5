@@ -17,10 +17,10 @@ module updown_counter #(
 ) (
   // Input signals
   input logic clk_i,
-  input logic rst_n_i,  // Asynchronous reset
+  input logic rst_ni,  // Asynchronous reset
   input logic en_i,
-  input logic clr_i,    // Synchronous clear
-  input logic up_dn_i,  // 1: up, 0: down
+  input logic clr_i,   // Synchronous clear
+  input logic up_dn_i, // 1: up, 0: down
 
   // Output signals
   output logic [WIDTH-1:0] count_o,
@@ -31,8 +31,8 @@ module updown_counter #(
   assign tc_o = &count_o;
 
   // Main counting process
-  always_ff @(posedge clk_i or negedge rst_n_i) begin
-    if (!rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
       count_o <= 0;  // Asynchronous reset
     end else if (clr_i) begin
       count_o <= 0;  // Synchronous clear

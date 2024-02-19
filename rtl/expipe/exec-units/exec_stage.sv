@@ -15,7 +15,7 @@
 module exec_stage (
   // Clock, reset, and flush
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic mis_flush_i,
   input logic except_flush_i,
 
@@ -92,7 +92,7 @@ module exec_stage (
     .SB_DEPTH(STBUFF_DEPTH)
   ) u_load_store_unit (
     .clk_i               (clk_i),
-    .rst_n_i             (rst_n_i),
+    .rst_ni              (rst_ni),
     .mis_flush_i         (mis_flush_i),
     .except_flush_i      (except_flush_i),
     .issue_lb_valid_i    (issue_valid_i[EU_LOAD_BUFFER]),
@@ -149,7 +149,7 @@ module exec_stage (
     .RS_DEPTH(BU_RS_DEPTH)
   ) u_branch_unit (
     .clk_i               (clk_i),
-    .rst_n_i             (rst_n_i),
+    .rst_ni              (rst_ni),
     .flush_i             (mis_flush_i),
     .fe_ready_i          (fe_ready_i),
     .fe_res_valid_o      (fe_res_valid_o),
@@ -183,7 +183,7 @@ module exec_stage (
     .RS_DEPTH  (ALU_RS_DEPTH)
   ) u_alu_unit (
     .clk_i               (clk_i),
-    .rst_n_i             (rst_n_i),
+    .rst_ni              (rst_ni),
     .flush_i             (mis_flush_i),
     .issue_valid_i       (issue_valid_i[EU_INT_ALU]),
     .issue_ready_o       (issue_ready_o[EU_INT_ALU]),
@@ -207,7 +207,7 @@ module exec_stage (
         .RS_DEPTH  (MULT_RS_DEPTH)
       ) u_mult_unit (
         .clk_i               (clk_i),
-        .rst_n_i             (rst_n_i),
+        .rst_ni              (rst_ni),
         .flush_i             (mis_flush_i),
         .issue_valid_i       (issue_valid_i[EU_INT_MULT]),
         .issue_ready_o       (issue_ready_o[EU_INT_MULT]),
@@ -228,7 +228,7 @@ module exec_stage (
         .PIPE_DEPTH(DIV_PIPE_DEPTH)
       ) u_div_unit (
         .clk_i               (clk_i),
-        .rst_n_i             (rst_n_i),
+        .rst_ni              (rst_ni),
         .flush_i             (mis_flush_i),
         .issue_valid_i       (issue_valid_i[EU_INT_DIV]),
         .issue_ready_o       (issue_ready_o[EU_INT_DIV]),
@@ -261,7 +261,7 @@ module exec_stage (
   //   .RS_DEPTH  (FPU_RS_DEPTH)
   // ) u_fpu_unit (
   //   .clk_i              (clk_i),
-  //   .rst_n_i            (rst_n_i),
+  //   .rst_ni            (rst_ni),
   //   .flush_i            (mis_flush_i),
   //   .issue_valid_i      (issue_valid_i[EU_FPU]),
   //   .issue_ready_o      (issue_ready_o[EU_FPU]),

@@ -16,7 +16,7 @@ module fair_2way_arbiter #(
   parameter type DATA_T = logic
 ) (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
 
   // Handshaking
   input  logic valid_a_i,
@@ -69,8 +69,8 @@ module fair_2way_arbiter #(
   // LAST SERVED ON CONFLICT
   // -----------------------
   // This flip-flop stores the last input that was accepted during a conflict (both valid asserted). When a new conflict takes place, the other input is served instead.
-  always @(posedge clk_i or negedge rst_n_i) begin : last_served_ff
-    if (!rst_n_i) begin
+  always @(posedge clk_i or negedge rst_ni) begin : last_served_ff
+    if (!rst_ni) begin
       last_served_a <= 1'b0;
     end else if (valid_a_i && valid_b_i && ready_i) last_served_a <= ~last_served_a;
   end

@@ -15,7 +15,7 @@
 module commit_cu (
   // Clock and reset
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
 
   // Commit logic <--> CU
   input  expipe_pkg::comm_type_t    comm_type_i,      // from commit decoder
@@ -436,8 +436,8 @@ module commit_cu (
   end
 
   // State update
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : cu_state_upd
-    if (!rst_n_i) curr_state <= RESET;
+  always_ff @(posedge clk_i or negedge rst_ni) begin : cu_state_upd
+    if (!rst_ni) curr_state <= RESET;
     else curr_state <= next_state;
   end
 
@@ -447,8 +447,7 @@ module commit_cu (
 `ifndef SYNTHESIS
 `ifndef VERILATOR
   always @(posedge clk_i) begin
-    $display($sformatf("valid_i: %b | type: %s | state: %s", valid_i, comm_type_i.name(),
-                       curr_state.name()));
+    $display("valid_i: %b | type: %s | state: %s", valid_i, comm_type_i.name(), curr_state.name());
   end
 `endif  /* VERILATOR */
 `endif  /* SYNTHESIS */

@@ -19,7 +19,7 @@ module div #(
   parameter int unsigned EU_CTL_LEN = 4
 ) (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   // Handshake from/to the reservation station unit
@@ -80,8 +80,8 @@ module div #(
   // Generate PIPE_DEPTH-1 pipeline registers
   generate
     for (genvar i = 1; i < PIPE_DEPTH; i = i + 1) begin : gen_pipe_reg
-      always_ff @(posedge clk_i or negedge rst_n_i) begin
-        if (!rst_n_i) begin
+      always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
           pipe_result_d[i]        <= '0;
           pipe_rob_idx_d[i]       <= '0;
           pipe_except_raised_d[i] <= 1'b0;
@@ -123,7 +123,7 @@ module div #(
     .SKIP  (1'b0)
   ) u_out_reg (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .flush_i(flush_i),
     .valid_i(valid_i),
     .ready_i(ready_i),

@@ -21,7 +21,7 @@ module Control
 (
 	// From :TB
   	input   logic             	clk_i,
-  	input   logic             	rst_n_i,
+  	input   logic             	rst_ni,
 	// To all
   	output  logic             	flush_i,
 
@@ -99,9 +99,9 @@ module Control
   	state_t present_state, next_state;
 
   // State transition
-  	always_ff @ (posedge clk_i or negedge rst_n_i) begin
+  	always_ff @ (posedge clk_i or negedge rst_ni) begin
     // Async reset
-    	if (!rst_n_i) begin
+    	if (!rst_ni) begin
       		present_state 	<= 	RESET;
     	//end else begin
     	//if (flush_i) begin
@@ -267,9 +267,9 @@ module Control
 
 
 	// Flush_Pipeline logic
-	always_ff @(posedge clk_i or negedge rst_n_i) begin: flush_PIPE_update
+	always_ff @(posedge clk_i or negedge rst_ni) begin: flush_PIPE_update
 
-	if (!rst_n_i) begin // Asynchronous reset
+	if (!rst_ni) begin // Asynchronous reset
         	flush_i 			= 	1;
 			stall	 			= 	0;
     end
@@ -288,9 +288,9 @@ module Control
        // E_ENV_CALL_UMODE      = 4'h8,
        // E_UNKNOWN             = 4'ha    // reserved code 10, used for debugging
 	// Abort and Clear logic
-	always_ff @(posedge clk_i or negedge rst_n_i) begin: Abort_update
+	always_ff @(posedge clk_i or negedge rst_ni) begin: Abort_update
 
-	if (!rst_n_i) begin // Asynchronous reset
+	if (!rst_ni) begin // Asynchronous reset
         	abort_i  				= 	0;
    			clr_l1tlb_mshr_i  		= 	1;
    			clr_l2tlb_mshr_i  		= 	1;
@@ -330,9 +330,9 @@ module Control
 	end
 
 	// Flush logic
-	always_ff @(posedge clk_i or negedge rst_n_i) begin: flush_update
+	always_ff @(posedge clk_i or negedge rst_ni) begin: flush_update
 
-	if (!rst_n_i) begin // Asynchronous reset
+	if (!rst_ni) begin // Asynchronous reset
         	L1TLB_flush_type_i		= 	FlushAll;//NoFlush;
   			L2TLB_flush_type_i  	= 	FlushAll;//NoFlush;
   			flush_asid_i  			= 	'd0;

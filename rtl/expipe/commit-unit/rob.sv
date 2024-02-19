@@ -25,7 +25,7 @@ module rob #(
 ) (
   /* Clock and reset */
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   /* Issue stage */
@@ -96,8 +96,8 @@ module rob #(
   // 1) push (from issue stage)
   // 2) pop
   // 3) update result (from CDB)
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : p_fifo_update
-    if (!rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin : p_fifo_update
+    if (!rst_ni) begin
       foreach (data[i]) begin
         data_valid[i] <= 1'b0;
         data[i]       <= '0;
@@ -131,7 +131,7 @@ module rob #(
     .N(DEPTH)
   ) u_head_counter (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .en_i   (head_cnt_en),
     .clr_i  (head_cnt_clr),
     .count_o(head_idx),
@@ -142,7 +142,7 @@ module rob #(
     .N(DEPTH)
   ) u_tail_counter (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .en_i   (tail_cnt_en),
     .clr_i  (tail_cnt_clr),
     .count_o(tail_idx),
@@ -179,7 +179,7 @@ module rob #(
 `ifndef SYNTHESIS
 `ifndef VERILATOR
   property p_fifo_push;
-    @(posedge clk_i) disable iff (!rst_n_i) sync_accept_on (flush_i)
+    @(posedge clk_i) disable iff (!rst_ni) sync_accept_on (flush_i)
       issue_valid_i && issue_ready_o |-> ##1 data_valid[$past(
         tail_idx
     )] == 1'b1 && data[$past(
@@ -205,7 +205,7 @@ module rob #(
     );
 
   property p_fifo_pop;
-    @(posedge clk_i) disable iff (!rst_n_i) sync_accept_on (flush_i)
+    @(posedge clk_i) disable iff (!rst_ni) sync_accept_on (flush_i)
       comm_valid_o && comm_ready_i |-> ##1 issue_ready_o == 1'b1 && data_valid[$past(
         head_idx
     )] == 1'b0;
@@ -214,25 +214,25 @@ module rob #(
   assert property (p_fifo_pop);
 
   property p_ready_n;
-    @(posedge clk_i) disable iff (!rst_n_i) sync_accept_on (flush_i) !comm_ready_i && comm_valid_o |=> comm_valid_o;
+    @(posedge clk_i) disable iff (!rst_ni) sync_accept_on (flush_i) !comm_ready_i && comm_valid_o |=> comm_valid_o;
   endproperty
   a_ready_n :
   assert property (p_ready_n);
 
   property p_push_pop;
-    @(posedge clk_i) disable iff (!rst_n_i) fifo_push && fifo_pop |-> head_idx != tail_idx;
+    @(posedge clk_i) disable iff (!rst_ni) fifo_push && fifo_pop |-> head_idx != tail_idx;
   endproperty
   a_push_pop :
   assert property (p_push_pop);
 
   property p_cdb_valid;
-    @(posedge clk_i) disable iff (!rst_n_i) cdb_valid_i |-> data_valid[cdb_data_i.rob_idx];
+    @(posedge clk_i) disable iff (!rst_ni) cdb_valid_i |-> data_valid[cdb_data_i.rob_idx];
   endproperty
   a_cdb_valid :
   assert property (p_cdb_valid);
 
   property p_flush;
-    @(posedge clk_i) disable iff (!rst_n_i) $rose(
+    @(posedge clk_i) disable iff (!rst_ni) $rose(
         flush_i
     ) |=> comm_valid_o == 1'b0 && issue_ready_o == 1'b1;
   endproperty

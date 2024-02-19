@@ -21,7 +21,7 @@
 
 module branch_cu (
   input  logic clk_i,
-  input  logic rst_n_i,
+  input  logic rst_ni,
   input  logic flush_i,
   input  logic valid_i,
   input  logic misprediction_i,
@@ -95,8 +95,8 @@ module branch_cu (
   end
 
   // State update
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : cu_state_upd
-    if (!rst_n_i) curr_state <= IDLE;
+  always_ff @(posedge clk_i or negedge rst_ni) begin : cu_state_upd
+    if (!rst_ni) curr_state <= IDLE;
     else if (flush_i) curr_state <= IDLE;
     else curr_state <= next_state;
   end
@@ -107,7 +107,7 @@ module branch_cu (
 `ifndef SYNTHESIS
 `ifndef VERILATOR
   property p_fe_valid;
-    @(posedge clk_i) disable iff (!rst_n_i)
+    @(posedge clk_i) disable iff (!rst_ni)
         sync_accept_on(flush_i)
         (curr_state == IDLE || curr_state == UPD_FE) && valid_i && misprediction_i |-> ##1
             fe_res_valid_o |-> ##[0:10]
@@ -117,7 +117,7 @@ module branch_cu (
   a_fe_valid :
   assert property (p_fe_valid);
   property p_wait_flush;
-    @(posedge clk_i) disable iff (!rst_n_i) curr_state == STALL & !flush_i |-> ##[1:2] !fe_res_valid_o
+    @(posedge clk_i) disable iff (!rst_ni) curr_state == STALL & !flush_i |-> ##[1:2] !fe_res_valid_o
   endproperty
   a_wait_flush :
   assert property (p_wait_flush);

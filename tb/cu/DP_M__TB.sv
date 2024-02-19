@@ -11,7 +11,7 @@ module DP_M_tb;
     logic    main_cu_stall_o;
 
     logic clk_i;
-	logic rst_n_i;
+	logic rst_ni;
 	logic flush_i;
 	satp_mode_t         vm_mode_i;
 
@@ -67,7 +67,7 @@ always #5 clk_i = ~clk_i;
 initial begin
     //$monitor("Time = %0t -- instruction = 0x%8x, fetch ready = %0b", $time, instruction_i, fetch_ready_o);
     clk_i = 1;
-    rst_n_i = 1;
+    rst_ni = 1;
     flush_i = 0;
 
 	vm_mode_i=SV39;
@@ -101,8 +101,8 @@ initial begin
   	l2c_l2arb_ans_i  = 0;
 
         // reset
-    #2 rst_n_i = 0;
-    #10 rst_n_i = 1;
+    #2 rst_ni = 0;
+    #10 rst_ni = 1;
 
     #30 flush_i = 1;
     #10 flush_i = 0;
@@ -117,7 +117,7 @@ end
 Data_path_memory u_Data_path_memory
 (
 	.clk_i (clk_i),
-    .rst_n_i (rst_n_i),
+    .rst_ni (rst_ni),
     .flush_i (flush_i),
 	.vm_mode_i(vm_mode_i),
 	.main_cu_stall_o(main_cu_stall_o),

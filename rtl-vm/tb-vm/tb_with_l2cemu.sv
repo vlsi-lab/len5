@@ -68,29 +68,29 @@ module tb_with_l2cemu;
     end
 
     /* Print boot program counter */
-    $display($sformatf("Boot program counter: 0x%x", BOOT_PC));
+    $display("Boot program counter: 0x%x", BOOT_PC);
 
     /* Print the number of simulation cycles */
-    $display($sformatf("Number of simulation cycles: %0d", num_cycles));
+    $display("Number of simulation cycles: %0d", num_cycles);
 
     /* Print memory file being used */
-    $display($sformatf("Memory file: %s", mem_file));
+    $display("Memory file: %s", mem_file);
 
     /* Print M extension information */
-    $display($sformatf("M extension: %s",
+    $display("M extension: %s",
                        `ifdef LEN5_M_EN "YES"
                        `else
                        "NO"
                        `endif
-                       ));
+                       );
 
     /* Print FP extension information */
-    $display($sformatf("D extension: %s",
+    $display("D extension: %s",
                        `ifdef LEN5_FP_EN "YES"
                        `else
                        "NO"
                        `endif
-                       ));
+                       );
   end
 
   // Clock and reset generation
@@ -117,12 +117,12 @@ module tb_with_l2cemu;
   int ret = 0;
   initial begin
     @(negedge clk);
-    $display($sformatf("Flashing memory from '%s'...", mem_file));
+    $display("Flashing memory from '%s'...", mem_file);
     ret = u_cache_L2_system_emulator.i_memory.LoadMem(mem_file);
     if (0 > ret) begin
       $display("ERROR while flashing memory");
     end
-    $display($sformatf(" - loaded %0d words", ret));
+    $display(" - loaded %0d words", ret);
 
     // Stop the simulation after the requested number of cycles
     if (num_cycles > 0) begin
@@ -140,7 +140,7 @@ module tb_with_l2cemu;
 
   datapath u_datapath (
     .clk_i              (clk),
-    .rst_n_i            (rst_n),
+    .rst_ni            (rst_n),
     .l2c_l2arb_req_rdy_i(l2c_l2arb_req_rdy),
     .l2c_l2arb_ans_i    (l2c_l2arb_ans),
     .l2arb_l2c_req_o    (l2arb_l2c_req),

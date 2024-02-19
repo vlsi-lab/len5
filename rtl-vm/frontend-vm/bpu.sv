@@ -19,7 +19,7 @@ module bpu #(
     parameter BTB_BITS = 4
 ) (
     input logic                   clk_i,
-    input logic                   rst_n_i,
+    input logic                   rst_ni,
     input logic                   flush_i,
     input logic        [len5_pkg::XLEN-1:0] pc_i,
     input resolution_t            res_i,
@@ -37,7 +37,7 @@ module bpu #(
       .HLEN(HLEN)
   ) u_gshare (
       .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
+      .rst_ni(rst_ni),
       .flush_i(flush_i),
       .pc_i   (pc_i),
       .res_i  (res_i),
@@ -49,7 +49,7 @@ module bpu #(
       .BTB_BITS(BTB_BITS)
   ) u_btb (
       .clk_i      (clk_i),
-      .rst_n_i    (rst_n_i),
+      .rst_ni    (rst_ni),
       .flush_i    (flush_i),
       .pc_i       (pc_i),
       .valid_i    (btb_update),

@@ -21,7 +21,7 @@ module div_unit #(
 ) (
   // Clock, reset, and flush
   input  logic                  clk_i,
-  input  logic                  rst_n_i,
+  input  logic                  rst_ni,
   input  logic                  flush_i,
   // Issue stage
   input  logic                  issue_valid_i,
@@ -64,7 +64,7 @@ module div_unit #(
     .EU_CTL_LEN(EU_CTL_LEN)
   ) u_div_rs (
     .clk_i               (clk_i),
-    .rst_n_i             (rst_n_i),
+    .rst_ni              (rst_ni),
     .flush_i             (flush_i),
     .issue_valid_i       (issue_valid_i),
     .issue_ready_o       (issue_ready_o),
@@ -96,7 +96,7 @@ module div_unit #(
     .PIPE_DEPTH(PIPE_DEPTH)
   ) u_div (
     .clk_i          (clk_i),
-    .rst_n_i        (rst_n_i),
+    .rst_ni         (rst_ni),
     .flush_i        (flush_i),
     .valid_i        (rs_div_valid),
     .ready_i        (rs_div_ready),

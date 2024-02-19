@@ -25,7 +25,7 @@ module op_only_unit #(
 ) (
   // Clock, reset, and flush
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   // Handshake from/to issue arbiter
@@ -58,7 +58,7 @@ module op_only_unit #(
     .EU_CTL_LEN(EU_CTL_LEN)
   ) u_op_only_rs (
     .clk_i        (clk_i),
-    .rst_n_i      (rst_n_i),
+    .rst_ni       (rst_ni),
     .flush_i      (flush_i),
     .issue_valid_i(issue_valid_i),
     .issue_ready_o(issue_ready_o),

@@ -14,7 +14,7 @@
 
 module cdb (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   // Handshake from/to the maximum priority EU
@@ -56,7 +56,7 @@ module cdb (
   // -----------
   cdb_arbiter u_cdb_arbiter (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .flush_i(flush_i),
 
     // Handshake from/to the maximum priority unit

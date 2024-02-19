@@ -25,7 +25,7 @@ module store_buffer #(
   localparam int unsigned L0TagW = len5_pkg::XLEN - IdxW
 ) (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   /* Issue stage */
@@ -260,8 +260,8 @@ module store_buffer #(
   end
 
   // State update
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : p_state_update
-    if (!rst_n_i) foreach (curr_state[i]) curr_state[i] <= STORE_S_EMPTY;
+  always_ff @(posedge clk_i or negedge rst_ni) begin : p_state_update
+    if (!rst_ni) foreach (curr_state[i]) curr_state[i] <= STORE_S_EMPTY;
     else if (flush_i) begin
       if (LEN5_STORE_LOAD_FWD_EN != 0) begin
         foreach (curr_state[i]) begin
@@ -278,8 +278,8 @@ module store_buffer #(
   // ------------------
   // LOAD BUFFER UPDATE
   // ------------------
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : p_lb_update
-    if (!rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin : p_lb_update
+    if (!rst_ni) begin
       foreach (data[i]) begin
         data[i] <= '0;
       end
@@ -324,8 +324,8 @@ module store_buffer #(
   end
 
   // Latest store instruction idx update
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : latest_idx_reg
-    if (!rst_n_i) latest_idx <= '0;
+  always_ff @(posedge clk_i or negedge rst_ni) begin : latest_idx_reg
+    if (!rst_ni) latest_idx <= '0;
     else if (flush_i) latest_idx <= '0;
     else if (push) latest_idx <= tail_idx;
   end
@@ -408,13 +408,11 @@ module store_buffer #(
     .N(DEPTH)
   ) u_head_counter (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .en_i   (head_cnt_en),
     .clr_i  (head_cnt_clr),
     .count_o(head_idx),
-    
     .tc_o   ()               // not needed
-    
   );
 
   // Tail counter pointing to the first empty entry
@@ -422,7 +420,7 @@ module store_buffer #(
     .N(DEPTH)
   ) u_tail_counter (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .en_i   (tail_cnt_en),
     .clr_i  (tail_cnt_clr),
     .count_o(tail_idx),
@@ -435,7 +433,7 @@ module store_buffer #(
     .N(DEPTH)
   ) u_addr_counter (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .en_i   (addr_cnt_en),
     .clr_i  (addr_cnt_clr),
     .count_o(addr_idx),
@@ -448,7 +446,7 @@ module store_buffer #(
     .N(DEPTH)
   ) u_mem_counter (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .en_i   (mem_cnt_en),
     .clr_i  (mem_cnt_clr),
     .count_o(mem_idx),
@@ -462,7 +460,7 @@ module store_buffer #(
 `ifndef VERILATOR
   always @(posedge clk_i) begin
     foreach (curr_state[i]) begin
-      assert property (@(posedge clk_i) disable iff (!rst_n_i) curr_state[i] == STORE_S_HALT |->
+      assert property (@(posedge clk_i) disable iff (!rst_ni) curr_state[i] == STORE_S_HALT |->
                 ##1 curr_state[i] != STORE_S_HALT);
     end
   end

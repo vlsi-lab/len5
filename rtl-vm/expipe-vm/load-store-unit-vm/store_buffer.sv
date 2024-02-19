@@ -27,7 +27,7 @@ import csr_pkg::SV48;
 
 module store_buffer (
     input logic clk_i,
-    input logic rst_n_i,
+    input logic rst_ni,
     input logic flush_i,
 
 
@@ -309,8 +309,8 @@ module store_buffer (
   // ------------------------
   // STORE BUFFER DATA UPDATE
   // ------------------------
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : sb_data_update
-    if (!rst_n_i) begin  // Asynchronous reset
+  always_ff @(posedge clk_i or negedge rst_ni) begin : sb_data_update
+    if (!rst_ni) begin  // Asynchronous reset
       foreach (sb_data[i]) begin
         sb_data[i] <= 0;
       end
@@ -730,7 +730,7 @@ module store_buffer (
       .N(STBUFF_DEPTH)
   ) head_counter (
       .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
+      .rst_ni(rst_ni),
       .en_i   (head_cnt_en),
       .clr_i  (head_cnt_clr),
       .count_o(sb_head_idx),
@@ -741,7 +741,7 @@ module store_buffer (
       .N(STBUFF_DEPTH)
   ) tail_counter (
       .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
+      .rst_ni(rst_ni),
       .en_i   (tail_cnt_en),
       .clr_i  (tail_cnt_clr),
       .count_o(sb_tail_idx),
@@ -879,11 +879,11 @@ module store_buffer (
   always @(negedge clk_i) begin
     // Notice when the load buffer is full
     assert (valid_a !== '1)
-    else $display($sformatf("Store buffer full (%0d entries): you might want to increase its depth", STBUFF_DEPTH));
+    else $display("Store buffer full (%0d entries): you might want to increase its depth", STBUFF_DEPTH);
     foreach (sb_data[i]) begin
       // Check if the correct order of operations is respected
       assert (sb_data[i].except_code != E_UNKNOWN)
-      else `$error($sformatf("Store buffer entry %4d has encountered an unknown exception", i))
+      else `$error("Store buffer entry %4d has encountered an unknown exception", i);
     end
   end
 `endif /* VERILATOR */

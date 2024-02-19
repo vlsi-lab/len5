@@ -19,7 +19,7 @@ import expipe_pkg::*;
 
 module ifu (
     input logic clk_i,
-    input logic rst_n_i,
+    input logic rst_ni,
     input logic flush_i,
 
     // From/to PC gen
@@ -81,8 +81,8 @@ module ifu (
   // --------
   // Line reg
   // --------
-  always_ff @(posedge clk_i or negedge rst_n_i) begin
-    if (!rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
       line_valid <= '0;
       line_reg   <= '0;
       except_o   <= '0;
@@ -103,8 +103,8 @@ module ifu (
   // --------
   // Line bak
   // --------
-  always_ff @(posedge clk_i or negedge rst_n_i) begin
-    if (!rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
       line_bak <= '0;
     end else begin
       if (flush_i) begin
@@ -120,7 +120,7 @@ module ifu (
   // ----------------
   fetch_controller u_fetch_controller (
       .clk_i         (clk_i),
-      .rst_n_i       (rst_n_i),
+      .rst_ni       (rst_ni),
       .flush_i       (flush_i),
       .here_i        (here),
       .will_be_here_i(will_be_here),
@@ -139,8 +139,8 @@ module ifu (
   // -------
   assign prev_pc_d = fetch_ready ? pc_i : prev_pc_q;
 
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : prev_pc
-    if (!rst_n_i) prev_pc_q <= '0;
+  always_ff @(posedge clk_i or negedge rst_ni) begin : prev_pc
+    if (!rst_ni) prev_pc_q <= '0;
     else if (flush_i) prev_pc_q <= '0;
     else prev_pc_q <= prev_pc_d;
   end : prev_pc

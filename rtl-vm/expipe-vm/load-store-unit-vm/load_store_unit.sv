@@ -24,7 +24,7 @@ import csr_pkg::SV48;
 
 module load_store_unit (
     input logic clk_i,
-    input logic rst_n_i,
+    input logic rst_ni,
     input logic flush_i,
 
     input logic [SATP_MODE_LEN-1:0] vm_mode_i,
@@ -253,7 +253,7 @@ module load_store_unit (
   // -----------
   load_buffer u_load_buffer (
       .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
+      .rst_ni(rst_ni),
       .flush_i(flush_i),
 
       .vm_mode_i(vm_mode_i),
@@ -354,7 +354,7 @@ module load_store_unit (
 
   store_buffer u_store_buffer (
       .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
+      .rst_ni(rst_ni),
       .flush_i(flush_i),
 
       .vm_mode_i(vm_mode_i),
@@ -466,7 +466,7 @@ module load_store_unit (
       .IDX_LEN(BUFF_IDX_LEN)
   ) u_vaddr_adder (
       .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
+      .rst_ni(rst_ni),
       .flush_i(flush_i),
 
       // Virtual memory configuration
@@ -505,7 +505,7 @@ module load_store_unit (
 `else
   fair_2way_arbiter vadder_arbiter (
       .clk_i   (clk_i),
-      .rst_n_i (rst_n_i),
+      .rst_ni (rst_ni),
       .valid_i ({lb_vadderarb_valid, sb_vadderarb_valid}),
       .ready_i (vadder_vadderarb_ready),
       .valid_o (vadderarb_vadder_valid),
@@ -597,7 +597,7 @@ module load_store_unit (
 `else
   fair_2way_arbiter dtlb_hs_arbiter (
       .clk_i   (clk_i),
-      .rst_n_i (rst_n_i),
+      .rst_ni (rst_ni),
       .valid_i ({lb_dtlbarb_valid, sb_dtlbarb_valid}),
       .ready_i (dtlb_dtlbarb_ready),
       .valid_o (dtlbarb_dtlb_valid),
@@ -696,7 +696,7 @@ module load_store_unit (
 `else
   fair_2way_arbiter dcache_hs_arbiter (
       .clk_i   (clk_i),
-      .rst_n_i (rst_n_i),
+      .rst_ni (rst_ni),
       .valid_i ({lb_dcachearb_valid, sb_dcachearb_valid}),
       .ready_i (dcache_dcachearb_ready),
       .valid_o (dcachearb_dcache_valid),

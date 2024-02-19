@@ -12,7 +12,7 @@
 module backend (
   // Clock, reset, and flush
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
 
   // Frontend
   input  logic                                        fetch_valid_i,
@@ -219,10 +219,10 @@ module backend (
 
   issue_stage u_issue_stage (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .flush_i(except_flush),
 
-    .fetch_mis_flush_o    (fetch_mis_flush_o),
+    .fetch_mis_flush_o(fetch_mis_flush_o),
 
     .fetch_valid_i        (fetch_valid_i),
     .fetch_ready_o        (fetch_ready_o),
@@ -301,7 +301,7 @@ module backend (
     .REG_NUM(XREG_NUM)
   ) u_int_regstat (
     .clk_i              (clk_i),
-    .rst_n_i            (rst_n_i),
+    .rst_ni             (rst_ni),
     .flush_i            (ex_mis_flush),
     .issue_valid_i      (il_int_regstat_valid),
     .issue_rd_idx_i     (il_int_regstat_rd_idx),
@@ -320,7 +320,7 @@ module backend (
   // ---------------------
   int_rf u_int_rf (
     .clk_i            (clk_i),
-    .rst_n_i          (rst_n_i),
+    .rst_ni           (rst_ni),
     .comm_valid_i     (comm_intrf_valid),
     .comm_rd_idx_i    (comm_rf_rd_idx),
     .comm_rd_value_i  (comm_rf_rd_value),
@@ -337,7 +337,7 @@ module backend (
   //   .REG_NUM(XREG_NUM)
   // ) u_fp_regstat (
   //   .clk_i              (clk_i),
-  //   .rst_n_i            (rst_n_i),
+  //   .rst_ni            (rst_ni),
   //   .issue_valid_i      (il_fp_regstat_valid),
   //   .issue_ready_o      (fp_regstat_il_ready),
   //   .issue_rd_idx_i     (il_fp_regstat_rd_idx),
@@ -356,7 +356,7 @@ module backend (
   // // ----------------------------
   // fp_rf u_fp_rf (
   //   .clk_i            (clk_i),
-  //   .rst_n_i          (rst_n_i),
+  //   .rst_ni          (rst_ni),
   //   .comm_valid_i     (comm_fprf_valid),
   //   .comm_ready_o     (fprf_comm_ready),
   //   .comm_rd_idx_i    (comm_rf_rd_idx),
@@ -375,7 +375,7 @@ module backend (
   // ---------------
   exec_stage u_exec_stage (
     .clk_i         (clk_i),
-    .rst_n_i       (rst_n_i),
+    .rst_ni        (rst_ni),
     .mis_flush_i   (ex_mis_flush),
     .except_flush_i(except_flush),
 
@@ -436,7 +436,7 @@ module backend (
   // ---------------------
   cdb u_cdb (
     .clk_i           (clk_i),
-    .rst_n_i         (rst_n_i),
+    .rst_ni          (rst_ni),
     .flush_i         (ex_mis_flush),
     .max_prio_valid_i(ex_cdb_valid[0]),
     .max_prio_ready_o(cdb_ex_ready[0]),
@@ -456,8 +456,8 @@ module backend (
   // Commit logic
   // ------------
   commit_stage u_commit_stage (
-    .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .clk_i (clk_i),
+    .rst_ni(rst_ni),
 
     .ex_mis_flush_o(ex_mis_flush),
     .except_flush_o(except_flush),
@@ -511,7 +511,7 @@ module backend (
   // ----
   csrs u_csrs (
     .clk_i      (clk_i),
-    .rst_n_i    (rst_n_i),
+    .rst_ni     (rst_ni),
     .valid_i    (comm_csr_valid),
     .comm_insn_i(comm_csr_comm_insn),
     .comm_op_i  (comm_csr_op),

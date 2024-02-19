@@ -23,7 +23,7 @@ module ras #(
   parameter int unsigned RAS_DEPTH = 4  // number of recent return addresses to buffer
 ) (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
 
   // From the branch unit
   input  logic                      push_i,
@@ -50,8 +50,8 @@ module ras #(
   // RETURN ADDRESS LIFO BUFFER
   // --------------------------
   assign ras_push = push_i;
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : lifo_upd
-    if (rst_n_i) foreach (ras[i]) ras[i] <= '0;
+  always_ff @(posedge clk_i or negedge rst_ni) begin : lifo_upd
+    if (rst_ni) foreach (ras[i]) ras[i] <= '0;
     else if (ras_push) ras[new_idx] <= ret_addr_i;
   end
 
@@ -63,7 +63,7 @@ module ras #(
     .W(IdxW)
   ) u_new_cnt (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .en_i   (new_cnt_en),
     .clr_i  (1'b0),
     .up_dn_i(new_cnt_up),

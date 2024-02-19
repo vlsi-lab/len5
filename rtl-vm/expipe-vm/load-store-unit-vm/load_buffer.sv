@@ -27,7 +27,7 @@ import csr_pkg::SV48;
 
 module load_buffer (
     input logic clk_i,
-    input logic rst_n_i,
+    input logic rst_ni,
     input logic flush_i,
 
     input logic [SATP_MODE_LEN-1:0] vm_mode_i,  // virtual memory MODE (from the 'satp' CSR)
@@ -313,8 +313,8 @@ module load_buffer (
   // -----------------------
   // LOAD BUFFER DATA UPDATE
   // -----------------------
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : lb_data_update
-    if (!rst_n_i) begin  // Asynchronous reset
+  always_ff @(posedge clk_i or negedge rst_ni) begin : lb_data_update
+    if (!rst_ni) begin  // Asynchronous reset
       foreach (lb_data[i]) begin
         lb_data[i] <= 0;
       end
@@ -706,8 +706,8 @@ module load_buffer (
   // FORWARDING INDEX REGISTER
   // -------------------------
   // When the virtual address adder returns the computed virtual address or and the index of the corresponding entry of the load buffer, this index is saved in a register so it can be used in the next cycle to select the entry for virtual address forwarding
-  always_ff @(posedge clk_i or negedge rst_n_i) begin
-    if (!rst_n_i) vfwd_idx <= 0;
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) vfwd_idx <= 0;
     else vfwd_idx <= (vfwd_idx_reg_en) ? vadder_idx_i : vfwd_idx;
   end
 
@@ -767,10 +767,10 @@ module load_buffer (
   always @(negedge clk_i) begin
     // Notice when the load buffer is full
     assert (valid_a !== '1)
-    else $display($sformatf("Load buffer full (%0d entries): you might want to increase its depth", LDBUFF_DEPTH))
+    else $display("Load buffer full (%0d entries): you might want to increase its depth", LDBUFF_DEPTH);
     foreach (lb_data[i]) begin
       assert (lb_data[i].except_code != E_UNKNOWN)
-      else `$error($sformatf("Load buffer entry %4d has encountered an unknown exception", i))
+      else `$error("Load buffer entry %4d has encountered an unknown exception", i);
     end
   end
 `endif /* VERILATOR */

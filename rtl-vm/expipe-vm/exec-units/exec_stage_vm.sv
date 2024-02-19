@@ -27,7 +27,7 @@ import csr_pkg::SATP_MODE_LEN;
 module exec_stage_vm (
     // Clock, reset, and flush
     input logic clk_i,
-    input logic rst_n_i,
+    input logic rst_ni,
     input logic flush_i,
 
     // FETCH UNIT
@@ -108,7 +108,7 @@ module exec_stage_vm (
 
   load_store_unit u_load_store_unit (
       .clk_i                    (clk_i),
-      .rst_n_i                  (rst_n_i),
+      .rst_ni                  (rst_ni),
       .flush_i                  (flush_i),
       .vm_mode_i                (vm_mode_i),
       .issue_lb_valid_i         (issue_valid_i[EU_LOAD_BUFFER]),
@@ -154,7 +154,7 @@ module exec_stage_vm (
       .RS_DEPTH(BU_RS_DEPTH)
   ) u_branch_unit (
       .clk_i           (clk_i),
-      .rst_n_i         (rst_n_i),
+      .rst_ni         (rst_ni),
       .flush_i         (flush_i),
       .issue_valid_i   (issue_valid_i[EU_BRANCH_UNIT]),
       .issue_ready_o   (issue_ready_o[EU_BRANCH_UNIT]),
@@ -193,7 +193,7 @@ module exec_stage_vm (
       .RS_DEPTH  (ALU_RS_DEPTH)
   ) u_alu_unit (
       .clk_i              (clk_i),
-      .rst_n_i            (rst_n_i),
+      .rst_ni            (rst_ni),
       .flush_i            (flush_i),
       .issue_valid_i      (issue_valid_i[EU_INT_ALU]),
       .issue_ready_o      (issue_ready_o[EU_INT_ALU]),
@@ -225,7 +225,7 @@ module exec_stage_vm (
       .RS_DEPTH  (MULT_RS_DEPTH)
   ) u_mult_unit (
       .clk_i              (clk_i),
-      .rst_n_i            (rst_n_i),
+      .rst_ni            (rst_ni),
       .flush_i            (flush_i),
       .issue_valid_i      (issue_valid_i[EU_INT_MULT]),
       .issue_ready_o      (issue_ready_o[EU_INT_MULT]),
@@ -257,7 +257,7 @@ module exec_stage_vm (
       .RS_DEPTH  (DIV_RS_DEPTH)
   ) u_div_unit (
       .clk_i              (clk_i),
-      .rst_n_i            (rst_n_i),
+      .rst_ni            (rst_ni),
       .flush_i            (flush_i),
       .issue_valid_i      (issue_valid_i[EU_INT_DIV]),
       .issue_ready_o      (issue_ready_o[EU_INT_DIV]),
@@ -292,7 +292,7 @@ module exec_stage_vm (
       .RS_DEPTH  (FPU_RS_DEPTH)
   ) u_fpu_unit (
       .clk_i              (clk_i),
-      .rst_n_i            (rst_n_i),
+      .rst_ni            (rst_ni),
       .flush_i            (flush_i),
       .issue_valid_i      (issue_valid_i[EU_FPU]),
       .issue_ready_o      (issue_ready_o[EU_FPU]),
@@ -327,7 +327,7 @@ module exec_stage_vm (
       .EU_CTL_LEN(OP_ONLY_CTL_LEN)
   ) u_op_only_unit (
       .clk_i        (clk_i),
-      .rst_n_i      (rst_n_i),
+      .rst_ni      (rst_ni),
       .flush_i      (flush_i),
       .issue_valid_i(issue_valid_i[EU_OPERANDS_ONLY]),
       .issue_ready_o(issue_ready_o[EU_OPERANDS_ONLY]),

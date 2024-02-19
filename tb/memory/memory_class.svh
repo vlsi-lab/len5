@@ -160,7 +160,7 @@ class memory_class;
     CloseMemFile();
 
     // Return the number of loaded bytes
-    $display("Loaded %0d bytes (%0d words)", this.mem.num(), this.mem.num() >> 2);
+    $display(" - Loaded %0d bytes (%0d words)", this.mem.num(), this.mem.num() >> 2);
     return this.mem.num();
   endfunction : LoadMemTxt
   
@@ -172,7 +172,7 @@ class memory_class;
     $readmemh(path, this.mem);
 
     // Return the number of loaded bytes
-    $display("Loaded %0d bytes (%0d words)", this.mem.num(), this.mem.num() >> 2);
+    $display(" - Loaded %0d bytes (%0d words)", this.mem.num(), this.mem.num() >> 2);
     return this.mem.num();
   endfunction : LoadMemHex
 
@@ -187,7 +187,6 @@ class memory_class;
   function int ReadB(logic [AWIDTH-1:0] addr);
     // Search the byte in memory
     if (this.mem.exists(addr) == 0) begin
-      $display($sformatf("Reading uninitialized byte at address 0x%h", addr),);
       this.read_byte = '0;
       return 2;
     end

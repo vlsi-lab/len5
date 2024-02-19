@@ -224,7 +224,7 @@ module tb_bare #(
     .BOOT_PC               (BOOT_PC)
   ) u_datapath (
     .clk_i                     (clk_i),
-    .rst_n_i                   (rst_ni),
+    .rst_ni                    (rst_ni),
     .mem_flush_o               (dp2mem_flush),
     .instr_req_o               (dp2mem_instr_valid),
     .instr_gnt_i               (mem2dp_instr_ready),
@@ -275,7 +275,7 @@ module tb_bare #(
     .SKIP_DATA_ANS_REG(1'b1)
   ) u_memory_bare_emu (
     .clk_i                     (clk_i),
-    .rst_n_i                   (rst_ni),
+    .rst_ni                    (rst_ni),
     .instr_flush_i             (dp2mem_flush),
     .mem_file_i                (mem_file),
     .mem_dump_file_i           (MEM_DUMP_FILE),
@@ -332,35 +332,29 @@ module tb_bare #(
     $display("- retired instructions:                  %0d", u_datapath.u_backend.u_csrs.minstret);
 `ifdef LEN5_CSR_HPMCOUNTERS_EN
     $display(
-        $sformatf(
-            "  > retired branch/jump instructions:    %0d (%0.1f%%)",
-            u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4,
-            real'(u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret));
+        "  > retired branch/jump instructions:    %0d (%0.1f%%)",
+        u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4,
+        real'(u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret);
     $display(
-        $sformatf(
-            "    + jumps:                             %0d (%0.1f%%)",
-            u_datapath.u_backend.u_csrs.hpmcounter3,
-            real'(u_datapath.u_backend.u_csrs.hpmcounter3) * 100 / u_datapath.u_backend.u_csrs.minstret));
+        "    + jumps:                             %0d (%0.1f%%)",
+        u_datapath.u_backend.u_csrs.hpmcounter3,
+        real'(u_datapath.u_backend.u_csrs.hpmcounter3) * 100 / u_datapath.u_backend.u_csrs.minstret);
     $display(
-        $sformatf(
-            "    + branches:                          %0d (%0.1f%%)",
-            u_datapath.u_backend.u_csrs.hpmcounter4,
-            real'(u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret));
+        "    + branches:                          %0d (%0.1f%%)",
+        u_datapath.u_backend.u_csrs.hpmcounter4,
+        real'(u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret);
     $display(
-        $sformatf(
-            "  > retired load/store instructions:     %0d (%0.1f%%)",
-            u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6,
-            real'(u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret));
+        "  > retired load/store instructions:     %0d (%0.1f%%)",
+        u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6,
+        real'(u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret);
     $display(
-        $sformatf(
-            "    + loads:                             %0d (%0.1f%%)",
-            u_datapath.u_backend.u_csrs.hpmcounter5,
-            real'(u_datapath.u_backend.u_csrs.hpmcounter5) * 100 / u_datapath.u_backend.u_csrs.minstret));
+        "    + loads:                             %0d (%0.1f%%)",
+        u_datapath.u_backend.u_csrs.hpmcounter5,
+        real'(u_datapath.u_backend.u_csrs.hpmcounter5) * 100 / u_datapath.u_backend.u_csrs.minstret);
     $display(
-        $sformatf(
-            "    + stores:                            %0d (%0.1f%%)",
-            u_datapath.u_backend.u_csrs.hpmcounter6,
-            real'(u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret));
+        "    + stores:                            %0d (%0.1f%%)",
+        u_datapath.u_backend.u_csrs.hpmcounter6,
+        real'(u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret);
 `endif  /* LEN5_CSR_HPMCOUNTERS_EN */
     $display("- average IPC:                           %0.2f",
              real'(u_datapath.u_backend.u_csrs.minstret) / curr_cycle);

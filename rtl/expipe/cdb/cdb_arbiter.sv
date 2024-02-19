@@ -14,7 +14,7 @@
 
 module cdb_arbiter (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
 
@@ -105,8 +105,8 @@ module cdb_arbiter (
   // ------------------------
   // REMAINING VALID REGISTER
   // ------------------------
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : last_served_reg
-    if (!rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin : last_served_reg
+    if (!rst_ni) begin
       rem_valid_q <= 0;
     end else if (flush_i) begin
       rem_valid_q <= 0;

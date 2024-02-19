@@ -19,7 +19,7 @@ module arith_rs #(
   localparam int unsigned RsIdxLen = $clog2(DEPTH)
 ) (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
 
@@ -208,8 +208,8 @@ module arith_rs #(
   end
 
   // State update
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : p_state_update
-    if (!rst_n_i) foreach (curr_state[i]) curr_state[i] <= ARITH_S_EMPTY;
+  always_ff @(posedge clk_i or negedge rst_ni) begin : p_state_update
+    if (!rst_ni) foreach (curr_state[i]) curr_state[i] <= ARITH_S_EMPTY;
     else if (flush_i) foreach (curr_state[i]) curr_state[i] <= ARITH_S_EMPTY;
     else curr_state <= next_state;
   end
@@ -217,8 +217,8 @@ module arith_rs #(
   // ------------------
   // ARITH UNIT BUFFER
   // ------------------
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : p_rs_update
-    if (!rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin : p_rs_update
+    if (!rst_ni) begin
       foreach (data[i]) begin
         data[i] <= '0;
       end
@@ -355,7 +355,7 @@ module arith_rs #(
 `ifndef VERILATOR
   always @(posedge clk_i) begin
     foreach (curr_state[i]) begin
-      assert property (@(posedge clk_i) disable iff (!rst_n_i) curr_state[i] == ARITH_S_HALT |->
+      assert property (@(posedge clk_i) disable iff (!rst_ni) curr_state[i] == ARITH_S_HALT |->
         ##1 curr_state[i] != ARITH_S_HALT);
     end
   end

@@ -17,7 +17,7 @@ module pc_gen #(
   parameter logic [len5_pkg::XLEN-1:0] BOOT_PC = 64'h0
 ) (
   input  logic                                        clk_i,
-  input  logic                                        rst_n_i,
+  input  logic                                        rst_ni,
   input  logic                                        comm_except_raised_i,
   input  logic                   [len5_pkg::XLEN-1:0] comm_except_pc_i,
   input  logic                                        bu_res_valid_i,
@@ -66,8 +66,8 @@ module pc_gen #(
   end : pc_priority_enc
 
   // PC register
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : pc_reg
-    if (!rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin : pc_reg
+    if (!rst_ni) begin
       pc_o <= BOOT_PC;
     end else if (mem_ready_i) begin
       pc_o <= next_pc;
@@ -75,6 +75,6 @@ module pc_gen #(
   end : pc_reg
 
   // Output valid and ready
-  assign valid_o    = rst_n_i & !(bu_res_valid_i & bu_res_i.mispredict) & !comm_except_raised_i;
+  assign valid_o    = rst_ni & !(bu_res_valid_i & bu_res_i.mispredict) & !comm_except_raised_i;
   assign bu_ready_o = mem_ready_i;
 endmodule

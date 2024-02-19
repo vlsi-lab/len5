@@ -19,7 +19,7 @@ module fetch_stage #(
   parameter int unsigned MEMIF_FIFO_DEPTH = 2  // equal to the max number of outstanding requests the memory can accept
 ) (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
   input logic flush_bpu_i,
 
@@ -88,7 +88,7 @@ module fetch_stage #(
     .INIT_C2B(INIT_C2B)
   ) u_bpu (
     .clk_i         (clk_i),
-    .rst_n_i       (rst_n_i),
+    .rst_ni        (rst_ni),
     .flush_i       (flush_bpu_i),
     .curr_pc_i     (curr_pc),
     .bu_res_valid_i(bu_res_valid_i),
@@ -102,7 +102,7 @@ module fetch_stage #(
     .BOOT_PC(BOOT_PC)
   ) u_pc_gen (
     .clk_i               (clk_i),
-    .rst_n_i             (rst_n_i),
+    .rst_ni              (rst_ni),
     .comm_except_raised_i(comm_except_raised_i),
     .comm_except_pc_i    (comm_except_pc_i),
     .bu_res_valid_i      (bu_res_valid_i),
@@ -121,7 +121,7 @@ module fetch_stage #(
     .MAX_MEM_OUTSTANDING_REQUESTS(MEMIF_FIFO_DEPTH)
   ) u_mem_if (
     .clk_i                (clk_i),
-    .rst_n_i              (rst_n_i),
+    .rst_ni               (rst_ni),
     .flush_i              (flush_i),
     .fetch_valid_i        (pcgen_memif_valid),
     .fetch_ready_o        (memif_pcgen_ready),

@@ -21,7 +21,7 @@
  */
 module address_adder (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   /* Load/store buffer */
@@ -69,7 +69,7 @@ module address_adder (
     .SKIP  (LSU_SPILL_SKIP)
   ) u_out_reg (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .flush_i(flush_i),
     .valid_i(valid_i),
     .ready_i(ready_i),

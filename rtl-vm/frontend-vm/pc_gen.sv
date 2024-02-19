@@ -18,7 +18,7 @@ module pc_gen #(
     parameter [len5_pkg::XLEN-1:0] BOOT_PC = 'h0
 ) (
     input logic                   clk_i,
-    input logic                   rst_n_i,
+    input logic                   rst_ni,
     input logic                   except_i,
     input logic        [len5_pkg::XLEN-1:0] except_pc_i,
     input resolution_t            res_i,
@@ -57,8 +57,8 @@ module pc_gen #(
   end : pc_priority_enc
 
   // PC update
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : pc_reg
-    if (!rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin : pc_reg
+    if (!rst_ni) begin
       pc_o <= BOOT_PC;
     end else begin
       if (fetch_ready_i) begin

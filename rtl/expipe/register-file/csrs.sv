@@ -15,7 +15,7 @@
 module csrs (
   // Clock and reset
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
 
   // Handshaking with commit logic
   input logic valid_i,
@@ -300,8 +300,8 @@ module csrs (
   // CSR WRITE
   // ---------
 
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : fcsr_reg
-    if (!rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin : fcsr_reg
+    if (!rst_ni) begin
       // CSR DEFAULT VALUES
       // ------------------
 
@@ -388,8 +388,8 @@ module csrs (
     end
   end
   // Counters
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : perf_counters
-    if (!rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin : perf_counters
+    if (!rst_ni) begin
       mcycle      <= 'h0;
       minstret    <= 'h0;
       hpmcounter3 <= 'h0;

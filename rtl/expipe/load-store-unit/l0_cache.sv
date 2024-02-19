@@ -26,7 +26,7 @@ module l0_cache #(
   localparam int unsigned TagW   = (len5_pkg::XLEN) - StIdxW
 ) (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,  // flush after exception
   input logic st_valid_i,  // store instruction valid
   input logic [len5_pkg::XLEN-1:0] st_addr_i,  // store address
@@ -56,16 +56,16 @@ module l0_cache #(
   l0_cache_t [STBUFF_DEPTH-1:0] data;
 
   // Address and tag
-  logic      [StIdxW-1:0] st_idx;
-  logic      [  TagW-1:0] st_tag;
-  logic      [StIdxW-1:0] ld_idx;
-  logic      [  TagW-1:0] ld_tag;
+  logic      [      StIdxW-1:0] st_idx;
+  logic      [        TagW-1:0] st_tag;
+  logic      [      StIdxW-1:0] ld_idx;
+  logic      [        TagW-1:0] ld_tag;
 
   // Cache control
-  logic                   addr_valid;
-  logic                   cache_upd;
-  logic                   cache_hit;
-  logic                   st_hit;
+  logic                         addr_valid;
+  logic                         cache_upd;
+  logic                         cache_hit;
+  logic                         st_hit;
 
   // --------------------
   // LEVEL-0 CACHE UPDATE
@@ -76,8 +76,8 @@ module l0_cache #(
   assign cache_upd  = st_valid_i & addr_valid;
   assign st_idx     = st_addr_i[StIdxW-1:0];
   assign st_tag     = st_addr_i[XLEN-1-:TagW];
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : blockName
-    if (!rst_n_i) foreach (data[i]) data[i] <= 'h0;
+  always_ff @(posedge clk_i or negedge rst_ni) begin : blockName
+    if (!rst_ni) foreach (data[i]) data[i] <= 'h0;
     else if (flush_i) begin
       foreach (data[i]) data[i].valid <= 1'b0;
     end else if (cache_upd) begin

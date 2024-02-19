@@ -16,7 +16,7 @@ module branch_unit #(
   parameter int unsigned RS_DEPTH = 4  // must be a power of 2
 ) (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   // Frontend
@@ -155,7 +155,7 @@ module branch_unit #(
     .SKIP  (BU_SPILL_SKIP)
   ) u_bu_out_reg (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .valid_i(rs_bu_valid),
     .ready_i(rs_bu_ready),
     .valid_o(bu_rs_valid),
@@ -166,8 +166,8 @@ module branch_unit #(
 
   // Resolution register
   // -------------------
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : res_reg
-    if (!rst_n_i) res_d <= '0;
+  always_ff @(posedge clk_i or negedge rst_ni) begin : res_reg
+    if (!rst_ni) res_d <= '0;
     else if (flush_i) res_d <= '0;
     else if (cu_res_reg_en) begin
       res_d.pc         <= rs_bu_curr_pc;
@@ -182,7 +182,7 @@ module branch_unit #(
   // -------------------
   branch_cu u_branch_cu (
     .clk_i          (clk_i),
-    .rst_n_i        (rst_n_i),
+    .rst_ni         (rst_ni),
     .flush_i        (flush_i),
     .valid_i        (rs_bu_valid),
     .misprediction_i(res_mispredicted),
@@ -199,7 +199,7 @@ module branch_unit #(
     .DEPTH(RS_DEPTH)
   ) u_branch_rs (
     .clk_i               (clk_i),
-    .rst_n_i             (rst_n_i),
+    .rst_ni              (rst_ni),
     .flush_i             (flush_i),
     .issue_valid_i       (issue_valid_i),
     .issue_ready_o       (issue_ready_o),

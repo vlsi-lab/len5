@@ -14,7 +14,7 @@
 module issue_stage (
   // Clock, reset, and flush
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   // Fetch unit
@@ -178,7 +178,7 @@ module issue_stage (
     .DEPTH (IQ_DEPTH)
   ) u_issue_fifo (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .flush_i(iq_flush),
     .valid_i(fetch_valid_i),
     .ready_i(cu_iq_ready),
@@ -279,8 +279,8 @@ module issue_stage (
   assign  ireg_data_in.except_code    = (iq_data_out.except_raised) ? iq_data_out.except_code : id_except_code;
 
   // Issue register
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : issue_reg
-    if (!rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin : issue_reg
+    if (!rst_ni) begin
       ireg_data_out <= '0;
     end else if (flush_i || cu_mis_flush) begin
       ireg_data_out <= '0;
@@ -297,7 +297,7 @@ module issue_stage (
   // CU
   issue_cu u_issue_cu (
     .clk_i              (clk_i),
-    .rst_n_i            (rst_n_i),
+    .rst_ni             (rst_ni),
     .flush_i            (flush_i),
     .mis_flush_o        (cu_mis_flush),
     .iq_valid_i         (iq_cu_valid),
@@ -494,7 +494,7 @@ module issue_stage (
   end
   // Instruction sent to at most one execution unit
   property p_ex_valid;
-    @(posedge clk_i) disable iff (!rst_n_i) comm_valid_o |-> $onehot0(
+    @(posedge clk_i) disable iff (!rst_ni) comm_valid_o |-> $onehot0(
         ex_valid_o
     );
   endproperty

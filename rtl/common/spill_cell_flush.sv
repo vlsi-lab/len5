@@ -25,7 +25,7 @@ module spill_cell_flush #(
 ) (
   // Clock, reset, and flush
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   // Handshaking signals
@@ -66,7 +66,7 @@ module spill_cell_flush #(
 
       spill_cell_flush_cu u_spill_cell_cu (
         .clk_i  (clk_i),
-        .rst_n_i(rst_n_i),
+        .rst_ni (rst_ni),
         .flush_i(flush_i),
         .valid_i(valid_i),
         .ready_i(ready_i),
@@ -82,14 +82,14 @@ module spill_cell_flush #(
       // --------
 
       // Register A
-      always_ff @(posedge clk_i or negedge rst_n_i) begin : reg_a
-        if (!rst_n_i) a_data_q <= '0;
+      always_ff @(posedge clk_i or negedge rst_ni) begin : reg_a
+        if (!rst_ni) a_data_q <= '0;
         else if (a_en) a_data_q <= data_i;
       end
 
       // Register B
-      always_ff @(posedge clk_i or negedge rst_n_i) begin : reg_b
-        if (!rst_n_i) b_data_q <= '0;
+      always_ff @(posedge clk_i or negedge rst_ni) begin : reg_b
+        if (!rst_ni) b_data_q <= '0;
         else if (b_en) b_data_q <= data_i;
       end
 

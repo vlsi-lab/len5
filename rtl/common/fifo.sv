@@ -24,7 +24,7 @@ module fifo #(
 ) (
   /* Clock and reset */
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   /* Handshaking */
@@ -73,8 +73,8 @@ module fifo #(
   // NOTE: operations priority:
   // 1) push
   // 2) pop
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : fifo_update
-    if (!rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin : fifo_update
+    if (!rst_ni) begin
       foreach (data[i]) begin
         data_valid[i] <= 1'b0;
         data[i]       <= '0;
@@ -113,7 +113,7 @@ module fifo #(
     .N(DEPTH)
   ) u_head_counter (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .en_i   (head_cnt_en),
     .clr_i  (head_cnt_clr),
     .count_o(head_cnt),
@@ -124,7 +124,7 @@ module fifo #(
     .N(DEPTH)
   ) u_tail_counter (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .en_i   (tail_cnt_en),
     .clr_i  (tail_cnt_clr),
     .count_o(tail_cnt),
@@ -137,7 +137,7 @@ module fifo #(
 `ifndef SYNTHESIS
 `ifndef VERILATOR
   property p_fifo_push;
-    @(posedge clk_i) disable iff (!rst_n_i) sync_accept_on (flush_i)
+    @(posedge clk_i) disable iff (!rst_ni) sync_accept_on (flush_i)
       valid_i && ready_o |-> ##1 valid_o && data_valid[$past(
         tail_cnt
     )] == 1'b1 && data[$past(
@@ -164,7 +164,7 @@ module fifo #(
     );
 
   property p_fifo_pop;
-    @(posedge clk_i) disable iff (!rst_n_i) sync_accept_on (flush_i)
+    @(posedge clk_i) disable iff (!rst_ni) sync_accept_on (flush_i)
       valid_o && ready_i |-> ##1 ready_o == 1'b1 && data_valid[$past(
         head_cnt
     )] == 1'b0;
@@ -173,7 +173,7 @@ module fifo #(
   assert property (p_fifo_pop);
 
   property p_ready_n;
-    @(posedge clk_i) disable iff (!rst_n_i) sync_accept_on (flush_i) !ready_i && valid_o |-> ##1 valid_o;
+    @(posedge clk_i) disable iff (!rst_ni) sync_accept_on (flush_i) !ready_i && valid_o |-> ##1 valid_o;
   endproperty
   a_ready_n :
   assert property (p_ready_n);

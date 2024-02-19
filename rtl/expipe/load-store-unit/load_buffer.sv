@@ -24,7 +24,7 @@ module load_buffer #(
   localparam int unsigned IdxW  = $clog2(DEPTH)
 ) (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   /* Issue stage */
@@ -57,9 +57,9 @@ module load_buffer #(
   input logic [len5_pkg::STBUFF_TAG_W-1:0] sb_oldest_idx_i,
 
   /* Level-zero cache */
-  input  logic                      l0_valid_i,
-  input  logic [len5_pkg::XLEN-1:0] l0_value_i,
-  output expipe_pkg::ldst_width_t   l0_width_o,
+  input  logic                                         l0_valid_i,
+  input  logic                    [len5_pkg::XLEN-1:0] l0_value_i,
+  output expipe_pkg::ldst_width_t                      l0_width_o,
 
   /* Memory system */
   output logic                                                mem_valid_o,
@@ -238,8 +238,8 @@ module load_buffer #(
   end
 
   // State update
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : p_state_update
-    if (!rst_n_i) foreach (curr_state[i]) curr_state[i] <= LOAD_S_EMPTY;
+  always_ff @(posedge clk_i or negedge rst_ni) begin : p_state_update
+    if (!rst_ni) foreach (curr_state[i]) curr_state[i] <= LOAD_S_EMPTY;
     else if (flush_i) foreach (curr_state[i]) curr_state[i] <= LOAD_S_EMPTY;
     else curr_state <= next_state;
   end
@@ -267,8 +267,8 @@ module load_buffer #(
   // 3) update memory value
   // 4) update address
   // 5) update rs1 (from CDB)
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : p_lb_update
-    if (!rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin : p_lb_update
+    if (!rst_ni) begin
       foreach (data[i]) begin
         data[i] <= '0;
       end
@@ -316,8 +316,8 @@ module load_buffer #(
   // Store dependency register
   generate
     for (genvar i = 0; i < DEPTH; i++) begin : gen_store_dep_reg
-      always_ff @(posedge clk_i or negedge rst_n_i) begin : store_dep_reg
-        if (!rst_n_i) begin
+      always_ff @(posedge clk_i or negedge rst_ni) begin : store_dep_reg
+        if (!rst_ni) begin
           store_dep[i]     <= 1'b0;
           store_dep_idx[i] <= '0;
         end else if (flush_i) begin
@@ -424,7 +424,7 @@ module load_buffer #(
     .N(DEPTH)
   ) u_head_counter (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .en_i   (head_cnt_en),
     .clr_i  (head_cnt_clr),
     .count_o(head_idx),
@@ -435,7 +435,7 @@ module load_buffer #(
     .N(DEPTH)
   ) u_tail_counter (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .en_i   (tail_cnt_en),
     .clr_i  (tail_cnt_clr),
     .count_o(tail_idx),
@@ -446,7 +446,7 @@ module load_buffer #(
     .N(DEPTH)
   ) u_addr_counter (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .en_i   (addr_cnt_en),
     .clr_i  (addr_cnt_clr),
     .count_o(addr_idx),
@@ -457,7 +457,7 @@ module load_buffer #(
     .N(DEPTH)
   ) u_mem_counter (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .en_i   (mem_cnt_en),
     .clr_i  (mem_cnt_clr),
     .count_o(mem_idx),
@@ -471,7 +471,7 @@ module load_buffer #(
 `ifndef VERILATOR
   always @(posedge clk_i) begin
     foreach (curr_state[i]) begin
-      assert property (@(posedge clk_i) disable iff (!rst_n_i) curr_state[i] == LOAD_S_HALT |->
+      assert property (@(posedge clk_i) disable iff (!rst_ni) curr_state[i] == LOAD_S_HALT |->
                 ##1 curr_state[i] != LOAD_S_HALT);
     end
   end

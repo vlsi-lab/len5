@@ -17,9 +17,9 @@ module modn_counter #(
 ) (
   // Input signals
   input logic clk_i,
-  input logic rst_n_i,  // Asynchronous reset
+  input logic rst_ni,  // Asynchronous reset
   input logic en_i,
-  input logic clr_i,    // Synchronous clear
+  input logic clr_i,   // Synchronous clear
 
   // Output signals
   output logic [$clog2(N)-1:0] count_o,  // Counter value
@@ -30,8 +30,8 @@ module modn_counter #(
   assign tc_o = int'(count_o) == N - 1;
 
   // Main counting process. The counter clears when reaching the threshold
-  always_ff @(posedge clk_i or negedge rst_n_i) begin
-    if (!rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
       count_o <= 0;  // Asynchronous reset
     end else if (clr_i || (en_i && tc_o)) begin
       count_o <= 0;  // Synchronous clear when requested or when reaching the threshold

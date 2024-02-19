@@ -27,7 +27,7 @@ module fifo_nohs #(
 ) (
   /* Clock and reset */
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   /* Control */
@@ -71,8 +71,8 @@ module fifo_nohs #(
       // NOTE: operations priority:
       // 1) push
       // 2) pop
-      always_ff @(posedge clk_i or negedge rst_n_i) begin : fifo_update
-        if (!rst_n_i) begin
+      always_ff @(posedge clk_i or negedge rst_ni) begin : fifo_update
+        if (!rst_ni) begin
           foreach (data[i]) begin
             data_valid[i] <= 1'b0;
             data[i]       <= '0;
@@ -101,7 +101,7 @@ module fifo_nohs #(
         .N(DEPTH)
       ) u_head_counter (
         .clk_i  (clk_i),
-        .rst_n_i(rst_n_i),
+        .rst_ni (rst_ni),
         .en_i   (head_cnt_en),
         .clr_i  (head_cnt_clr),
         .count_o(head_cnt),
@@ -112,7 +112,7 @@ module fifo_nohs #(
         .N(DEPTH)
       ) u_tail_counter (
         .clk_i  (clk_i),
-        .rst_n_i(rst_n_i),
+        .rst_ni (rst_ni),
         .en_i   (tail_cnt_en),
         .clr_i  (tail_cnt_clr),
         .count_o(tail_cnt),
@@ -131,7 +131,7 @@ module fifo_nohs #(
 `ifndef SYNTHESIS
 `ifndef VERILATOR
       property p_fifo_full;
-        @(posedge clk_i) disable iff (!rst_n_i || flush_i) (tail_cnt == head_cnt) && data_valid[head_cnt] |-> !push_i
+        @(posedge clk_i) disable iff (!rst_ni || flush_i) (tail_cnt == head_cnt) && data_valid[head_cnt] |-> !push_i
       endproperty
       a_fifo_full :
       assert property (p_fifo_full);

@@ -18,7 +18,7 @@ module bpu #(
   parameter fetch_pkg::c2b_t INIT_C2B = WNT
 ) (
   input logic                                        clk_i,
-  input logic                                        rst_n_i,
+  input logic                                        rst_ni,
   input logic                                        flush_i,
   input logic                   [len5_pkg::XLEN-1:0] curr_pc_i,
   input logic                                        bu_res_valid_i,
@@ -40,7 +40,7 @@ module bpu #(
     .INIT_C2B(INIT_C2B)
   ) u_gshare (
     .clk_i      (clk_i),
-    .rst_n_i    (rst_n_i),
+    .rst_ni     (rst_ni),
     .flush_i    (flush_i),
     .curr_pc_i  (curr_pc_i),
     .res_valid_i(bu_res_valid_i),
@@ -53,7 +53,7 @@ module bpu #(
     .BTB_BITS(BTB_BITS)
   ) u_btb (
     .clk_i       (clk_i),
-    .rst_n_i     (rst_n_i),
+    .rst_ni      (rst_ni),
     .flush_i     (flush_i),
     .curr_pc_i   (curr_pc_i),
     .valid_i     (btb_update),

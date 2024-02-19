@@ -21,7 +21,7 @@ module memory_bare_emu #(
   parameter bit SKIP_DATA_ANS_REG = 0  // data from memory is directly passed to LSU
 ) (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic instr_flush_i,
 
   input string mem_file_i,
@@ -93,9 +93,12 @@ module memory_bare_emu #(
   } dstore_mem_ans_t;
 
   // Memory answer to the core
-  instr_mem_ans_t  instr_rsp;
-  dload_mem_ans_t  data_load_rsp;
-  dstore_mem_ans_t data_store_rsp;
+  instr_mem_ans_t                       instr_rsp;
+  dload_mem_ans_t                       data_load_rsp;
+  dstore_mem_ans_t                      data_store_rsp;
+  logic            [len5_pkg::XLEN-1:0] instr_addr_q;
+  logic            [len5_pkg::XLEN-1:0] data_load_addr_q;
+  logic            [len5_pkg::XLEN-1:0] data_store_addr_q;
 
   // Instruction and data memory
   memory_class i_mem, d_mem;  // memory objects (the memory array itself is a static member)
@@ -117,7 +120,7 @@ module memory_bare_emu #(
   // Memory initialization
   // ---------------------
   initial begin
-    $display($sformatf("Flashing memory image '%s'...", mem_file_i));
+    $display("[%8t - MEM EMU] Flashing memory image '%s'...", $time, mem_file_i);
     i_mem = new(mem_file_i);
     d_mem = new(mem_file_i);
     if (i_mem.LoadMem() <= 0) begin
@@ -134,7 +137,7 @@ module memory_bare_emu #(
         while (1) begin
           repeat (DUMP_PERIOD) @(posedge clk_i);
           if (i_mem.PrintMem(mem_dump_file_i)) begin
-            $fatal("Unable to dump memory content to file");
+            $fatal("[MEM EMU] Unable to dump memory content to file");
           end
         end
       end
@@ -157,18 +160,38 @@ module memory_bare_emu #(
     case (i_ret)
       0: instr_pipe_reg[0].except_raised = 1'b0;
       1: begin  // address_misaligned
+        if (instr_addr_i != instr_addr_q)
+          $display(
+              "[%8t - MEM EMU] WARNING: misaligned INSTRUCTION access at %h", $time, instr_addr_i
+          );
         instr_pipe_reg[0].except_raised = 1'b1;
         instr_pipe_reg[0].except_code   = E_I_ADDR_MISALIGNED;
       end
       2: begin  // access_fault
+        if (instr_addr_i != instr_addr_q)
+          $display(
+              "[%8t - MEM EMU] WARNING: reading uninitialized INSTRUCTION at %h",
+              $time,
+              instr_addr_i
+          );
         instr_pipe_reg[0].except_raised = 1'b1;
         instr_pipe_reg[0].except_code   = E_I_ACCESS_FAULT;
       end
       default: begin
+        if (instr_addr_i != instr_addr_q)
+          $display(
+              "[%8t - MEM EMU] WARNING: unknown INSTRUCTION exception at %h", $time, instr_addr_i
+          );
         instr_pipe_reg[0].except_raised = 1'b1;
         instr_pipe_reg[0].except_code   = E_UNKNOWN;
       end
     endcase
+  end
+
+  // Instruction address register
+  always_ff @(posedge clk_i or negedge rst_ni) begin : instr_addr_reg
+    if (!rst_ni) instr_addr_q <= '0;
+    else instr_addr_q <= instr_addr_i;
   end
 
 
@@ -182,6 +205,7 @@ module memory_bare_emu #(
     data_load_pipe_reg[0].except_code   <= E_UNKNOWN;
 
     if (data_load_valid_i) begin  // Memory always ready to answer (data_load_ready_o = 1)
+      data_load_addr_q <= data_load_addr_i;
       case (data_load_be_i)
         8'b0000_0001: begin
           dl_ret                     <= d_mem.ReadB(data_load_addr_i);
@@ -211,14 +235,19 @@ module memory_bare_emu #(
     case (dl_ret)
       0: data_load_pipe_reg[0].except_raised = 1'b0;
       1: begin : address_misaligned
+        $display("[%8t - MEM EMU] WARNING: misaligned memory READ at %h", $time, data_load_addr_q);
         data_load_pipe_reg[0].except_raised = data_load_pipe_valid[0];
         data_load_pipe_reg[0].except_code   = E_LD_ADDR_MISALIGNED;
       end
       2: begin : access_fault
+        $display("[%8t - MEM EMU] WARNING: uninitialized memory READ at %h", $time,
+                 data_load_addr_q);
         data_load_pipe_reg[0].except_raised = data_load_pipe_valid[0];
         data_load_pipe_reg[0].except_code   = E_LD_ACCESS_FAULT;
       end
       default: begin
+        $display("[%8t - MEM EMU] WARNING: unknown memory READ exception at %h", $time,
+                 data_load_addr_q);
         data_load_pipe_reg[0].except_raised = data_load_pipe_valid[0];
         data_load_pipe_reg[0].except_code   = E_UNKNOWN;
       end
@@ -232,7 +261,9 @@ module memory_bare_emu #(
     data_store_pipe_reg[0].tag           <= data_store_tag_i;
     data_store_pipe_reg[0].except_raised <= 1'b0;
     data_store_pipe_reg[0].except_code   <= E_UNKNOWN;
+
     if (data_store_valid_i && data_store_we_i) begin
+      data_store_addr_q <= data_store_addr_i;
       case (data_store_be_i)
         8'b0000_0001: begin
           ds_ret <= d_mem.WriteB(data_store_addr_i, data_store_wdata_i[7:0]);
@@ -258,14 +289,20 @@ module memory_bare_emu #(
     case (ds_ret)
       0: data_store_pipe_reg[0].except_raised = 1'b0;
       1: begin : address_misaligned
+        $display("[%8t - MEM EMU] WARNING: misaligned memory WRITE at %h", $time,
+                 data_store_addr_q);
         data_store_pipe_reg[0].except_raised = data_store_pipe_valid[0];
         data_store_pipe_reg[0].except_code   = E_ST_ADDR_MISALIGNED;
       end
       2: begin : access_fault
+        $display("[%8t - MEM EMU] WARNING: memory WRITE access exception at %h", $time,
+                 data_store_addr_q);
         data_store_pipe_reg[0].except_raised = data_store_pipe_valid[0];
         data_store_pipe_reg[0].except_code   = E_ST_ACCESS_FAULT;
       end
       default: begin
+        $display("[%8t - MEM EMU] WARNING: unknown memory WRITE exception at %h", $time,
+                 data_store_addr_q);
         data_store_pipe_reg[0].except_raised = data_store_pipe_valid[0];
         data_store_pipe_reg[0].except_code   = E_UNKNOWN;
       end
@@ -283,7 +320,7 @@ module memory_bare_emu #(
   generate
     for (genvar i = 1; i < PIPE_NUM + 1; i++) begin : gen_mem_pipe_reg
       always_ff @(posedge clk_i) begin : mem_pipe_reg
-        if (!rst_n_i) begin
+        if (!rst_ni) begin
           instr_pipe_valid[i]      <= 1'b0;
           instr_pipe_reg[i]        <= '0;
           data_load_pipe_valid[i]  <= 1'b0;
@@ -318,7 +355,7 @@ module memory_bare_emu #(
     .SKIP  (SKIP_INS_ANS_REG)
   ) u_ins_out_reg (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .flush_i(instr_flush_i),
     .valid_i(instr_pipe_valid[PIPE_NUM]),
     .ready_i(instr_ready_i),
@@ -333,7 +370,7 @@ module memory_bare_emu #(
     .SKIP  (SKIP_DATA_ANS_REG)
   ) u_data_load_out_reg (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .flush_i(1'b0),
     .valid_i(data_load_pipe_valid[PIPE_NUM]),
     .ready_i(data_load_ready_i),
@@ -348,7 +385,7 @@ module memory_bare_emu #(
     .SKIP  (SKIP_DATA_ANS_REG)
   ) u_data_store_out_reg (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .flush_i(1'b0),
     .valid_i(data_store_pipe_valid[PIPE_NUM]),
     .ready_i(data_store_ready_i),

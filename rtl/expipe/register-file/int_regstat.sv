@@ -18,7 +18,7 @@ module int_regstat #(
   localparam int unsigned RegIdxLen = $clog2(REG_NUM)  // not exposed
 ) (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   // Issue Logic
@@ -74,8 +74,8 @@ module int_regstat #(
   // ---------------------------
   // REGISTER STATUS DATA UPDATE
   // ---------------------------
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : rs_data_update
-    if (!rst_n_i) begin  // Asynchronous reset
+  always_ff @(posedge clk_i or negedge rst_ni) begin : rs_data_update
+    if (!rst_ni) begin  // Asynchronous reset
       foreach (busy_rob_idx[i]) begin
         busy_rob_idx[i] <= 0;
       end
@@ -96,7 +96,7 @@ module int_regstat #(
         .WIDTH(REGSTAT_CNT_W)
       ) u_rob_cnt (
         .clk_i  (clk_i),
-        .rst_n_i(rst_n_i),
+        .rst_ni (rst_ni),
         .en_i   (busy_cnt_en[i]),
         .clr_i  (busy_cnt_clr),
         .up_dn_i(busy_cnt_up[i]),
@@ -136,13 +136,13 @@ module int_regstat #(
 `ifndef VERILATOR
   // The counter should never overflow
   property p_busy_cnt_overflow(i, en, cnt);
-    @(posedge clk_i) disable iff (!rst_n_i) en && &cnt |-> ##1 |cnt;
+    @(posedge clk_i) disable iff (!rst_ni) en && &cnt |-> ##1 |cnt;
   endproperty
   generate
     for (genvar i = 1; i < REG_NUM - 1; i++) begin : gen_assertion_gen
       a_busy_cnt_overflow :
       assert property (p_busy_cnt_overflow(i, busy_cnt_en[i], busy_cnt[i]))
-      else $error($sformatf("busy count %0d overflow", i));
+      else $error("busy count %0d overflow", i);
     end
   endgenerate
 `endif  /* VERILATOR */

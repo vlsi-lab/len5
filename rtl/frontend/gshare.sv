@@ -19,7 +19,7 @@ module gshare #(
   parameter fetch_pkg::c2b_t INIT_C2B = WNT
 ) (
   input logic                      clk_i,
-  input logic                      rst_n_i,
+  input logic                      rst_ni,
   input logic                      flush_i,
   input logic [len5_pkg::XLEN-1:0] curr_pc_i,
   input logic                      res_valid_i,
@@ -41,8 +41,8 @@ module gshare #(
   // --------------------------
   // Branch History Table (BHT)
   // --------------------------
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : bht
-    if (!rst_n_i) begin : bht_async_rst
+  always_ff @(posedge clk_i or negedge rst_ni) begin : bht
+    if (!rst_ni) begin : bht_async_rst
       history <= '0;
     end else begin
       if (flush_i) begin : bht_sync_flush
@@ -84,8 +84,8 @@ module gshare #(
     end : c2b_fsm
   end : pht_update
 
-  always_ff @(posedge clk_i or negedge rst_n_i) begin
-    if (!rst_n_i) begin : pht_async_rst
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin : pht_async_rst
       for (int i = 0; i < PhtRows; i++) begin
         pht_q[i] <= INIT_C2B;
       end

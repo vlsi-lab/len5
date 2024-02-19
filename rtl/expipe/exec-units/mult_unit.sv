@@ -19,7 +19,7 @@ module mult_unit #(
   parameter int unsigned EU_CTL_LEN = 4
 ) (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
 
@@ -65,7 +65,7 @@ module mult_unit #(
     .EU_CTL_LEN(EU_CTL_LEN)
   ) u_mult_rs (
     .clk_i               (clk_i),
-    .rst_n_i             (rst_n_i),
+    .rst_ni              (rst_ni),
     .flush_i             (flush_i),
     .issue_valid_i       (issue_valid_i),
     .issue_ready_o       (issue_ready_o),
@@ -97,7 +97,7 @@ module mult_unit #(
     .PIPE_DEPTH(MULT_PIPE_DEPTH)
   ) u_mult (
     .clk_i          (clk_i),
-    .rst_n_i        (rst_n_i),
+    .rst_ni         (rst_ni),
     .flush_i        (flush_i),
     .valid_i        (rs_mult_valid),
     .ready_i        (rs_mult_ready),

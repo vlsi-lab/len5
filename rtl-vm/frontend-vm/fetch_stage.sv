@@ -21,7 +21,7 @@ module fetch_stage #(
     parameter BTB_BITS = 4
 ) (
     input logic clk_i,
-    input logic rst_n_i,
+    input logic rst_ni,
     input logic flush_i,
 
     // From/to PC gen stage
@@ -64,7 +64,7 @@ module fetch_stage #(
   // -----------------
   icache_ifc u_icache_ifc (
       .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
+      .rst_ni(rst_ni),
       .flush_i(flush_i),
 
       // From/to IF
@@ -87,7 +87,7 @@ module fetch_stage #(
   // ----------
   ifu u_ifu (
       .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
+      .rst_ni(rst_ni),
       .flush_i(flush_i),
 
       // From/to PC gen
@@ -119,7 +119,7 @@ module fetch_stage #(
       .BTB_BITS(BTB_BITS)
   ) u_bpu (
       .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
+      .rst_ni(rst_ni),
       .flush_i(bpu_flush),
       .pc_i   (pc_i),
       .res_i  (res_i),

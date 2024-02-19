@@ -25,11 +25,12 @@ ABI_STRING					?= lp64
 CFLAGS			:= -march=$(ISA_STRING) \
 				   -mabi=$(ABI_STRING) \
 				   -mstrict-align \
-				   -nostartfiles \
+				   -nostdlib \
 				   -O0 \
-				   -Wall 
-LDFLAGS			:= -T $(LINKER) \
-				   -static \
+				   -Wall
+LDFLAGS_PRE		:= -T $(LINKER) \
+				   -static
+LDFLAGS_POST	:= -Wl,-Map,$(BUILD_DIR)/main.map \
 				   -L $(RISCV)/$(RISCV_EXE_PREFIX)/lib \
 				   -lc \
 				   -lm \
@@ -38,13 +39,13 @@ LDFLAGS			:= -T $(LINKER) \
 				   -ffunction-sections \
 				   -fdata-sections \
 				   -specs=nano.specs
-ARFLAGS			:= rcus # s replaces ranlib
 
 # LEN5 software support
 LIB_SRCS		:= $(wildcard device/crt/*.S) \
 				   $(wildcard device/runtime/*.c device/runtime/*.S) \
-				   $(wildcard device/base/memory*.c device/base/memory*.S)
-INC_FOLDERS     += $(sort $(dir $(LIB_SRCS)))
+				   $(wildcard device/base/**.c device/base/**.S)
+LIB_INCS		:= $(wildcard device/base/*.h device/base/freestanding/*.h device/runtime/*.h)
+INC_FOLDERS     += $(sort $(dir $(LIB_INCS)))
 INC_FOLDERS_GCC += $(addprefix -I ,$(INC_FOLDERS))
 LIB_OBJS		:= $(filter %.o,\
 				   $(patsubst %.S,$(BUILD_DIR)/%.o,$(LIB_SRCS))\
@@ -78,7 +79,7 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf
 
 # Linked executable firmware
 $(BUILD_DIR)/%.elf: $(OBJS) $(LIB_OBJS)
-	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(INC_FOLDERS_GCC) $(LDFLAGS) $^ -o $@
+	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(LDFLAGS_PRE) $(INC_FOLDERS_GCC) $^ $(LDFLAGS_POST) -o $@
 
 # Implicit compilation rules
 $(BUILD_DIR)/%.o: ./%.c
@@ -97,15 +98,17 @@ $(BUILD_DIR)/%.o: ./%.S
 # Print variables
 .PHONY: .print
 .print:
-	@echo "RISCV:       $(RISCV)"
-	@echo "PROJECT:     $(PROJECT)"
-	@echo "SRCS         $(SRCS)"
-	@echo "OBJS         $(OBJS)"
-	@echo "LIB_SRCS:    $(LIB_SRCS)"
-	@echo "LIB_OBJS:    $(LIB_OBJS)"
-	@echo "INC_FOLDERS: $(INC_FOLDERS)"
-	@echo "CFLAGS:      $(CFLAGS)"
-	@echo "LDFLAGS:     $(LDFLAGS)"
+	@echo "RISCV:        $(RISCV)"
+	@echo "PROJECT:      $(PROJECT)"
+	@echo "SRCS          $(SRCS)"
+	@echo "OBJS          $(OBJS)"
+	@echo "LIB_SRCS:     $(LIB_SRCS)"
+	@echo "LIB_OBJS:     $(LIB_OBJS)"
+	@echo "LIB_INCS:     $(LIB_INCS)"
+	@echo "INC_FOLDERS:  $(INC_FOLDERS)"
+	@echo "CFLAGS:       $(CFLAGS)"
+	@echo "LDFLAGS_PRE:  $(LDFLAGS_PRE)"
+	@echo "LDFLAGS_POST: $(LDFLAGS_POST)"
 
 # Clean-up
 .PHONY: clean

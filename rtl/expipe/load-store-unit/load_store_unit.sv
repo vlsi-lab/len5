@@ -24,7 +24,7 @@ module load_store_unit #(
   parameter int unsigned SB_DEPTH = 4
 ) (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic mis_flush_i,
   input logic except_flush_i,
 
@@ -108,18 +108,18 @@ module load_store_unit #(
   adder_ans_t adder_lb_ans, adder_sb_ans;
 
   // Load-store buffers <--> level-zero cache control
-  logic              sb_l0_valid;
-  logic [  XLEN-1:0] sb_l0_addr;
-  logic [StIdxW-1:0] sb_l0_idx;
-  logic [L0TagW-1:0] sb_l0_tag;
-  logic              sb_l0_cached;
-  ldst_width_t       sb_l0_width;
-  logic [  XLEN-1:0] sb_l0_value;
-  logic [  XLEN-1:0] lb_l0_addr;
-  ldst_width_t       lb_l0_width;
-  logic [StIdxW-1:0] l0_sb_idx;
-  logic              l0_lb_valid;
-  logic [  XLEN-1:0] l0_lb_value;
+  logic                     sb_l0_valid;
+  logic        [  XLEN-1:0] sb_l0_addr;
+  logic        [StIdxW-1:0] sb_l0_idx;
+  logic        [L0TagW-1:0] sb_l0_tag;
+  logic                     sb_l0_cached;
+  ldst_width_t              sb_l0_width;
+  logic        [  XLEN-1:0] sb_l0_value;
+  logic        [  XLEN-1:0] lb_l0_addr;
+  ldst_width_t              lb_l0_width;
+  logic        [StIdxW-1:0] l0_sb_idx;
+  logic                     l0_lb_valid;
+  logic        [  XLEN-1:0] l0_lb_value;
 
   // --------------
   // LSU SUBSYSTEMS
@@ -131,7 +131,7 @@ module load_store_unit #(
     .DEPTH(LB_DEPTH)
   ) u_load_buffer (
     .clk_i                (clk_i),
-    .rst_n_i              (rst_n_i),
+    .rst_ni               (rst_ni),
     .flush_i              (mis_flush_i),
     .issue_valid_i        (issue_lb_valid_i),
     .issue_ready_o        (issue_lb_ready_o),
@@ -177,7 +177,7 @@ module load_store_unit #(
     .DEPTH(SB_DEPTH)
   ) u_store_buffer (
     .clk_i                (clk_i),
-    .rst_n_i              (rst_n_i),
+    .rst_ni               (rst_ni),
     .flush_i              (mis_flush_i),
     .issue_valid_i        (issue_sb_valid_i),
     .issue_ready_o        (issue_sb_ready_o),
@@ -226,7 +226,7 @@ module load_store_unit #(
   // -------------
   address_adder u_address_adder_load (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .flush_i(mis_flush_i),
     .valid_i(lb_adder_valid),
     .ready_i(lb_adder_ready),
@@ -240,7 +240,7 @@ module load_store_unit #(
   // -------------
   address_adder u_address_adder_store (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .flush_i(mis_flush_i),
     .valid_i(sb_adder_valid),
     .ready_i(sb_adder_ready),
@@ -260,7 +260,7 @@ module load_store_unit #(
       assign lb_l0_addr  = mem_load_addr_o;
       l0_cache u_l0_cache (
         .clk_i      (clk_i),
-        .rst_n_i    (rst_n_i),
+        .rst_ni     (rst_ni),
         .flush_i    (except_flush_i),
         .st_valid_i (sb_l0_valid),
         .st_addr_i  (sb_l0_addr),

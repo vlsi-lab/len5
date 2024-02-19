@@ -21,7 +21,7 @@ module Control
 (
 	// From :TB
   	input   logic             	clk_i,
-  	input   logic             	rst_n_i,
+  	input   logic             	rst_ni,
 	// To all
   	output  logic             	flush_i,
 
@@ -101,9 +101,9 @@ module Control
   	state_t present_state, next_state;
 
   // State transition
-  	always_ff @ (posedge clk_i or negedge rst_n_i) begin
+  	always_ff @ (posedge clk_i or negedge rst_ni) begin
     // Async reset
-    	if (!rst_n_i) begin
+    	if (!rst_ni) begin
       		present_state 	<= 	RESET;
     	//end else begin
     	//if (flush_i) begin

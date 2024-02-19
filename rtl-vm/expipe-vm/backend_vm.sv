@@ -26,7 +26,7 @@ import memory_pkg::*;
 module backend_vm (
     // Clock, reset, and flush
     input logic clk_i,
-    input logic rst_n_i,
+    input logic rst_ni,
     input logic flush_i,
 
     // Main control unit
@@ -250,7 +250,7 @@ module backend_vm (
 
   issue_stage u_issue_stage (
       .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
+      .rst_ni(rst_ni),
       .flush_i(flush_i),
 
       .main_cu_stall_o(main_cu_stall_o),
@@ -349,7 +349,7 @@ module backend_vm (
       .REG_NUM(XREG_NUM)
   ) u_int_regstat (
       .clk_i              (clk_i),
-      .rst_n_i            (rst_n_i),
+      .rst_ni            (rst_ni),
       .flush_i            (flush_i),
       .issue_valid_i      (il_int_regstat_valid),
       // .issue_ready_o          (int_regstat_il_ready),
@@ -371,7 +371,7 @@ module backend_vm (
   // ---------------------
   int_rf u_int_rf (
       .clk_i            (clk_i),
-      .rst_n_i          (rst_n_i),
+      .rst_ni          (rst_ni),
       .comm_valid_i     (comm_intrf_valid),
       // .comm_ready_o           (intrf_comm_ready),
       .comm_rd_idx_i    (comm_rf_rd_idx),
@@ -391,7 +391,7 @@ module backend_vm (
       .REG_NUM(XREG_NUM)
   ) u_fp_regstat (
       .clk_i              (clk_i),
-      .rst_n_i            (rst_n_i),
+      .rst_ni            (rst_ni),
       .flush_i            (flush_i),
       .issue_valid_i      (il_fp_regstat_valid),
       .issue_ready_o      (fp_regstat_il_ready),
@@ -413,7 +413,7 @@ module backend_vm (
   // ----------------------------
   fp_rf u_fp_rf (
       .clk_i            (clk_i),
-      .rst_n_i          (rst_n_i),
+      .rst_ni          (rst_ni),
       .comm_valid_i     (comm_fprf_valid),
       .comm_ready_o     (fprf_comm_ready),
       .comm_rd_idx_i    (comm_rf_rd_idx),
@@ -433,7 +433,7 @@ module backend_vm (
   // ---------------
   exec_stage u_exec_stage (
       .clk_i  (clk_i),
-      .rst_n_i(rst_n_i),
+      .rst_ni(rst_ni),
       .flush_i(flush_i),
 
       .fetch_res_pc_o        (fetch_res_pc_o),
@@ -487,7 +487,7 @@ module backend_vm (
   // ---------------------
   cdb u_cdb (
       .clk_i           (clk_i),
-      .rst_n_i         (rst_n_i),
+      .rst_ni         (rst_ni),
       .flush_i         (flush_i),
       .max_prio_valid_i(ex_cdb_valid[0]),
       .max_prio_ready_o(cdb_ex_ready[0]),
@@ -506,7 +506,7 @@ module backend_vm (
       .DEPTH(ROB_DEPTH)
   ) u_rob (
       .clk_i              (clk_i),
-      .rst_n_i            (rst_n_i),
+      .rst_ni            (rst_ni),
       .flush_i            (flush_i),
       .issue_valid_i      (il_rob_valid),
       .issue_ready_o      (rob_il_ready),
@@ -534,7 +534,7 @@ module backend_vm (
   // ------------
   commit_stage u_commit_stage (
       .clk_i              (clk_i),
-      .rst_n_i            (rst_n_i),
+      .rst_ni            (rst_ni),
       .main_cu_flush_o    (main_cu_flush_o),
       .main_cu_resume_o   (main_cu_resume_o),
       .fe_except_raised_o (fetch_except_raised_o),
@@ -586,7 +586,7 @@ module backend_vm (
 
   csrs u_csrs (
       .clk_i             (clk_i),
-      .rst_n_i           (rst_n_i),
+      .rst_ni           (rst_ni),
       .valid_i           (comm_csr_valid),
       .ready_o           (csr_comm_ready),
       .instr_type_i      (comm_csr_op),

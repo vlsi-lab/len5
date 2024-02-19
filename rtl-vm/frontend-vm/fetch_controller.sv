@@ -16,7 +16,7 @@ import len5_pkg::*;
 
 module fetch_controller (
     input logic clk_i,
-    input logic rst_n_i,
+    input logic rst_ni,
     input logic flush_i,
     input logic here_i,
     input logic will_be_here_i,
@@ -40,9 +40,9 @@ module fetch_controller (
   state_t present_state, next_state;
 
   // State transition
-  always_ff @(posedge clk_i or negedge rst_n_i) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
     // Async reset
-    if (!rst_n_i) begin
+    if (!rst_ni) begin
       present_state <= RESET;
     end else begin
       if (flush_i) begin

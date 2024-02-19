@@ -13,7 +13,7 @@
 // Date: 17/10/2019
 module issue_queue (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
   input logic flush_i,
 
   // Handshake from/to fetch unit
@@ -64,7 +64,7 @@ module issue_queue (
     .DEPTH (IQ_DEPTH)
   ) u_issue_fifo (
     .clk_i  (clk_i),
-    .rst_n_i(rst_n_i),
+    .rst_ni (rst_ni),
     .flush_i(flush_i),
     .valid_i(fetch_valid_i),
     .ready_i(issue_ready_i),

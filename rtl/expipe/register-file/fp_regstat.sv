@@ -22,7 +22,7 @@ module fp_regstat #(
   localparam int unsigned RegIdxLen = $clog2(REG_NUM)
 ) (
   input logic clk_i,
-  input logic rst_n_i,
+  input logic rst_ni,
 
   // Handshake from/to the issue logic
   input logic issue_valid_i,
@@ -85,8 +85,8 @@ module fp_regstat #(
   // ---------------------------
   // REGISTER STATUS DATA UPDATE
   // ---------------------------
-  always_ff @(posedge clk_i or negedge rst_n_i) begin : rs_data_update
-    if (!rst_n_i) begin  // Asynchronous reset
+  always_ff @(posedge clk_i or negedge rst_ni) begin : rs_data_update
+    if (!rst_ni) begin  // Asynchronous reset
       foreach (regstat_data[i]) begin
         regstat_data[i] <= 0;
       end
