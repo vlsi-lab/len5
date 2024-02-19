@@ -20,7 +20,7 @@ INC_DIRS_GCC	:= $(addprefix -I ,$(INCLUDE_DIRS))
 ###  RISC-V C toolchain
 # TODO: REMOVE -mstrict-align ONCE UNALIGNED ACCESS IS SUPPORTED
 RISCV_EXE_PREFIX           	?= riscv64-unknown-elf
-ISA_STRING					?= rv64izicsr
+ISA_STRING					?= rv64i
 ABI_STRING					?= lp64
 CFLAGS			:= -march=$(ISA_STRING) \
 				   -mabi=$(ABI_STRING) \
@@ -41,11 +41,9 @@ LDFLAGS			:= -T $(LINKER) \
 ARFLAGS			:= rcus # s replaces ranlib
 
 # LEN5 software support
-LIB_SRCS		:= device/crt/crt0.S \
-				   device/crt/vectors.S \
-				   device/runtime/len5.c \
-				   device/runtime/syscall.c \
-				   device/base/memory.c
+LIB_SRCS		:= $(wildcard device/crt/*.S) \
+				   $(wildcard device/runtime/*.c device/runtime/*.S) \
+				   $(wildcard device/base/memory*.c device/base/memory*.S)
 INC_FOLDERS     += $(sort $(dir $(LIB_SRCS)))
 INC_FOLDERS_GCC += $(addprefix -I ,$(INC_FOLDERS))
 LIB_OBJS		:= $(filter %.o,\
