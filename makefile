@@ -13,6 +13,7 @@ BUILD_DIR	   	?= $(realpath .)/build
 
 # Software build configuration
 PROJECT  ?= hello_world
+COPT   	 ?= -O0
 
 # RTL simulation
 FIRMWARE		?= $(BUILD_DIR)/main.hex
@@ -83,7 +84,7 @@ questasim-sim: | app .check-fusesoc $(BUILD_DIR)/
 .PHONY: app
 app: | $(BUILD_DIR)/
 	@echo "## Building application '$(PROJECT)'"
-	$(MAKE) -BC sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR)
+	$(MAKE) -BC sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR) COPT=$(COPT)
 
 # Simple test application
 .PHONY: app-helloworld

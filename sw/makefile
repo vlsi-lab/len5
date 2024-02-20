@@ -22,11 +22,12 @@ INC_DIRS_GCC	:= $(addprefix -I ,$(INCLUDE_DIRS))
 RISCV_EXE_PREFIX           	?= riscv64-unknown-elf
 ISA_STRING					?= rv64i
 ABI_STRING					?= lp64
+COPT						?= -O0
 CFLAGS			:= -march=$(ISA_STRING) \
 				   -mabi=$(ABI_STRING) \
 				   -mstrict-align \
 				   -nostartfiles \
-				   -O0 \
+				   $(COPT) \
 				   -Wall
 LDFLAGS_PRE		:= -T $(LINKER) \
 				   -static

@@ -11,8 +11,6 @@ filesets:
    depend:
     - polito:len5:packages
    files:
-    - expipe/register-file/fp_regstat.sv
-    - expipe/register-file/fp_rf.sv
     - expipe/register-file/int_regstat.sv
     - expipe/register-file/int_rf.sv
     - expipe/register-file/csrs.sv

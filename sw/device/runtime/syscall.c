@@ -284,8 +284,10 @@ ssize_t _write(int handle, const char *data, size_t size)
         return -1;
     }
 
-    while (data != end_data)
-        serial_write(*data++);
+    while (data != end_data) {
+        serial_write(*data);
+        data++;
+    }
 
     return size;
 }

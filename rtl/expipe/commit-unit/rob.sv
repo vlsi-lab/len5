@@ -44,6 +44,10 @@ module rob #(
   output logic                      opfwd_rs2_ready_o,
   output logic [len5_pkg::XLEN-1:0] opfwd_rs2_value_o,
 
+  /* Store buffer */
+  output expipe_pkg::rob_idx_t sb_clear_idx_o,  // oldest instruction that is NOT clear to commit
+  input  logic                 sb_completed_i,  // memory access completed
+
   /* Commit stage */
   output logic                   comm_valid_o,    // to downstream hardware
   input  logic                   comm_ready_i,    // from downstream hardware
@@ -59,13 +63,14 @@ module rob #(
   import expipe_pkg::*;
   import len5_pkg::XLEN;
   import len5_pkg::REG_IDX_LEN;
+  import len5_pkg::E_MISPREDICTION;
+
   // INTERNAL SIGNALS
   // ----------------
-
   // Head and tail counters
-  logic [$clog2(DEPTH)-1:0] head_idx, tail_idx;
-  logic head_cnt_en, tail_cnt_en;
-  logic head_cnt_clr, tail_cnt_clr;
+  logic [$clog2(DEPTH)-1:0] head_idx, tail_idx, clear_idx;
+  logic head_cnt_en, tail_cnt_en, clear_cnt_en;
+  logic head_cnt_clr, tail_cnt_clr, clear_cnt_clr;
 
   // FIFO data
   logic       data_valid[DEPTH];
@@ -74,20 +79,37 @@ module rob #(
   // FIFO control
   logic fifo_push, fifo_pop, update_res;
 
+  // Clear instruction
+  logic instr_clear;
+
   // -----------------
   // FIFO CONTROL UNIT
   // -----------------
 
   // Push/pop/update control
-  assign fifo_push    = issue_valid_i && issue_ready_o;
-  assign fifo_pop     = comm_valid_o && comm_ready_i;
-  assign update_res   = cdb_valid_i;
+  assign fifo_push = issue_valid_i && issue_ready_o;
+  assign fifo_pop = comm_valid_o && comm_ready_i;
+  assign update_res = cdb_valid_i;
 
   // Counters control
   assign head_cnt_clr = flush_i;
   assign tail_cnt_clr = flush_i;
-  assign head_cnt_en  = fifo_pop;
-  assign tail_cnt_en  = fifo_push;
+  assign clear_cnt_clr = flush_i;
+  assign head_cnt_en = fifo_pop;
+  assign tail_cnt_en = fifo_push;
+  assign clear_cnt_en = instr_clear | sb_completed_i;
+
+  // Oldest instruction that is not "clear to commit"
+  // NOTE: the instruction pointed by clear_idx can be committed if:
+  // 1) it is valid
+  // 2) no exception has been raised for it
+  // 3) no misprediction has been raised for it
+  // 4) its result is valid
+  // TODO: OR the combinational check on CDB result transaction as well.
+  assign instr_clear = data_valid[clear_idx] &
+                       ~data[clear_idx].except_raised &
+                       (data[clear_idx].except_code != E_MISPREDICTION) &
+                       data[clear_idx].res_ready;
 
   // -----------
   // FIFO UPDATE
@@ -123,10 +145,11 @@ module rob #(
     end
   end
 
-  // ----------------------
-  // HEAD AND TAIL COUNTERS
-  // ----------------------
-
+  // ------------
+  // ROB COUNTERS
+  // ------------
+  // Head counter
+  // Tracks the oldest instruction in the ROB
   modn_counter #(
     .N(DEPTH)
   ) u_head_counter (
@@ -138,6 +161,8 @@ module rob #(
     .tc_o   ()               // not needed
   );
 
+  // Tail counter
+  // Tracks the first available empty entry in the ROB
   modn_counter #(
     .N(DEPTH)
   ) u_tail_counter (
@@ -147,6 +172,19 @@ module rob #(
     .clr_i  (tail_cnt_clr),
     .count_o(tail_idx),
     .tc_o   ()               // not needed
+  );
+
+  // Clear counter
+  // Tracks the oldest instruction that is NOT "clear to commit"
+  modn_counter #(
+    .N(DEPTH)
+  ) u_clear_counter (
+    .clk_i  (clk_i),
+    .rst_ni (rst_ni),
+    .en_i   (clear_cnt_en),
+    .clr_i  (clear_cnt_clr),
+    .count_o(clear_idx),
+    .tc_o   ()                // not needed
   );
 
   // --------------
@@ -161,6 +199,9 @@ module rob #(
   /* Issue stage */
   assign issue_ready_o     = !data_valid[tail_idx];
   assign issue_tail_idx_o  = tail_idx;
+
+  /* Store buffer */
+  assign sb_clear_idx_o    = clear_idx;
 
   /* Commit stage */
   assign comm_valid_o      = data_valid[head_idx] & data[head_idx].res_ready;

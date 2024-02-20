@@ -20,8 +20,9 @@ module branch_unit #(
   input logic flush_i,
 
   // Frontend
-  input  logic                   fe_ready_i,
-  output logic                   fe_res_valid_o,
+  input  logic                   fe_pcgen_ready_i,
+  output logic                   fe_bpu_valid_o,
+  output logic                   fe_pcgen_valid_o,
   output fetch_pkg::resolution_t fe_res_o,
 
   // Issue Stage
@@ -181,15 +182,16 @@ module branch_unit #(
   // BRANCH CONTROL UNIT
   // -------------------
   branch_cu u_branch_cu (
-    .clk_i          (clk_i),
-    .rst_ni         (rst_ni),
-    .flush_i        (flush_i),
-    .valid_i        (rs_bu_valid),
-    .misprediction_i(res_mispredicted),
-    .fe_ready_i     (fe_ready_i),
-    .issue_mis_o    (issue_mis_o),
-    .fe_res_valid_o (fe_res_valid_o),
-    .bu_mis_reg_en_o(cu_res_reg_en)
+    .clk_i           (clk_i),
+    .rst_ni          (rst_ni),
+    .flush_i         (flush_i),
+    .valid_i         (rs_bu_valid),
+    .misprediction_i (res_mispredicted),
+    .fe_pcgen_ready_i(fe_pcgen_ready_i),
+    .fe_bpu_valid_o  (fe_bpu_valid_o),
+    .fe_pcgen_valid_o(fe_pcgen_valid_o),
+    .issue_mis_o     (issue_mis_o),
+    .bu_mis_reg_en_o (cu_res_reg_en)
   );
 
   // -------------------------------

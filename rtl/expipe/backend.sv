@@ -16,15 +16,16 @@ module backend (
 
   // Frontend
   input  logic                                        fetch_valid_i,
-  input  logic                                        fetch_ready_i,
   output logic                                        fetch_ready_o,
   input  logic                   [len5_pkg::ILEN-1:0] fetch_instr_i,
   input  fetch_pkg::prediction_t                      fetch_pred_i,
   input  logic                                        fetch_except_raised_i,
   input  len5_pkg::except_code_t                      fetch_except_code_i,
+  input  logic                                        fetch_pcgen_ready_i,
+  output logic                                        fetch_bpu_valid_o,
+  output logic                                        fetch_pcgen_valid_o,
   output logic                                        fetch_mis_flush_o,
   output logic                                        fetch_except_flush_o,
-  output logic                                        fetch_res_valid_o,
   output fetch_pkg::resolution_t                      fetch_res_o,
   output logic                                        fetch_except_raised_o,
   output logic                   [len5_pkg::XLEN-1:0] fetch_except_pc_o,
@@ -133,7 +134,6 @@ module backend (
   logic                                 comm_issue_resume;
   rob_idx_t                             comm_issue_rob_tail_idx;
   rob_entry_t                           issue_comm_rob_data;
-  logic                                 issue_comm_jb_instr;
   rob_idx_t                             issue_comm_rs1_rob_idx;
   logic                                 comm_issue_rs1_ready;
   logic            [          XLEN-1:0] comm_issue_rs1_value;
@@ -167,8 +167,8 @@ module backend (
 
   // Execution stage <--> commit stage
   // ---------------------------------
-  logic                                 comm_sb_spec_instr;
-  rob_idx_t                             comm_sb_rob_head_idx;
+  rob_idx_t                             comm_sb_rob_clear_idx;
+  logic                                 sb_comm_store_completed;
 
   // Execution stage <--> CSRs
   // -------------------------
@@ -280,7 +280,6 @@ module backend (
     .comm_resume_i     (comm_issue_resume),
     .comm_tail_idx_i   (comm_issue_rob_tail_idx),
     .comm_data_o       (issue_comm_rob_data),
-    .comm_jb_instr_o   (issue_comm_jb_instr),
     .comm_rs1_rob_idx_o(issue_comm_rs1_rob_idx),
     .comm_rs1_ready_i  (comm_issue_rs1_ready),
     .comm_rs1_value_i  (comm_issue_rs1_value),
@@ -379,9 +378,10 @@ module backend (
     .mis_flush_i   (ex_mis_flush),
     .except_flush_i(except_flush),
 
-    .fe_ready_i    (fetch_ready_i),
-    .fe_res_valid_o(fetch_res_valid_o),
-    .fe_res_o      (fetch_res_o),
+    .fe_pcgen_ready_i(fetch_pcgen_ready_i),
+    .fe_bpu_valid_o  (fetch_bpu_valid_o),
+    .fe_pcgen_valid_o(fetch_pcgen_valid_o),
+    .fe_res_o        (fetch_res_o),
 
     .issue_valid_i      (il_ex_valid),
     .issue_ready_o      (ex_issue_ready),
@@ -401,8 +401,8 @@ module backend (
     .cdb_data_i (cdb_others_data),
     .cdb_data_o (ex_cdb_data),
 
-    .comm_sb_spec_instr_i  (comm_sb_spec_instr),
-    .comm_sb_rob_head_idx_i(comm_sb_rob_head_idx),
+    .comm_sb_rob_clear_idx_i(comm_sb_rob_clear_idx),
+    .comm_store_completed_o (sb_comm_store_completed),
     // .csr_frm_i             (csr_ex_frm),
 
     .mem_load_valid_o        (mem_load_valid_o),
@@ -462,14 +462,13 @@ module backend (
     .ex_mis_flush_o(ex_mis_flush),
     .except_flush_o(except_flush),
 
-    .fe_ready_i        (fetch_ready_i),
+    .fe_ready_i        (fetch_pcgen_ready_i),
     .fe_except_raised_o(fetch_except_raised_o),
     .fe_except_pc_o    (fetch_except_pc_o),
 
     .issue_valid_i      (issue_comm_valid),
     .issue_ready_o      (comm_issue_ready),
     .issue_data_i       (issue_comm_rob_data),
-    .issue_jb_instr_i   (issue_comm_jb_instr),
     .issue_tail_idx_o   (comm_issue_rob_tail_idx),
     .issue_rs1_rob_idx_i(issue_comm_rs1_rob_idx),
     .issue_rs1_ready_o  (comm_issue_rs1_ready),
@@ -483,8 +482,8 @@ module backend (
     .cdb_data_i (cdb_others_data),
     .cdb_ready_o(comm_cdb_ready),
 
-    .sb_spec_instr_o  (comm_sb_spec_instr),
-    .sb_rob_head_idx_o(comm_sb_rob_head_idx),
+    .sb_rob_clear_idx_o(comm_sb_rob_clear_idx),
+    .sb_completed_i    (sb_comm_store_completed),
 
     .int_rs_valid_o(comm_intrs_valid),
     .int_rf_valid_o(comm_intrf_valid),

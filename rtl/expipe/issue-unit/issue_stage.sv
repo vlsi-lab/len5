@@ -81,7 +81,6 @@ module issue_stage (
   input logic comm_resume_i,  // resume after stall
   input expipe_pkg::rob_idx_t comm_tail_idx_i,  // the entry of the ROB allocated for the new instr
   output expipe_pkg::rob_entry_t comm_data_o,  // data to the ROB
-  output logic comm_jb_instr_o,  // the issuing instruction is a jump/branch
   output expipe_pkg::rob_idx_t comm_rs1_rob_idx_o,
   input logic comm_rs1_ready_i,
   input logic [len5_pkg::XLEN-1:0] comm_rs1_value_i,
@@ -314,8 +313,7 @@ module issue_stage (
     // .fp_regstat_valid_o   (fp_regstat_valid_o     ),
     .comm_ready_i       (comm_ready_i),
     .comm_valid_o       (comm_valid_o),
-    .comm_resume_i      (comm_resume_i),
-    .comm_jb_instr_o    (comm_jb_instr_o)
+    .comm_resume_i      (comm_resume_i)
   );
 
   // Execution stage valid encoding

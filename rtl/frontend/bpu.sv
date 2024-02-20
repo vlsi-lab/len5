@@ -30,7 +30,7 @@ module bpu #(
   import len5_pkg::*;
   import fetch_pkg::*;
   // Signal definitions
-  logic btb_hit, btb_update, btb_del_entry;
+  logic btb_hit, btb_del_entry;
   logic                   gshare_taken;
   logic [XLEN-OFFSET-1:0] btb_target;
 
@@ -56,7 +56,7 @@ module bpu #(
     .rst_ni      (rst_ni),
     .flush_i     (flush_i),
     .curr_pc_i   (curr_pc_i),
-    .valid_i     (btb_update),
+    .valid_i     (bu_res_valid_i),
     .del_entry_i (btb_del_entry),
     .res_pc_i    (bu_res_i.pc),
     .res_target_i(bu_res_i.target),
@@ -65,7 +65,6 @@ module bpu #(
   );
 
   // Assignments
-  assign btb_update    = bu_res_valid_i;
   assign btb_del_entry = bu_res_i.mispredict & ~bu_res_i.taken;  // Why delete?
   assign pred_o.pc     = curr_pc_i;
   assign pred_o.taken  = gshare_taken & btb_hit;
