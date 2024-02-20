@@ -72,7 +72,7 @@ module l0_cache #(
   // --------------------
   // Update the cache when a valid store is detected and the address is not
   // reserved.
-  assign addr_valid = (st_addr_i & ST2LD_FWD_MASK) != 64'h0;
+  assign addr_valid = (st_addr_i & MMAP_MASK) == 64'h0;
   assign cache_upd  = st_valid_i & addr_valid;
   assign st_idx     = st_addr_i[StIdxW-1:0];
   assign st_tag     = st_addr_i[XLEN-1-:TagW];

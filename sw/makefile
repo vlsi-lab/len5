@@ -25,16 +25,13 @@ ABI_STRING					?= lp64
 CFLAGS			:= -march=$(ISA_STRING) \
 				   -mabi=$(ABI_STRING) \
 				   -mstrict-align \
-				   -nostdlib \
+				   -nostartfiles \
 				   -O0 \
 				   -Wall
 LDFLAGS_PRE		:= -T $(LINKER) \
 				   -static
 LDFLAGS_POST	:= -Wl,-Map,$(BUILD_DIR)/main.map \
-				   -L $(RISCV)/$(RISCV_EXE_PREFIX)/lib \
-				   -lc \
-				   -lm \
-				   -lgcc \
+				   -Wl,--gc-sections \
 				   -flto \
 				   -ffunction-sections \
 				   -fdata-sections \

@@ -31,18 +31,11 @@ package len5_config_pkg;
 
   // MEMORY-MAPPED DEVICES
   // ---------------------
-
   // Address mask for memory-mapped devices
   // This mask defines the address range that is reserved to memory-mapped
   // devices. Store-to-load forwarding (see below) in this region is not
-  // performed.
-  localparam logic [63:0] MMAP_MASK = 64'h000000000000ffff;  // 64kiB by default
-
-  // TB Serial interface base address
-  localparam logic [63:0] SERIAL_ADDR = 'h10000;
-
-  // TB exit register address (stop the simulation when written)
-  localparam logic [63:0] EXIT_ADDR = 'h10000;
+  // performed. This must be consistent with PERI_BASE in `len5.h`.
+  localparam logic [63:0] MMAP_MASK = 64'hffffffffe0000000;  // above 512MB
 
   // FRONTEND PARAMETERS
   // -------------------
@@ -141,10 +134,6 @@ package len5_config_pkg;
   // minstret are always instantiated). See 'csrs.sv' to see what counters are
   // available in LEN5.
   localparam bit LEN5_CSR_HPMCOUNTERS_EN = 1'b1;
-
-  //////////////////////////////////////////////////////////////////////////////
-  // OTHER DEFINES
-  localparam logic [63:0] ST2LD_FWD_MASK = ~MMAP_MASK;
 endpackage
 
 `endif  /* LEN5_CONFIG_PKG */

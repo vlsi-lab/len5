@@ -24,7 +24,7 @@ filesets:
     depend:
     - polito:len5:packages
     files:
-    - tb/memory/memory_class: {is_include_file : true}
+    - tb/memory/memory_class.svh: {is_include_file : true}
     - tb/memory/memory_if.sv
     - tb/memory/memory_bare_emu.sv
     - tb/tb_bare.sv
@@ -115,6 +115,8 @@ targets:
         - '--x-initial unique'
         - '--report-unoptflat'
         - '-GBOOT_PC=384' # 0x180
+        - '-GSERIAL_ADDR=536870912' # 0x20000000
+        - '-GEXIT_ADDR=536871168' # 0x20000100
         - '--exe'
         - 'len5_tb.cpp'
         - '-Wall'

@@ -10,20 +10,21 @@
 /********************/
 /* ---- MACROS ---- */
 /********************/
+/* Peripherals base address */
+// NOTE: only powers of 2 are supported. This value must be consistent with
+// MMAP_MASK in `len5_config_pkg.sv`.
+#define PERI_BASE ((unsigned char *) 0x20000000) // 512MB
 
 /* Serial interface registers */
-#ifndef UART_BASE
-#define UART_BASE (unsigned char *)0x100
-#endif
+#define UART_BASE ((unsigned char *) (PERI_BASE + 0x00))
 #define UART_WRITE_REG (*(UART_BASE + 0x00))
 #define UART_WRITE_FLAG (*(UART_BASE + 0x01))
 #define UART_READ_REG (*(UART_BASE + 0x02))
 #define UART_READ_FLAG (*(UART_BASE + 0x03))
 
 /* Exit code register */
-#ifndef EXIT_REG
-#define EXIT_REG (*(unsigned char *)0x200)
-#endif
+#define EXIT_REG_BASE ((unsigned char *) (PERI_BASE + 0x100))
+#define EXIT_REG (*(EXIT_REG_BASE + 0x00))
 
 /*********************************/
 /* ---- FUNCTION PROTOTYPES ---- */

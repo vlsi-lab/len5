@@ -10,6 +10,8 @@
 `verilator_config
 // Top-level parameter width
 lint_off -rule WIDTH -file "*/tb_bare.sv" -match "Operator VAR 'BOOT_PC' expects 64 bits on the Initial value, but Initial value's CONST '32'h180' generates 32 bits."
+lint_off -rule WIDTH -file "*/tb_bare.sv" -match "Operator VAR 'SERIAL_ADDR' expects 64 bits on the Initial value, but Initial value's CONST '32'h20000000' generates 32 bits."
+lint_off -rule WIDTH -file "*/tb_bare.sv" -match "Operator VAR 'EXIT_ADDR' expects 64 bits on the Initial value, but Initial value's CONST '32'h20000100' generates 32 bits."
 
 // Signals not used inside class but used outside when declared an object of the class
 lint_off -rule UNUSED -file "*/memory_class.svh" -match "Signal is not used: 'read_halfword'"

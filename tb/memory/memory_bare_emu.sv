@@ -100,8 +100,8 @@ module memory_bare_emu #(
   logic            [len5_pkg::XLEN-1:0] data_load_addr_q;
   logic            [len5_pkg::XLEN-1:0] data_store_addr_q;
 
-  // Instruction and data memory
-  memory_class i_mem, d_mem;  // memory objects (the memory array itself is a static member)
+  // Memory object
+  memory_class                          mem;
   int i_ret, dl_ret, ds_ret;  // memory emulator return value
 
   // Pipeline registers
@@ -120,11 +120,10 @@ module memory_bare_emu #(
   // Memory initialization
   // ---------------------
   initial begin
-    $display("[%8t - MEM EMU] Flashing memory image '%s'...", $time, mem_file_i);
-    i_mem = new(mem_file_i);
-    d_mem = new(mem_file_i);
-    if (i_mem.LoadMem() <= 0) begin
-      $fatal("Unable to load instruction memory");
+    $display("[%8t] MEM EMU > Flashing memory image '%s'...", $time, mem_file_i);
+    mem = new(mem_file_i);
+    if (mem.LoadMem() <= 0) begin
+      $fatal("Unable to load memory image");
     end
   end
 
@@ -136,7 +135,7 @@ module memory_bare_emu #(
       initial begin
         while (1) begin
           repeat (DUMP_PERIOD) @(posedge clk_i);
-          if (i_mem.PrintMem(mem_dump_file_i)) begin
+          if (mem.PrintMem(mem_dump_file_i)) begin
             $fatal("[MEM EMU] Unable to dump memory content to file");
           end
         end
@@ -152,8 +151,8 @@ module memory_bare_emu #(
     instr_pipe_reg[0].except_code   = E_UNKNOWN;
 
     if (instr_valid_i) begin  // Memory always ready to answer (instr_ready_o = 1)
-      i_ret                  = i_mem.ReadW(instr_addr_i);
-      instr_pipe_reg[0].read = i_mem.read_word;
+      i_ret                  = mem.ReadW(instr_addr_i);
+      instr_pipe_reg[0].read = mem.read_word;
     end
 
     // Exception handling
@@ -162,7 +161,7 @@ module memory_bare_emu #(
       1: begin  // address_misaligned
         if (instr_addr_i != instr_addr_q)
           $display(
-              "[%8t - MEM EMU] WARNING: misaligned INSTRUCTION access at %h", $time, instr_addr_i
+              "[%8t] MEM EMU > WARNING: misaligned INSTRUCTION access at %h", $time, instr_addr_i
           );
         instr_pipe_reg[0].except_raised = 1'b1;
         instr_pipe_reg[0].except_code   = E_I_ADDR_MISALIGNED;
@@ -170,7 +169,7 @@ module memory_bare_emu #(
       2: begin  // access_fault
         if (instr_addr_i != instr_addr_q)
           $display(
-              "[%8t - MEM EMU] WARNING: reading uninitialized INSTRUCTION at %h",
+              "[%8t] MEM EMU > WARNING: reading uninitialized INSTRUCTION at %h",
               $time,
               instr_addr_i
           );
@@ -180,7 +179,7 @@ module memory_bare_emu #(
       default: begin
         if (instr_addr_i != instr_addr_q)
           $display(
-              "[%8t - MEM EMU] WARNING: unknown INSTRUCTION exception at %h", $time, instr_addr_i
+              "[%8t] MEM EMU > WARNING: unknown INSTRUCTION exception at %h", $time, instr_addr_i
           );
         instr_pipe_reg[0].except_raised = 1'b1;
         instr_pipe_reg[0].except_code   = E_UNKNOWN;
@@ -208,20 +207,20 @@ module memory_bare_emu #(
       data_load_addr_q <= data_load_addr_i;
       case (data_load_be_i)
         8'b0000_0001: begin
-          dl_ret                     <= d_mem.ReadB(data_load_addr_i);
-          data_load_pipe_reg[0].read <= {56'h0, d_mem.read_byte};
+          dl_ret                     <= mem.ReadB(data_load_addr_i);
+          data_load_pipe_reg[0].read <= {56'h0, mem.read_byte};
         end
         8'b0000_0011: begin
-          dl_ret                     <= d_mem.ReadHW(data_load_addr_i);
-          data_load_pipe_reg[0].read <= {48'h0, d_mem.read_halfword};
+          dl_ret                     <= mem.ReadHW(data_load_addr_i);
+          data_load_pipe_reg[0].read <= {48'h0, mem.read_halfword};
         end
         8'b0000_1111: begin
-          dl_ret                     <= d_mem.ReadW(data_load_addr_i);
-          data_load_pipe_reg[0].read <= {32'h0, d_mem.read_word};
+          dl_ret                     <= mem.ReadW(data_load_addr_i);
+          data_load_pipe_reg[0].read <= {32'h0, mem.read_word};
         end
         8'b1111_1111: begin
-          dl_ret                     <= d_mem.ReadDW(data_load_addr_i);
-          data_load_pipe_reg[0].read <= d_mem.read_doubleword;
+          dl_ret                     <= mem.ReadDW(data_load_addr_i);
+          data_load_pipe_reg[0].read <= mem.read_doubleword;
         end
         default: begin
           $fatal("Unsupported data load request");
@@ -235,19 +234,28 @@ module memory_bare_emu #(
     case (dl_ret)
       0: data_load_pipe_reg[0].except_raised = 1'b0;
       1: begin : address_misaligned
-        $display("[%8t - MEM EMU] WARNING: misaligned memory READ at %h", $time, data_load_addr_q);
+        if (data_load_pipe_valid[0] && data_load_addr_q != data_load_addr_i)
+          $display(
+              "[%8t] MEM EMU > WARNING: misaligned memory READ at %h", $time, data_load_addr_q
+          );
         data_load_pipe_reg[0].except_raised = data_load_pipe_valid[0];
         data_load_pipe_reg[0].except_code   = E_LD_ADDR_MISALIGNED;
       end
       2: begin : access_fault
-        $display("[%8t - MEM EMU] WARNING: uninitialized memory READ at %h", $time,
-                 data_load_addr_q);
+        if (data_load_pipe_valid[0] && data_load_addr_q != data_load_addr_i)
+          $display(
+              "[%8t] MEM EMU > WARNING: uninitialized memory READ at %h", $time, data_load_addr_q
+          );
         data_load_pipe_reg[0].except_raised = data_load_pipe_valid[0];
         data_load_pipe_reg[0].except_code   = E_LD_ACCESS_FAULT;
       end
       default: begin
-        $display("[%8t - MEM EMU] WARNING: unknown memory READ exception at %h", $time,
-                 data_load_addr_q);
+        if (data_load_pipe_valid[0] && data_load_addr_q != data_load_addr_i)
+          $display(
+              "[%8t] MEM EMU > WARNING: unknown memory READ exception at %h",
+              $time,
+              data_load_addr_q
+          );
         data_load_pipe_reg[0].except_raised = data_load_pipe_valid[0];
         data_load_pipe_reg[0].except_code   = E_UNKNOWN;
       end
@@ -266,16 +274,16 @@ module memory_bare_emu #(
       data_store_addr_q <= data_store_addr_i;
       case (data_store_be_i)
         8'b0000_0001: begin
-          ds_ret <= d_mem.WriteB(data_store_addr_i, data_store_wdata_i[7:0]);
+          ds_ret <= mem.WriteB(data_store_addr_i, data_store_wdata_i[7:0]);
         end
         8'b0000_0011: begin
-          ds_ret <= d_mem.WriteHW(data_store_addr_i, data_store_wdata_i[15:0]);
+          ds_ret <= mem.WriteHW(data_store_addr_i, data_store_wdata_i[15:0]);
         end
         8'b0000_1111: begin
-          ds_ret <= d_mem.WriteW(data_store_addr_i, data_store_wdata_i[31:0]);
+          ds_ret <= mem.WriteW(data_store_addr_i, data_store_wdata_i[31:0]);
         end
         8'b1111_1111: begin
-          ds_ret <= d_mem.WriteDW(data_store_addr_i, data_store_wdata_i);
+          ds_ret <= mem.WriteDW(data_store_addr_i, data_store_wdata_i);
         end
         default: begin
           $fatal("Unsupported data store request");
@@ -289,20 +297,30 @@ module memory_bare_emu #(
     case (ds_ret)
       0: data_store_pipe_reg[0].except_raised = 1'b0;
       1: begin : address_misaligned
-        $display("[%8t - MEM EMU] WARNING: misaligned memory WRITE at %h", $time,
-                 data_store_addr_q);
+        if (data_store_pipe_valid[0] && data_store_addr_q != data_store_addr_i)
+          $display(
+              "[%8t] MEM EMU > WARNING: misaligned memory WRITE at %h", $time, data_store_addr_q
+          );
         data_store_pipe_reg[0].except_raised = data_store_pipe_valid[0];
         data_store_pipe_reg[0].except_code   = E_ST_ADDR_MISALIGNED;
       end
       2: begin : access_fault
-        $display("[%8t - MEM EMU] WARNING: memory WRITE access exception at %h", $time,
-                 data_store_addr_q);
+        if (data_store_pipe_valid[0] && data_store_addr_q != data_store_addr_i)
+          $display(
+              "[%8t] MEM EMU > WARNING: memory WRITE access exception at %h",
+              $time,
+              data_store_addr_q
+          );
         data_store_pipe_reg[0].except_raised = data_store_pipe_valid[0];
         data_store_pipe_reg[0].except_code   = E_ST_ACCESS_FAULT;
       end
       default: begin
-        $display("[%8t - MEM EMU] WARNING: unknown memory WRITE exception at %h", $time,
-                 data_store_addr_q);
+        if (data_store_pipe_valid[0] && data_store_addr_q != data_store_addr_i)
+          $display(
+              "[%8t] MEM EMU > WARNING: unknown memory WRITE exception at %h",
+              $time,
+              data_store_addr_q
+          );
         data_store_pipe_reg[0].except_raised = data_store_pipe_valid[0];
         data_store_pipe_reg[0].except_code   = E_UNKNOWN;
       end

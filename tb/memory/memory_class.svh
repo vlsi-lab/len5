@@ -45,7 +45,7 @@ class memory_class;
   // NOTE: delared as static so it's shared by all instances
   // TODO: Update verilator to support static class members
   // static logic       [ BWIDTH-1:0] mem[logic         [AWIDTH-1:0]];
-  logic       [BWIDTH-1:0] mem[logic         [AWIDTH-1:0]];
+  logic [BWIDTH-1:0] mem[logic [AWIDTH-1:0]];
 
   // METHODS
   // -------
@@ -414,9 +414,7 @@ class memory_class;
         $fdisplay(this.fd, "%016h %08h", waddr, w);
         w = 'x;
       end
-    end while (this.mem.next(
-        baddr
-    ) == 1);
+    end while (this.mem.next(baddr) == 1);
 
     // Close the file
     CloseMemFile();

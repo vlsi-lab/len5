@@ -14,7 +14,9 @@
 
 module tb_bare #(
   parameter string           MEM_DUMP_FILE = "mem_dump.txt",
-  parameter longint unsigned BOOT_PC       = 64'h0
+  parameter longint unsigned BOOT_PC       = 64'h0,
+  parameter longint unsigned SERIAL_ADDR   = 64'h20000000,
+  parameter longint unsigned EXIT_ADDR     = 64'h20000100
 ) (
   input logic clk_i,  // simulation clock
   input logic rst_ni  // simulation reset
@@ -52,8 +54,14 @@ module tb_bare #(
   // Number of cycles to simulate
   longint unsigned                    curr_cycle = 0;
 
-  // Serial monitor string
+  // Serial monitor
+  bit                                 serial_recv;
+  byte                                serial_char;
   string                              serial_str;
+
+  // Exit monitor
+  bit                                 exit_code_recv;
+  byte                                exit_code_q;
 
   // Mmeory monitor
   longint unsigned                    num_instr_loads = 0;
@@ -122,7 +130,10 @@ module tb_bare #(
     $display("[TB] Memory image: %s", mem_file);
 
     // Print the serial monitor base address
-    $display("[TB] Serial monitor memory address: 0x%h", SERIAL_ADDR);
+    $display("[TB] Serial regiter memory address: 0x%h", SERIAL_ADDR);
+
+    // Print the exit monitor base address
+    $display("[TB] Exit register memory address: 0x%h", EXIT_ADDR);
 
     // Print M extension information
     $display("[TB] M extension: %s",
@@ -176,25 +187,30 @@ module tb_bare #(
   // Serial monitor
   // --------------
   always_ff @(posedge clk_i) begin : serial_monitor
-    byte c;
-
     // Sniff SERIAL ADDRESS and print content
-    if (dp2mem_store_valid && dp2mem_store_addr == SERIAL_ADDR) begin
-      c <= dp2mem_store_wdata[7:0];
-      if (c == "\n") begin
-        $display("Detected newline:         [0x%h]", c);
-      end else if (c == 8'b0) begin  // null character \0 decode to all 0 byte
-        $display("Detected end of string:   [0x%h]", c);
+    if (dp2mem_store_valid && mem2dp_store_ready && dp2mem_store_addr == SERIAL_ADDR) begin
+      serial_recv <= 1'b1;
+      serial_char <= dp2mem_store_wdata[7:0];
+    end else begin
+      serial_recv <= 1'b0;
+    end
+
+    if (serial_recv) begin
+      if (serial_char == "\n" || serial_char == "\r") begin
+        $display("[%8t] SERIAL MONITOR > detected newline:         [0x%h]", $time, serial_char);
+      end else if (serial_char == 8'h0) begin
+        $display("[%8t] SERIAL MONITOR > detected end of string:   [0x%h]", $time, serial_char);
       end else begin
-        $display("Detected character:     %c [0x%h]", c, c);
+        $display("[%8t] SERIAL MONITOR > detected character:     %c [0x%h]", $time, serial_char,
+                 serial_char);
       end
 
       // Check for end-of-string
-      if ((c == 8'b0 || c == "\n") && serial_str.len() > 0) begin // null character \0 decode to all 0 byte
-        $display("Received string: \"%s\"", serial_str);
+      if ((serial_char == 8'h0 || serial_char == "\n" || serial_char == "\r") && serial_str.len() > 0) begin
+        $display("\033[1m[%8t] SERIAL MONITOR > received string:\033[0m \"%s\"", $time, serial_str);
         serial_str <= "";
       end else begin
-        serial_str <= {serial_str, c};
+        serial_str <= {serial_str, serial_char};
       end
     end
   end
@@ -203,13 +219,23 @@ module tb_bare #(
   // ------------
   // Stop the simulation after a certain memory location is written
   always_ff @(posedge clk_i) begin : exit_monitor
-    byte c;
-
     if (dp2mem_store_valid && dp2mem_store_addr == EXIT_ADDR) begin
-      c <= dp2mem_store_wdata[7:0];
-      $display("Program exit with code: 0x%h", c);
+      exit_code_q    <= dp2mem_store_wdata[7:0];
+      exit_code_recv <= 1'b1;
+    end else begin
+      exit_code_recv <= 1'b0;
+    end
+
+    if (exit_code_recv) begin
+      if (exit_code_q == 0) begin
+        $display("\n\033[1;32m[%8t] TB > Program exit with code: 0x%h (SUCCESS)\033[0m\n", $time,
+                 exit_code_q);
+      end else begin
+        $display("\n\033[1;31m[%8t] TB > Program exit with code: 0x%h (FAILURE)\033[0m\n", $time,
+                 exit_code_q);
+      end
       printReport();
-      $stop();
+      $finish();
     end
   end
 
@@ -322,49 +348,49 @@ module tb_bare #(
     longint unsigned
     num_mem_requests = num_instr_loads + num_data_loads + num_data_stores;
 
-    $display("EXECUTION REPORT");
-`ifndef LEN5_CSR_HPMCOUNTERS_EN
-    $display(
-        "NOTE: extra performance counters not available since 'LEN5_CSR_HPMCOUNTERS_EN' is not defined");
-`endif  /* LEN5_CSR_HPMCOUNTERS_EN */
-    $display("- current TB cycle:                      %0d", curr_cycle);
-    $display("- total CPU cycles:                      %0d", u_datapath.u_backend.u_csrs.mcycle);
-    $display("- retired instructions:                  %0d", u_datapath.u_backend.u_csrs.minstret);
-`ifdef LEN5_CSR_HPMCOUNTERS_EN
-    $display(
-        "  > retired branch/jump instructions:    %0d (%0.1f%%)",
-        u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4,
-        real'(u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret);
-    $display(
-        "    + jumps:                             %0d (%0.1f%%)",
-        u_datapath.u_backend.u_csrs.hpmcounter3,
-        real'(u_datapath.u_backend.u_csrs.hpmcounter3) * 100 / u_datapath.u_backend.u_csrs.minstret);
-    $display(
-        "    + branches:                          %0d (%0.1f%%)",
-        u_datapath.u_backend.u_csrs.hpmcounter4,
-        real'(u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret);
-    $display(
-        "  > retired load/store instructions:     %0d (%0.1f%%)",
-        u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6,
-        real'(u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret);
-    $display(
-        "    + loads:                             %0d (%0.1f%%)",
-        u_datapath.u_backend.u_csrs.hpmcounter5,
-        real'(u_datapath.u_backend.u_csrs.hpmcounter5) * 100 / u_datapath.u_backend.u_csrs.minstret);
-    $display(
-        "    + stores:                            %0d (%0.1f%%)",
-        u_datapath.u_backend.u_csrs.hpmcounter6,
-        real'(u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret);
-`endif  /* LEN5_CSR_HPMCOUNTERS_EN */
-    $display("- average IPC:                           %0.2f",
-             real'(u_datapath.u_backend.u_csrs.minstret) / curr_cycle);
-    $display("- memory requests:                       %0d",
+    $display("### EXECUTION REPORT");
+    $display("    - current TB cycle:                    %6d", curr_cycle);
+    $display("    - total CPU cycles:                    %6d", u_datapath.u_backend.u_csrs.mcycle);
+    $display(" ## retired instructions:                  %6d",
+             u_datapath.u_backend.u_csrs.minstret);
+    $display(" ## average IPC:                           %6.2f",
+             real'(u_datapath.u_backend.u_csrs.minstret) / u_datapath.u_backend.u_csrs.mcycle);
+    if (!LEN5_CSR_HPMCOUNTERS_EN) begin
+      $display(
+          "  # NOTE: extra performance counters not available since 'LEN5_CSR_HPMCOUNTERS_EN' is not defined");
+    end else begin
+      $display(
+          " ## retired branch/jump instructions:      %6d (%0.1f%%)",
+          u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4,
+          real'(u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret);
+      $display(
+          "  # jumps:                                 %6d (%0.1f%%)",
+          u_datapath.u_backend.u_csrs.hpmcounter3,
+          real'(u_datapath.u_backend.u_csrs.hpmcounter3) * 100 / (u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4));
+      $display(
+          "  # branches:                              %6d (%0.1f%%)",
+          u_datapath.u_backend.u_csrs.hpmcounter4,
+          real'(u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / (u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4));
+      $display(
+          " ## retired load/store instructions:       %6d (%0.1f%%)",
+          u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6,
+          real'(u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret);
+      $display(
+          "  # loads:                                 %6d (%0.1f%%)",
+          u_datapath.u_backend.u_csrs.hpmcounter5,
+          real'(u_datapath.u_backend.u_csrs.hpmcounter5) * 100 / (u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6));
+      $display(
+          "  # stores:                                %6d (%0.1f%%)",
+          u_datapath.u_backend.u_csrs.hpmcounter6,
+          real'(u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / (u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6));
+    end
+    $display(" ## memory requests:                       %6d",
              num_data_loads + num_data_stores + num_instr_loads);
-    $display("  > load instr. memory requests:         %0d (%0.2f%%)", num_instr_loads,
+    $display("  # load instr. memory requests:           %6d (%0.2f%%)", num_instr_loads,
              real'(num_instr_loads) * 100 / num_mem_requests);
-    $display("  > load data memory requests :          %0d (%0.2f%%)", num_data_loads,
+    $display("  # load data memory requests:             %6d (%0.2f%%)", num_data_loads,
              real'(num_data_loads) * 100 / num_mem_requests);
-    $display("  > store data memory requests :         %0d (%0.2f%%)", num_data_stores,
+    $display("  # store data memory requests:            %6d (%0.2f%%)", num_data_stores,
              real'(num_data_stores) * 100 / num_mem_requests);
   endfunction : printReport
 
