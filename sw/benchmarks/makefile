@@ -6,8 +6,10 @@
 SUITE			?= embench 
 BENCHMARK 		?= crc32
 LINKER 			?= ../linker/len5-sim.ld
-BENCH_SRCS 			:= $(wildcard $(SUITE)/$(BENCHMARK)/*.c)
-BENCH_SRCS 			+= $(wildcard $(SUITE)/$(BENCHMARK)/*.S)
+BENCH_SRCS 			:= $(wildcard $(SUITE)/src/$(BENCHMARK)/*.c)
+BENCH_SRCS 			+= $(wildcard $(SUITE)/src/$(BENCHMARK)/*.S)
+BENCH_SRCS 			+= $(wildcard $(SUITE)/support/*.c)
+BENCH_SRCS 			+= $(wildcard $(SUITE)/support/*.S)
 ifeq ($(SUITE),  embench) # If embench suite, then include files are found in support dir
 BENCH_SRCS 			+= $(wildcard $(SUITE)/support/*.c)
 BENCH_SRCS 			+= $(wildcard $(SUITE)/support/*.S)

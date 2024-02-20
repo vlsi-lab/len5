@@ -7,7 +7,7 @@
 
   // Target directory: typically equal to the name
   // All imported code is copied into this directory
-  target_dir: "embench",
+  target_dir: "embench/src",
 
   // Git upstream source code repository
   upstream: {
@@ -21,15 +21,9 @@
   // specify where to put them.
   mapping: [
     {from: 'src', to: '.'},
-    {from: 'support', to: 'support'},
   ],
 
   exclude_from_upstream: [
-    "support/dummy*",
-    "support/support.h", # Avoid this file because we overwrite it with defines
-    "support/board.c",
-    "support/chip.c",
-    "support/support.c",
-    "huffbench/.gitignore", # they have a .gitignore here, not necessary
+    "src/huffbench/.gitignore", # they have a .gitignore here, not necessary
   ]
 }
