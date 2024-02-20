@@ -22,7 +22,6 @@ main (int argc __attribute__ ((unused)),
   volatile int result;
   int correct;
 
-  initialise_board ();
   initialise_benchmark ();
   warm_caches (WARMUP_HEAT);
 

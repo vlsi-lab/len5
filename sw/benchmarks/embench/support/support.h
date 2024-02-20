@@ -31,7 +31,6 @@ int verify_benchmark (int result);
 
 /* Standard functions implemented for each board */
 
-void initialise_board (void) __attribute__ ((weak));
 void start_trigger (void);
 void stop_trigger (void);
 
