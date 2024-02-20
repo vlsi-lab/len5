@@ -40,8 +40,8 @@ module load_store_unit #(
   input  expipe_pkg::rob_idx_t                         issue_dest_rob_idx_i,
 
   /* Commit stage */
-  input logic                 comm_spec_instr_i,
-  input expipe_pkg::rob_idx_t comm_rob_head_idx_i,
+  input  expipe_pkg::rob_idx_t comm_rob_clear_idx_i,
+  output logic                 comm_store_completed_o,
 
   /* Common data bus (CDB) */
   input  logic                  cdb_valid_i,
@@ -186,8 +186,8 @@ module load_store_unit #(
     .issue_rs2_i          (issue_rs2_i),
     .issue_imm_i          (issue_imm_i),
     .issue_dest_rob_idx_i (issue_dest_rob_idx_i),
-    .comm_spec_instr_i    (comm_spec_instr_i),
-    .comm_rob_head_idx_i  (comm_rob_head_idx_i),
+    .comm_rob_clear_idx_i (comm_rob_clear_idx_i),
+    .comm_completed_o     (comm_store_completed_o),
     .cdb_valid_i          (cdb_valid_i),
     .cdb_ready_i          (cdb_sb_ready_i),
     .cdb_valid_o          (cdb_sb_valid_o),

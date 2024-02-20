@@ -79,11 +79,12 @@ module datapath #(
   except_code_t            fe_be_except_code;
   logic                    be_fe_mis_flush;
   logic                    be_fe_except_flush;
-  logic                    be_fe_res_valid;
+  logic                    be_fe_bpu_valid;
+  logic                    be_fe_pcgen_valid;
   resolution_t             be_fe_res;
   logic                    be_fe_except_raised;
   logic         [XLEN-1:0] be_fe_except_pc;
-  logic                    fe_be_bu_ready;
+  logic                    fe_be_bu_pcgen_ready;
 
   // ---------
   // FRONT-END
@@ -113,9 +114,10 @@ module datapath #(
     .issue_pred_o         (fe_be_pred),
     .issue_except_raised_o(fe_be_except_raised),
     .issue_except_code_o  (fe_be_except_code),
-    .bu_res_valid_i       (be_fe_res_valid),
+    .bu_pcgen_ready_o     (fe_be_bu_pcgen_ready),
+    .bu_bpu_valid_i       (be_fe_bpu_valid),
+    .bu_pcgen_valid_i     (be_fe_pcgen_valid),
     .bu_res_i             (be_fe_res),
-    .bu_ready_o           (fe_be_bu_ready),
     .comm_except_raised_i (be_fe_except_raised),
     .comm_except_pc_i     (be_fe_except_pc)
   );
@@ -124,18 +126,20 @@ module datapath #(
   // BACK-END
   // --------
   backend u_backend (
-    .clk_i                (clk_i),
-    .rst_ni               (rst_ni),
+    .clk_i (clk_i),
+    .rst_ni(rst_ni),
+
     .fetch_valid_i        (fe_be_valid),
-    .fetch_ready_i        (fe_be_bu_ready),
     .fetch_ready_o        (be_fe_ready),
     .fetch_instr_i        (fe_be_instr),
     .fetch_pred_i         (fe_be_pred),
     .fetch_except_raised_i(fe_be_except_raised),
     .fetch_except_code_i  (fe_be_except_code),
+    .fetch_pcgen_ready_i  (fe_be_bu_pcgen_ready),
+    .fetch_bpu_valid_o    (be_fe_bpu_valid),
+    .fetch_pcgen_valid_o  (be_fe_pcgen_valid),
     .fetch_mis_flush_o    (be_fe_mis_flush),
     .fetch_except_flush_o (be_fe_except_flush),
-    .fetch_res_valid_o    (be_fe_res_valid),
     .fetch_res_o          (be_fe_res),
     .fetch_except_raised_o(be_fe_except_raised),
     .fetch_except_pc_o    (be_fe_except_pc),

@@ -18,13 +18,12 @@ module commit_cu (
   input logic rst_ni,
 
   // Commit logic <--> CU
-  input  expipe_pkg::comm_type_t    comm_type_i,      // from commit decoder
-  input  logic                      mispredict_i,     // branch misprediction
-  output logic                      comm_reg_en_o,    // commit register enable
-  output logic                      comm_reg_clr_o,   // commit register clear
-  output expipe_pkg::comm_rd_sel_t  comm_rd_sel_o,    // rd is link address
-  output logic                      comm_jb_instr_o,  // committing a jump/branch
-  output expipe_pkg::comm_csr_sel_t comm_csr_sel_o,   // select PC as CSR data
+  input  expipe_pkg::comm_type_t    comm_type_i,     // from commit decoder
+  input  logic                      mispredict_i,    // branch misprediction
+  output logic                      comm_reg_en_o,   // commit register enable
+  output logic                      comm_reg_clr_o,  // commit register clear
+  output expipe_pkg::comm_rd_sel_t  comm_rd_sel_o,   // rd is link address
+  output expipe_pkg::comm_csr_sel_t comm_csr_sel_o,  // select PC as CSR data
 
   // ROB <--> CU
   input  logic                   valid_i,
@@ -253,7 +252,6 @@ module commit_cu (
     comm_reg_en_o      = 1'b0;
     comm_reg_clr_o     = 1'b0;
     comm_rd_sel_o      = COMM_RD_SEL_RES;
-    comm_jb_instr_o    = 1'b0;
     comm_csr_sel_o     = COMM_CSR_SEL_RES;
     csr_override_o     = 1'b0;
     csr_addr_o         = CSR_MEPC;
@@ -309,7 +307,6 @@ module commit_cu (
         int_rs_valid_o  = 1'b1;
         int_rf_valid_o  = 1'b1;
         comm_reg_en_o   = 1'b1;
-        comm_jb_instr_o = 1'b1;
         csr_comm_insn_o = COMM_CSR_INSTR_TYPE_JUMP;
       end
       COMMIT_JUMP_MIS: begin
@@ -317,20 +314,17 @@ module commit_cu (
         int_rf_valid_o  = 1'b1;
         comm_reg_clr_o  = 1'b1;
         ex_mis_flush_o  = 1'b1;
-        comm_jb_instr_o = 1'b1;
         csr_comm_insn_o = COMM_CSR_INSTR_TYPE_JUMP;
         issue_resume_o  = 1'b1;
       end
       COMMIT_BRANCH: begin
         ready_o         = 1'b1;
         comm_reg_en_o   = 1'b1;
-        comm_jb_instr_o = 1'b1;
         csr_comm_insn_o = COMM_CSR_INSTR_TYPE_BRANCH;
       end
       COMMIT_BRANCH_MIS: begin
         ex_mis_flush_o  = 1'b1;
         comm_reg_clr_o  = 1'b1;
-        comm_jb_instr_o = 1'b1;
         csr_comm_insn_o = COMM_CSR_INSTR_TYPE_BRANCH;
         issue_resume_o  = 1'b1;
       end

@@ -82,26 +82,9 @@ package expipe_pkg;
   // ---------------------------
   localparam int unsigned REGSTAT_CNT_W = $clog2(COMMIT_UNIT_DEPTH);
 
-  // ---
-  // ALL
-  // ---
-
-  // Jump/branch auxiliary information
-  typedef struct packed {
-    logic mispredicted;
-    logic taken;
-  } res_aux_jb_t;
-
-  // EU result auxiliary data
-  typedef union packed {
-    res_aux_jb_t jb;
-    logic [1:0]  raw;
-  } res_aux_t;
-
   // ----
   // ROB
   // ----
-
   typedef logic [ROB_IDX_LEN-1:0] rob_idx_t;
 
   typedef struct packed {
@@ -117,14 +100,12 @@ package expipe_pkg;
   // ----
   // CDB
   // ----
-
   typedef struct packed {
     rob_idx_t        rob_idx;
     logic [XLEN-1:0] res_value;
     logic            except_raised;
     except_code_t    except_code;
   } cdb_data_t;
-
 
   // --------------------
   // RESERVATION STATIONS
@@ -276,24 +257,9 @@ MAX_EU_N
     IMM_TYPE_RS1
   } imm_format_t;
 
-  // Decoder select
-  typedef enum logic [2:0] {
-    ISSUE_DEC_SEL_MAIN,
-    ISSUE_DEC_SEL_ALU,
-    ISSUE_DEC_SEL_MULT,
-    ISSUE_DEC_SEL_DIV,
-    ISSUE_DEC_SEL_LS,
-    ISSUE_DEC_SEL_BRANCH
-  } issue_dec_sel_t;
-
   // ---------------
   // REGISTER STATUS
   // ---------------
-
-  typedef struct packed {
-    rob_idx_t busy;     /* at most as many entry in the ROB, the current (this instruction) */
-    rob_idx_t rob_idx;
-  } regstat_entry_t;
 
   // Operand data
   // ------------
@@ -303,169 +269,12 @@ MAX_EU_N
     logic [XLEN-1:0] value;
   } op_data_t;
 
-  // ARITHMETIC RESERVATION STATION
-  // ------------------------------
-
-  /* Arithmetic unit state */
-  typedef enum logic [2:0] {
-    ARITH_S_EMPTY,         // empty
-    ARITH_S_RS1_PENDING,   // waiting for rs1 forwarding
-    ARITH_S_RS2_PENDING,   // waiting for rs2 forwarding
-    ARITH_S_RS12_PENDING,  // waiting for rs1 and rs2 forwarding
-    ARITH_S_EX_REQ,        // requesting execution to execution unit
-    ARITH_S_EX_WAIT,       // waiting for the BU result
-    ARITH_S_COMPLETED,     // ready to write the result on the CDB
-    ARITH_S_HALT           // for debug
-  } arith_state_t;
-
-  /* Arithmetic unit operations */
-  typedef enum logic [3:0] {
-    ARITH_OP_NONE,
-    ARITH_OP_INSERT,
-    ARITH_OP_INSERT_RS12,
-    ARITH_OP_INSERT_RS1,
-    ARITH_OP_INSERT_RS2,
-    ARITH_OP_SAVE_RS12,
-    ARITH_OP_SAVE_RS1,
-    ARITH_OP_SAVE_RS2,
-    ARITH_OP_SAVE_RES
-  } arith_op_t;
-
-  // -----------
-  // BRANCH UNIT
-  // -----------
-
-  /* Branch unit status */
-  typedef enum logic [2:0] {
-    BU_S_EMPTY,         // empty
-    BU_S_RS1_PENDING,   // waiting for rs1 forwarding
-    BU_S_RS2_PENDING,   // waiting for rs2 forwarding
-    BU_S_RS12_PENDING,  // waiting for rs1 and rs2 forwarding
-    BU_S_EX_REQ,        // requesting execution to BU logic
-    BU_S_EX_WAIT,       // waiting for the BU result
-    BU_S_COMPLETED,     // ready to write the result on the CDB
-    BU_S_HALT           // for debug
-  } bu_state_t;
-
-  /* Branch unit reservation station data */
-  typedef struct packed {
-    branch_ctl_t     branch_type;    // Branch type for the branch unit
-    logic [XLEN-1:0] curr_pc;
-    rob_idx_t        rs1_rob_idx;    // The entry of the rob that will contain the required operand
-    logic [XLEN-1:0] rs1_value;      // The value of the first operand
-    rob_idx_t        rs2_rob_idx;    // The entry of the rob that will contain the required operand
-    logic [XLEN-1:0] rs2_value;      // The value of the second operand
-    logic [XLEN-1:0] imm_value;      // Immediate value
-    rob_idx_t        dest_rob_idx;   // The entry of the ROB where the result will be stored
-    logic [XLEN-1:0] target_link;    // predicted target, then link address
-    logic            taken;
-    logic            mispredicted;
-`ifndef LEN5_C_EN
-    logic            except_raised;
-`endif  /* LEN5_C_EN */
-  } bu_data_t;
-
-  /* Branch unit operations */
-  typedef enum logic [2:0] {
-    BU_OP_NONE,
-    BU_OP_INSERT,
-    BU_OP_SAVE_RS12,
-    BU_OP_SAVE_RS1,
-    BU_OP_SAVE_RS2,
-    BU_OP_SAVE_RES
-  } bu_op_t;
-
   // ---------------
   // LOAD-STORE UNIT
   // ---------------
 
-  // LOAD BUFFER DATA TYPES
-  // ----------------------
-
-  /* Load instruction status */
-  typedef enum logic [3:0] {
-    LOAD_S_EMPTY,
-    LOAD_S_RS1_PENDING,
-    LOAD_S_ADDR_REQ,
-    LOAD_S_ADDR_WAIT,
-    LOAD_S_DEP_WAIT,
-    LOAD_S_MEM_REQ,
-    LOAD_S_MEM_WAIT,
-    LOAD_S_COMPLETED,
-    LOAD_S_HALT     // for debug
-  } lb_state_t;
-
-  /* Load instruction data */
-  typedef struct packed {
-    ldst_width_t     load_type;       // byte, halfword, ...
-    rob_idx_t        rs1_rob_idx;
-    logic [XLEN-1:0] rs1_value;
-    rob_idx_t        dest_rob_idx;
-    logic [XLEN-1:0] imm_addr_value;  // immediate offset, then replaced with resulting address
-    logic            except_raised;
-    except_code_t    except_code;
-    logic [XLEN-1:0] value;
-  } lb_data_t;
-
-  /* Load instruction command */
-  typedef enum logic [2:0] {
-    LOAD_OP_NONE,
-    LOAD_OP_PUSH,
-    LOAD_OP_SAVE_RS1,
-    LOAD_OP_SAVE_ADDR,
-    LOAD_OP_ADDR_EXCEPT,
-    LOAD_OP_SAVE_CACHED,
-    LOAD_OP_SAVE_MEM,
-    LOAD_OP_MEM_EXCEPT
-  } lb_op_t;
-
-  // STORE BUFFER DATA TYPES
-  // -----------------------
-
-  /* Store instruction status */
-  typedef enum logic [3:0] {
-    STORE_S_EMPTY,
-    STORE_S_RS12_PENDING,
-    STORE_S_RS1_PENDING,
-    STORE_S_RS2_PENDING,
-    STORE_S_ADDR_REQ,
-    STORE_S_ADDR_WAIT,
-    STORE_S_WAIT_ROB,
-    STORE_S_MEM_REQ,
-    STORE_S_MEM_WAIT,
-    STORE_S_COMPLETED,
-    STORE_S_CACHED,
-    STORE_S_HALT  // for debug
-  } sb_state_t;
-
-  /* Store instruction data */
-  typedef struct packed {
-    ldst_width_t     store_type;
-    logic            speculative;     // the store instruction is speculative
-    rob_idx_t        rs1_rob_idx;
-    logic [XLEN-1:0] rs1_value;
-    rob_idx_t        rs2_rob_idx;
-    logic [XLEN-1:0] rs2_value;
-    rob_idx_t        dest_rob_idx;
-    logic [XLEN-1:0] imm_addr_value;  // immediate offset, then replaced with resulting address
-    logic            except_raised;
-    except_code_t    except_code;
-  } sb_data_t;
-
-  /* Store instruction command */
-  typedef enum logic [2:0] {
-    STORE_OP_NONE,
-    STORE_OP_PUSH,
-    STORE_OP_SAVE_RS12,
-    STORE_OP_SAVE_RS1,
-    STORE_OP_SAVE_RS2,
-    STORE_OP_SAVE_ADDR,
-    STORE_OP_SAVE_MEM
-  } sb_op_t;
-
   // ADDRESS ADDER
   // -------------
-
   // Virtual address adder exception codes
   typedef enum logic [1:0] {
     VADDER_ALIGN_EXCEPT,
@@ -493,7 +302,6 @@ MAX_EU_N
   // ------------
   // COMMIT LOGIC
   // ------------
-
   // Commit destination data type
   typedef enum logic [3:0] {
     COMM_TYPE_NONE,    // no data to commit (e.g., nops)
