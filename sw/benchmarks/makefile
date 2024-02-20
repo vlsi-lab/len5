@@ -21,6 +21,8 @@ BENCH_OBJS 			:= $(filter %.o,\
 LDFLAGS_PRE		:= -T ../$(LINKER) \
 				   -static
 
+LDFLAGS_POST	+= -lm # This MUST BE put post the c files to enable math benchmarks
+
 # LEN5 software support
 LIB_SRCS		:= $(wildcard ../device/crt/*.S) \
 				   $(wildcard ../device/runtime/*.c ../device/runtime/*.S) \
