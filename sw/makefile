@@ -49,6 +49,10 @@ LIB_OBJS		:= $(filter %.o,\
 				   $(patsubst %.s,$(BUILD_DIR)/%.o,$(LIB_SRCS))\
 				   $(patsubst %.c,$(BUILD_DIR)/%.o,$(LIB_SRCS)))
 
+
+# Export all the variables to sub-makefiles
+export
+
 #######################
 # ----- TARGETS ----- #
 #######################
@@ -58,6 +62,10 @@ LIB_OBJS		:= $(filter %.o,\
 # Application build
 .PHONY: app
 app: $(BUILD_DIR)/main.hex $(BUILD_DIR)/main.disasm
+	echo $(OBJS)
+.PHONY: benchmark
+benchmark: $(LIB_OBJS) 
+	$(MAKE) -B -C benchmarks $(SUITE) BENCHMARK=$(BENCHMARK) SUITE=$(SUITE)
 
 $(BUILD_DIR)/main.%: $(BUILD_DIR)/applications/$(PROJECT)/main.%
 	cp $< $@
@@ -76,6 +84,7 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf
 
 # Linked executable firmware
 $(BUILD_DIR)/%.elf: $(OBJS) $(LIB_OBJS)
+	echo $(LIB_OBJS)
 	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(LDFLAGS_PRE) $(INC_FOLDERS_GCC) $^ $(LDFLAGS_POST) -o $@
 
 # Implicit compilation rules
