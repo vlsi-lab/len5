@@ -37,7 +37,7 @@
 
 /* This scale factor will be changed to equalise the runtime of the
    benchmarks. */
-#define LOCAL_SCALE_FACTOR 87
+#define LOCAL_SCALE_FACTOR 1
 
 
 #define N 100

@@ -20,8 +20,10 @@
   // Optional: Pick specific files or subdirectories from upstream and
   // specify where to put them.
   mapping: [
-    {from: 'src', to: '.'},
+    {from: 'src', to: '.', patch_dir:"src_patch"},
   ],
+
+  patch_dir: "patches",
 
   exclude_from_upstream: [
     "src/huffbench/.gitignore", # they have a .gitignore here, not necessary
