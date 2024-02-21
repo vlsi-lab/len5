@@ -93,8 +93,10 @@ package expipe_pkg;
     logic                   res_ready;      // the result of the instruction is ready
     logic [XLEN-1:0]        res_value;      // the value of the result (from the EU)
     logic [REG_IDX_LEN-1:0] rd_idx;         // the destination register (rd)
+    logic                   order_crit;     // no out-of-order memory commit allowed
     logic                   except_raised;  // an exception has been raised
     except_code_t           except_code;    // the exception code
+    logic                   mem_clear;      // clear to commit to memory out of order (stores only)
   } rob_entry_t;
 
   // ----
@@ -241,6 +243,7 @@ MAX_EU_N
     logic [XLEN-1:0]        imm_value;
     logic [REG_IDX_LEN-1:0] rd_idx;
     eu_ctl_t                eu_ctl;
+    logic                   order_crit;
     logic                   pred_taken;
     logic [XLEN-1:0]        pred_target;
     logic                   except_raised;
@@ -275,17 +278,9 @@ MAX_EU_N
 
   // ADDRESS ADDER
   // -------------
-  // Virtual address adder exception codes
-  typedef enum logic [1:0] {
-    VADDER_ALIGN_EXCEPT,
-    VADDER_PAGE_EXCEPT,
-    VADDER_NO_EXCEPT
-  } vadder_except_t;
-
   // Request
   typedef struct packed {
     logic [BUFF_IDX_LEN-1:0] tag;
-    logic                    is_store;
     ldst_width_t             ls_type;
     logic [XLEN-1:0]         base;
     logic [XLEN-1:0]         offs;

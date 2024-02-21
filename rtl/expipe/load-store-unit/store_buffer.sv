@@ -38,8 +38,8 @@ module store_buffer #(
   input  expipe_pkg::rob_idx_t                         issue_dest_rob_idx_i,
 
   // Commit stage
-  input  expipe_pkg::rob_idx_t comm_rob_clear_idx_i,
-  output logic                 comm_completed_o,
+  input  logic                 comm_mem_clear_i,
+  output expipe_pkg::rob_idx_t comm_mem_idx_o,
 
   // Common data bus (CDB)
   input  logic                  cdb_valid_i,
@@ -253,7 +253,7 @@ module store_buffer #(
           if (save_addr && adder_ans_i.tag == i[IdxW-1:0]) begin
             sb_op[i] = STORE_OP_SAVE_ADDR;
             if (adder_ans_i.except_raised) next_state[i] = STORE_S_COMPLETED;
-            else if (comm_rob_clear_idx_i != data[i].dest_rob_idx) next_state[i] = STORE_S_WAIT_ROB;
+            else if (!comm_mem_clear_i) next_state[i] = STORE_S_WAIT_ROB;
             else next_state[i] = STORE_S_MEM_REQ;
           end else if (addr_idx == i[IdxW-1:0] && addr_accepted) next_state[i] = STORE_S_ADDR_WAIT;
           else next_state[i] = STORE_S_ADDR_REQ;
@@ -262,12 +262,12 @@ module store_buffer #(
           if (save_addr && adder_ans_i.tag == i[IdxW-1:0]) begin
             sb_op[i] = STORE_OP_SAVE_ADDR;
             if (adder_ans_i.except_raised) next_state[i] = STORE_S_COMPLETED;
-            else if (comm_rob_clear_idx_i != data[i].dest_rob_idx) next_state[i] = STORE_S_WAIT_ROB;
+            else if (!comm_mem_clear_i) next_state[i] = STORE_S_WAIT_ROB;
             else next_state[i] = STORE_S_MEM_REQ;
           end else next_state[i] = STORE_S_ADDR_WAIT;
         end
         STORE_S_WAIT_ROB: begin
-          if (comm_rob_clear_idx_i == data[i].dest_rob_idx) next_state[i] = STORE_S_MEM_REQ;
+          if (comm_mem_clear_i) next_state[i] = STORE_S_MEM_REQ;
           else next_state[i] = STORE_S_WAIT_ROB;
         end
         STORE_S_MEM_REQ: begin  // wait for commit
@@ -316,9 +316,9 @@ module store_buffer #(
     end else curr_state <= next_state;
   end
 
-  // ------------------
-  // LOAD BUFFER UPDATE
-  // ------------------
+  // -------------------
+  // STORE BUFFER UPDATE
+  // -------------------
   always_ff @(posedge clk_i or negedge rst_ni) begin : p_lb_update
     if (!rst_ni) begin
       foreach (data[i]) begin
@@ -383,7 +383,7 @@ module store_buffer #(
   endgenerate
 
   // Commit stage
-  assign comm_completed_o         = mem_done & ~mem_except_raised_i;
+  assign comm_mem_idx_o           = data[mem_idx].dest_rob_idx;
 
   // CDB
   // NOTE: save memory address in result field for exception handling (mtval)
@@ -397,7 +397,6 @@ module store_buffer #(
   assign adder_valid_o            = curr_state[addr_idx] == STORE_S_ADDR_REQ;
   assign adder_ready_o            = 1'b1;  // always ready to accept data from the adder
   assign adder_req_o.tag          = addr_idx;
-  assign adder_req_o.is_store     = 1'b1;
   assign adder_req_o.base         = data[addr_idx].rs1_value;
   assign adder_req_o.offs         = data[addr_idx].imm_addr_value;
   assign adder_req_o.ls_type      = data[addr_idx].store_type;

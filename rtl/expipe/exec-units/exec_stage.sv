@@ -46,8 +46,9 @@ module exec_stage (
   output expipe_pkg::cdb_data_t [len5_config_pkg::MAX_EU_N-1:0] cdb_data_o,
 
   // ROB AND CSRs
-  input  expipe_pkg::rob_idx_t comm_sb_rob_clear_idx_i,
-  output logic                 comm_store_completed_o,
+  input  logic                 comm_sb_mem_clear_i,  // store is clear to execute
+  output expipe_pkg::rob_idx_t comm_sb_mem_idx_o,    // executing store ROB index
+
   // input logic     [FCSR_FRM_LEN-1:0] csr_frm_i,               // global rounding mode for the FPU
 
   // MEMORY SYSTEM
@@ -92,29 +93,29 @@ module exec_stage (
     .LB_DEPTH(LDBUFF_DEPTH),
     .SB_DEPTH(STBUFF_DEPTH)
   ) u_load_store_unit (
-    .clk_i                 (clk_i),
-    .rst_ni                (rst_ni),
-    .mis_flush_i           (mis_flush_i),
-    .except_flush_i        (except_flush_i),
-    .issue_lb_valid_i      (issue_valid_i[EU_LOAD_BUFFER]),
-    .issue_sb_valid_i      (issue_valid_i[EU_STORE_BUFFER]),
-    .issue_lb_ready_o      (issue_ready_o[EU_LOAD_BUFFER]),
-    .issue_sb_ready_o      (issue_ready_o[EU_STORE_BUFFER]),
-    .issue_type_i          (issue_eu_ctl_i.lsu),
-    .issue_rs1_i           (issue_rs1_i),
-    .issue_rs2_i           (issue_rs2_i),
-    .issue_imm_i           (issue_imm_value_i),
-    .issue_dest_rob_idx_i  (issue_rob_idx_i),
-    .comm_rob_clear_idx_i  (comm_sb_rob_clear_idx_i),
-    .comm_store_completed_o(comm_store_completed_o),
-    .cdb_valid_i           (cdb_valid_i),
-    .cdb_lb_ready_i        (cdb_ready_i[EU_LOAD_BUFFER]),
-    .cdb_sb_ready_i        (cdb_ready_i[EU_STORE_BUFFER]),
-    .cdb_lb_valid_o        (cdb_valid_o[EU_LOAD_BUFFER]),
-    .cdb_sb_valid_o        (cdb_valid_o[EU_STORE_BUFFER]),
-    .cdb_data_i            (cdb_data_i),
-    .cdb_lb_data_o         (cdb_data_o[EU_LOAD_BUFFER]),
-    .cdb_sb_data_o         (cdb_data_o[EU_STORE_BUFFER]),
+    .clk_i               (clk_i),
+    .rst_ni              (rst_ni),
+    .mis_flush_i         (mis_flush_i),
+    .except_flush_i      (except_flush_i),
+    .issue_lb_valid_i    (issue_valid_i[EU_LOAD_BUFFER]),
+    .issue_sb_valid_i    (issue_valid_i[EU_STORE_BUFFER]),
+    .issue_lb_ready_o    (issue_ready_o[EU_LOAD_BUFFER]),
+    .issue_sb_ready_o    (issue_ready_o[EU_STORE_BUFFER]),
+    .issue_type_i        (issue_eu_ctl_i.lsu),
+    .issue_rs1_i         (issue_rs1_i),
+    .issue_rs2_i         (issue_rs2_i),
+    .issue_imm_i         (issue_imm_value_i),
+    .issue_dest_rob_idx_i(issue_rob_idx_i),
+    .comm_sb_mem_clear_i (comm_sb_mem_clear_i),
+    .comm_sb_mem_idx_o   (comm_sb_mem_idx_o),
+    .cdb_valid_i         (cdb_valid_i),
+    .cdb_lb_ready_i      (cdb_ready_i[EU_LOAD_BUFFER]),
+    .cdb_sb_ready_i      (cdb_ready_i[EU_STORE_BUFFER]),
+    .cdb_lb_valid_o      (cdb_valid_o[EU_LOAD_BUFFER]),
+    .cdb_sb_valid_o      (cdb_valid_o[EU_STORE_BUFFER]),
+    .cdb_data_i          (cdb_data_i),
+    .cdb_lb_data_o       (cdb_data_o[EU_LOAD_BUFFER]),
+    .cdb_sb_data_o       (cdb_data_o[EU_STORE_BUFFER]),
 
     .mem_load_valid_o        (mem_load_valid_o),
     .mem_load_ready_i        (mem_load_ready_i),

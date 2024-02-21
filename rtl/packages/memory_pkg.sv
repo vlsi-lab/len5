@@ -14,6 +14,7 @@
 
 package memory_pkg;
   import len5_pkg::*;
+  import len5_config_pkg::*;
   import csr_pkg::csr_priv_t;
   import expipe_pkg::ldst_width_t;
   import util_pkg::*;
