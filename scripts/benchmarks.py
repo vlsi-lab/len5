@@ -6,6 +6,7 @@ import subprocess
 import time
 from typing import List, Dict
 
+PATIENCE = 10 # Time to wait before spawning a new process (Useful to avoid fusesoc races)
 
 def benchmark_runner(num, suite, output_queue):
     """Function to simulate work and output to stdout."""
@@ -122,7 +123,8 @@ def print_table_to_file(table, suite):
             file.write(f"{benchmark}:\t")
             file.write(f"Instructions: {results['instructions']}\t")
             file.write(f"Cycles: {results['cycles']}\t")
-            file.write(f"IPC: {results['ipc'] : .2f}\n\n")
+            file.write(f"IPC: {results['ipc'] : .2f}\n")
+            file.write(80*"-"+ "\n")
 
 if __name__ == "__main__":
     output_queue = multiprocessing.Queue()
@@ -148,10 +150,17 @@ if __name__ == "__main__":
         p = multiprocessing.Process(target=benchmark_runner, args=(i, SUITE, output_queue))
         processes.append(p)
         p.start()
+        time.sleep(PATIENCE)
+
+    print("All benchmarks running...")
 
     while True:
         # Check if any process has finished
         finished_processes = [p for p in processes if not p.is_alive()]
+
+        # Clean waiting list
+        for p in finished_processes:
+            processes.remove(p)
 
         # If no processes have finished, wait a bit before checking again
         if not finished_processes:
@@ -166,6 +175,7 @@ if __name__ == "__main__":
             # Retrieve output from the queue
             while not output_queue.empty():
                 output = output_queue.get()
+                print(f"Benchmark {output[0]} finished")
                 update_table(table, output[0],
                             parse_retired_instructions(output[1]),
                             parse_cycles(output[1]))
@@ -176,3 +186,5 @@ if __name__ == "__main__":
         # If all processes have finished, break the loop
         if all(not p.is_alive() for p in processes):
             break
+    
+    print(f"All benchmarks finished. Results stored in sw/benchmarks/{SUITE}/output/results.txt")
