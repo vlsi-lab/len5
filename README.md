@@ -12,12 +12,11 @@
    ```
    Alternatively, benchmarks can be run using:
    ```bash
-   make benchmark # SUITE=embench BENCHMARK=crc32
+   make run-benchmark # SUITE=embench
    ```
    Each benchmark suite, contains several tests. The available suites are:
       - [embench](https://www.embench.org/)
 
-   Please refer to the suite benchmark directory to look for the available tests.
 
 3. Run the RTL simulation using Verilator
    ```bash

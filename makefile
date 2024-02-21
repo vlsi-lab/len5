@@ -94,7 +94,7 @@ benchmark:
 	$(MAKE) -BC sw benchmark SUITE=$(SUITE) BUILD_DIR=$(BUILD_DIR) BENCHMARK=$(BENCHMARK)
 
 .PHONY: run_benchmarks
-run_benchmarks: 
+run-benchmarks: 
 	@echo "## Running suite $(SUITE)"
 	python3 scripts/benchmarks.py -s $(SUITE)
 	rm -rf build_*
