@@ -8,11 +8,15 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// File: arith_rs.sv
+// File: arith_rs_serial.sv
 // Author: Michele Caon
 // Date: 19/08/2022
 
-module arith_rs #(
+/* Reservation station for multicycle/serial units.
+TODO: add info on the handshaking protocol used
+*/
+
+module arith_rs_serial #(
   parameter int unsigned DEPTH = 4,  // must be a power of 2
   parameter int unsigned EU_CTL_LEN = 4,
   // Dependent parameters: do NOT override
@@ -100,7 +104,7 @@ module arith_rs #(
   // INTERNAL SIGNALS
   // ----------------
   // New, execution, and CDB write pointers
-  logic [RsIdxLen-1:0] new_idx, ex_idx, cdb_idx;
+  logic [RsIdxLen-1:0] new_idx, ex_idx, ex_idx_hold, cdb_idx;
   logic empty[DEPTH], ready_ex[DEPTH], ready_cdb[DEPTH];
 
   // Arithmetic reservation station data
@@ -323,6 +327,18 @@ module arith_rs #(
   end
 
   // -----------------
+  // EX IDX MANAGEMENT
+  // -----------------
+
+  // Sample and hold ex_idx until instruction completion
+  always_ff @(posedge clk_i or negedge rst_ni) begin : ex_idx_reg
+    if (!rst_ni) ex_idx_hold <= '0;
+    else if (flush_i) ex_idx_hold <= '0;
+    else if (ex_accepted) ex_idx_hold <= ex_idx;
+  end  
+
+
+  // -----------------
   // OUTPUT EVALUATION
   // -----------------
 
@@ -338,11 +354,11 @@ module arith_rs #(
 
   // Execution unit
   assign eu_valid_o               = curr_state[ex_idx] == ARITH_S_EX_REQ;
-  assign eu_ready_o               = 1'b1;
-  assign eu_ctl_o                 = data[ex_idx].eu_ctl;
-  assign eu_rs1_o                 = data[ex_idx].rs1_value;
-  assign eu_rs2_o                 = data[ex_idx].rs2_value;
-  assign eu_rob_idx_o             = data[ex_idx].dest_rob_idx;
+  assign eu_ready_o               = 1'b1;   // TODO: check
+  assign eu_ctl_o                 = data[ex_idx_hold].eu_ctl;
+  assign eu_rs1_o                 = data[ex_idx_hold].rs1_value;
+  assign eu_rs2_o                 = data[ex_idx_hold].rs2_value;
+  assign eu_rob_idx_o             = data[ex_idx_hold].dest_rob_idx;
 
   // ---------------
   // ENTRY SELECTORS

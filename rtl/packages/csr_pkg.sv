@@ -303,7 +303,7 @@ package csr_pkg;
     1'b0,  // J
     1'b0,  // K
     1'b0,  // L
-    LEN5_M_EN,  // M
+    LEN5_M_EN,  // M    // TODO: divider not supported yet
     1'b0,  // N
     1'b0,  // O
     1'b0,  // P

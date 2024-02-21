@@ -9,9 +9,10 @@
 
 `verilator_config
 // Warnings due to MAX_EU_N, in future version EU_N will be evualated by python template
-lint_off -rule UNUSED -file "*/exec_stage.sv" -match "Bits of signal are not used: 'issue_valid_i'[5:4]"
-lint_off -rule UNUSED -file "*/exec_stage.sv" -match "Bits of signal are not used: 'cdb_ready_i'[5:4]"
+lint_off -rule UNUSED -file "*/exec_stage.sv" -match "Bits of signal are not used: 'issue_valid_i'[5*"
+lint_off -rule UNUSED -file "*/exec_stage.sv" -match "Bits of signal are not used: 'cdb_ready_i'[5*"
 lint_off -rule UNUSED -file "*/arith_rs.sv" -match "Bits of signal are not used: 'cdb_data_i'[5:0]"
+lint_off -rule UNUSED -file "*/arith_rs_serial.sv" -match "Bits of signal are not used: 'cdb_data_i'[5:0]"
 lint_off -rule UNUSED -file "*/branch_rs.sv" -match "Bits of signal are not used: 'cdb_data_i'[5:0]"
 lint_off -rule UNUSED -file "*/load_buffer.sv" -match "Bits of signal are not used: 'cdb_data_i'[5:0]"
 lint_off -rule UNUSED -file "*/load_buffer.sv" -match "Signal is not used: 'byte_offs'"
@@ -32,6 +33,7 @@ lint_off -rule UNUSED -file "*/csrs.sv" -match "Bits of signal are not used: 'mc
 lint_off -rule PINCONNECTEMPTY -file "*/commit_stage.sv" -match "Cell pin connected by name with empty reference: 'tc_o'"
 lint_off -rule PINCONNECTEMPTY -file "*/rob.sv" -match "Cell pin connected by name with empty reference: 'tc_o'"
 lint_off -rule PINCONNECTEMPTY -file "*/arith_rs.sv" -match "Cell pin connected by name with empty reference: 'valid_o'"
+lint_off -rule PINCONNECTEMPTY -file "*/arith_rs_serial.sv" -match "Cell pin connected by name with empty reference: 'valid_o'"
 lint_off -rule PINCONNECTEMPTY -file "*/branch_rs.sv" -match "Cell pin connected by name with empty reference: 'tc_o'"
 lint_off -rule PINCONNECTEMPTY -file "*/op_only_rs.sv" -match "Cell pin connected by name with empty reference: 'tc_o'"
 lint_off -rule PINCONNECTEMPTY -file "*/load_buffer.sv" -match "Cell pin connected by name with empty reference: 'tc_o'"

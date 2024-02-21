@@ -41,11 +41,12 @@ package expipe_pkg;
   // EXECUTION UNITS
   // ---------------
   localparam int unsigned BASE_EU_N = 4;  // load buffer, store buffer, branch unit, ALU
-  localparam int unsigned MULT_EU_N = (LEN5_M_EN) ? 2 : 0;  // MULT, DIV
+  localparam int unsigned MULT_EU_N = (LEN5_M_EN) ? 1 : 0;  // MULT
+  localparam int unsigned DIV_EU_N = (LEN5_D_EN) ? 1 : 0;  // DIV, split from MUL
   localparam int unsigned FP_EU_N = (LEN5_FP_EN) ? 1 : 0;  // FPU
 
   // Total number of execution units
-  localparam int unsigned EU_N = BASE_EU_N + MULT_EU_N + FP_EU_N;
+  localparam int unsigned EU_N = BASE_EU_N + MULT_EU_N + DIV_EU_N + FP_EU_N;
 
   // RESERVATION STATIONS
   // --------------------

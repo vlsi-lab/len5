@@ -136,20 +136,10 @@ module tb_bare #(
     $display("[TB] Exit register memory address: 0x%h", EXIT_ADDR);
 
     // Print M extension information
-    $display("[TB] M extension: %s",
-             `ifdef LEN5_M_EN "YES"
-             `else
-             "NO"
-             `endif
-    );
+    $display("[TB] M extension: %s", (LEN5_M_EN && LEN5_D_EN) ? "YES" : "NO");
 
     // Print FP extension information
-    $display("[TB] D extension: %s",
-             `ifdef LEN5_FP_EN "YES"
-             `else
-             "NO"
-             `endif
-    );
+    $display("[TB] D extension: %s", (LEN5_FP_EN) ? "YES" : "NO");
 
     if (num_cycles <= 0) begin
       $fatal("Maximum simulation cycles is lower or equal to 0. Exiting...");
