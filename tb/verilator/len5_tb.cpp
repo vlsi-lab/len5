@@ -25,7 +25,7 @@
 #define BOOT_PC 0x180
 #define MEM_DUMP_FILE "mem_dump.txt"
 #define FST_FILENAME "logs/waves.fst"
-#define MAX_SIM_TIME 1e6
+#define MAX_SIM_TIME 1e10
 
 // Logger
 TbLogger logger;
