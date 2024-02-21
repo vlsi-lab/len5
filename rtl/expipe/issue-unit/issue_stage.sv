@@ -124,6 +124,7 @@ module issue_stage (
   logic                        id_skip_eu;
   issue_eu_t                   id_assigned_eu;
   eu_ctl_t                     id_eu_ctl;
+  logic                        id_order_crit;
   logic                        id_rs1_req;
   logic                        id_rs1_is_pc;
   logic                        id_rs2_req;
@@ -200,6 +201,7 @@ module issue_stage (
     .skip_eu_o    (id_skip_eu),
     .assigned_eu_o(id_assigned_eu),
     .eu_ctl_o     (id_eu_ctl),
+    .order_crit_o (id_order_crit),
     .rs1_req_o    (id_rs1_req),
     .rs1_is_pc_o  (id_rs1_is_pc),
     .rs2_req_o    (id_rs2_req),
@@ -272,10 +274,11 @@ module issue_stage (
   assign ireg_data_in.imm_value = imm_value;
   assign ireg_data_in.rd_idx = instr_rd_idx;
   assign ireg_data_in.eu_ctl = id_eu_ctl;
+  assign ireg_data_in.order_crit = id_order_crit;
   assign ireg_data_in.pred_taken = iq_data_out.pred_taken;
   assign ireg_data_in.pred_target = iq_data_out.pred_target;
-  assign  ireg_data_in.except_raised  = iq_data_out.except_raised | (id_cu_issue_type == ISSUE_TYPE_EXCEPT);
-  assign  ireg_data_in.except_code    = (iq_data_out.except_raised) ? iq_data_out.except_code : id_except_code;
+  assign ireg_data_in.except_raised  = iq_data_out.except_raised | (id_cu_issue_type == ISSUE_TYPE_EXCEPT);
+  assign ireg_data_in.except_code    = (iq_data_out.except_raised) ? iq_data_out.except_code : id_except_code;
 
   // Issue register
   always_ff @(posedge clk_i or negedge rst_ni) begin : issue_reg
@@ -475,8 +478,10 @@ module issue_stage (
   assign comm_data_o.res_ready     = cu_il_res_ready;
   assign comm_data_o.res_value     = (cu_il_res_sel_rs1) ? rs1_value : ireg_data_out.imm_value;
   assign comm_data_o.rd_idx        = ireg_data_out.rd_idx;
+  assign comm_data_o.order_crit    = ireg_data_out.order_crit;
   assign comm_data_o.except_raised = ireg_data_out.except_raised;
   assign comm_data_o.except_code   = ireg_data_out.except_code;
+  assign comm_data_o.mem_clear     = 1'b0;
   assign comm_rs1_rob_idx_o        = rs1_rob_idx;
   assign comm_rs2_rob_idx_o        = rs2_rob_idx;
 

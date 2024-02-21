@@ -45,9 +45,9 @@ package len5_config_pkg;
   // as tag)
   localparam int unsigned BPU_BTB_BITS = 4;
 
-  // -----------------
-  // PIPELINE SWITCHES
-  // -----------------
+  // -------------------
+  // PIPELINE PARAMETERS
+  // -------------------
   // The following switches enable or disable some of the sequential elements
   // inside some functional units, therefore reducing the latency at the
   // expense of increased delay on the involved lines. The increased delay
@@ -58,7 +58,6 @@ package len5_config_pkg;
 
   // FETCH STAGE
   // -----------
-
   // Fetch memory interface
   // NOTE: if the memory is 0-latency, at least one of the fetch unit registers
   // must be enabled (i.e., not skipped). Therefore, at least one of the
@@ -68,17 +67,29 @@ package len5_config_pkg;
 
   // EXECUTION PIPELINE
   // ------------------
+  // ISSUE QUEUE
+  localparam int unsigned IQ_DEPTH = 2;  // number of entries in the issue queue (power of 2)
 
-  // ALU
-  localparam bit ALU_SPILL_SKIP = 1'b1;  // make the ALU fully combinational
-
-  // Branch Unit
-  localparam bit BU_SPILL_SKIP = 1'b1;  // make the target address adder fully combinational
-
-  // Load-store Unit
+  // LOAD/STORE UNIT
+  localparam int unsigned LDBUFF_DEPTH = 4;  // number of entries in the load buffer
+  localparam int unsigned STBUFF_DEPTH = 8;  // number of entries in the store buffer
   localparam bit LSU_SPILL_SKIP = 1'b1;  // make address adder fully combinational
 
-  // Commit Stage
+  // ALU UNIT
+  localparam int unsigned ALU_RS_DEPTH = 4;
+  localparam bit ALU_SPILL_SKIP = 1'b1;  // make the ALU fully combinational
+
+  // MULT/DIV UNIT
+  localparam int unsigned MULT_RS_DEPTH = 2;
+  localparam int unsigned DIV_RS_DEPTH = 2;
+  localparam int unsigned DIV_PIPE_DEPTH = 8;
+
+  // BRANCH UNIT
+  localparam int unsigned BU_RS_DEPTH = 4;
+  localparam bit BU_SPILL_SKIP = 1'b1;  // make the target address adder fully combinational
+
+  // COMMIT STAGE
+  localparam int unsigned ROB_DEPTH = 16;  // Number of entries in the ROB
   localparam bit COMMIT_SPILL_SKIP = 1'b1;  // directly connect the commit CU to the ROB output
 
   // -----------------
@@ -115,8 +126,8 @@ package len5_config_pkg;
   localparam bit LEN5_A_EN = 1'b0;
 
   // Maximum number of execution units :
-  // load buffer, store buffer, branch unit, ALU, MULT, DIV, FPU
-  localparam int unsigned MAX_EU_N = 8;
+  // load buffer, store buffer, branch unit, ALU, MULT, DIV
+  localparam int unsigned MAX_EU_N = 6;
 
   // Reservation stations
   // --------------------

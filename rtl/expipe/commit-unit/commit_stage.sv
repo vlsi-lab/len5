@@ -45,8 +45,8 @@ module commit_stage (
   output logic                  cdb_ready_o,
 
   // Commit logic <--> store buffer
-  output expipe_pkg::rob_idx_t sb_rob_clear_idx_o,
-  input  logic                 sb_completed_i,
+  input  expipe_pkg::rob_idx_t sb_mem_idx_i,   // executing store ROB index
+  output logic                 sb_mem_clear_o, // store is clear to execute
 
   // Commit logic <--> register files and status
   output logic int_rs_valid_o,
@@ -164,8 +164,8 @@ module commit_stage (
     .opfwd_rs2_valid_o  (rob_opfwd_rs2_valid),
     .opfwd_rs2_ready_o  (rob_opfwd_rs2_ready),
     .opfwd_rs2_value_o  (rob_opfwd_rs2_value),
-    .sb_clear_idx_o     (sb_rob_clear_idx_o),
-    .sb_completed_i     (sb_completed_i),
+    .sb_mem_idx_i       (sb_mem_idx_i),
+    .sb_mem_clear_o     (sb_mem_clear_o),
     .comm_valid_o       (rob_reg_valid),
     .comm_ready_i       (reg_rob_ready),
     .comm_data_o        (rob_reg_head_entry),

@@ -25,6 +25,7 @@ module issue_decoder (
   output expipe_pkg::issue_eu_t assigned_eu_o,  // assigned EU
   output logic skip_eu_o,  // do not assign to any EU
   output expipe_pkg::eu_ctl_t eu_ctl_o,  // controls for the assigned EU
+  output logic order_crit_o,  // out-of-order commit not allowed
   output logic rs1_req_o,  // rs1 fetch is required
   output logic rs1_is_pc_o,  // rs1 is the current PC (for AUIPC)
   output logic rs2_req_o,  // rs2 fetch is required
@@ -49,6 +50,7 @@ module issue_decoder (
   issue_type_t  issue_type;
   issue_eu_t    assigned_eu;
   eu_ctl_t      eu_ctl;
+  logic         order_crit;
   logic         rs1_req;
   logic         rs1_is_pc;  // for AUIPC
   logic         rs2_req;
@@ -73,6 +75,7 @@ module issue_decoder (
     skip_eu       = 1'b0;
     assigned_eu   = EU_INT_ALU;
     eu_ctl.raw    = '0;
+    order_crit    = 1'b1;  // opt-out policy is safer
     rs1_req       = 1'b0;
     rs1_is_pc     = 1'b0;
     rs2_req       = 1'b0;
@@ -89,6 +92,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_ADD;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
@@ -96,6 +100,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_ADDW;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
@@ -103,6 +108,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_ADD;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         rs2_is_imm  = 1'b1;
@@ -111,6 +117,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_ADDW;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         rs2_is_imm  = 1'b1;
@@ -119,6 +126,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SUB;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
@@ -126,6 +134,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SUBW;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
@@ -133,6 +142,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_AND;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
@@ -140,6 +150,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_AND;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         rs2_is_imm  = 1'b1;
@@ -148,6 +159,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_OR;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
@@ -155,6 +167,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_OR;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         rs2_is_imm  = 1'b1;
@@ -163,6 +176,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_XOR;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
@@ -170,6 +184,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_XOR;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         rs2_is_imm  = 1'b1;
@@ -178,6 +193,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SLL;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
@@ -185,6 +201,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SLLW;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
@@ -192,6 +209,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SLL;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         rs2_is_imm  = 1'b1;
@@ -200,6 +218,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SLLW;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         rs2_is_imm  = 1'b1;
@@ -208,6 +227,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SRL;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
@@ -215,6 +235,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SRLW;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
@@ -222,6 +243,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SRL;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         rs2_is_imm  = 1'b1;
@@ -230,6 +252,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SRLW;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         rs2_is_imm  = 1'b1;
@@ -238,6 +261,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SRA;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
@@ -245,6 +269,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SRAW;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
@@ -252,6 +277,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SRA;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         rs2_is_imm  = 1'b1;
@@ -260,6 +286,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SRAW;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         rs2_is_imm  = 1'b1;
@@ -268,6 +295,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SLT;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
@@ -275,6 +303,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SLTU;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
       end
@@ -282,6 +311,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SLT;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         rs2_is_imm  = 1'b1;
@@ -290,6 +320,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_SLTU;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         rs2_is_imm  = 1'b1;
@@ -297,12 +328,14 @@ module issue_decoder (
       LUI: begin
         issue_type = ISSUE_TYPE_LUI;
         skip_eu    = 1'b1;
+        order_crit = 1'b0;
         imm_format = IMM_TYPE_U;
       end
       AUIPC: begin
         issue_type  = ISSUE_TYPE_INT;
         assigned_eu = EU_INT_ALU;
         eu_ctl.alu  = ALU_ADD;
+        order_crit  = 1'b0;
         imm_format  = IMM_TYPE_U;
         rs1_is_pc   = 1'b1;
         rs2_is_imm  = 1'b1;
@@ -421,6 +454,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_STORE;
         assigned_eu = EU_STORE_BUFFER;
         eu_ctl.lsu  = LS_BYTE;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         imm_format  = IMM_TYPE_S;
@@ -429,6 +463,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_STORE;
         assigned_eu = EU_STORE_BUFFER;
         eu_ctl.lsu  = LS_HALFWORD;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         imm_format  = IMM_TYPE_S;
@@ -437,6 +472,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_STORE;
         assigned_eu = EU_STORE_BUFFER;
         eu_ctl.lsu  = LS_WORD;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         imm_format  = IMM_TYPE_S;
@@ -445,6 +481,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_STORE;
         assigned_eu = EU_STORE_BUFFER;
         eu_ctl.lsu  = LS_DOUBLEWORD;
+        order_crit  = 1'b0;
         rs1_req     = 1'b1;
         rs2_req     = 1'b1;
         imm_format  = IMM_TYPE_S;
@@ -476,6 +513,7 @@ module issue_decoder (
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_MULT;
           eu_ctl.mult = MULT_MUL;
+          order_crit  = 1'b0;
           rs1_req     = 1'b1;
           rs2_req     = 1'b1;
         end else begin
@@ -489,6 +527,7 @@ module issue_decoder (
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_MULT;
           eu_ctl.mult = MULT_MULH;
+          order_crit  = 1'b0;
           rs1_req     = 1'b1;
           rs2_req     = 1'b1;
         end else begin
@@ -502,6 +541,7 @@ module issue_decoder (
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_MULT;
           eu_ctl.mult = MULT_MULHU;
+          order_crit  = 1'b0;
           rs1_req     = 1'b1;
           rs2_req     = 1'b1;
         end else begin
@@ -515,6 +555,7 @@ module issue_decoder (
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_MULT;
           eu_ctl.mult = MULT_MULHSU;
+          order_crit  = 1'b0;
           rs1_req     = 1'b1;
           rs2_req     = 1'b1;
         end else begin
@@ -528,6 +569,7 @@ module issue_decoder (
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_MULT;
           eu_ctl.mult = MULT_MULW;
+          order_crit  = 1'b0;
           rs1_req     = 1'b1;
           rs2_req     = 1'b1;
         end else begin
@@ -541,6 +583,7 @@ module issue_decoder (
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_DIV;
           eu_ctl.div  = DIV_DIV;
+          order_crit  = 1'b0;
           rs1_req     = 1'b1;
           rs2_req     = 1'b1;
         end else begin
@@ -554,6 +597,7 @@ module issue_decoder (
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_DIV;
           eu_ctl.div  = DIV_DIVU;
+          order_crit  = 1'b0;
           rs1_req     = 1'b1;
           rs2_req     = 1'b1;
         end else begin
@@ -567,6 +611,7 @@ module issue_decoder (
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_DIV;
           eu_ctl.div  = DIV_DIVW;
+          order_crit  = 1'b0;
           rs1_req     = 1'b1;
           rs2_req     = 1'b1;
         end else begin
@@ -580,6 +625,7 @@ module issue_decoder (
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_DIV;
           eu_ctl.div  = DIV_DIVUW;
+          order_crit  = 1'b0;
           rs1_req     = 1'b1;
           rs2_req     = 1'b1;
         end else begin
@@ -593,6 +639,7 @@ module issue_decoder (
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_DIV;
           eu_ctl.div  = DIV_REM;
+          order_crit  = 1'b0;
           rs1_req     = 1'b1;
           rs2_req     = 1'b1;
         end else begin
@@ -606,6 +653,7 @@ module issue_decoder (
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_DIV;
           eu_ctl.div  = DIV_REMU;
+          order_crit  = 1'b0;
           rs1_req     = 1'b1;
           rs2_req     = 1'b1;
         end else begin
@@ -619,6 +667,7 @@ module issue_decoder (
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_DIV;
           eu_ctl.div  = DIV_REMW;
+          order_crit  = 1'b0;
           rs1_req     = 1'b1;
           rs2_req     = 1'b1;
         end else begin
@@ -632,6 +681,7 @@ module issue_decoder (
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_DIV;
           eu_ctl.div  = DIV_REMUW;
+          order_crit  = 1'b0;
           rs1_req     = 1'b1;
           rs2_req     = 1'b1;
         end else begin
@@ -711,6 +761,7 @@ module issue_decoder (
   assign except_code_o = except_code;
   assign assigned_eu_o = assigned_eu;
   assign eu_ctl_o      = eu_ctl;
+  assign order_crit_o  = order_crit;
   assign rs1_req_o     = rs1_req;
   assign rs1_is_pc_o   = rs1_is_pc;
   assign rs2_req_o     = rs2_req;

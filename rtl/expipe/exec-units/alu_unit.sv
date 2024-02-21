@@ -44,20 +44,18 @@ module alu_unit #(
   import expipe_pkg::*;
 
   // ALU handshake
-  logic                          rs_alu_valid;
-  logic                          rs_alu_ready;
-  logic                          alu_rs_valid;
-  logic                          alu_rs_ready;
+  logic                      rs_alu_valid;
+  logic                      rs_alu_ready;
+  logic                      alu_rs_valid;
+  logic                      alu_rs_ready;
 
   // Data from/to the execution unit
-  rob_idx_t                      rs_alu_rob_idx;
-  logic         [EU_CTL_LEN-1:0] rs_alu_ctl;
-  logic         [      XLEN-1:0] rs_alu_rs1_value;
-  logic         [      XLEN-1:0] rs_alu_rs2_value;
-  rob_idx_t                      alu_rs_rob_idx;
-  logic         [      XLEN-1:0] alu_rs_result;
-  logic                          alu_rs_except_raised;
-  except_code_t                  alu_rs_except_code;
+  rob_idx_t                  rs_alu_rob_idx;
+  logic     [EU_CTL_LEN-1:0] rs_alu_ctl;
+  logic     [      XLEN-1:0] rs_alu_rs1_value;
+  logic     [      XLEN-1:0] rs_alu_rs2_value;
+  rob_idx_t                  alu_rs_rob_idx;
+  logic     [      XLEN-1:0] alu_rs_result;
 
   // ALU reservation station
   // -----------------------
@@ -85,8 +83,8 @@ module alu_unit #(
     .eu_ready_o          (rs_alu_ready),
     .eu_rob_idx_i        (alu_rs_rob_idx),
     .eu_result_i         (alu_rs_result),
-    .eu_except_raised_i  (alu_rs_except_raised),
-    .eu_except_code_i    (alu_rs_except_code),
+    .eu_except_raised_i  (1'b0),                  // ALU cannot raise exceptions
+    .eu_except_code_i    (E_UNKNOWN),
     .eu_ctl_o            (rs_alu_ctl),
     .eu_rs1_o            (rs_alu_rs1_value),
     .eu_rs2_o            (rs_alu_rs2_value),
@@ -97,21 +95,19 @@ module alu_unit #(
     .SKIP_REG  (ALU_SPILL_SKIP),
     .EU_CTL_LEN(EU_CTL_LEN)
   ) u_alu (
-    .clk_i          (clk_i),
-    .rst_ni         (rst_ni),
-    .flush_i        (flush_i),
-    .valid_i        (rs_alu_valid),
-    .ready_i        (rs_alu_ready),
-    .valid_o        (alu_rs_valid),
-    .ready_o        (alu_rs_ready),
-    .ctl_i          (rs_alu_ctl),
-    .rs1_i          (rs_alu_rs1_value),
-    .rs2_i          (rs_alu_rs2_value),
-    .rob_idx_i      (rs_alu_rob_idx),
-    .rob_idx_o      (alu_rs_rob_idx),
-    .result_o       (alu_rs_result),
-    .except_raised_o(alu_rs_except_raised),
-    .except_code_o  (alu_rs_except_code)
+    .clk_i    (clk_i),
+    .rst_ni   (rst_ni),
+    .flush_i  (flush_i),
+    .valid_i  (rs_alu_valid),
+    .ready_i  (rs_alu_ready),
+    .valid_o  (alu_rs_valid),
+    .ready_o  (alu_rs_ready),
+    .ctl_i    (rs_alu_ctl),
+    .rs1_i    (rs_alu_rs1_value),
+    .rs2_i    (rs_alu_rs2_value),
+    .rob_idx_i(rs_alu_rob_idx),
+    .rob_idx_o(alu_rs_rob_idx),
+    .result_o (alu_rs_result)
   );
 
 endmodule

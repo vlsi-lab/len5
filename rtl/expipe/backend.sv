@@ -167,8 +167,8 @@ module backend (
 
   // Execution stage <--> commit stage
   // ---------------------------------
-  rob_idx_t                             comm_sb_rob_clear_idx;
-  logic                                 sb_comm_store_completed;
+  rob_idx_t                             sb_comm_mem_idx;
+  logic                                 comm_sb_mem_clear;
 
   // Execution stage <--> CSRs
   // -------------------------
@@ -401,8 +401,8 @@ module backend (
     .cdb_data_i (cdb_others_data),
     .cdb_data_o (ex_cdb_data),
 
-    .comm_sb_rob_clear_idx_i(comm_sb_rob_clear_idx),
-    .comm_store_completed_o (sb_comm_store_completed),
+    .comm_sb_mem_idx_o  (sb_comm_mem_idx),
+    .comm_sb_mem_clear_i(comm_sb_mem_clear),
     // .csr_frm_i             (csr_ex_frm),
 
     .mem_load_valid_o        (mem_load_valid_o),
@@ -482,8 +482,8 @@ module backend (
     .cdb_data_i (cdb_others_data),
     .cdb_ready_o(comm_cdb_ready),
 
-    .sb_rob_clear_idx_o(comm_sb_rob_clear_idx),
-    .sb_completed_i    (sb_comm_store_completed),
+    .sb_mem_idx_i  (sb_comm_mem_idx),
+    .sb_mem_clear_o(comm_sb_mem_clear),
 
     .int_rs_valid_o(comm_intrs_valid),
     .int_rf_valid_o(comm_intrf_valid),
