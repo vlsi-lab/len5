@@ -23,6 +23,7 @@ RISCV_EXE_PREFIX           	?= riscv64-unknown-elf
 ISA_STRING					?= rv64i
 ABI_STRING					?= lp64
 COPT						?= -O0
+CDEFS						?= -DSPIKE_EXIT
 CFLAGS			:= -march=$(ISA_STRING) \
 				   -mabi=$(ABI_STRING) \
 				   -mstrict-align \
@@ -84,10 +85,10 @@ $(BUILD_DIR)/%.elf: $(OBJS) $(LIB_OBJS)
 # Implicit compilation rules
 $(BUILD_DIR)/%.o: ./%.c
 	@mkdir -p $(@D)
-	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(INC_FOLDERS_GCC) -c $< -o $@
+	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(CDEFS) $(INC_FOLDERS_GCC) -c $< -o $@
 $(BUILD_DIR)/%.o: ./%.S
 	@mkdir -p $(@D)
-	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(INC_FOLDERS_GCC) -c $< -o $@
+	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(CDEFS) $(INC_FOLDERS_GCC) -c $< -o $@
 
 # Utils
 # -----

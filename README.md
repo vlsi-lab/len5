@@ -25,7 +25,13 @@ An application built using step 2. above can be also simulated using the Spike I
 make spike-sim
 ```
 This starts Spike in debug mode. You can progress one instruction at a time by pressing enter, or type `help` to get a list of all the other supported actions.
-> **NOTE:** platform-dependent features like the UART emulator and the exit condition will **NOT** work in Spike. So don't expect any output from `printf` or similar. The intended use is to help tracking down issues in the RTL by using Spike as a reference model to check the content of the register file and memory at a given point in the program execution. Remember that LEN5 is out-of-order, so don't expect its register file content to match Spike's one at any time.
+> **NOTE:** platform-dependent features like the UART emulator will **NOT** work in Spike. So don't expect any output from `printf` or similar. The intended use is to help tracking down issues in the RTL by using Spike as a reference model to check the content of the register file and memory at a given point in the program execution. Remember that LEN5 is out-of-order, so don't expect its register file content to match Spike's one at any time.
+
+It is possible to generate a full execution trace with:
+```bash
+make spike-trace
+```
+The trace is saved in `build/spike-trace.log`.
 
 ## TODO
 - [ ] Improve this file with info and instructions

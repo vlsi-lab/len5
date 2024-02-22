@@ -105,7 +105,12 @@ run-helloworld-questasim: questasim-sim app-helloworld | .check-fusesoc
 .PHONY: spike-sim
 spike-sim:
 	@echo "## Running simulation with Spike..."
-	spike -d -m0xf000:0x100000  $(BUILD_DIR)/main.elf
+	spike -m0xf000:0x100000,0x20000000:0x1000 -d $(BUILD_DIR)/main.elf
+
+.PHONY: spike-trace
+spike-trace:
+	@echo "## Running simulation with Spike..."
+	spike --log=$(BUILD_DIR)/spike-trace.log -l -m0xf000:0x100000,0x20000000:0x1000 $(BUILD_DIR)/main.elf
 
 # Check that nothing is broken
 # ----------------------------
