@@ -13,7 +13,9 @@
 // Date: 19/08/2022
 
 /* Reservation station for multicycle/serial units.
-TODO: add info on the handshaking protocol used
+  Handshaking protocol is the same as all units.
+  The reservation station execution index is sampled when the EU accepts the instruction,
+  and it is held until the instruction is completed to guarantee stable data to the EU.
 */
 
 module arith_rs_serial #(
