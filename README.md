@@ -10,6 +10,14 @@
    ```bash
    make app # PROJECT=<a directory in sw/applications>
    ```
+   Alternatively, benchmarks can be run using:
+   ```bash
+   make run-benchmark # SUITE=embench
+   ```
+   Each benchmark suite, contains several tests. The available suites are:
+      - [embench](https://www.embench.org/)
+
+
 3. Run the RTL simulation using Verilator
    ```bash
    make verilator-sim # optionally specify FIRMWARE|MAX_CYCLES|LOG_LEVEL
