@@ -27,15 +27,17 @@ CFLAGS			:= -march=$(ISA_STRING) \
 				   -mabi=$(ABI_STRING) \
 				   -mstrict-align \
 				   -nostartfiles \
+				   -flto \
+				   -ffunction-sections \
+				   -fdata-sections \
+				   -fno-builtin \
 				   $(COPT) \
+				   -g \
 				   -Wall
 LDFLAGS_PRE		:= -T $(LINKER) \
 				   -static
 LDFLAGS_POST	:= -Wl,-Map,$(BUILD_DIR)/main.map \
 				   -Wl,--gc-sections \
-				   -flto \
-				   -ffunction-sections \
-				   -fdata-sections \
 				   -specs=nano.specs
 
 # LEN5 software support
@@ -58,7 +60,7 @@ LIB_OBJS		:= $(filter %.o,\
 # --------------
 # Application build
 .PHONY: app
-app: $(BUILD_DIR)/main.hex $(BUILD_DIR)/main.disasm
+app: $(BUILD_DIR)/main.hex $(BUILD_DIR)/main.disasm $(BUILD_DIR)/main.elf
 
 $(BUILD_DIR)/main.%: $(BUILD_DIR)/applications/$(PROJECT)/main.%
 	cp $< $@

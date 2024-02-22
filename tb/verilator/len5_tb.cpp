@@ -22,7 +22,6 @@
 
 // Default parameters
 #define RESET_CYCLES 10
-#define BOOT_PC 0x180
 #define MEM_DUMP_FILE "mem_dump.txt"
 #define FST_FILENAME "logs/waves.fst"
 #define MAX_SIM_TIME 1e6
@@ -60,7 +59,6 @@ int main(int argc, char **argv, char **env) {
 
     // Print simulation configuration
     TB_CONFIG("Log level set to %u", logger.getLogLvl());
-    TB_CONFIG("Boot PC: 0x%x", BOOT_PC);
     TB_CONFIG("Reset cycles: %u", RESET_CYCLES);
     TB_CONFIG("Memory dump file: %s", MEM_DUMP_FILE);
     TB_CONFIG("Max simulation time: %u", MAX_SIM_TIME);

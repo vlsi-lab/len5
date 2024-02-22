@@ -13,6 +13,7 @@ BUILD_DIR	   	?= $(realpath .)/build
 
 # Software build configuration
 PROJECT  ?= hello_world
+LINKER   ?= $(realpath sw/linker/len5-sim.ld)
 COPT   	 ?= -O0
 
 # RTL simulation
@@ -84,7 +85,7 @@ questasim-sim: | app .check-fusesoc $(BUILD_DIR)/
 .PHONY: app
 app: | $(BUILD_DIR)/
 	@echo "## Building application '$(PROJECT)'"
-	$(MAKE) -BC sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR) COPT=$(COPT)
+	$(MAKE) -BC sw app
 
 # Simple test application
 .PHONY: app-helloworld
@@ -99,6 +100,12 @@ run-helloworld-questasim: questasim-sim app-helloworld | .check-fusesoc
 	cd ./build/vlsi_polito_len5_0/sim-modelsim; \
 	make run PLUSARGS="c firmware=../../../sw/applications/hello_world.hex"; \
 	cd ../../..;
+
+# Spike simulation
+.PHONY: spike-sim
+spike-sim:
+	@echo "## Running simulation with Spike..."
+	spike -d -m0xf000:0x100000  $(BUILD_DIR)/main.elf
 
 # Check that nothing is broken
 # ----------------------------
@@ -148,3 +155,10 @@ clean-app:
 .print:
 	@echo "SIM_HDL_FILES: $(SIM_HDL_FILES)"
 	@echo "SIM_CPP_FILES: $(SIM_CPP_FILES)"
+
+# Export variables for software linker script
+# -------------------------------------------
+export BUILD_DIR
+export PROJECT
+export LINKER
+export COPT
