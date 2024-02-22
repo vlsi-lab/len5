@@ -17,6 +17,9 @@ endif
 BENCH_OBJS 			:= $(filter %.o,\
 				   $(patsubst %.c,$(BUILD_DIR)/%.o,$(BENCH_SRCS))\
 				   $(patsubst %.S,$(BUILD_DIR)/%.o,$(BENCH_SRCS)))
+ifeq ($(ISA_STRING), rv64im) # Disable div instructions
+	CFLAGS += -mno-div
+endif
 
 ###  RISC-V C toolchain
 # TODO: REMOVE -mstrict-align ONCE UNALIGNED ACCESS IS SUPPORTED
@@ -72,12 +75,12 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf
 
 # Linked executable firmware
 $(BUILD_DIR)/main.elf: $(BENCH_OBJS) $(LIB_OBJS)
-	echo $(LIB_OBJS)
 	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(LDFLAGS_PRE) $(INC_FOLDERS_GCC) $^ $(LDFLAGS_POST) -o $@
 
 # Implicit compilation rules
 $(BUILD_DIR)/%.o: ./%.c
 	@mkdir -p $(@D)
+	echo $(CFLAGS)
 	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(INC_FOLDERS_GCC) -c $< -o $@
 $(BUILD_DIR)/%.o: %.S
 	@mkdir -p $(@D)

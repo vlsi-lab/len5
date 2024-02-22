@@ -65,3 +65,4 @@ scripts/*.log
 **/obj_dir
 
 results.txt
+build*
