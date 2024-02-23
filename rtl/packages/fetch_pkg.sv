@@ -20,6 +20,7 @@ package fetch_pkg;
   import len5_pkg::XLEN;
   import len5_pkg::ILEN;
   import len5_pkg::except_code_t;
+  export len5_pkg::except_code_t;
 
   // ----------
   // DATA TYPES

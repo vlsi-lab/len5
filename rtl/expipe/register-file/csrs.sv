@@ -25,10 +25,10 @@ module csrs (
   input csr_pkg::csr_op_t            comm_op_i,
 
   // CSR address and data to/from commit logic
-  input logic [CSR_ADDR_LEN-1:0] addr_i,
-  input logic [REG_IDX_LEN-1:0] rs1_idx_i,  // source register or unsigned immediate
+  input logic [csr_pkg::CSR_ADDR_LEN-1:0] addr_i,
+  input logic [len5_pkg::REG_IDX_LEN-1:0] rs1_idx_i,  // source register or unsigned immediate
   input logic [len5_pkg::XLEN-1:0] data_i,  // data to write to the CSR
-  input logic [REG_IDX_LEN-1:0] rd_idx_i,  // destination register
+  input logic [len5_pkg::REG_IDX_LEN-1:0] rd_idx_i,  // destination register
   output csr_pkg::csr_t data_o,
   output csr_pkg::csr_mtvec_t mtvec_o,  // exception base address and mode
   output logic csr_exc_o,  // exception raised
