@@ -1,0 +1,31 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{
+  // Name of the vendored-in project
+  name: "coremark",
+
+  // Target directory: typically equal to the name
+  // All imported code is copied into this directory
+  target_dir: "coremark",
+
+  // Git upstream source code repository
+  upstream: {
+    // Upstream Git repository URL. HTTPS URLs are preferred.
+    url: "https://github.com/eembc/coremark.git",
+    // Upstream revision or branch. Can be a commit hash or a branch name.
+    rev: "v1.01",
+  },
+
+  // Optional: Pick specific files or subdirectories from upstream and
+  // specify where to put them.
+  mapping: [
+    {from: 'core_list_join.c',      to: 'core_list_join.c'},
+    {from: 'core_main.c',           to: 'core_main.c'},
+    {from: 'core_matrix.c',         to: 'core_matrix.c'},
+    {from: 'core_state.c',          to: 'core_state.c'},
+    {from: 'core_util.c',           to: 'core_util.c'},
+    {from: 'coremark.h',            to: 'coremark.h'},
+  ],
+
+}

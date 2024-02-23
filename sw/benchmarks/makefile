@@ -58,6 +58,9 @@ LIB_OBJS		:= $(filter %.o,\
 .PHONY: embench
 embench: $(BUILD_DIR)/main.hex $(BUILD_DIR)/main.disasm
 
+.PHONY: coremark 
+coremark: $(BUILD_DIR)/main.hex $(BUILD_DIR)/main.disasm
+
 $(BUILD_DIR)/main.%: $(BUILD_DIR)/benchmarks/$(SUITE)/$(BENCHMARK)/main.%
 	cp $< $@
 
