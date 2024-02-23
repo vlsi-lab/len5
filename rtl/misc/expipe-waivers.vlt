@@ -22,9 +22,14 @@ lint_off -rule PINCONNECTEMPTY -file "*/cdb_arbiter.sv" -match "Cell pin connect
 lint_off -rule UNDRIVEN -file "*/exec_stage.sv" -match "Bits of signal are not driven: 'issue_ready_o'[7:6]"
 lint_off -rule UNDRIVEN -file "*/exec_stage.sv" -match "Bits of signal are not driven: 'cdb_valid_o'[7:6]"
 lint_off -rule UNDRIVEN -file "*/exec_stage.sv" -match "Bits of signal are not driven: 'cdb_data_o'[583:438]"
+lint_off -rule UNUSED -file "*/lzc.sv" -match "Bits of signal are not driven, nor used: 'sel_nodes'[63]"
+lint_off -rule UNUSED -file "*/lzc.sv" -match "Bits of signal are not driven, nor used: 'index_nodes'[383:378]"
+
 
 // TODO: check if this is actually a combinational loop
 lint_off -rule UNOPTFLAT -file "*/address_adder.sv" -match "Signal unoptimizable: Feedback to clock or circular logic: *align_except'"
+lint_off -rule UNOPTFLAT -file "*/lzc.sv" -match "Signal unoptimizable: Feedback to clock or circular logic: *index_nodes'"
+lint_off -rule UNOPTFLAT -file "*/lzc.sv" -match "Signal unoptimizable: Feedback to clock or circular logic: *sel_nodes'"
 
 // Warning due to not inhibit all high performance counters 
 lint_off -rule UNUSED -file "*/csrs.sv" -match "Bits of signal are not used: 'mcountinhibit'[31:7,1]"

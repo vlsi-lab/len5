@@ -229,8 +229,7 @@ module exec_stage (
     end else if (LEN5_D_EN && !LEN5_M_EN) begin : gen_div_unit
       div_unit #(
         .EU_CTL_LEN(MAX_EU_CTL_LEN),
-        .RS_DEPTH  (DIV_RS_DEPTH),
-        .PIPE_DEPTH(DIV_PIPE_DEPTH)
+        .RS_DEPTH  (DIV_RS_DEPTH)
       ) u_div_unit (
         .clk_i               (clk_i),
         .rst_ni              (rst_ni),
@@ -273,8 +272,7 @@ module exec_stage (
 
       div_unit #(
         .EU_CTL_LEN(MAX_EU_CTL_LEN),
-        .RS_DEPTH  (DIV_RS_DEPTH),
-        .PIPE_DEPTH(DIV_PIPE_DEPTH)
+        .RS_DEPTH  (DIV_RS_DEPTH)
       ) u_div_unit (
         .clk_i               (clk_i),
         .rst_ni              (rst_ni),

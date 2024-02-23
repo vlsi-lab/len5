@@ -144,14 +144,14 @@ package expipe_pkg;
 
   // Div opcodes
   typedef enum logic [MAX_EU_CTL_LEN-1:0] {
-    DIV_DIV,
     DIV_DIVU,
-    DIV_DIVW,
-    DIV_DIVUW,
-    DIV_REM,
+    DIV_DIV,
     DIV_REMU,
-    DIV_REMW,
-    DIV_REMUW
+    DIV_REM,
+    DIV_DIVUW,
+    DIV_DIVW,
+    DIV_REMUW,
+    DIV_REMW
   } div_ctl_t;
 
   // Branch unit control

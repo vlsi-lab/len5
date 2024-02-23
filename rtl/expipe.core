@@ -48,6 +48,8 @@ filesets:
     - expipe/exec-units/branch_unit.sv
     - expipe/exec-units/div_unit.sv
     - expipe/exec-units/div.sv
+    - expipe/exec-units/serdiv.sv
+    - expipe/exec-units/lzc.sv
     - expipe/exec-units/exec_stage.sv
     - expipe/exec-units/mult_unit.sv
     - expipe/exec-units/mult.sv

@@ -80,8 +80,8 @@ package len5_config_pkg;
   localparam bit ALU_SPILL_SKIP = 1'b1;  // make the ALU fully combinational
 
   // MULT/DIV UNIT
-  localparam int unsigned MULT_RS_DEPTH = 2;
-  localparam int unsigned DIV_RS_DEPTH = 2;
+  localparam int unsigned MULT_RS_DEPTH = 4;
+  localparam int unsigned DIV_RS_DEPTH = 4;
   localparam int unsigned DIV_PIPE_DEPTH = 8;
 
   // BRANCH UNIT
@@ -116,7 +116,7 @@ package len5_config_pkg;
   // Enable M extension support
   // --------------------------
   localparam bit LEN5_M_EN = 1'b1;
-  localparam bit LEN5_D_EN = 1'b0;  // TODO: div available
+  localparam bit LEN5_D_EN = 1'b1;  // TODO: div available
 
   // Enable floating-point support
   // -----------------------------
