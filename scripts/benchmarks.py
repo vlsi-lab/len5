@@ -6,7 +6,7 @@ import subprocess
 import time
 from typing import List, Dict
 
-PATIENCE = 10 # Time to wait before spawning a new process (Useful to avoid fusesoc races)
+PATIENCE = 30 # Time to wait before spawning a new process (Useful to avoid fusesoc races)
 
 def benchmark_runner(num, suite, output_queue):
     """Function to simulate work and output to stdout."""

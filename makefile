@@ -93,7 +93,7 @@ benchmark:
 	@echo "## Building suite $(SUITE) benchmark $(BENCHMARK)"
 	$(MAKE) -BC sw benchmark SUITE=$(SUITE) BUILD_DIR=$(BUILD_DIR) BENCHMARK=$(BENCHMARK)
 
-.PHONY: run_benchmarks
+.PHONY: run-benchmarks
 run-benchmarks: 
 	@echo "## Running suite $(SUITE)"
 	python3 scripts/benchmarks.py -s $(SUITE)
