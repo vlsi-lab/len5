@@ -17,9 +17,6 @@ endif
 BENCH_OBJS 			:= $(filter %.o,\
 				   $(patsubst %.c,$(BUILD_DIR)/%.o,$(BENCH_SRCS))\
 				   $(patsubst %.S,$(BUILD_DIR)/%.o,$(BENCH_SRCS)))
-ifeq ($(ISA_STRING), rv64im) # Disable div instructions
-	CFLAGS += -mno-div
-endif
 
 ###  RISC-V C toolchain
 # TODO: REMOVE -mstrict-align ONCE UNALIGNED ACCESS IS SUPPORTED
@@ -36,6 +33,10 @@ LIB_INCS		:= $(wildcard ../device/base/*.h ../device/base/freestanding/*.h ../de
 
 ifeq ($(SUITE),  embench) # If embench suite, then include files are found in support dir
 LIB_INCS		+= $(wildcard ../benchmarks/$(SUITE)/support/*.h)
+endif
+
+ifeq ($(SUITE),  coremark) # If embench suite, then include files are found in support dir
+LIB_INCS		+= $(wildcard ../benchmarks/$(SUITE)/src/*.h)
 endif
 
 INC_FOLDERS     += $(sort $(dir $(LIB_INCS)))
