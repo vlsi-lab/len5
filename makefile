@@ -99,6 +99,13 @@ run-helloworld-questasim: questasim-sim app-helloworld | .check-fusesoc
 	make run PLUSARGS="c firmware=../../../sw/applications/hello_world.hex"; \
 	cd ../../..;
 
+# Synthesis
+# ----------------------------
+.PHONE: syn-asic
+syn-asic: | .check-fusesoc
+	@echo "## Running ASIC synthesis..."
+	fusesoc run --no-export --target synth_asic --tool design_compiler polito:len5:len5
+
 # Check that nothing is broken
 # ----------------------------
 .PHONE: check
