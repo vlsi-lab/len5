@@ -46,7 +46,7 @@ module mult #(
   output len5_pkg::except_code_t                      except_code_o
 );
 
-  import len5_pkg::*; 
+  import len5_pkg::*;
   import expipe_pkg::*;
 
   // High and low half of the two operands, extended
@@ -58,33 +58,35 @@ module mult #(
   // Shift operations and clear signals
   logic shift_right, shift_left, clear_acc;
   //mulw management
-  logic              mulw_next;           // 1 if instruction to be executed is mulw
-  logic              valid_i_p;           // valid_i sampled at the previous cycle
+  logic              mulw_next;  // 1 if instruction to be executed is mulw
+  logic              valid_i_p;  // valid_i sampled at the previous cycle
   // MULT  temporary outputs
-  logic [XLEN+2-1:0] mult_result_ls;      // result of 33bit mult shifted left
-  logic [XLEN+2-1:0] mult_result_1;       // muxed result of 33bit mult
-  logic [XLEN+2-1:0] mult_result;         // result of 33bit mult
+  logic [XLEN+2-1:0] mult_result_ls;  // result of 33bit mult shifted left
+  logic [XLEN+2-1:0] mult_result_1;  // muxed result of 33bit mult
+  logic [XLEN+2-1:0] mult_result;  // result of 33bit mult
   logic [XLEN+1:0] mult_acc, mult_acc_next, acc_result;
-  logic [XLEN+1:0] mult_acc_rs;           // result of accumulatorshifted right
+  logic [XLEN+1:0] mult_acc_rs;  // result of accumulatorshifted right
   logic [XLEN+1:0] mult_acc_1, mult_acc_2;  // muxed result of accumulator
   logic except_raised;
 
   // FSM states
   typedef enum logic [2:0] {
-    S_COMMON,   
+    S_COMMON,
     S_AHBL_M,
     S_AHBL_MH,
     S_ALBH_M,
     S_ALBH_MH,
     S_AHBH_MH,
     S_WAIT
-  } mult_state_t;  
+  } mult_state_t;
 
   mult_state_t mult_state, mult_next_state, mult_init_state;
 
   // Sign extend high and low part based on the instruction
   // Low part is always unsigned
-  assign rs1_l = {s_l[0], rs1_value_i[(XLEN>>1)-1:0]};  // TODO: check if sign extension is required for MULW or if 0 is fine as well, save some logic
+  assign rs1_l = {
+    s_l[0], rs1_value_i[(XLEN>>1)-1:0]
+  };  // TODO: check if sign extension is required for MULW or if 0 is fine as well, save some logic
   assign rs2_l = {s_l[1], rs2_value_i[(XLEN>>1)-1:0]};
   assign rs1_h = {s_h[0], rs1_value_i[XLEN-1:XLEN>>1]};
   assign rs2_h = {s_h[1], rs2_value_i[XLEN-1:XLEN>>1]};
@@ -93,40 +95,40 @@ module mult #(
   // Operands sign extension //
   /////////////////////////////
   always_comb begin : sign_extend_init
-    s_l[0]         = 1'b0;
-    s_l[1]         = 1'b0;
-    s_h[0]         = 0;
-    s_h[1]         = 0;
-    except_raised  = 1'b0;
-    mulw_next      = 1'b0;
+    s_l[0]          = 1'b0;
+    s_l[1]          = 1'b0;
+    s_h[0]          = 0;
+    s_h[1]          = 0;
+    except_raised   = 1'b0;
+    mulw_next       = 1'b0;
     mult_init_state = S_COMMON;
     unique case (ctl_i)
       MULT_MUL: begin
-        s_h[0]         = rs1_value_i[XLEN-1];
-        s_h[1]         = rs2_value_i[XLEN-1];
+        s_h[0]          = rs1_value_i[XLEN-1];
+        s_h[1]          = rs2_value_i[XLEN-1];
         mult_init_state = S_AHBL_M;
       end
       MULT_MULW: begin
-        s_l[0]         = rs1_value_i[(XLEN>>1)-1];
-        s_l[1]         = rs2_value_i[(XLEN>>1)-1];
-        s_h[0]         = rs1_value_i[XLEN-1];
-        s_h[1]         = rs2_value_i[XLEN-1];
+        s_l[0]          = rs1_value_i[(XLEN>>1)-1];
+        s_l[1]          = rs2_value_i[(XLEN>>1)-1];
+        s_h[0]          = rs1_value_i[XLEN-1];
+        s_h[1]          = rs2_value_i[XLEN-1];
         mult_init_state = S_COMMON;
-        mulw_next      = 1'b1;
+        mulw_next       = 1'b1;
       end
       MULT_MULH: begin
-        s_h[0]         = rs1_value_i[XLEN-1];
-        s_h[1]         = rs2_value_i[XLEN-1];
+        s_h[0]          = rs1_value_i[XLEN-1];
+        s_h[1]          = rs2_value_i[XLEN-1];
         mult_init_state = S_AHBL_MH;
       end
       MULT_MULHU: begin
-        s_h[0]         = 0;
-        s_h[1]         = 0;
+        s_h[0]          = 0;
+        s_h[1]          = 0;
         mult_init_state = S_AHBL_MH;
       end
       MULT_MULHSU: begin
-        s_h[0]         = rs1_value_i[XLEN-1];
-        s_h[1]         = 0;
+        s_h[0]          = rs1_value_i[XLEN-1];
+        s_h[1]          = 0;
         mult_init_state = S_AHBL_MH;
       end
       default: except_raised = 1'b1;
@@ -140,27 +142,27 @@ module mult #(
     case (mult_state)
       S_COMMON: begin     // initial state: computation starts (AL*BL) or unit stays in idle if valid_i_p=0
         if (valid_i_p)    // if ctl_i = MULT_MULW remains in S_COMMON, either waiting ready_i signal or computing new values
-           mult_next_state = mult_init_state;  //S_COMMON works also as a WAIT state for MULW
+          mult_next_state = mult_init_state;  //S_COMMON works also as a WAIT state for MULW
         else mult_next_state = S_COMMON;
       end
-      S_AHBL_M: begin     // AH*BL for MULT_MUL
+      S_AHBL_M: begin  // AH*BL for MULT_MUL
         mult_next_state = S_ALBH_M;
       end
-      S_AHBL_MH: begin    // AH*BL for MULT_MULH
+      S_AHBL_MH: begin  // AH*BL for MULT_MULH
         mult_next_state = S_ALBH_MH;
       end
-      S_ALBH_M: begin     // AL*BH for MULT_MUL, result is valid
+      S_ALBH_M: begin  // AL*BH for MULT_MUL, result is valid
         if (!ready_i) mult_next_state = S_WAIT;
         else mult_next_state = S_COMMON;
       end
-      S_ALBH_MH: begin      // AL*BH for MULT_MULH
+      S_ALBH_MH: begin  // AL*BH for MULT_MULH
         mult_next_state = S_AHBH_MH;
       end
-      S_AHBH_MH: begin      // AH*BH for MULT_MULH, result is valid
+      S_AHBH_MH: begin  // AH*BH for MULT_MULH, result is valid
         if (!ready_i) mult_next_state = S_WAIT;
         else mult_next_state = S_COMMON;
       end
-      S_WAIT: begin         // wait for ready_i signal
+      S_WAIT: begin  // wait for ready_i signal
         if (!ready_i) mult_next_state = S_WAIT;
         else mult_next_state = S_COMMON;
       end
@@ -175,28 +177,28 @@ module mult #(
     mult_a        = rs1_l;
     mult_b        = rs2_l;
     mult_acc_next = acc_result;
-    shift_right  = 1'b0;
-    shift_left   = 1'b0;
-    clear_acc    = 1'b0;  
+    shift_right   = 1'b0;
+    shift_left    = 1'b0;
+    clear_acc     = 1'b0;
     case (mult_state)
       S_COMMON: begin
-        clear_acc = 1'b1;     // clear accumulator
+        clear_acc = 1'b1;  // clear accumulator
       end
       S_AHBL_M: begin
         mult_a        = rs1_h;
         mult_b        = rs2_l;
         mult_acc_next = acc_result;
-        shift_left   = 1'b1;  // shift left, albl + ahbl<<32
+        shift_left    = 1'b1;  // shift left, albl + ahbl<<32
       end
       S_AHBL_MH: begin
         mult_a        = rs1_h;
         mult_b        = rs2_l;
         mult_acc_next = acc_result;
-        shift_right  = 1'b1;  // shift right, albl>>32 + ahbl
+        shift_right   = 1'b1;  // shift right, albl>>32 + ahbl
       end
       S_ALBH_M: begin
-        mult_a      = rs1_l;
-        mult_b      = rs2_h;
+        mult_a     = rs1_l;
+        mult_b     = rs2_h;
         shift_left = 1'b1;  // shift left, albh<<32 + ahbl<<32 + albl
       end
       S_ALBH_MH: begin
@@ -205,12 +207,12 @@ module mult #(
         mult_acc_next = acc_result;
       end
       S_AHBH_MH: begin
-        mult_a       = rs1_h;
-        mult_b       = rs2_h;
+        mult_a      = rs1_h;
+        mult_b      = rs2_h;
         shift_right = 1'b1;  //shift right (ahbl+albh+albl)>>32
       end
       S_WAIT: begin
-        mult_a = '0;  
+        mult_a = '0;
         mult_b = '0;
       end
       default: ;
@@ -219,7 +221,7 @@ module mult #(
   end
 
 
-  ////////////////////////////////////// 
+  //////////////////////////////////////
   // Out hansdshake signal evaluation //
   //////////////////////////////////////
   always_comb begin : mult_out_eval
@@ -271,7 +273,7 @@ module mult #(
       mult_state <= mult_next_state;
     end
   end
-  
+
   //////////////////////////
   // Accumulator register //
   //////////////////////////
@@ -301,17 +303,17 @@ module mult #(
   ///////////////////////
   // 33-bit multiplier //
   ///////////////////////
-  assign mult_result      = $signed(mult_a) * $signed(mult_b);
+  assign mult_result     = $signed(mult_a) * $signed(mult_b);
 
   // shift operations
-  assign mult_result_ls   = $signed(mult_result) << (XLEN >> 1);
-  assign mult_acc_rs      = $signed(mult_acc) >>> (XLEN >> 1);  
-  
+  assign mult_result_ls  = $signed(mult_result) << (XLEN >> 1);
+  assign mult_acc_rs     = $signed(mult_acc) >>> (XLEN >> 1);
+
   //TODO: check if results bitwidth can be reduced
   // MUX selection of multiplication and accumulation results
-  assign mult_result_1    = shift_left ? $signed(mult_result_ls) : mult_result;
-  assign mult_acc_1       = shift_right ? mult_acc_rs : mult_acc;
-  assign mult_acc_2       = clear_acc ? '0 : mult_acc_1;
+  assign mult_result_1   = shift_left ? $signed(mult_result_ls) : mult_result;
+  assign mult_acc_1      = shift_right ? mult_acc_rs : mult_acc;
+  assign mult_acc_2      = clear_acc ? '0 : mult_acc_1;
   // Accumulate results for multicycle operations
   assign acc_result      = $signed(mult_result_1) + $signed(mult_acc_2);
 
@@ -322,4 +324,6 @@ module mult #(
   assign rob_idx_o       = rob_idx_i;
   assign except_raised_o = except_raised;
   assign except_code_o   = E_ILLEGAL_INSTRUCTION;
+
+  // TODO: add spill cell if required to split critical path.
 endmodule  // mult

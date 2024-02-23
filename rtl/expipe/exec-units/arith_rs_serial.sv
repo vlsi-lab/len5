@@ -337,7 +337,7 @@ module arith_rs_serial #(
     if (!rst_ni) ex_idx_hold <= '0;
     else if (flush_i) ex_idx_hold <= '0;
     else if (ex_accepted) ex_idx_hold <= ex_idx;
-  end  
+  end
 
 
   // -----------------
@@ -356,7 +356,7 @@ module arith_rs_serial #(
 
   // Execution unit
   assign eu_valid_o               = curr_state[ex_idx] == ARITH_S_EX_REQ;
-  assign eu_ready_o               = 1'b1;   // TODO: check
+  assign eu_ready_o               = 1'b1;  // TODO: check
   assign eu_ctl_o                 = data[ex_idx_hold].eu_ctl;
   assign eu_rs1_o                 = data[ex_idx_hold].rs1_value;
   assign eu_rs2_o                 = data[ex_idx_hold].rs2_value;
