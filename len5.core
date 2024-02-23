@@ -126,9 +126,9 @@ targets:
     <<: *default
     default_tool: design_compiler
     description: Synthesize the design using Synopsys Design Compiler
-    # hooks:
-    #   post_build: # Generic hook to copy the results after synthesis
-    #   - syn-copy-results
+    hooks:
+      post_build: # Generic hook to copy the results after synthesis
+      - syn-copy-results
     tools:
       design_compiler:
         script_dir: ../../../syn
@@ -192,3 +192,11 @@ parameters:
     datatype: int
     description: Maximum number of simulation cycles (halt the simulation when reached).
     paramtype: plusarg
+
+scripts:
+  syn-copy-results:
+    cmd: 
+    - cp 
+    - -r 
+    - reports 
+    - ../../../reports
