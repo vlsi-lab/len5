@@ -134,7 +134,7 @@ targets:
         script_dir: ../../../syn
         report_dir: reports
         dc_script: synth.tcl
-        jobs: 16
+        jobs: 2
 
   # Format HDL with Verible
   format:
@@ -199,4 +199,4 @@ scripts:
     - cp 
     - -r 
     - reports 
-    - ../../../reports
+    - ../../

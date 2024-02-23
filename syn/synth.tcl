@@ -33,7 +33,7 @@ set_clock_gating_style -minimum_bitwidth 3 -positive_edge_logic integrated:CKLNQ
 check_design > ${REPORT_DIR}/check_design.log
 
 # Compile design
-compile
+compile_ultra -no_autoungroup -no_boundary_optimization -timing -gate_clock
 
 # Store compiled netlist + constraints
 write -f ddc -hierarchy -output ${REPORT_DIR}/compiled.ddc
