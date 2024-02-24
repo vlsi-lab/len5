@@ -12,15 +12,20 @@
 // Author: Michele Caon
 // Date: 17/08/2022
 
+
 module tb_bare #(
   parameter string           MEM_DUMP_FILE = "mem_dump.txt",
+  parameter string           TRACE_FILE    = "logs/sim-trace.log",
   parameter longint unsigned BOOT_PC       = 64'h0,
   parameter longint unsigned SERIAL_ADDR   = 64'h20000000,
-  parameter longint unsigned EXIT_ADDR     = 64'h20000100
+  parameter longint unsigned EXIT_ADDR     = 64'h20000100,
+  parameter int unsigned     EXIT_TIMEOUT  = 3 // cycles
 ) (
-  input logic clk_i,  // simulation clock
-  input logic rst_ni  // simulation reset
+  input logic clk_i,      // simulation clock
+  input logic rst_ni,     // simulation reset
+  input bit trace_en_i    // trace enable
 );
+  `include "len5_utils.svh"
 
   import len5_pkg::*;
   import expipe_pkg::*;
@@ -49,9 +54,6 @@ module tb_bare #(
   string                              mem_file = "firmware.hex";
 
   // Number of cycles to simulate
-  longint unsigned                    num_cycles = 0;
-
-  // Number of cycles to simulate
   longint unsigned                    curr_cycle = 0;
 
   // Serial monitor
@@ -62,13 +64,21 @@ module tb_bare #(
   // Exit monitor
   bit                                 exit_code_recv;
   byte                                exit_code_q;
+  bit                                 exit_cnt_en = 1'b0;
+  int unsigned                        exit_cnt_q;
 
-  // Mmeory monitor
+  // Trace logger
+  int                                 trace_fd;
+
+  // Memory monitor
   longint unsigned                    num_instr_loads = 0;
   longint unsigned                    num_data_loads = 0;
   longint unsigned                    num_data_stores = 0;
 
-  // Mmeory Emulator <--> Datapath
+  // LEN5 Interface
+  len5_data_t                         cpu_data;
+
+  // Memory Emulator <--> Datapath
   logic                               dp2mem_flush;
   logic                               dp2mem_instr_valid;
   logic                               mem2dp_instr_ready;
@@ -114,14 +124,8 @@ module tb_bare #(
     // Set the firmware file path
     $value$plusargs("firmware=%s", mem_file);
 
-    // Set the number of cycles to simulate
-    $value$plusargs("max_cycles=%d", num_cycles);
-
     // Print firmware file being used
     $display("[TB] Firmware: %s", mem_file);
-
-    // Print the number of cycles to simulate
-    $display("[TB] Number of cycles to simulate: %0d", num_cycles);
 
     // Print boot program counter
     $display("[TB] Boot program counter: 0x%x", BOOT_PC);
@@ -150,24 +154,13 @@ module tb_bare #(
              "NO"
              `endif
     );
-
-    if (num_cycles <= 0) begin
-      $fatal("Maximum simulation cycles is lower or equal to 0. Exiting...");
-    end
-
   end
 
   // Watchdog
   // --------
-  //logic clk = 1'b0;
-  //always #5 clk = ~clk;
   always_ff @(posedge clk_i) begin
     curr_cycle <= curr_cycle + 1;
-    if (curr_cycle >= num_cycles) begin
-      $fatal("[%t] Simulation timeout. Exiting...", $time);
-    end
   end
-
 
   // Memory monitor
   // --------------
@@ -196,14 +189,14 @@ module tb_bare #(
     end
 
     if (serial_recv) begin
-      if (serial_char == "\n" || serial_char == "\r") begin
-        $display("[%8t] SERIAL MONITOR > detected newline:         [0x%h]", $time, serial_char);
-      end else if (serial_char == 8'h0) begin
-        $display("[%8t] SERIAL MONITOR > detected end of string:   [0x%h]", $time, serial_char);
-      end else begin
-        $display("[%8t] SERIAL MONITOR > detected character:     %c [0x%h]", $time, serial_char,
-                 serial_char);
-      end
+      // if (serial_char == "\n" || serial_char == "\r") begin
+      //   $display("[%8t] SERIAL MONITOR > detected newline:         [0x%h]", $time, serial_char);
+      // end else if (serial_char == 8'h0) begin
+      //   $display("[%8t] SERIAL MONITOR > detected end of string:   [0x%h]", $time, serial_char);
+      // end else begin
+      //   $display("[%8t] SERIAL MONITOR > detected character:     %c [0x%h]", $time, serial_char,
+      //            serial_char);
+      // end
 
       // Check for end-of-string
       if ((serial_char == 8'h0 || serial_char == "\n" || serial_char == "\r") && serial_str.len() > 0) begin
@@ -227,6 +220,18 @@ module tb_bare #(
     end
 
     if (exit_code_recv) begin
+      // Get execution stats
+      cpu_data <= tb_get_len5_data(num_instr_loads, num_data_loads, num_data_stores);
+      exit_cnt_en <= 1'b1;
+    end
+  end
+
+  // Exit timer
+  always_ff @( posedge clk_i or negedge rst_ni ) begin : blockName
+    if (!rst_ni) begin
+      exit_cnt_q <= '0;
+    end else if (exit_cnt_q >= EXIT_TIMEOUT)  begin
+      // Print end of execution message
       if (exit_code_q == 0) begin
         $display("\n\033[1;32m[%8t] TB > Program exit with code: 0x%h (SUCCESS)\033[0m\n", $time,
                  exit_code_q);
@@ -234,8 +239,35 @@ module tb_bare #(
         $display("\n\033[1;31m[%8t] TB > Program exit with code: 0x%h (FAILURE)\033[0m\n", $time,
                  exit_code_q);
       end
-      printReport();
+
+      // Print execution report
+      tb_print_len5_report(cpu_data);
+
+      // Clean up and terminate simulation
+      $fclose(trace_fd);
       $finish();
+    end else if (exit_cnt_en) begin
+      exit_cnt_q <= exit_cnt_q + 1;
+    end
+  end
+
+  // Execution trace logger
+  // ----------------------
+  // Create trace dump file
+  initial begin
+    if (trace_en_i) trace_fd = $fopen(TRACE_FILE, "w");
+  end
+
+  // Print the currently committing instruction and its program counter
+  always_ff @( posedge clk_i ) begin : trace_logger
+    // Check if an instruction is committing
+    if (trace_en_i && tb_get_len5_committing()) begin
+      // Print the currently committing instruction and its program counter
+      $fdisplay(trace_fd, "core %3d: 0x%16h (0x%8h)",
+                  tb_get_len5_cpu_id(),
+                  tb_get_len5_commit_pc(),
+                  tb_get_len5_commit_instr()
+      );
     end
   end
 
@@ -337,61 +369,4 @@ module tb_bare #(
     .data_store_except_raised_o(mem2dp_store_except_raised),
     .data_store_except_code_o  (mem2dp_store_except_code)
   );
-
-  // ---------
-  // FUNCTIONS
-  // ---------
-
-  // Print simulation report
-  function automatic void printReport();
-    automatic
-    longint unsigned
-    num_mem_requests = num_instr_loads + num_data_loads + num_data_stores;
-
-    $display("### EXECUTION REPORT");
-    $display("    - current TB cycle:                    %6d", curr_cycle);
-    $display("    - total CPU cycles:                    %6d", u_datapath.u_backend.u_csrs.mcycle);
-    $display(" ## retired instructions:                  %6d",
-             u_datapath.u_backend.u_csrs.minstret);
-    $display(" ## average IPC:                           %6.2f",
-             real'(u_datapath.u_backend.u_csrs.minstret) / u_datapath.u_backend.u_csrs.mcycle);
-    if (!LEN5_CSR_HPMCOUNTERS_EN) begin
-      $display(
-          "  # NOTE: extra performance counters not available since 'LEN5_CSR_HPMCOUNTERS_EN' is not defined");
-    end else begin
-      $display(
-          " ## retired branch/jump instructions:      %6d (%0.1f%%)",
-          u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4,
-          real'(u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / u_datapath.u_backend.u_csrs.minstret);
-      $display(
-          "  # jumps:                                 %6d (%0.1f%%)",
-          u_datapath.u_backend.u_csrs.hpmcounter3,
-          real'(u_datapath.u_backend.u_csrs.hpmcounter3) * 100 / (u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4));
-      $display(
-          "  # branches:                              %6d (%0.1f%%)",
-          u_datapath.u_backend.u_csrs.hpmcounter4,
-          real'(u_datapath.u_backend.u_csrs.hpmcounter4) * 100 / (u_datapath.u_backend.u_csrs.hpmcounter3 + u_datapath.u_backend.u_csrs.hpmcounter4));
-      $display(
-          " ## retired load/store instructions:       %6d (%0.1f%%)",
-          u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6,
-          real'(u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / u_datapath.u_backend.u_csrs.minstret);
-      $display(
-          "  # loads:                                 %6d (%0.1f%%)",
-          u_datapath.u_backend.u_csrs.hpmcounter5,
-          real'(u_datapath.u_backend.u_csrs.hpmcounter5) * 100 / (u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6));
-      $display(
-          "  # stores:                                %6d (%0.1f%%)",
-          u_datapath.u_backend.u_csrs.hpmcounter6,
-          real'(u_datapath.u_backend.u_csrs.hpmcounter6) * 100 / (u_datapath.u_backend.u_csrs.hpmcounter5 + u_datapath.u_backend.u_csrs.hpmcounter6));
-    end
-    $display(" ## memory requests:                       %6d",
-             num_data_loads + num_data_stores + num_instr_loads);
-    $display("  # load instr. memory requests:           %6d (%0.2f%%)", num_instr_loads,
-             real'(num_instr_loads) * 100 / num_mem_requests);
-    $display("  # load data memory requests:             %6d (%0.2f%%)", num_data_loads,
-             real'(num_data_loads) * 100 / num_mem_requests);
-    $display("  # store data memory requests:            %6d (%0.2f%%)", num_data_stores,
-             real'(num_data_stores) * 100 / num_mem_requests);
-  endfunction : printReport
-
 endmodule

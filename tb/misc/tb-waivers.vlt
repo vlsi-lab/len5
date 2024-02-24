@@ -21,6 +21,9 @@ lint_off -rule UNUSED -file "*/memory_class.svh" -match "Signal is not used: 're
 
 lint_off -rule UNUSED -file "*/memory_bare_emu.sv" -match "Signal is not used: 'mem_dump_file_i'"
 
+// Baremetal testbench
+lint_off -rule UNUSED -file "*/tb_bare.sv" -match "Signal is not used: 'cpu_data'"
+
 // Not used since always load doubleword from mem  
 lint_off -rule UNUSED -file "*/memory_bare_emu.sv" -match "Signal is not used: 'data_load_be_i'"
 

@@ -18,8 +18,9 @@ COPT   	 ?= -O0
 
 # RTL simulation
 FIRMWARE		?= $(BUILD_DIR)/main.hex
-MAX_CYCLES		?= 1000000
+MAX_CYCLES		?= 100000
 LOG_LEVEL		?= LOG_MEDIUM
+DUMP_TRACE		?= false
 
 # VARIABLES
 # ---------
@@ -65,6 +66,16 @@ verilator-sim: $(BUILD_DIR)/.verilator.lock | .check-fusesoc
 		--log_level=$(LOG_LEVEL) \
 		--firmware=$(FIRMWARE) \
 		--max_cycles=$(MAX_CYCLES) \
+		--dump_trace=$(DUMP_TRACE) \
+		$(FUSESOC_ARGS)
+
+.PHONY: verilator-opt
+verilator-opt: $(BUILD_DIR)/.verilator.lock | .check-fusesoc
+	fusesoc run --no-export --target sim --tool verilator --run $(FUSESOC_FLAGS) polito:len5:len5 \
+		--log_level=$(LOG_LEVEL) \
+		--firmware=$(FIRMWARE) \
+		--max_cycles=$(MAX_CYCLES) \
+		--dump_waves=false \
 		$(FUSESOC_ARGS)
 
 # Open dumped waveform with GTKWave
@@ -108,9 +119,9 @@ spike-sim:
 	spike -m0xf000:0x100000,0x20000000:0x1000 -d $(BUILD_DIR)/main.elf
 
 .PHONY: spike-trace
-spike-trace:
+spike-trace: $(BUILD_DIR)/sim-common/
 	@echo "## Running simulation with Spike..."
-	spike --log=$(BUILD_DIR)/spike-trace.log -l -m0xf000:0x100000,0x20000000:0x1000 $(BUILD_DIR)/main.elf
+	spike --log=$(BUILD_DIR)/sim-common/spike-trace.log -l -m0xf000:0x100000,0x20000000:0x1000 $(BUILD_DIR)/main.elf
 
 # Check that nothing is broken
 # ----------------------------

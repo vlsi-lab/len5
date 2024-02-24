@@ -8,6 +8,6 @@ int main(void)
         a++;
     }
 
-    printf("Hello LEN%d!\n\r", a >> 5);
+    printf("Hello LEN%d!\n", a >> 5);
     return 0;
 }
