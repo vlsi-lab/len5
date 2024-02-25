@@ -151,14 +151,15 @@ spike-check: $(BUILD_DIR)/sim-common/sim-trace.log $(BUILD_DIR)/sim-common/spike
 # ----------------------------
 .PHONE: check
 check: | .check-fusesoc
-	@echo "## Checking software build..."
-	@echo "## Checking RTL..."
+	@echo "### Executing regression tests..."
+	@echo " ## Checking RTL..."
 	fusesoc run --no-export --target format polito:len5:len5
 	fusesoc run --no-export --target lint polito:len5:len5
+	@echo " ## Simulating test applications..."
 	$(foreach T, $(TESTS), eval $(MAKE) app PROJECT=$(T) COPT=-O0 && $(MAKE) spike-check || exit 1;)
 	$(foreach T, $(TESTS), eval $(MAKE) app PROJECT=$(T) COPT=-O1 && $(MAKE) spike-check || exit 1;)
 	$(foreach T, $(TESTS), eval $(MAKE) app PROJECT=$(T) COPT=-O2 && $(MAKE) spike-check || exit 1;)
-	@echo "\033[1;32mSUCCESS: all checks passed!\033[0m"
+	@echo "\e[1;32m### SUCCESS: all checks passed!\e[0m"
 
 # Utilities
 # ---------
