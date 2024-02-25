@@ -69,6 +69,7 @@ diff $SIM_TRACE.tmp $SPIKE_TRACE_STRIPPED.tmp > $DIFF_FILE
 echo "### Execution trace comparison saved to $DIFF_FILE"
 
 # Print comparison outcome
+EXIT_CODE=0
 if [ $(wc -l $DIFF_FILE | awk '{print $1}') -eq 0 ]; then
     echo -e "\e[1;32m ## SUCCESS: Execution traces match\e[0m"
 else
@@ -76,9 +77,10 @@ else
     echo -e "\e[1;31m### ERROR: Execution traces differ\e[0m" >&2
     echo " ## First 10 differences:"
     head -n 11 $DIFF_FILE
+    EXIT_CODE=1
 fi
 
 # Remove temporary files
 rm $SIM_TRACE.tmp2 $SPIKE_TRACE_STRIPPED.tmp2 $SIM_TRACE.tmp $SPIKE_TRACE_STRIPPED.tmp
 
-exit 0
+exit $EXIT_CODE
