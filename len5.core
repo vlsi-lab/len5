@@ -8,7 +8,7 @@ CAPI=2:
 # Date: 24/01/2024
 # Description: LEN5 top-level core file
 
-name: "polito:len5:len5:0.1.0"
+name: "polito:len5:len5:0.1.1"
 description: "LEN5: out-of-order superscalar CPU"
 
 filesets:

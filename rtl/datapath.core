@@ -3,7 +3,7 @@ CAPI=2:
 # Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-name: "polito:len5:datapath:0.1.0"
+name: "polito:len5:datapath:0.1.1"
 description: "LEN5 CPU datapath"
 
 filesets:

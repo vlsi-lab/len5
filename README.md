@@ -1,6 +1,13 @@
 # LEN5-core - Active repository
 ![logo](/doc/logo/len5-logo-full.png)
 
+## Contributing
+Before creating a merge request with the changes that you would like to merge, launch the following target:
+```bash
+make check
+```
+This runs HDL code linting and formatting, builds the test projects from `sw/applications`/`, builds the hardware simulation model with Verilator, and runs the RTL simulation on every test application compiled with different optimization levels. If this target fails, it means that _you broke something and shall dive deeper to understand what and why_. When this is the case, an RTL simulation alongside a Spike simulation with traces enabled is good starting point.
+
 ## Quick Start
 1. Compile the RTL simulation model using Verilator:
    ```bash
@@ -12,7 +19,7 @@
    ```
 3. Run the RTL simulation using Verilator
    ```bash
-   make verilator-sim # optionally specify FIRMWARE|MAX_CYCLES|LOG_LEVEL
+   make verilator-sim # optionally specify FIRMWARE|MAX_CYCLES|LOG_LEVEL|DUMP_WAVES|TRACE_WAVES
    ```
 4. [*optional*] Open the waveforms with GTKWave
    ```bash
@@ -31,13 +38,20 @@ It is possible to generate a full execution trace with:
 ```bash
 make spike-trace
 ```
-The trace is saved in `build/spike-trace.log`.
+The trace is saved in `build/sim-common/spike-trace.log`.
+Similarly, LEN5 testbench can dump an execution trace from the RTL simulation. This can be obtained by setting the `DUMP_TRACE` variable when calling:
+```bash
+make verilator-sim DUMP_TRACE=true
+```
+The trace is saved in `build/sim-common/sim-trace.log`
+
+The `spike-check` target can be used to compare the trace logs from Spike and the RTL simulation and produce a summary of the differences (using `diff`). This target is also used by `make check` to verify that the simulation trace matches the one from the RTL simulation.
 
 ## TODO
 - [ ] Improve this file with info and instructions
-- [ ] Fix RTL simulation
+- [x] Fix RTL simulation
 - [ ] Support interrupts
 - [ ] Improve support for CSR instruction
 - [ ] Add OBI bus bridge
-- [ ] Map some benchmark
+- [x] Map some benchmark
 - [ ] Implement multiple issue (ideally 4-way)
