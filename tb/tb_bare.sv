@@ -19,11 +19,11 @@ module tb_bare #(
   parameter longint unsigned BOOT_PC       = 64'h0,
   parameter longint unsigned SERIAL_ADDR   = 64'h20000000,
   parameter longint unsigned EXIT_ADDR     = 64'h20000100,
-  parameter int unsigned     EXIT_TIMEOUT  = 3 // cycles
+  parameter int unsigned     EXIT_TIMEOUT  = 50                     // cycles
 ) (
   input logic clk_i,      // simulation clock
   input logic rst_ni,     // simulation reset
-  input bit trace_en_i    // trace enable
+  input bit   trace_en_i  // trace enable
 );
   `include "len5_utils.svh"
 
@@ -221,16 +221,16 @@ module tb_bare #(
 
     if (exit_code_recv) begin
       // Get execution stats
-      cpu_data <= tb_get_len5_data(num_instr_loads, num_data_loads, num_data_stores);
+      cpu_data    <= tb_get_len5_data(num_instr_loads, num_data_loads, num_data_stores);
       exit_cnt_en <= 1'b1;
     end
   end
 
   // Exit timer
-  always_ff @( posedge clk_i or negedge rst_ni ) begin : blockName
+  always_ff @(posedge clk_i or negedge rst_ni) begin : blockName
     if (!rst_ni) begin
       exit_cnt_q <= '0;
-    end else if (exit_cnt_q >= EXIT_TIMEOUT)  begin
+    end else if (exit_cnt_q >= EXIT_TIMEOUT) begin
       // Print end of execution message
       if (exit_code_q == 0) begin
         $display("\n\033[1;32m[%8t] TB > Program exit with code: 0x%h (SUCCESS)\033[0m\n", $time,
@@ -259,15 +259,12 @@ module tb_bare #(
   end
 
   // Print the currently committing instruction and its program counter
-  always_ff @( posedge clk_i ) begin : trace_logger
+  always_ff @(posedge clk_i) begin : trace_logger
     // Check if an instruction is committing
     if (trace_en_i && tb_get_len5_committing()) begin
       // Print the currently committing instruction and its program counter
-      $fdisplay(trace_fd, "core %3d: 0x%16h (0x%8h)",
-                  tb_get_len5_cpu_id(),
-                  tb_get_len5_commit_pc(),
-                  tb_get_len5_commit_instr()
-      );
+      $fdisplay(trace_fd, "core %3d: 0x%16h (0x%8h)", tb_get_len5_cpu_id(),
+                tb_get_len5_commit_pc(), tb_get_len5_commit_instr());
     end
   end
 
