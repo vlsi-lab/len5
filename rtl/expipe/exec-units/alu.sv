@@ -158,8 +158,8 @@ module alu #(
       ALU_XOR:                              result = rs1_i ^ rs2_i;
       ALU_SLL, ALU_SLLW:                    result = shifter_res_rev;  // TODO: check
       ALU_SRL, ALU_SRA, ALU_SRLW, ALU_SRAW: result = shifter_res[XLEN-1:0];  // TODO: check
-      ALU_SLT:                              result = '0;  // TODO: implement with adder res
-      ALU_SLTU:                             result = '0;  // TODO: implement with adder res
+      ALU_SLT:                              result = {{XLEN-1{1'b0}}, ($signed(rs1_i) < $signed(rs2_i))};  // TODO: implement with adder res
+      ALU_SLTU:                             result = {{XLEN-1{1'b0}}, (rs1_i < rs2_i)};  // TODO: implement with adder res
       default:                              result = adder_res;  // ALU_ADD, ALU_SUB
     endcase
   end
