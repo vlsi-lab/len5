@@ -253,8 +253,8 @@ module store_buffer #(
           if (save_addr && adder_ans_i.tag == i[IdxW-1:0]) begin
             sb_op[i] = STORE_OP_SAVE_ADDR;
             if (adder_ans_i.except_raised) next_state[i] = STORE_S_COMPLETED;
-            else if (!comm_mem_clear_i) next_state[i] = STORE_S_WAIT_ROB;
-            else next_state[i] = STORE_S_MEM_REQ;
+            else if (comm_mem_clear_i && mem_idx == i[IdxW-1:0]) next_state[i] = STORE_S_MEM_REQ;
+            else next_state[i] = STORE_S_WAIT_ROB;
           end else if (addr_idx == i[IdxW-1:0] && addr_accepted) next_state[i] = STORE_S_ADDR_WAIT;
           else next_state[i] = STORE_S_ADDR_REQ;
         end
@@ -262,12 +262,12 @@ module store_buffer #(
           if (save_addr && adder_ans_i.tag == i[IdxW-1:0]) begin
             sb_op[i] = STORE_OP_SAVE_ADDR;
             if (adder_ans_i.except_raised) next_state[i] = STORE_S_COMPLETED;
-            else if (!comm_mem_clear_i) next_state[i] = STORE_S_WAIT_ROB;
-            else next_state[i] = STORE_S_MEM_REQ;
+            else if (comm_mem_clear_i && mem_idx == i[IdxW-1:0]) next_state[i] = STORE_S_MEM_REQ;
+            else next_state[i] = STORE_S_WAIT_ROB;
           end else next_state[i] = STORE_S_ADDR_WAIT;
         end
         STORE_S_WAIT_ROB: begin
-          if (comm_mem_clear_i) next_state[i] = STORE_S_MEM_REQ;
+          if (comm_mem_clear_i && mem_idx == i[IdxW-1:0]) next_state[i] = STORE_S_MEM_REQ;
           else next_state[i] = STORE_S_WAIT_ROB;
         end
         STORE_S_MEM_REQ: begin  // wait for commit
@@ -383,29 +383,29 @@ module store_buffer #(
   endgenerate
 
   // Commit stage
-  assign comm_mem_idx_o           = data[mem_idx].dest_rob_idx;
+  assign comm_mem_idx_o = data[mem_idx].dest_rob_idx;
 
   // CDB
   // NOTE: save memory address in result field for exception handling (mtval)
-  assign cdb_valid_o              = curr_state[head_idx] == STORE_S_COMPLETED;
-  assign cdb_data_o.rob_idx       = data[head_idx].dest_rob_idx;
-  assign cdb_data_o.res_value     = data[head_idx].imm_addr_value;
+  assign cdb_valid_o = curr_state[head_idx] == STORE_S_COMPLETED;
+  assign cdb_data_o.rob_idx = data[head_idx].dest_rob_idx;
+  assign cdb_data_o.res_value = data[head_idx].imm_addr_value;
   assign cdb_data_o.except_raised = data[head_idx].except_raised;
-  assign cdb_data_o.except_code   = data[head_idx].except_code;
+  assign cdb_data_o.except_code = data[head_idx].except_code;
 
   // Address adder
-  assign adder_valid_o            = curr_state[addr_idx] == STORE_S_ADDR_REQ;
-  assign adder_ready_o            = 1'b1;  // always ready to accept data from the adder
-  assign adder_req_o.tag          = addr_idx;
-  assign adder_req_o.base         = data[addr_idx].rs1_value;
-  assign adder_req_o.offs         = data[addr_idx].imm_addr_value;
-  assign adder_req_o.ls_type      = data[addr_idx].store_type;
+  assign adder_valid_o = curr_state[addr_idx] == STORE_S_ADDR_REQ;
+  assign adder_ready_o = 1'b1;  // always ready to accept data from the adder
+  assign adder_req_o.tag = addr_idx;
+  assign adder_req_o.base = data[addr_idx].rs1_value;
+  assign adder_req_o.offs = data[addr_idx].imm_addr_value;
+  assign adder_req_o.ls_type = data[addr_idx].store_type;
 
   // Load buffer
-  assign lb_latest_valid_o        = active[latest_idx] & ~(mem_done & (mem_tag_i == latest_idx));
-  assign lb_latest_idx_o          = latest_idx;
-  assign lb_oldest_completed_o    = mem_done;
-  assign lb_oldest_idx_o          = mem_tag_i;
+  assign lb_latest_valid_o = active[latest_idx] & ~(mem_done & (mem_tag_i == latest_idx));
+  assign lb_latest_idx_o = latest_idx;
+  assign lb_oldest_completed_o    = mem_done; // TODO: replace with mem_accepted, it should be enough (check)
+  assign lb_oldest_idx_o = mem_tag_i;
 
   // Level-zero cache
   generate
