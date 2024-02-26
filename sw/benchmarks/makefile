@@ -5,7 +5,6 @@
 # Target application
 SUITE			?= embench 
 BENCHMARK 		?= crc32
-LINKER 			?= ../linker/len5-sim.ld
 BENCH_SRCS 			:= $(wildcard $(SUITE)/src/$(BENCHMARK)/*.c)
 BENCH_SRCS 			+= $(wildcard $(SUITE)/src/$(BENCHMARK)/*.S)
 BENCH_SRCS 			+= $(wildcard $(SUITE)/support/*.c)
@@ -20,8 +19,6 @@ BENCH_OBJS 			:= $(filter %.o,\
 
 ###  RISC-V C toolchain
 # TODO: REMOVE -mstrict-align ONCE UNALIGNED ACCESS IS SUPPORTED
-LDFLAGS_PRE		:= -T ../$(LINKER) \
-				   -static
 
 LDFLAGS_POST	+= -lm # This MUST BE put post the c files to enable math benchmarks
 
