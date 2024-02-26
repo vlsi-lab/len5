@@ -26,7 +26,7 @@ module issue_queue (
   input logic         [len5_pkg::XLEN-1:0] pred_target_i,
   input logic                              pred_taken_i,
   input logic                              except_raised_i,
-  input except_code_t                      except_code_i,
+  input len5_pkg::except_code_t                      except_code_i,
 
   // Handshake from/to the issue logic
   input  logic issue_ready_i,
@@ -38,7 +38,7 @@ module issue_queue (
   output logic         [len5_pkg::XLEN-1:0] pred_target_o,
   output logic                              pred_taken_o,
   output logic                              except_raised_o,
-  output except_code_t                      except_code_o
+  output len5_pkg::except_code_t                      except_code_o
 );
 
   import len5_pkg::*;

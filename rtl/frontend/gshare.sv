@@ -16,7 +16,7 @@
 
 module gshare #(
   parameter int unsigned     HLEN     = 4,
-  parameter fetch_pkg::c2b_t INIT_C2B = WNT
+  parameter fetch_pkg::c2b_t INIT_C2B = fetch_pkg::WNT
 ) (
   input logic                      clk_i,
   input logic                      rst_ni,

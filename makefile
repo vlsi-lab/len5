@@ -159,6 +159,12 @@ $(BUILD_DIR)/sim-common/spike-trace.log: $(BUILD_DIR)/main.elf | $(BUILD_DIR)/si
 spike-check: $(BUILD_DIR)/sim-common/sim-trace.log $(BUILD_DIR)/sim-common/spike-trace.log
 	@echo "## Comparing Spike and Verilator traces..."
 	scripts/sim/cmp-trace.sh $^
+# Synthesis
+# ----------------------------
+.PHONE: syn-asic
+syn-asic: | .check-fusesoc
+	@echo "## Running ASIC synthesis..."
+	fusesoc run --no-export --target synth_asic --tool design_compiler polito:len5:len5
 
 # Check that nothing is broken
 # ----------------------------

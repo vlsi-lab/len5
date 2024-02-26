@@ -64,5 +64,7 @@ scripts/*.log
 # Verilator compilation output
 **/obj_dir
 
+# ignore reports
+reports
 results.txt
 build*
