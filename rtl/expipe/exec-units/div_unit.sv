@@ -16,8 +16,8 @@ module div_unit #(
   parameter int unsigned RS_DEPTH = 4,  // must be a power of 2,
 
   // EU-specific parameters
-  parameter int unsigned EU_CTL_LEN = 4,
-  parameter int unsigned PIPE_DEPTH = 4
+  parameter int unsigned EU_CTL_LEN = 4
+  //parameter int unsigned PIPE_DEPTH = 4
 ) (
   // Clock, reset, and flush
   input  logic                  clk_i,
@@ -91,9 +91,8 @@ module div_unit #(
     .eu_rob_idx_o        (rs_div_rob_idx)
   );
 
-  div #(
-    .EU_CTL_LEN(EU_CTL_LEN),
-    .PIPE_DEPTH(PIPE_DEPTH)
+  div #(  // TODO: call div
+    .EU_CTL_LEN(EU_CTL_LEN)
   ) u_div (
     .clk_i          (clk_i),
     .rst_ni         (rst_ni),

@@ -42,11 +42,14 @@ filesets:
     - expipe/exec-units/alu_unit.sv
     - expipe/exec-units/alu.sv
     - expipe/exec-units/arith_rs.sv
+    - expipe/exec-units/arith_rs_serial.sv
     - expipe/exec-units/branch_cu.sv
     - expipe/exec-units/branch_rs.sv
     - expipe/exec-units/branch_unit.sv
     - expipe/exec-units/div_unit.sv
     - expipe/exec-units/div.sv
+    - expipe/exec-units/serdiv.sv
+    - expipe/exec-units/lzc.sv
     - expipe/exec-units/exec_stage.sv
     - expipe/exec-units/mult_unit.sv
     - expipe/exec-units/mult.sv

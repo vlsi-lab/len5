@@ -579,7 +579,7 @@ module issue_decoder (
         end
       end
       DIV: begin
-        if (LEN5_M_EN != 1'b0) begin
+        if (LEN5_D_EN != 1'b0) begin
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_DIV;
           eu_ctl.div  = DIV_DIV;
@@ -593,7 +593,7 @@ module issue_decoder (
         end
       end
       DIVU: begin
-        if (LEN5_M_EN != 1'b0) begin
+        if (LEN5_D_EN != 1'b0) begin
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_DIV;
           eu_ctl.div  = DIV_DIVU;
@@ -607,7 +607,7 @@ module issue_decoder (
         end
       end
       DIVW: begin
-        if (LEN5_M_EN != 1'b0) begin
+        if (LEN5_D_EN != 1'b0) begin
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_DIV;
           eu_ctl.div  = DIV_DIVW;
@@ -621,7 +621,7 @@ module issue_decoder (
         end
       end
       DIVUW: begin
-        if (LEN5_M_EN != 1'b0) begin
+        if (LEN5_D_EN != 1'b0) begin
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_DIV;
           eu_ctl.div  = DIV_DIVUW;
@@ -635,7 +635,7 @@ module issue_decoder (
         end
       end
       REM: begin
-        if (LEN5_M_EN != 1'b0) begin
+        if (LEN5_D_EN != 1'b0) begin
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_DIV;
           eu_ctl.div  = DIV_REM;
@@ -649,7 +649,7 @@ module issue_decoder (
         end
       end
       REMU: begin
-        if (LEN5_M_EN != 1'b0) begin
+        if (LEN5_D_EN != 1'b0) begin
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_DIV;
           eu_ctl.div  = DIV_REMU;
@@ -663,7 +663,7 @@ module issue_decoder (
         end
       end
       REMW: begin
-        if (LEN5_M_EN != 1'b0) begin
+        if (LEN5_D_EN != 1'b0) begin
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_DIV;
           eu_ctl.div  = DIV_REMW;
@@ -677,7 +677,7 @@ module issue_decoder (
         end
       end
       REMUW: begin
-        if (LEN5_M_EN != 1'b0) begin
+        if (LEN5_D_EN != 1'b0) begin
           issue_type  = ISSUE_TYPE_INT;
           assigned_eu = EU_INT_DIV;
           eu_ctl.div  = DIV_REMUW;

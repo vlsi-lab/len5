@@ -63,3 +63,6 @@ scripts/*.log
 
 # Verilator compilation output
 **/obj_dir
+
+results.txt
+build*

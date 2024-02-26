@@ -1,0 +1,208 @@
+diff --git a/aha-mont64/mont64.c b/aha-mont64/mont64.c
+index faeccdb..d2241e8 100644
+--- a/aha-mont64/mont64.c
++++ b/aha-mont64/mont64.c
+@@ -18,7 +18,7 @@
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+-#define LOCAL_SCALE_FACTOR 423
++#define LOCAL_SCALE_FACTOR 1
+ 
+ /* Computes a*b mod m using Montgomery multiplication (MM). a, b, and m
+ are unsigned numbers with a, b < m < 2**64, and m odd. The code does
+diff --git a/crc32/crc_32.c b/crc32/crc_32.c
+index a268113..4bf45c8 100644
+--- a/crc32/crc_32.c
++++ b/crc32/crc_32.c
+@@ -20,7 +20,7 @@
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+-#define LOCAL_SCALE_FACTOR 170
++#define LOCAL_SCALE_FACTOR 1
+ 
+ #include <stdlib.h>
+ 
+diff --git a/cubic/basicmath_small.c b/cubic/basicmath_small.c
+index a3d2839..5fa8be9 100644
+--- a/cubic/basicmath_small.c
++++ b/cubic/basicmath_small.c
+@@ -13,7 +13,7 @@
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+-#define LOCAL_SCALE_FACTOR 10
++#define LOCAL_SCALE_FACTOR 1
+ 
+ 
+ 
+diff --git a/edn/libedn.c b/edn/libedn.c
+index 48a748d..3ce5871 100644
+--- a/edn/libedn.c
++++ b/edn/libedn.c
+@@ -37,7 +37,7 @@
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+-#define LOCAL_SCALE_FACTOR 87
++#define LOCAL_SCALE_FACTOR 1
+ 
+ 
+ #define N 100
+diff --git a/matmult-int/matmult-int.c b/matmult-int/matmult-int.c
+index 41b387e..ae0a463 100644
+--- a/matmult-int/matmult-int.c
++++ b/matmult-int/matmult-int.c
+@@ -38,7 +38,7 @@
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+-#define LOCAL_SCALE_FACTOR 46
++#define LOCAL_SCALE_FACTOR 1
+ #define UPPERLIMIT 20
+ #define RANDOM_VALUE (RandomInteger ())
+ #define ZERO 0
+diff --git a/minver/libminver.c b/minver/libminver.c
+index 8015229..39cb1ab 100644
+--- a/minver/libminver.c
++++ b/minver/libminver.c
+@@ -61,7 +61,7 @@
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+-#define LOCAL_SCALE_FACTOR 555
++#define LOCAL_SCALE_FACTOR 1
+ 
+ int minver (int row, int col, float eps);
+ int mmul (int row_a, int col_a, int row_b, int col_b);
+diff --git a/nettle-aes/nettle-aes.c b/nettle-aes/nettle-aes.c
+index d85b9f6..9f7bb4d 100644
+--- a/nettle-aes/nettle-aes.c
++++ b/nettle-aes/nettle-aes.c
+@@ -20,7 +20,7 @@
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+-#define LOCAL_SCALE_FACTOR 78
++#define LOCAL_SCALE_FACTOR 1
+ 
+ // From nettle/macros.h
+ 
+diff --git a/nettle-sha256/nettle-sha256.c b/nettle-sha256/nettle-sha256.c
+index 28f53d6..1d81d38 100644
+--- a/nettle-sha256/nettle-sha256.c
++++ b/nettle-sha256/nettle-sha256.c
+@@ -20,7 +20,7 @@
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+-#define LOCAL_SCALE_FACTOR 475
++#define LOCAL_SCALE_FACTOR 1
+ 
+ // From nettle/nettle-types.h
+ 
+diff --git a/nsichneu/libnsichneu.c b/nsichneu/libnsichneu.c
+index 6952136..ec1513b 100644
+--- a/nsichneu/libnsichneu.c
++++ b/nsichneu/libnsichneu.c
+@@ -38,7 +38,7 @@
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+-#define LOCAL_SCALE_FACTOR 1231
++#define LOCAL_SCALE_FACTOR 1
+ 
+ #ifdef DO_TRACING		// ON PC
+ 
+diff --git a/picojpeg/picojpeg_test.c b/picojpeg/picojpeg_test.c
+index 134cde0..b7dcff5 100644
+--- a/picojpeg/picojpeg_test.c
++++ b/picojpeg/picojpeg_test.c
+@@ -18,7 +18,7 @@
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+-#define LOCAL_SCALE_FACTOR 6
++#define LOCAL_SCALE_FACTOR 1
+ 
+ const unsigned char jpeg_data[] = {
+   0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46,
+diff --git a/qrduino/qrtest.c b/qrduino/qrtest.c
+index 2ce36ca..b53f953 100644
+--- a/qrduino/qrtest.c
++++ b/qrduino/qrtest.c
+@@ -20,7 +20,7 @@
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+-#define LOCAL_SCALE_FACTOR 5
++#define LOCAL_SCALE_FACTOR 1
+ 
+ /* BEEBS heap is just an array */
+ 
+diff --git a/sglib-combined/combined.c b/sglib-combined/combined.c
+index de41b86..d0c2bd8 100644
+--- a/sglib-combined/combined.c
++++ b/sglib-combined/combined.c
+@@ -17,7 +17,7 @@
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+-#define LOCAL_SCALE_FACTOR 29
++#define LOCAL_SCALE_FACTOR 1
+ 
+ /* BEEBS heap is just an array */
+ 
+diff --git a/slre/libslre.c b/slre/libslre.c
+index ee1353a..a80236f 100644
+--- a/slre/libslre.c
++++ b/slre/libslre.c
+@@ -18,7 +18,7 @@
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+-#define LOCAL_SCALE_FACTOR 110
++#define LOCAL_SCALE_FACTOR 1
+ 
+ #include <stdio.h>
+ #include <ctype.h>
+diff --git a/st/libst.c b/st/libst.c
+index ce5b391..4817739 100644
+--- a/st/libst.c
++++ b/st/libst.c
+@@ -34,7 +34,7 @@
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+-#define LOCAL_SCALE_FACTOR 13
++#define LOCAL_SCALE_FACTOR 1
+ 
+ #define MAX 100
+ 
+diff --git a/statemate/libstatemate.c b/statemate/libstatemate.c
+index 2bf8e36..e869e62 100644
+--- a/statemate/libstatemate.c
++++ b/statemate/libstatemate.c
+@@ -46,7 +46,7 @@
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+-#define LOCAL_SCALE_FACTOR 1964
++#define LOCAL_SCALE_FACTOR 1
+ 
+ /*
+ ** actually, we don't really need floating point here
+diff --git a/ud/libud.c b/ud/libud.c
+index a7a85bd..d14ebfc 100644
+--- a/ud/libud.c
++++ b/ud/libud.c
+@@ -90,7 +90,7 @@
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+-#define LOCAL_SCALE_FACTOR 1478
++#define LOCAL_SCALE_FACTOR 1
+ 
+ 
+ long int a[20][20], b[20], x[20];

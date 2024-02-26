@@ -212,7 +212,7 @@ module arith_rs #(
             next_state[i] = ARITH_S_EX_REQ;
           end else next_state[i] = ARITH_S_RS2_PENDING;
         end
-        ARITH_S_EX_REQ: begin  // request branch resolution to branch logic
+        ARITH_S_EX_REQ: begin  // request execution to EU
           if (save_res && eu_rob_idx_i == data[i].dest_rob_idx) begin
             arith_op[i]   = ARITH_OP_SAVE_RES;
             next_state[i] = ARITH_S_COMPLETED;

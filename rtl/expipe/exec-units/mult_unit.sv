@@ -60,7 +60,7 @@ module mult_unit #(
 
   // MULT reservation station
   // -----------------------
-  arith_rs #(
+  arith_rs_serial #(
     .DEPTH     (RS_DEPTH),
     .EU_CTL_LEN(EU_CTL_LEN)
   ) u_mult_rs (
@@ -93,8 +93,8 @@ module mult_unit #(
   );
 
   mult #(
-    .EU_CTL_LEN(EU_CTL_LEN),
-    .PIPE_DEPTH(MULT_PIPE_DEPTH)
+    .EU_CTL_LEN(EU_CTL_LEN)
+    //  .PIPE_DEPTH(MULT_PIPE_DEPTH)
   ) u_mult (
     .clk_i          (clk_i),
     .rst_ni         (rst_ni),

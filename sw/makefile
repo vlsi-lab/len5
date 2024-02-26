@@ -20,7 +20,7 @@ INC_DIRS_GCC	:= $(addprefix -I ,$(INCLUDE_DIRS))
 ###  RISC-V C toolchain
 # TODO: REMOVE -mstrict-align ONCE UNALIGNED ACCESS IS SUPPORTED
 RISCV_EXE_PREFIX           	?= riscv64-unknown-elf
-ISA_STRING					?= rv64i
+ISA_STRING					?= rv64im
 ABI_STRING					?= lp64
 COPT						?= -O0
 CDEFS						?= -DSPIKE_EXIT
@@ -53,6 +53,10 @@ LIB_OBJS		:= $(filter %.o,\
 				   $(patsubst %.s,$(BUILD_DIR)/%.o,$(LIB_SRCS))\
 				   $(patsubst %.c,$(BUILD_DIR)/%.o,$(LIB_SRCS)))
 
+
+# Export all the variables to sub-makefiles
+export
+
 #######################
 # ----- TARGETS ----- #
 #######################
@@ -62,6 +66,9 @@ LIB_OBJS		:= $(filter %.o,\
 # Application build
 .PHONY: app
 app: $(BUILD_DIR)/main.hex $(BUILD_DIR)/main.disasm $(BUILD_DIR)/main.elf
+.PHONY: benchmark
+benchmark: $(LIB_OBJS) 
+	$(MAKE) -B -C benchmarks $(SUITE) BENCHMARK=$(BENCHMARK) SUITE=$(SUITE)
 
 $(BUILD_DIR)/main.%: $(BUILD_DIR)/applications/$(PROJECT)/main.%
 	cp $< $@
@@ -80,13 +87,14 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf
 
 # Linked executable firmware
 $(BUILD_DIR)/%.elf: $(OBJS) $(LIB_OBJS)
+	echo $(LIB_OBJS)
 	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(LDFLAGS_PRE) $(INC_FOLDERS_GCC) $^ $(LDFLAGS_POST) -o $@
 
 # Implicit compilation rules
-$(BUILD_DIR)/%.o: ./%.c
+$(BUILD_DIR)/%.o: ./%.c | $(BUILD_DIR)/applications/$(PROJECT)/
 	@mkdir -p $(@D)
 	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(CDEFS) $(INC_FOLDERS_GCC) -c $< -o $@
-$(BUILD_DIR)/%.o: ./%.S
+$(BUILD_DIR)/%.o: ./%.S | $(BUILD_DIR)/applications/$(PROJECT)/
 	@mkdir -p $(@D)
 	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(CDEFS) $(INC_FOLDERS_GCC) -c $< -o $@
 
