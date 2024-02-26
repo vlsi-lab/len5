@@ -22,19 +22,23 @@ INC_DIRS_GCC	:= $(addprefix -I ,$(INCLUDE_DIRS))
 RISCV_EXE_PREFIX           	?= riscv64-unknown-elf
 ISA_STRING					?= rv64i
 ABI_STRING					?= lp64
+COPT						?= -O0
+CDEFS						?= -DSPIKE_EXIT
 CFLAGS			:= -march=$(ISA_STRING) \
 				   -mabi=$(ABI_STRING) \
 				   -mstrict-align \
 				   -nostartfiles \
-				   -O0 \
+				   -flto \
+				   -ffunction-sections \
+				   -fdata-sections \
+				   -fno-builtin \
+				   $(COPT) \
+				   -g \
 				   -Wall
 LDFLAGS_PRE		:= -T $(LINKER) \
 				   -static
 LDFLAGS_POST	:= -Wl,-Map,$(BUILD_DIR)/main.map \
 				   -Wl,--gc-sections \
-				   -flto \
-				   -ffunction-sections \
-				   -fdata-sections \
 				   -specs=nano.specs
 
 # LEN5 software support
@@ -57,7 +61,7 @@ LIB_OBJS		:= $(filter %.o,\
 # --------------
 # Application build
 .PHONY: app
-app: $(BUILD_DIR)/main.hex $(BUILD_DIR)/main.disasm
+app: $(BUILD_DIR)/main.hex $(BUILD_DIR)/main.disasm $(BUILD_DIR)/main.elf
 
 $(BUILD_DIR)/main.%: $(BUILD_DIR)/applications/$(PROJECT)/main.%
 	cp $< $@
@@ -81,10 +85,10 @@ $(BUILD_DIR)/%.elf: $(OBJS) $(LIB_OBJS)
 # Implicit compilation rules
 $(BUILD_DIR)/%.o: ./%.c
 	@mkdir -p $(@D)
-	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(INC_FOLDERS_GCC) -c $< -o $@
+	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(CDEFS) $(INC_FOLDERS_GCC) -c $< -o $@
 $(BUILD_DIR)/%.o: ./%.S
 	@mkdir -p $(@D)
-	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(INC_FOLDERS_GCC) -c $< -o $@
+	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(CDEFS) $(INC_FOLDERS_GCC) -c $< -o $@
 
 # Utils
 # -----

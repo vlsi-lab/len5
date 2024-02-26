@@ -29,14 +29,12 @@ module alu #(
   output logic ready_o,
 
   // Data from/to the reservation station unit
-  input  logic                   [    EU_CTL_LEN-1:0] ctl_i,
-  input  expipe_pkg::rob_idx_t                        rob_idx_i,
-  input  logic                   [len5_pkg::XLEN-1:0] rs1_i,
-  input  logic                   [len5_pkg::XLEN-1:0] rs2_i,
-  output expipe_pkg::rob_idx_t                        rob_idx_o,
-  output logic                   [len5_pkg::XLEN-1:0] result_o,
-  output logic                                        except_raised_o,
-  output len5_pkg::except_code_t                      except_code_o
+  input  logic                 [    EU_CTL_LEN-1:0] ctl_i,
+  input  expipe_pkg::rob_idx_t                      rob_idx_i,
+  input  logic                 [len5_pkg::XLEN-1:0] rs1_i,
+  input  logic                 [len5_pkg::XLEN-1:0] rs2_i,
+  output expipe_pkg::rob_idx_t                      rob_idx_o,
+  output logic                 [len5_pkg::XLEN-1:0] result_o
 );
 
   import len5_pkg::*;
@@ -64,7 +62,6 @@ module alu #(
 
   // ALU output
   logic [        XLEN-1:0] result;
-  logic                    except_raised;
 
   // --------------
   // ALU OPERATIONS
@@ -152,20 +149,21 @@ module alu #(
   // ------------------
   always_comb begin : result_mux
     // Default values
-    result        = '0;
-    except_raised = 1'b0;
+    result = '0;
 
     unique case (ctl_i)
-      ALU_ADD, ALU_SUB:                     result = adder_res;
-      ALU_ADDW, ALU_SUBW:                   result = adder_res_32;  // TODO: check
-      ALU_AND:                              result = rs1_i & rs2_i;
-      ALU_OR:                               result = rs1_i | rs2_i;
-      ALU_XOR:                              result = rs1_i ^ rs2_i;
-      ALU_SLL, ALU_SLLW:                    result = shifter_res_rev;  // TODO: check
+      ALU_ADDW, ALU_SUBW: result = adder_res_32;  // TODO: check
+      ALU_AND: result = rs1_i & rs2_i;
+      ALU_OR: result = rs1_i | rs2_i;
+      ALU_XOR: result = rs1_i ^ rs2_i;
+      ALU_SLL, ALU_SLLW: result = shifter_res_rev;  // TODO: check
       ALU_SRL, ALU_SRA, ALU_SRLW, ALU_SRAW: result = shifter_res[XLEN-1:0];  // TODO: check
-      ALU_SLT:                              result = '0;  // TODO: implement with adder res
-      ALU_SLTU:                             result = '0;  // TODO: implement with adder res
-      default:                              except_raised = 1'b1;
+      ALU_SLT:
+      result = {
+        {XLEN - 1{1'b0}}, ($signed(rs1_i) < $signed(rs2_i))
+      };  // TODO: implement with adder res
+      ALU_SLTU: result = {{XLEN - 1{1'b0}}, (rs1_i < rs2_i)};  // TODO: implement with adder res
+      default: result = adder_res;  // ALU_ADD, ALU_SUB
     endcase
   end
 
@@ -176,23 +174,19 @@ module alu #(
 
   // Interface data type
   typedef struct packed {
-    logic [XLEN-1:0] res;            // the ALU result
-    rob_idx_t        rob_idx;        // instr. ROB index
-    logic            except_raised;  // exception flag
+    logic [XLEN-1:0] res;      // the ALU result
+    rob_idx_t        rob_idx;  // instr. ROB index
   } out_reg_data_t;
 
   out_reg_data_t out_reg_data_in, out_reg_data_out;
 
   // Input data
-  assign out_reg_data_in.res           = result;
-  assign out_reg_data_in.rob_idx       = rob_idx_i;
-  assign out_reg_data_in.except_raised = except_raised;
+  assign out_reg_data_in.res     = result;
+  assign out_reg_data_in.rob_idx = rob_idx_i;
 
   // Output data
-  assign result_o                      = out_reg_data_out.res;
-  assign rob_idx_o                     = out_reg_data_out.rob_idx;
-  assign except_raised_o               = out_reg_data_out.except_raised;
-  assign except_code_o                 = E_ILLEGAL_INSTRUCTION;
+  assign result_o                = out_reg_data_out.res;
+  assign rob_idx_o               = out_reg_data_out.rob_idx;
 
   // Output register
   spill_cell_flush #(

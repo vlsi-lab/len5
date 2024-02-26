@@ -15,7 +15,7 @@
 module arith_rs #(
   parameter int unsigned DEPTH = 4,  // must be a power of 2
   parameter int unsigned EU_CTL_LEN = 4,
-  /* Dependent parameters: do NOT override */
+  // Dependent parameters: do NOT override
   localparam int unsigned RsIdxLen = $clog2(DEPTH)
 ) (
   input logic clk_i,
@@ -23,7 +23,7 @@ module arith_rs #(
   input logic flush_i,
 
 
-  /* Issue Stage */
+  // Issue Stage
   input  logic                                  issue_valid_i,
   output logic                                  issue_ready_o,
   input  logic                 [EU_CTL_LEN-1:0] issue_eu_ctl_i,
@@ -31,14 +31,14 @@ module arith_rs #(
   input  expipe_pkg::op_data_t                  issue_rs2_i,
   input  expipe_pkg::rob_idx_t                  issue_dest_rob_idx_i,
 
-  /* CDB */
+  // CDB
   input  logic                  cdb_ready_i,
   input  logic                  cdb_valid_i,  // to know if the CDB is carrying valid data
   output logic                  cdb_valid_o,
   input  expipe_pkg::cdb_data_t cdb_data_i,
   output expipe_pkg::cdb_data_t cdb_data_o,
 
-  /* Execution unit */
+  // Execution unit
   input  logic                                        eu_ready_i,
   input  logic                                        eu_valid_i,
   output logic                                        eu_valid_o,
@@ -56,9 +56,9 @@ module arith_rs #(
   import len5_config_pkg::*;
   import len5_pkg::*;
   import expipe_pkg::*;
-  // INTERNAL SIGNALS
-  // ----------------
 
+  // DATA TYPES
+  // ----------
   // Generic arithmetic reservation station content
   typedef struct packed {
     logic [EU_CTL_LEN-1:0] eu_ctl;  // Control signals for the EU
@@ -72,6 +72,33 @@ module arith_rs #(
     except_code_t except_code;
   } arith_rs_data_t;
 
+  // Arithmetic unit state
+  typedef enum logic [2:0] {
+    ARITH_S_EMPTY,         // empty
+    ARITH_S_RS1_PENDING,   // waiting for rs1 forwarding
+    ARITH_S_RS2_PENDING,   // waiting for rs2 forwarding
+    ARITH_S_RS12_PENDING,  // waiting for rs1 and rs2 forwarding
+    ARITH_S_EX_REQ,        // requesting execution to execution unit
+    ARITH_S_EX_WAIT,       // waiting for the BU result
+    ARITH_S_COMPLETED,     // ready to write the result on the CDB
+    ARITH_S_HALT           // for debug
+  } arith_state_t;
+
+  // Arithmetic unit operations
+  typedef enum logic [3:0] {
+    ARITH_OP_NONE,
+    ARITH_OP_INSERT,
+    ARITH_OP_INSERT_RS12,
+    ARITH_OP_INSERT_RS1,
+    ARITH_OP_INSERT_RS2,
+    ARITH_OP_SAVE_RS12,
+    ARITH_OP_SAVE_RS1,
+    ARITH_OP_SAVE_RS2,
+    ARITH_OP_SAVE_RES
+  } arith_op_t;
+
+  // INTERNAL SIGNALS
+  // ----------------
   // New, execution, and CDB write pointers
   logic [RsIdxLen-1:0] new_idx, ex_idx, cdb_idx;
   logic empty[DEPTH], ready_ex[DEPTH], ready_cdb[DEPTH];
@@ -223,7 +250,7 @@ module arith_rs #(
         data[i] <= '0;
       end
     end else begin
-      /* Performed the required action for each instruction */
+      // Performed the required action for each instruction
       foreach (arith_op[i]) begin
         unique case (arith_op[i])
           ARITH_OP_INSERT: begin
@@ -299,17 +326,17 @@ module arith_rs #(
   // OUTPUT EVALUATION
   // -----------------
 
-  /* Issue Stage */
+  // Issue Stage
   assign issue_ready_o            = curr_state[new_idx] == ARITH_S_EMPTY;
 
-  /* CDB */
+  // CDB
   assign cdb_valid_o              = curr_state[cdb_idx] == ARITH_S_COMPLETED;
   assign cdb_data_o.rob_idx       = data[cdb_idx].dest_rob_idx;
   assign cdb_data_o.res_value     = data[cdb_idx].res_value;
   assign cdb_data_o.except_raised = data[cdb_idx].except_raised;
   assign cdb_data_o.except_code   = data[cdb_idx].except_code;
 
-  /* Execution unit */
+  // Execution unit
   assign eu_valid_o               = curr_state[ex_idx] == ARITH_S_EX_REQ;
   assign eu_ready_o               = 1'b1;
   assign eu_ctl_o                 = data[ex_idx].eu_ctl;
@@ -359,7 +386,7 @@ module arith_rs #(
         ##1 curr_state[i] != ARITH_S_HALT);
     end
   end
-`endif  /* VERILATOR */
-`endif  /* SYNTHESIS */
+`endif  // VERILATOR
+`endif  // SYNTHESIS
 
 endmodule

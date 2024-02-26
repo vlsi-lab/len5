@@ -25,9 +25,10 @@ module branch_cu (
   input  logic flush_i,
   input  logic valid_i,
   input  logic misprediction_i,
-  input  logic fe_ready_i,
-  output logic issue_mis_o,      // notify issue about the mispred.
-  output logic fe_res_valid_o,   // send the resolution to the FE
+  input  logic fe_pcgen_ready_i,
+  output logic fe_bpu_valid_o,    // send the resolution to the BPU
+  output logic fe_pcgen_valid_o,  // reset the program counter
+  output logic issue_mis_o,       // notify issue about the mispred.
   output logic bu_mis_reg_en_o
 );
   // INTERNAL SIGNALS
@@ -38,6 +39,7 @@ module branch_cu (
     UPD_FE,
     MIS,
     MIS_LOAD_PC,
+    MIS_WAIT_FE,
     STALL
   } cu_state_t;
   cu_state_t curr_state, next_state;
@@ -61,8 +63,12 @@ module branch_cu (
       end
       MIS:     next_state = MIS_LOAD_PC;
       MIS_LOAD_PC: begin
-        if (fe_ready_i) next_state = STALL;
-        else next_state = MIS_LOAD_PC;
+        if (fe_pcgen_ready_i) next_state = STALL;
+        else next_state = MIS_WAIT_FE;
+      end
+      MIS_WAIT_FE: begin
+        if (fe_pcgen_ready_i) next_state = STALL;
+        else next_state = MIS_WAIT_FE;
       end
       STALL:   next_state = STALL;  // until flush
       default: next_state = IDLE;
@@ -72,22 +78,27 @@ module branch_cu (
   // Output evaluation
   always_comb begin : cu_out_eval
     // Default values
-    issue_mis_o     = 1'b0;
-    fe_res_valid_o  = 1'b0;
-    bu_mis_reg_en_o = 1'b0;
+    issue_mis_o      = 1'b0;
+    fe_bpu_valid_o   = 1'b0;
+    fe_pcgen_valid_o = 1'b0;
+    bu_mis_reg_en_o  = 1'b0;
     case (curr_state)
       IDLE: begin
         bu_mis_reg_en_o = 1'b1;
       end
       UPD_FE: begin
         bu_mis_reg_en_o = 1'b1;
-        fe_res_valid_o  = 1'b1;
+        fe_bpu_valid_o  = 1'b1;
       end
       MIS: begin
         issue_mis_o = 1'b1;
       end
       MIS_LOAD_PC: begin
-        fe_res_valid_o = 1'b1;
+        fe_bpu_valid_o   = 1'b1;
+        fe_pcgen_valid_o = 1'b1;
+      end
+      MIS_WAIT_FE: begin
+        fe_pcgen_valid_o = 1'b1;
       end
       STALL:   ;  // use default values
       default: ;  // use default values
@@ -110,14 +121,14 @@ module branch_cu (
     @(posedge clk_i) disable iff (!rst_ni)
         sync_accept_on(flush_i)
         (curr_state == IDLE || curr_state == UPD_FE) && valid_i && misprediction_i |-> ##1
-            fe_res_valid_o |-> ##[0:10]
-            fe_ready_i |-> ##1
-            !fe_res_valid_o
+            fe_bpu_valid_o |-> ##[0:10]
+            fe_pcgen_ready_i |-> ##1
+            !fe_bpu_valid_o
   endproperty
   a_fe_valid :
   assert property (p_fe_valid);
   property p_wait_flush;
-    @(posedge clk_i) disable iff (!rst_ni) curr_state == STALL & !flush_i |-> ##[1:2] !fe_res_valid_o
+    @(posedge clk_i) disable iff (!rst_ni) curr_state == STALL & !flush_i |-> ##[1:2] !fe_bpu_valid_o
   endproperty
   a_wait_flush :
   assert property (p_wait_flush);

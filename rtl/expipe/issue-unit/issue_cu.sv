@@ -41,8 +41,7 @@ module issue_cu (
   // Commit stage <--> CU
   input  logic comm_ready_i,
   output logic comm_valid_o,
-  input  logic comm_resume_i,
-  output logic comm_jb_instr_o
+  input  logic comm_resume_i
 );
 
   import expipe_pkg::*;
@@ -208,7 +207,6 @@ module issue_cu (
     int_regstat_valid_o = 1'b0;
     // fp_regstat_valid_o = 1'b0;
     comm_valid_o        = 1'b0;
-    comm_jb_instr_o     = 1'b0;
 
     case (curr_state)
       S_RESET:       ;  // use default values
@@ -238,15 +236,13 @@ module issue_cu (
         iq_ready_o   = downstream_ready;
       end
       S_ISSUE_BRANCH: begin
-        ex_valid_o      = downstream_ready;
-        comm_valid_o    = downstream_ready;
-        comm_jb_instr_o = downstream_ready;
-        iq_ready_o      = downstream_ready;
+        ex_valid_o   = downstream_ready;
+        comm_valid_o = downstream_ready;
+        iq_ready_o   = downstream_ready;
       end
       S_ISSUE_JUMP: begin
         ex_valid_o          = downstream_ready;
         comm_valid_o        = downstream_ready;
-        comm_jb_instr_o     = downstream_ready;
         iq_ready_o          = downstream_ready;
         int_regstat_valid_o = downstream_ready;
       end

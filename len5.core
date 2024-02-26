@@ -8,7 +8,7 @@ CAPI=2:
 # Date: 24/01/2024
 # Description: LEN5 top-level core file
 
-name: "polito:len5:len5:0.1.0"
+name: "polito:len5:len5:0.1.1"
 description: "LEN5: out-of-order superscalar CPU"
 
 filesets:
@@ -27,6 +27,7 @@ filesets:
     - tb/memory/memory_class.svh: {is_include_file : true}
     - tb/memory/memory_if.sv
     - tb/memory/memory_bare_emu.sv
+    - tb/len5_utils.svh: {is_include_file: true}
     - tb/tb_bare.sv
     file_type: systemVerilogSource
 
@@ -55,13 +56,12 @@ scripts:
     - -p
     - logs
   
-  # Copy simulation waveforms in common directory
-  copy_waves:
+  # Copy simulation logs and waveforms in common directory
+  copy_logs:
     cmd:
     - bash
-    - ../../../scripts/sim/copy-waves.sh
+    - ../../../scripts/sim/copy-logs.sh
     - logs/waves.fst
-    - logs/waves-0.vcd
 
 targets:
   # Default target
@@ -84,13 +84,15 @@ targets:
       - "!tool_verilator ? (tb_len5)"
     parameters:
     - firmware
-    - max_cycles
+    - tool_verilator ? (max_cycles)
     - tool_verilator ? (log_level)
+    - tool_verilator ? (dump_waves)
+    - tool_verilator ? (dump_trace)
     hooks:
       pre_run:
       - prepare_dirs
       post_run:
-      - copy_waves
+      - copy_logs
     tools:
       modelsim:
         vlog_options:
@@ -114,7 +116,7 @@ targets:
         - '--x-assign unique'
         - '--x-initial unique'
         - '--report-unoptflat'
-        - '-GBOOT_PC=384' # 0x180
+        - '-GBOOT_PC=65920' # 0x10180
         - '-GSERIAL_ADDR=536870912' # 0x20000000
         - '-GEXIT_ADDR=536871168' # 0x20000100
         - '--exe'
@@ -170,6 +172,16 @@ parameters:
       Set the log level. Admitted values: LOG_NONE|LOG_LOW|LOG_MEDIUM|LOG_HIGH|LOG_FULL|LOG_DEBUG.
       Errors and configuration messages are always printed.
     paramtype: cmdlinearg
+  dump_waves:
+    datatype: str
+    description: If 'true', dump waveforms
+    default: "true"
+    paramtype: cmdlinearg
+  dump_trace:
+    datatype: str
+    description: If 'true', generate instruction execution trace
+    default: "false"
+    paramtype: cmdlinearg
   firmware:
     datatype: str
     description: Firmware (in HEX format) to load into the system SRAM.
@@ -177,4 +189,4 @@ parameters:
   max_cycles:
     datatype: int
     description: Maximum number of simulation cycles (halt the simulation when reached).
-    paramtype: plusarg
+    paramtype: cmdlinearg

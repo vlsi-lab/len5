@@ -39,10 +39,15 @@
 // GLOBAL VARIABLES
 // ----------------
 
-/* Heap top and bottom, provided by the linker script */
+// Heap top and bottom, provided by the linker script
 extern char __heap_bottom[];
 extern char __heap_top[];
 static char *brk = __heap_bottom;
+
+#ifdef SPIKE_EXIT
+// Spike exit function
+extern void tohost_exit(int code);
+#endif
 
 // FUNCTION DEFINITIONS
 // --------------------
@@ -98,6 +103,9 @@ int _execve(const char *name, char *const argv[], char *const env[])
 void _exit(int exit_status)
 {
     EXIT_REG = exit_status;
+#ifdef SPIKE_EXIT
+    tohost_exit(exit_status);
+#endif
     asm volatile("wfi");
     __builtin_unreachable(); // prevent returning instruction warning
 }
@@ -284,8 +292,10 @@ ssize_t _write(int handle, const char *data, size_t size)
         return -1;
     }
 
-    while (data != end_data)
-        serial_write(*data++);
+    while (data != end_data) {
+        serial_write(*data);
+        data++;
+    }
 
     return size;
 }

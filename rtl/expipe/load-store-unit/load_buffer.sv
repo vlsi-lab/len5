@@ -20,14 +20,15 @@
  */
 module load_buffer #(
   parameter  int unsigned DEPTH = 4,
-  /* Dependent parameters: do NOT override */
+  parameter  int unsigned TAG_W = 4,
+  // Dependent parameters: do NOT override
   localparam int unsigned IdxW  = $clog2(DEPTH)
 ) (
   input logic clk_i,
   input logic rst_ni,
   input logic flush_i,
 
-  /* Issue stage */
+  // Issue stage
   input  logic                                         issue_valid_i,
   output logic                                         issue_ready_o,
   input  expipe_pkg::ldst_width_t                      issue_type_i,         // byte, halfword, ...
@@ -35,14 +36,14 @@ module load_buffer #(
   input  logic                    [len5_pkg::XLEN-1:0] issue_imm_i,          // offset
   input  expipe_pkg::rob_idx_t                         issue_dest_rob_idx_i,
 
-  /* Common data bus (CDB) */
+  // Common data bus (CDB)
   input  logic                  cdb_valid_i,
   input  logic                  cdb_ready_i,
   output logic                  cdb_valid_o,
   input  expipe_pkg::cdb_data_t cdb_data_i,
   output expipe_pkg::cdb_data_t cdb_data_o,
 
-  /* Address adder */
+  // Address adder
   input  logic                   adder_valid_i,
   input  logic                   adder_ready_i,
   output logic                   adder_valid_o,
@@ -50,18 +51,18 @@ module load_buffer #(
   input  expipe_pkg::adder_ans_t adder_ans_i,
   output expipe_pkg::adder_req_t adder_req_o,
 
-  /* Store buffer */
+  // Store buffer
   input logic                              sb_latest_valid_i,
   input logic [len5_pkg::STBUFF_TAG_W-1:0] sb_latest_idx_i,
   input logic                              sb_oldest_completed_i,
   input logic [len5_pkg::STBUFF_TAG_W-1:0] sb_oldest_idx_i,
 
-  /* Level-zero cache */
+  // Level-zero cache
   input  logic                                         l0_valid_i,
   input  logic                    [len5_pkg::XLEN-1:0] l0_value_i,
   output expipe_pkg::ldst_width_t                      l0_width_o,
 
-  /* Memory system */
+  // Memory system
   output logic                                                mem_valid_o,
   input  logic                                                mem_ready_i,
   input  logic                                                mem_valid_i,
@@ -81,10 +82,47 @@ module load_buffer #(
   import expipe_pkg::*;
   import memory_pkg::*;
 
+  // DATA TYPES
+  // ----------
+  // Load instruction status
+  typedef enum logic [3:0] {
+    LOAD_S_EMPTY,
+    LOAD_S_RS1_PENDING,
+    LOAD_S_ADDR_REQ,
+    LOAD_S_ADDR_WAIT,
+    LOAD_S_DEP_WAIT,
+    LOAD_S_MEM_REQ,
+    LOAD_S_MEM_WAIT,
+    LOAD_S_COMPLETED,
+    LOAD_S_HALT     // for debug
+  } lb_state_t;
+
+  // Load instruction data
+  typedef struct packed {
+    ldst_width_t     load_type;       // byte, halfword, ...
+    rob_idx_t        rs1_rob_idx;
+    logic [XLEN-1:0] rs1_value;
+    rob_idx_t        dest_rob_idx;
+    logic [XLEN-1:0] imm_addr_value;  // immediate offset, then replaced with resulting address
+    logic            except_raised;
+    except_code_t    except_code;
+    logic [XLEN-1:0] value;
+  } lb_data_t;
+
+  // Load instruction command
+  typedef enum logic [2:0] {
+    LOAD_OP_NONE,
+    LOAD_OP_PUSH,
+    LOAD_OP_SAVE_RS1,
+    LOAD_OP_SAVE_ADDR,
+    LOAD_OP_ADDR_EXCEPT,
+    LOAD_OP_SAVE_CACHED,
+    LOAD_OP_SAVE_MEM,
+    LOAD_OP_MEM_EXCEPT
+  } lb_op_t;
 
   // INTERNAL SIGNALS
   // ----------------
-
   // Head, tail, and address calculation counters
   logic [IdxW-1:0] head_idx, tail_idx, addr_idx, mem_idx;
   logic head_cnt_en, tail_cnt_en, addr_cnt_en, mem_cnt_en;
@@ -158,10 +196,13 @@ module load_buffer #(
           end else next_state[i] = LOAD_S_RS1_PENDING;
         end
         LOAD_S_ADDR_REQ: begin  // save address (from adder)
-          if (save_addr && adder_ans_i.tag == i[IdxW-1:0]) begin
+          if (save_addr && adder_ans_i.tag == i[TAG_W-1:0]) begin
             if (adder_ans_i.except_raised) begin
               lb_op[i]      = LOAD_OP_ADDR_EXCEPT;
               next_state[i] = LOAD_S_COMPLETED;
+            end else if (store_dep[i] && !store_dep_clr[i]) begin
+              lb_op[i]      = LOAD_OP_SAVE_ADDR;
+              next_state[i] = LOAD_S_DEP_WAIT;
             end else begin
               lb_op[i]      = LOAD_OP_SAVE_ADDR;
               next_state[i] = LOAD_S_MEM_REQ;
@@ -170,11 +211,11 @@ module load_buffer #(
           else next_state[i] = LOAD_S_ADDR_REQ;
         end
         LOAD_S_ADDR_WAIT: begin
-          if (save_addr && adder_ans_i.tag == i[IdxW-1:0]) begin
+          if (save_addr && adder_ans_i.tag == i[TAG_W-1:0]) begin
             if (adder_ans_i.except_raised) begin
               lb_op[i]      = LOAD_OP_ADDR_EXCEPT;
               next_state[i] = LOAD_S_COMPLETED;
-            end else if (store_dep[i]) begin
+            end else if (store_dep[i] && !store_dep_clr[i]) begin
               lb_op[i]      = LOAD_OP_SAVE_ADDR;
               next_state[i] = LOAD_S_DEP_WAIT;
             end else begin
@@ -184,7 +225,7 @@ module load_buffer #(
           end else next_state[i] = LOAD_S_ADDR_WAIT;
         end
         LOAD_S_DEP_WAIT: begin
-          if (!store_dep[i]) begin
+          if (!store_dep[i] || store_dep_clr[i]) begin
             next_state[i] = LOAD_S_MEM_REQ;
           end else begin
             next_state[i] = LOAD_S_DEP_WAIT;
@@ -195,7 +236,7 @@ module load_buffer #(
             if (l0_valid_i && mem_idx == i[IdxW-1:0]) begin
               lb_op[i]      = LOAD_OP_SAVE_CACHED;
               next_state[i] = LOAD_S_COMPLETED;
-            end else if (save_mem && mem_tag_i == i[IdxW-1:0]) begin
+            end else if (save_mem && mem_tag_i == i[TAG_W-1:0]) begin
               if (mem_except_raised_i) begin
                 lb_op[i] = LOAD_OP_MEM_EXCEPT;
               end else begin
@@ -206,7 +247,7 @@ module load_buffer #(
               next_state[i] = LOAD_S_MEM_WAIT;
             end else next_state[i] = LOAD_S_MEM_REQ;
           end else begin
-            if (save_mem && mem_tag_i == i[IdxW-1:0]) begin
+            if (save_mem && mem_tag_i == i[TAG_W-1:0]) begin
               if (mem_except_raised_i) begin
                 lb_op[i] = LOAD_OP_MEM_EXCEPT;
               end else begin
@@ -219,7 +260,7 @@ module load_buffer #(
           end
         end
         LOAD_S_MEM_WAIT: begin
-          if (save_mem && mem_tag_i == i[IdxW-1:0]) begin
+          if (save_mem && mem_tag_i == i[TAG_W-1:0]) begin
             if (mem_except_raised_i) begin
               lb_op[i] = LOAD_OP_MEM_EXCEPT;
             end else begin
@@ -273,7 +314,7 @@ module load_buffer #(
         data[i] <= '0;
       end
     end else begin
-      /* Performed the required action for each instruction */
+      // Performed the required action for each instruction
       foreach (lb_op[i]) begin
         case (lb_op[i])
           LOAD_OP_PUSH: begin  // save new instruction data
@@ -339,26 +380,25 @@ module load_buffer #(
   // write enable set to 0 since only read from mem
   assign mem_we_o                 = 1'b0;
 
-  /* Issue stage */
+  // Issue stage
   assign issue_ready_o            = curr_state[tail_idx] == LOAD_S_EMPTY;
 
-  /* CDB */
+  // CDB
   assign cdb_valid_o              = curr_state[head_idx] == LOAD_S_COMPLETED;
   assign cdb_data_o.rob_idx       = data[head_idx].dest_rob_idx;
   assign cdb_data_o.res_value     = data[head_idx].value;
   assign cdb_data_o.except_raised = data[head_idx].except_raised;
   assign cdb_data_o.except_code   = data[head_idx].except_code;
 
-  /* Address adder */
+  // Address adder
   assign adder_valid_o            = curr_state[addr_idx] == LOAD_S_ADDR_REQ;
   assign adder_ready_o            = 1'b1;  // always ready to accept data from the adder
-  assign adder_req_o.tag          = addr_idx;
-  assign adder_req_o.is_store     = 1'b0;
+  assign adder_req_o.tag          = {'0, addr_idx};
   assign adder_req_o.ls_type      = data[addr_idx].load_type;
   assign adder_req_o.base         = data[addr_idx].rs1_value;
   assign adder_req_o.offs         = data[addr_idx].imm_addr_value;
 
-  /* Memory system */
+  // Memory system
   generate
     if (LEN5_STORE_LOAD_FWD_EN != 0) begin : gen_mem_valid_fwd
       assign mem_valid_o = ~l0_valid_i & (curr_state[mem_idx] == LOAD_S_MEM_REQ);
@@ -374,7 +414,7 @@ module load_buffer #(
       assign mem_addr_o = data[mem_idx].imm_addr_value;
     end
   endgenerate
-  assign mem_tag_o = mem_idx;
+  assign mem_tag_o = {'0, mem_idx};
   assign mem_we_o  = 1'b0;
 
   // Byte enable
@@ -409,7 +449,7 @@ module load_buffer #(
     end else begin : gen_sign_extender
       assign byte_offs = '0;
       sign_extender u_sign_extender (
-        .type_i(data[mem_tag_i].load_type),
+        .type_i(data[mem_tag_i[IdxW-1:0]].load_type),
         .data_i(mem_rdata_i),
         .data_o(read_data)
       );
@@ -475,7 +515,7 @@ module load_buffer #(
                 ##1 curr_state[i] != LOAD_S_HALT);
     end
   end
-`endif  /* VERILATOR */
-`endif  /* SYNTHESIS */
+`endif  // VERILATOR
+`endif  // SYNTHESIS
 
 endmodule

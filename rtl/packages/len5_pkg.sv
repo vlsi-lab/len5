@@ -17,10 +17,11 @@
 package len5_pkg;
   // LEN5 configuration
   import len5_config_pkg::*;
+
+  // Parameters
   localparam int unsigned WWIDTH = 32;
   localparam int unsigned AWIDTH = 64;
   localparam int unsigned BWIDTH = 8;
-  // Parameters
   localparam int unsigned HWWIDTH = WWIDTH >> 1;
   localparam int unsigned DWWIDTH = WWIDTH << 1;
   localparam int unsigned LWIDTH = WWIDTH << 4;
@@ -181,25 +182,8 @@ package len5_pkg;
   localparam int unsigned FREG_NUM = 32;  // number of floating-point registers
   localparam int unsigned FREG_IDX_LEN = $clog2(FREG_NUM);  // FP RF address width
 
-  // ISSUE QUEUE
-  localparam int unsigned IQ_DEPTH = 2;  // number of entries in the issue queue (power of 2)
-
-  // LOAD/STORE UNIT
-  localparam int unsigned LDBUFF_DEPTH = 4;  // number of entries in the load buffer
-  localparam int unsigned STBUFF_DEPTH = 4;  // number of entries in the store buffer
   localparam int unsigned LDBUFF_TAG_W = $clog2(LDBUFF_DEPTH);  // load buffer address width
   localparam int unsigned STBUFF_TAG_W = $clog2(STBUFF_DEPTH);  // store buffer address width
   localparam int unsigned BUFF_IDX_LEN = (LDBUFF_TAG_W > STBUFF_TAG_W) ? (LDBUFF_TAG_W) : (STBUFF_TAG_W);
-
-  // ROB
-  localparam int unsigned ROB_DEPTH = 8;  // Number of entries in the ROB
-
-  // RESERVATION STATIONS
-  localparam int unsigned ALU_RS_DEPTH = 4;
-  localparam int unsigned MULT_RS_DEPTH = 2;
-  localparam int unsigned DIV_RS_DEPTH = 2;
-  localparam int unsigned DIV_PIPE_DEPTH = 8;
-  localparam int unsigned FPU_RS_DEPTH = 2;
-  localparam int unsigned BU_RS_DEPTH = 4;
 
 endpackage

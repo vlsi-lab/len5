@@ -20,8 +20,9 @@ module exec_stage (
   input logic except_flush_i,
 
   // Fetch stage
-  input  logic                   fe_ready_i,
-  output logic                   fe_res_valid_o,
+  input  logic                   fe_pcgen_ready_i,
+  output logic                   fe_bpu_valid_o,
+  output logic                   fe_pcgen_valid_o,
   output fetch_pkg::resolution_t fe_res_o,
 
   // ISSUE STAGE
@@ -45,8 +46,9 @@ module exec_stage (
   output expipe_pkg::cdb_data_t [len5_config_pkg::MAX_EU_N-1:0] cdb_data_o,
 
   // ROB AND CSRs
-  input logic                 comm_sb_spec_instr_i,
-  input expipe_pkg::rob_idx_t comm_sb_rob_head_idx_i,
+  input  logic                 comm_sb_mem_clear_i,  // store is clear to execute
+  output expipe_pkg::rob_idx_t comm_sb_mem_idx_o,    // executing store ROB index
+
   // input logic     [FCSR_FRM_LEN-1:0] csr_frm_i,               // global rounding mode for the FPU
 
   // MEMORY SYSTEM
@@ -104,8 +106,8 @@ module exec_stage (
     .issue_rs2_i         (issue_rs2_i),
     .issue_imm_i         (issue_imm_value_i),
     .issue_dest_rob_idx_i(issue_rob_idx_i),
-    .comm_spec_instr_i   (comm_sb_spec_instr_i),
-    .comm_rob_head_idx_i (comm_sb_rob_head_idx_i),
+    .comm_sb_mem_clear_i (comm_sb_mem_clear_i),
+    .comm_sb_mem_idx_o   (comm_sb_mem_idx_o),
     .cdb_valid_i         (cdb_valid_i),
     .cdb_lb_ready_i      (cdb_ready_i[EU_LOAD_BUFFER]),
     .cdb_sb_ready_i      (cdb_ready_i[EU_STORE_BUFFER]),
@@ -151,8 +153,9 @@ module exec_stage (
     .clk_i               (clk_i),
     .rst_ni              (rst_ni),
     .flush_i             (mis_flush_i),
-    .fe_ready_i          (fe_ready_i),
-    .fe_res_valid_o      (fe_res_valid_o),
+    .fe_pcgen_ready_i    (fe_pcgen_ready_i),
+    .fe_bpu_valid_o      (fe_bpu_valid_o),
+    .fe_pcgen_valid_o    (fe_pcgen_valid_o),
     .fe_res_o            (fe_res_o),
     .issue_valid_i       (issue_valid_i[EU_BRANCH_UNIT]),
     .issue_ready_o       (issue_ready_o[EU_BRANCH_UNIT]),

@@ -40,8 +40,8 @@ module load_store_unit #(
   input  expipe_pkg::rob_idx_t                         issue_dest_rob_idx_i,
 
   /* Commit stage */
-  input logic                 comm_spec_instr_i,
-  input expipe_pkg::rob_idx_t comm_rob_head_idx_i,
+  input  logic                 comm_sb_mem_clear_i,
+  output expipe_pkg::rob_idx_t comm_sb_mem_idx_o,
 
   /* Common data bus (CDB) */
   input  logic                  cdb_valid_i,
@@ -128,7 +128,8 @@ module load_store_unit #(
   // LOAD BUFFER
   // -----------
   load_buffer #(
-    .DEPTH(LB_DEPTH)
+    .DEPTH(LB_DEPTH),
+    .TAG_W(BUFF_IDX_LEN)
   ) u_load_buffer (
     .clk_i                (clk_i),
     .rst_ni               (rst_ni),
@@ -186,8 +187,8 @@ module load_store_unit #(
     .issue_rs2_i          (issue_rs2_i),
     .issue_imm_i          (issue_imm_i),
     .issue_dest_rob_idx_i (issue_dest_rob_idx_i),
-    .comm_spec_instr_i    (comm_spec_instr_i),
-    .comm_rob_head_idx_i  (comm_rob_head_idx_i),
+    .comm_mem_clear_i     (comm_sb_mem_clear_i),
+    .comm_mem_idx_o       (comm_sb_mem_idx_o),
     .cdb_valid_i          (cdb_valid_i),
     .cdb_ready_i          (cdb_sb_ready_i),
     .cdb_valid_o          (cdb_sb_valid_o),
@@ -224,7 +225,9 @@ module load_store_unit #(
 
   // LOAD ADDRESS ADDER
   // -------------
-  address_adder u_address_adder_load (
+  address_adder #(
+    .IS_STORE(1'b0)
+  ) u_address_adder_load (
     .clk_i  (clk_i),
     .rst_ni (rst_ni),
     .flush_i(mis_flush_i),
@@ -238,7 +241,9 @@ module load_store_unit #(
 
   // STORE ADDRESS ADDER
   // -------------
-  address_adder u_address_adder_store (
+  address_adder #(
+    .IS_STORE(1'b1)
+  ) u_address_adder_store (
     .clk_i  (clk_i),
     .rst_ni (rst_ni),
     .flush_i(mis_flush_i),

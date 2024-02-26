@@ -29,7 +29,6 @@ module commit_stage (
   input  logic                                        issue_valid_i,
   output logic                                        issue_ready_o,
   input  expipe_pkg::rob_entry_t                      issue_data_i,
-  input  logic                                        issue_jb_instr_i,
   output expipe_pkg::rob_idx_t                        issue_tail_idx_o,
   input  expipe_pkg::rob_idx_t                        issue_rs1_rob_idx_i,
   output logic                                        issue_rs1_ready_o,
@@ -46,8 +45,8 @@ module commit_stage (
   output logic                  cdb_ready_o,
 
   // Commit logic <--> store buffer
-  output logic                 sb_spec_instr_o,   // there are in-flight jump/branch instructions
-  output expipe_pkg::rob_idx_t sb_rob_head_idx_o,
+  input  expipe_pkg::rob_idx_t sb_mem_idx_i,   // executing store ROB index
+  output logic                 sb_mem_clear_o, // store is clear to execute
 
   // Commit logic <--> register files and status
   output logic int_rs_valid_o,
@@ -136,11 +135,6 @@ module commit_stage (
   logic                             cu_csr_override;
   logic                             cu_mis_flush;
   logic                             cu_except_flush;
-  logic                             cu_jb_instr;
-
-  // In-flight jump/branch instructions counter
-  logic          [ ROB_IDX_LEN-1:0] jb_instr_cnt;
-  logic jb_instr_cnt_en, jb_instr_cnt_clr, jb_instr_cnt_up;
 
   // -------
   // MODULES
@@ -170,6 +164,8 @@ module commit_stage (
     .opfwd_rs2_valid_o  (rob_opfwd_rs2_valid),
     .opfwd_rs2_ready_o  (rob_opfwd_rs2_ready),
     .opfwd_rs2_value_o  (rob_opfwd_rs2_value),
+    .sb_mem_idx_i       (sb_mem_idx_i),
+    .sb_mem_clear_o     (sb_mem_clear_o),
     .comm_valid_o       (rob_reg_valid),
     .comm_ready_i       (reg_rob_ready),
     .comm_data_o        (rob_reg_head_entry),
@@ -288,8 +284,11 @@ module commit_stage (
   //       logic input register (spill cell). Since its output will only be
   //       available the next cycle, the instruction is buffered inside the
   //       'comm_reg' register above.
+
+  // Misprediction detection
   assign inreg_cu_mispredicted = inreg_data_out.data.except_code == E_MISPREDICTION;
 
+  // Control unit
   commit_cu u_commit_cu (
     .clk_i             (clk_i),
     .rst_ni            (rst_ni),
@@ -298,7 +297,6 @@ module commit_stage (
     .comm_reg_en_o     (comm_reg_en),
     .comm_reg_clr_o    (comm_reg_clr),
     .comm_rd_sel_o     (cu_rd_sel),
-    .comm_jb_instr_o   (cu_jb_instr),
     .comm_csr_sel_o    (cu_csr_sel),
     .valid_i           (inreg_cu_valid),
     .ready_o           (cu_inreg_ready),
@@ -366,51 +364,28 @@ module commit_stage (
       end
     endcase
   end
-  assign csr_op_o         = (cu_csr_override) ? CSR_OP_SYSTEM : comm_reg_csr_op;
-
-  // Jump/branch in-flight instructions counter
-  // ------------------------------------------
-  assign jb_instr_cnt_en  = (issue_jb_instr_i & issue_ready_o) ^ cu_jb_instr;
-  assign jb_instr_cnt_clr = cu_mis_flush;
-  assign jb_instr_cnt_up  = issue_jb_instr_i;
-  updown_counter #(
-    .WIDTH(ROB_IDX_LEN)
-  ) u_jb_instr_counter (
-    .clk_i  (clk_i),
-    .rst_ni (rst_ni),
-    .en_i   (jb_instr_cnt_en),
-    .clr_i  (jb_instr_cnt_clr),
-    .up_dn_i(jb_instr_cnt_up),
-    .count_o(jb_instr_cnt),
-    .tc_o   ()                   // not needed
-  );
+  assign csr_op_o       = (cu_csr_override) ? CSR_OP_SYSTEM : comm_reg_csr_op;
 
   // -----------------
   // OUTPUT EVALUATION
   // -----------------
 
   // Data to front-end
-  assign fe_except_pc_o    = adder_out;
-
-  // To store buffer
-  // NOTE: if there are in-flight jumps or branches, the new instuction is
-  // speculative.
-  assign sb_spec_instr_o   = |jb_instr_cnt;
-  assign sb_rob_head_idx_o = rob_reg_head_idx;
+  assign fe_except_pc_o = adder_out;
 
   // Data to the register file(s)
-  assign rd_idx_o          = comm_reg_data.data.rd_idx;
-  assign rd_value_o        = rd_value;
+  assign rd_idx_o       = comm_reg_data.data.rd_idx;
+  assign rd_value_o     = rd_value;
 
   // Data to CSRs
-  assign csr_addr_o        = csr_addr;
-  assign csr_rs1_idx_o     = comm_reg_data.data.instruction.r.rs1;
-  assign csr_data_o        = csr_data;
-  assign csr_rd_idx_o      = comm_reg_data.data.rd_idx;
+  assign csr_addr_o     = csr_addr;
+  assign csr_rs1_idx_o  = comm_reg_data.data.instruction.r.rs1;
+  assign csr_data_o     = csr_data;
+  assign csr_rd_idx_o   = comm_reg_data.data.rd_idx;
 
   // Data to others
-  assign ex_mis_flush_o    = cu_mis_flush;
-  assign except_flush_o    = cu_except_flush;
+  assign ex_mis_flush_o = cu_mis_flush;
+  assign except_flush_o = cu_except_flush;
 
   // ----------
   // ASSERTIONS
@@ -434,15 +409,6 @@ module commit_stage (
   property p_watchdog;
     @(posedge clk_i) disable iff (!rst_ni) u_commit_cu.curr_state == u_commit_cu.IDLE |->
       ##[1:100] u_commit_cu.curr_state != u_commit_cu.IDLE
-  endproperty
-  // The number of jump/branch instructions must never overflow
-  property p_jb_instr;
-    @(posedge clk_i) disable iff (!rst_ni) sync_accept_on (ex_mis_flush_o | except_flush_o) jb_instr_cnt_en |-> ##1
-            (jb_instr_cnt == $past(
-        jb_instr_cnt
-    ) - 1) || (jb_instr_cnt == $past(
-        jb_instr_cnt
-    ) + 1)
   endproperty
   a_jb_instr :
   assert property (p_jb_instr);

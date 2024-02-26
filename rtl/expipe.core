@@ -3,7 +3,7 @@ CAPI=2:
 # Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-name: "polito:len5:expipe:0.1.0"
+name: "polito:len5:expipe:0.1.1"
 description: " LEN5 CPU execution pipeline components"
 
 filesets:
@@ -11,8 +11,6 @@ filesets:
    depend:
     - polito:len5:packages
    files:
-    - expipe/register-file/fp_regstat.sv
-    - expipe/register-file/fp_rf.sv
     - expipe/register-file/int_regstat.sv
     - expipe/register-file/int_rf.sv
     - expipe/register-file/csrs.sv

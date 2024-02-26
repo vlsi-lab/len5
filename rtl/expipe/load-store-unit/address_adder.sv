@@ -19,7 +19,9 @@
  *          address (rs1) and an offset (immediate value). Not suitable for
  *          virtual memory.
  */
-module address_adder (
+module address_adder #(
+  parameter bit IS_STORE = 1'b0
+) (
   input logic clk_i,
   input logic rst_ni,
   input logic flush_i,
@@ -60,7 +62,7 @@ module address_adder (
   assign ans.tag           = req_i.tag;
   assign ans.result        = req_i.base + req_i.offs;
   assign ans.except_raised = align_except;
-  assign ans.except_code   = (req_i.is_store) ? E_ST_ADDR_MISALIGNED : E_LD_ADDR_MISALIGNED;
+  assign ans.except_code   = (IS_STORE) ? E_ST_ADDR_MISALIGNED : E_LD_ADDR_MISALIGNED;
 
   // Output spill cell
   // -----------------

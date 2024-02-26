@@ -9,8 +9,8 @@
 
 `verilator_config
 // Warnings due to MAX_EU_N, in future version EU_N will be evualated by python template
-lint_off -rule UNUSED -file "*/exec_stage.sv" -match "Bits of signal are not used: 'issue_valid_i'[7:4]"
-lint_off -rule UNUSED -file "*/exec_stage.sv" -match "Bits of signal are not used: 'cdb_ready_i'[7:4]"
+lint_off -rule UNUSED -file "*/exec_stage.sv" -match "Bits of signal are not used: 'issue_valid_i'[5:4]"
+lint_off -rule UNUSED -file "*/exec_stage.sv" -match "Bits of signal are not used: 'cdb_ready_i'[5:4]"
 lint_off -rule UNUSED -file "*/arith_rs.sv" -match "Bits of signal are not used: 'cdb_data_i'[5:0]"
 lint_off -rule UNUSED -file "*/branch_rs.sv" -match "Bits of signal are not used: 'cdb_data_i'[5:0]"
 lint_off -rule UNUSED -file "*/load_buffer.sv" -match "Bits of signal are not used: 'cdb_data_i'[5:0]"

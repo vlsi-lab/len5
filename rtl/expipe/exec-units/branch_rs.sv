@@ -20,7 +20,7 @@ module branch_rs #(
   input logic rst_ni,
   input logic flush_i,
 
-  /* Issue Stage */
+  // Issue Stage
   input  logic                                         issue_valid_i,
   output logic                                         issue_ready_o,
   input  expipe_pkg::branch_ctl_t                      issue_branch_type_i,
@@ -32,14 +32,14 @@ module branch_rs #(
   input  logic                    [len5_pkg::XLEN-1:0] issue_pred_target_i,
   input  logic                                         issue_pred_taken_i,
 
-  /* Common Data Bus (CDB) */
+  // Common Data Bus (CDB)
   input  logic                  cdb_ready_i,
   input  logic                  cdb_valid_i,  // to know if the CDB is carrying valid data
   output logic                  cdb_valid_o,
   input  expipe_pkg::cdb_data_t cdb_data_i,
   output expipe_pkg::cdb_data_t cdb_data_o,
 
-  /* Branch unit */
+  // Branch unit
   input  logic                                         bu_valid_i,
   input  logic                                         bu_ready_i,
   output logic                                         bu_valid_o,
@@ -49,7 +49,7 @@ module branch_rs #(
   input  logic                    [len5_pkg::XLEN-1:0] bu_link_addr_i,      // computed link address
 `ifndef LEN5_C_EN
   input  logic                                         bu_except_raised_i,
-`endif  /* LEN5_C_EN */
+`endif  // LEN5_C_EN
   output expipe_pkg::rob_idx_t                         bu_rob_idx_o,
   output logic                    [len5_pkg::XLEN-1:0] bu_rs1_o,
   output logic                    [len5_pkg::XLEN-1:0] bu_rs2_o,
@@ -62,9 +62,51 @@ module branch_rs #(
 
   import len5_pkg::*;
   import expipe_pkg::*;
+
+  // DATA TYPES
+  // ----------
+  // Branch unit status
+  typedef enum logic [2:0] {
+    BU_S_EMPTY,         // empty
+    BU_S_RS1_PENDING,   // waiting for rs1 forwarding
+    BU_S_RS2_PENDING,   // waiting for rs2 forwarding
+    BU_S_RS12_PENDING,  // waiting for rs1 and rs2 forwarding
+    BU_S_EX_REQ,        // requesting execution to BU logic
+    BU_S_EX_WAIT,       // waiting for the BU result
+    BU_S_COMPLETED,     // ready to write the result on the CDB
+    BU_S_HALT           // for debug
+  } bu_state_t;
+
+  // Branch unit reservation station data
+  typedef struct packed {
+    branch_ctl_t     branch_type;    // Branch type for the branch unit
+    logic [XLEN-1:0] curr_pc;
+    rob_idx_t        rs1_rob_idx;    // The entry of the rob that will contain the required operand
+    logic [XLEN-1:0] rs1_value;      // The value of the first operand
+    rob_idx_t        rs2_rob_idx;    // The entry of the rob that will contain the required operand
+    logic [XLEN-1:0] rs2_value;      // The value of the second operand
+    logic [XLEN-1:0] imm_value;      // Immediate value
+    rob_idx_t        dest_rob_idx;   // The entry of the ROB where the result will be stored
+    logic [XLEN-1:0] target_link;    // predicted target, then link address
+    logic            taken;
+    logic            mispredicted;
+`ifndef LEN5_C_EN
+    logic            except_raised;
+`endif  // LEN5_C_EN
+  } bu_data_t;
+
+  // Branch unit operations
+  typedef enum logic [2:0] {
+    BU_OP_NONE,
+    BU_OP_INSERT,
+    BU_OP_SAVE_RS12,
+    BU_OP_SAVE_RS1,
+    BU_OP_SAVE_RS2,
+    BU_OP_SAVE_RES
+  } bu_op_t;
+
   // INTERNAL SIGNALS
   // ----------------
-
   // Head, tail, and execution counters
   logic head_cnt_en, head_cnt_clr;
   logic tail_cnt_en, tail_cnt_clr;
@@ -194,7 +236,7 @@ module branch_rs #(
         data[i] <= '0;
       end
     end else begin
-      /* Performed the required action for each instruction */
+      // Performed the required action for each instruction
       foreach (bu_op[i]) begin
         case (bu_op[i])
           BU_OP_INSERT: begin
@@ -224,7 +266,7 @@ module branch_rs #(
             data[i].mispredicted <= bu_res_mis_i;
 `ifndef LEN5_C_EN
             data[i].except_raised <= bu_except_raised_i;
-`endif  /* LEN5_C_EN */
+`endif  // LEN5_C_EN
           end
           default: ;
         endcase
@@ -236,10 +278,10 @@ module branch_rs #(
   // OUTPUT EVALUATION
   // -----------------
 
-  /* Issue Stage */
+  // Issue Stage
   assign issue_ready_o        = curr_state[tail_idx] == BU_S_EMPTY;
 
-  /* CDB */
+  // CDB
   assign cdb_valid_o          = curr_state[head_idx] == BU_S_COMPLETED;
   assign cdb_data_o.rob_idx   = data[head_idx].dest_rob_idx;
   assign cdb_data_o.res_value = data[head_idx].target_link;
@@ -247,10 +289,10 @@ module branch_rs #(
   assign cdb_data_o.except_raised = data[head_idx].except_raised;
 `else
   assign cdb_data_o.except_raised = 1'b0;
-`endif  /* LEN5_C_EN */
+`endif  // LEN5_C_EN
   assign cdb_data_o.except_code = (data[head_idx].mispredicted) ? E_MISPREDICTION : E_I_ADDR_MISALIGNED;
 
-  /* Branch Unit logic */
+  // Branch Unit logic
   assign bu_valid_o = curr_state[ex_idx] == BU_S_EX_REQ;
   assign bu_ready_o = 1'b1;
   assign bu_rs1_o = data[ex_idx].rs1_value;
@@ -314,6 +356,6 @@ module branch_rs #(
         ##1 curr_state[i] != BU_S_HALT);
     end
   end
-`endif  /* VERILATOR */
-`endif  /* SYNTHESIS */
+`endif  // VERILATOR
+`endif  // SYNTHESIS
 endmodule
