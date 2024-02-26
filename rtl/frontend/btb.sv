@@ -25,8 +25,8 @@ module btb #(
   input logic [len5_pkg::XLEN-1:0] curr_pc_i,
   input logic                      valid_i,
   input logic                      del_entry_i,
-  input       [          len5_pkg::XLEN-1:0] res_pc_i,
-  input       [          len5_pkg::XLEN-1:0] res_target_i,
+  input       [len5_pkg::XLEN-1:0] res_pc_i,
+  input       [len5_pkg::XLEN-1:0] res_target_i,
 
   output logic                                        hit_o,
   output logic [len5_pkg::XLEN-fetch_pkg::OFFSET-1:0] target_o
@@ -39,7 +39,7 @@ module btb #(
   localparam int unsigned BtbRows = 1 << BTB_BITS;
 
   typedef struct packed {
-    logic                            valid;
+    logic                                      valid;
     logic [len5_pkg::XLEN-BTB_BITS-OFFSET-1:0] tag;
     logic [len5_pkg::XLEN-OFFSET-1:0]          target;
   } btb_entry_t;

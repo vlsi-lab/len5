@@ -22,7 +22,7 @@ module pc_gen #(
   input  logic                   [len5_pkg::XLEN-1:0] comm_except_pc_i,
   input  logic                                        bu_res_valid_i,
   input  fetch_pkg::resolution_t                      bu_res_i,
-  input  logic                   [          len5_pkg::XLEN-1:0] pred_target_i,
+  input  logic                   [len5_pkg::XLEN-1:0] pred_target_i,
   input  logic                                        pred_taken_i,
   input  logic                                        mem_ready_i,
   output logic                                        valid_o,
