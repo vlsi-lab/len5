@@ -1,20 +1,7 @@
-// Copyright 2019 Politecnico di Torino.
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 2.0 (the "License"); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-2.0. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
-//
-// File: div.sv
-// Author: Michele Caon
-// Date: 21/10/2019
+// TODO: inspired by https://github.com/openhwgroup/cva6/blob/master/core/mult.sv
 
-module div #(
-  parameter int unsigned PIPE_DEPTH = 4,  // number of pipeline levels (>0)
 
+module div #(  // TODO: call div
   // EU-specific parameters
   parameter int unsigned EU_CTL_LEN = 4
 ) (
@@ -41,100 +28,141 @@ module div #(
 
   import len5_pkg::*;
   import expipe_pkg::*;
+  //riscv::xlen_t
+  //    operand_b,
+  //    operand_a;  // input operands after input MUX (input silencing, word operations or full inputs)
+  //riscv::xlen_t result;  // result before result mux
 
-  // MULT output
-  logic     [XLEN-1:0] result;
-  logic                except_raised;
+  logic [XLEN-1:0] div_a, div_b;
+  logic word_op_d, word_op_q;  // save whether the operation was word or not
+  logic except_raised_d, except_raised_q;
+  logic [XLEN-1:0] result;  // temp result
 
-  // Pipeline registers
-  logic     [XLEN-1:0] pipe_result_d       [PIPE_DEPTH];
-  rob_idx_t            pipe_rob_idx_d      [PIPE_DEPTH];
-  logic                pipe_except_raised_d[PIPE_DEPTH];
-
-  // --------------
-  // DIV OPERATIONS
-  // --------------
-  // TODO: add proper operations support
-  always_comb begin : div_ops
-    // Default values
-    result        = '0;
-    except_raised = 1'b0;
-
-    unique case (ctl_i)
+  // ad-hoc encoding, bit 2 of ctl_i is the word operation bit
+  assign word_op_d = ctl_i[2];
+  // Sign and operation management
+  always_comb begin : sign_and_op
+    div_a           = '0;
+    div_b           = '0;
+    except_raised_d = 1'b0;
+    case (ctl_i)
       DIV_DIV: begin
-        if (rs2_value_i != 0) result = rs1_value_i / rs2_value_i;
-        else result = '0;
+        div_a = rs1_value_i;
+        div_b = rs2_value_i;
       end
-      default: except_raised = 1'b1;
+      DIV_DIVW: begin
+        div_a = {{32{rs1_value_i[31]}}, rs1_value_i[31:0]};
+        div_b = {{32{rs2_value_i[31]}}, rs2_value_i[31:0]};
+      end
+      DIV_REM: begin
+        div_a = rs1_value_i;
+        div_b = rs2_value_i;
+      end
+      DIV_REMW: begin
+        div_a = {{32{rs1_value_i[31]}}, rs1_value_i[31:0]};
+        div_b = {{32{rs2_value_i[31]}}, rs2_value_i[31:0]};
+      end
+      DIV_DIVU: begin
+        div_a = rs1_value_i;
+        div_b = rs2_value_i;
+      end
+      DIV_DIVUW: begin
+        div_a = {{32{'0}}, rs1_value_i[31:0]};
+        div_b = {{32{'0}}, rs2_value_i[31:0]};
+      end
+      DIV_REMU: begin
+        div_a = rs1_value_i;
+        div_b = rs2_value_i;
+      end
+      DIV_REMUW: begin
+        div_a = {{32{'0}}, rs1_value_i[31:0]};
+        div_b = {{32{'0}}, rs2_value_i[31:0]};
+      end
+      default: except_raised_d = 1'b1;  // invalid operation
     endcase
   end
 
-  // ------------------
-  // PIPELINE REGISTERS
-  // ------------------
 
-  assign pipe_result_d[0]        = result;
-  assign pipe_rob_idx_d[0]       = rob_idx_i;
-  assign pipe_except_raised_d[0] = except_raised;
-
-  // Generate PIPE_DEPTH-1 pipeline registers
-  generate
-    for (genvar i = 1; i < PIPE_DEPTH; i = i + 1) begin : gen_pipe_reg
-      always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni) begin
-          pipe_result_d[i]        <= '0;
-          pipe_rob_idx_d[i]       <= '0;
-          pipe_except_raised_d[i] <= 1'b0;
-        end else begin
-          pipe_result_d[i]        <= pipe_result_d[i-1];
-          pipe_rob_idx_d[i]       <= pipe_rob_idx_d[i-1];
-          pipe_except_raised_d[i] <= pipe_except_raised_d[i-1];
-        end
-      end
-    end
-  endgenerate
-
-  // ---------------
-  // OUTPUT REGISTER
-  // ---------------
-  // NOTE: use a spill cell to break the handshaking path
-
-  // Interface data type
-  typedef struct packed {
-    logic [XLEN-1:0] res;            // the ALU result
-    rob_idx_t        rob_idx;        // instr. index in the RS
-    logic            except_raised;  // exception flag
-  } out_reg_data_t;
-  out_reg_data_t out_reg_data_in, out_reg_data_out;
-
-  // Input data
-  assign out_reg_data_in.res           = pipe_result_d[PIPE_DEPTH-1];
-  assign out_reg_data_in.rob_idx       = pipe_rob_idx_d[PIPE_DEPTH-1];
-  assign out_reg_data_in.except_raised = pipe_except_raised_d[PIPE_DEPTH-1];
-
-  // Output data
-  assign result_o                      = out_reg_data_out.res;
-  assign rob_idx_o                     = out_reg_data_out.rob_idx;
-  assign except_raised_o               = out_reg_data_out.except_raised;
-
-  // Output register
-  spill_cell_flush #(
-    .DATA_T(out_reg_data_t),
-    .SKIP  (1'b0)
-  ) u_out_reg (
-    .clk_i  (clk_i),
-    .rst_ni (rst_ni),
+  ////////////////////
+  // Serial divider //
+  ////////////////////
+  serdiv #(
+    .STABLE_HANDSHAKE(1'b1)
+  ) u_serdiv (
+    .clk_i(clk_i),
+    .rst_ni(rst_ni),
+    .id_i(rob_idx_i),
+    .op_a_i(div_a),
+    .op_b_i(div_b),
+    .opcode_i (ctl_i[1:0]),   // 00: udiv, 10: urem, 01: div, 11: rem TODO:  manipulate ctl_i to get the opcode
+    .in_vld_i(valid_i),
+    .in_rdy_o(ready_o),
     .flush_i(flush_i),
-    .valid_i(valid_i),
-    .ready_i(ready_i),
-    .valid_o(valid_o),
-    .ready_o(ready_o),
-    .data_i (out_reg_data_in),
-    .data_o (out_reg_data_out)
+    .out_vld_o(valid_o),
+    .out_rdy_i(ready_i),
+    .id_o(rob_idx_o),
+    .res_o(result)
   );
 
-  // Exception handling
-  // ------------------
-  assign except_code_o = E_ILLEGAL_INSTRUCTION;
 
-endmodule
+
+  //////////////////////
+  // Word op register //
+  //////////////////////
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (~rst_ni) begin
+      word_op_q <= '0;
+    end else begin
+      word_op_q <= word_op_d;
+    end
+  end
+
+  //////////////////////
+  // Word op register //
+  //////////////////////
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (~rst_ni) begin
+      word_op_q <= 1'b0;
+    end else if (flush_i) begin
+      word_op_q <= 1'b0;
+    end else begin
+      word_op_q <= word_op_d;
+    end
+  end
+
+  //////////////////////
+  // Word op register //
+  //////////////////////
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (~rst_ni) begin
+      word_op_q <= '0;
+    end else if (flush_i) begin
+      word_op_q <= '0;
+    end else begin
+      word_op_q <= word_op_d;
+    end
+  end
+
+  // CHECK: maybe not needed valid_o also manages this,  check inside serdiv
+  // Exception handling
+
+  //assign except_raised = (div_b == '0) 1'b1 : 1'b0;
+  //////////////////////////////////
+  // Exception handling  register //
+  //////////////////////////////////
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (~rst_ni) begin
+      except_raised_q <= '0;
+    end else if (flush_i) begin
+      except_raised_q <= '0;
+    end else begin
+      except_raised_q <= except_raised_d;
+    end
+  end
+
+  // Result multiplexer
+  // if it was a signed word operation the bit will be set and the result will be sign extended accordingly
+  assign result_o        = (word_op_q) ? {{32{result[31]}}, result[31:0]} : result;
+  assign except_raised_o = except_raised_q;
+  assign except_code_o   = E_ILLEGAL_INSTRUCTION;
+endmodule  // div
