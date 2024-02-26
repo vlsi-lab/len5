@@ -70,18 +70,18 @@ module store_buffer #(
   output logic                    [len5_pkg::XLEN-1:0] l0_value_o,   // cached value
 
   // Memory system
-  output logic                                        mem_valid_o,
-  input  logic                                        mem_ready_i,
-  input  logic                                        mem_valid_i,
-  output logic                                        mem_ready_o,
-  output logic                                        mem_we_o,
-  output logic                   [len5_pkg::XLEN-1:0] mem_addr_o,
-  output logic                   [               7:0] mem_be_o,
-  output logic                   [len5_pkg::XLEN-1:0] mem_wdata_o,
-  output logic                   [  BUFF_IDX_LEN-1:0] mem_tag_o,
-  input  logic                   [  BUFF_IDX_LEN-1:0] mem_tag_i,
-  input  logic                                        mem_except_raised_i,
-  input  len5_pkg::except_code_t                      mem_except_code_i
+  output logic                                                mem_valid_o,
+  input  logic                                                mem_ready_i,
+  input  logic                                                mem_valid_i,
+  output logic                                                mem_ready_o,
+  output logic                                                mem_we_o,
+  output logic                   [        len5_pkg::XLEN-1:0] mem_addr_o,
+  output logic                   [                       7:0] mem_be_o,
+  output logic                   [        len5_pkg::XLEN-1:0] mem_wdata_o,
+  output logic                   [len5_pkg::BUFF_IDX_LEN-1:0] mem_tag_o,
+  input  logic                   [len5_pkg::BUFF_IDX_LEN-1:0] mem_tag_i,
+  input  logic                                                mem_except_raised_i,
+  input  len5_pkg::except_code_t                              mem_except_code_i
 );
 
   import len5_config_pkg::*;

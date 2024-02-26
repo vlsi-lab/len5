@@ -21,24 +21,24 @@ module issue_queue (
   output logic fetch_ready_o,
 
   // Data from fetch unit
-  input logic         [len5_pkg::XLEN-1:0] curr_pc_i,
-  input logic         [len5_pkg::ILEN-1:0] instruction_i,
-  input logic         [len5_pkg::XLEN-1:0] pred_target_i,
-  input logic                              pred_taken_i,
-  input logic                              except_raised_i,
-  input except_code_t                      except_code_i,
+  input logic                   [len5_pkg::XLEN-1:0] curr_pc_i,
+  input logic                   [len5_pkg::ILEN-1:0] instruction_i,
+  input logic                   [len5_pkg::XLEN-1:0] pred_target_i,
+  input logic                                        pred_taken_i,
+  input logic                                        except_raised_i,
+  input len5_pkg::except_code_t                      except_code_i,
 
   // Handshake from/to the issue logic
   input  logic issue_ready_i,
   output logic issue_valid_o,
 
   // Data to the execution pipeline
-  output logic         [len5_pkg::XLEN-1:0] curr_pc_o,
-  output logic         [len5_pkg::ILEN-1:0] instruction_o,
-  output logic         [len5_pkg::XLEN-1:0] pred_target_o,
-  output logic                              pred_taken_o,
-  output logic                              except_raised_o,
-  output except_code_t                      except_code_o
+  output logic                   [len5_pkg::XLEN-1:0] curr_pc_o,
+  output logic                   [len5_pkg::ILEN-1:0] instruction_o,
+  output logic                   [len5_pkg::XLEN-1:0] pred_target_o,
+  output logic                                        pred_taken_o,
+  output logic                                        except_raised_o,
+  output len5_pkg::except_code_t                      except_code_o
 );
 
   import len5_pkg::*;

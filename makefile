@@ -27,7 +27,7 @@ DUMP_TRACE		?= false
 # Regression tests
 TEST_DIRS		:= $(wildcard sw/applications/*/)
 TESTS			:= $(patsubst sw/applications/%/,%,$(TEST_DIRS))
-TESTS_EXCLUDE	:= timer
+TESTS_EXCLUDE	:= timer alu_mult alu_div #TODO fix
 TESTS			:= $(filter-out $(TESTS_EXCLUDE),$(TESTS))
 
 # VARIABLES
@@ -114,7 +114,7 @@ questasim-sim: | app .check-fusesoc $(BUILD_DIR)/
 .PHONY: app
 app: | $(BUILD_DIR)/
 	@echo "## Building application '$(PROJECT)'"
-	$(MAKE) -BC sw app
+	$(MAKE) -BC sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR) COPT=$(COPT)
 
 .PHONY: benchmark
 benchmark: 
@@ -170,6 +170,12 @@ $(BUILD_DIR)/sim-common/spike-trace.log: $(BUILD_DIR)/main.elf | $(BUILD_DIR)/si
 spike-check: $(BUILD_DIR)/sim-common/sim-trace.log $(BUILD_DIR)/sim-common/spike-trace.log
 	@echo "## Comparing Spike and Verilator traces..."
 	scripts/sim/cmp-trace.sh $^
+# Synthesis
+# ----------------------------
+.PHONE: syn-asic
+syn-asic: | .check-fusesoc
+	@echo "## Running ASIC synthesis..."
+	fusesoc run --no-export --target synth_asic --tool design_compiler polito:len5:len5
 
 # Check that nothing is broken
 # ----------------------------

@@ -143,12 +143,9 @@ module tb_bare #(
     $display("[TB] M extension: %s", (LEN5_M_EN && LEN5_D_EN) ? "YES" : "NO");
 
     // Print FP extension information
-    $display("[TB] D extension: %s",
-             `ifdef LEN5_FP_EN "YES"
-             `else
-             "NO"
-             `endif
-    );
+    $display("[TB] D extension: %s", (LEN5_FP_EN) ? "YES" : "NO");
+
+
   end
 
   // Watchdog

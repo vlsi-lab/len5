@@ -1,0 +1,37 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{
+  // Name of the vendored-in project
+  name: "coremark",
+
+  // Target directory: typically equal to the name
+  // All imported code is copied into this directory
+  target_dir: "coremark",
+
+  // Git upstream source code repository
+  upstream: {
+    // Upstream Git repository URL. HTTPS URLs are preferred.
+    url: "https://github.com/eembc/coremark.git",
+    // Upstream revision or branch. Can be a commit hash or a branch name.
+    rev: "v1.01",
+  },
+
+  // Optional: Pick specific files or subdirectories from upstream and
+  // specify where to put them.
+  mapping: [
+    {from: 'barebones',             to: 'src/all'},
+    {from: 'core_list_join.c',      to: 'src/all/core_list_join.c'},
+    {from: 'core_main.c',           to: 'src/all/core_main.c'},
+    {from: 'core_matrix.c',         to: 'src/all/core_matrix.c'},
+    {from: 'core_state.c',          to: 'src/all/core_state.c'},
+    {from: 'core_util.c',           to: 'src/all/core_util.c'},
+    {from: 'coremark.h',            to: 'src/all/coremark.h'},
+  ],
+
+  
+  exclude_from_upstream: [
+    "barebones/core_portme.mak", # they have a .gitignore here, not necessary
+  ]
+
+}

@@ -25,8 +25,8 @@ module btb #(
   input logic [len5_pkg::XLEN-1:0] curr_pc_i,
   input logic                      valid_i,
   input logic                      del_entry_i,
-  input       [          XLEN-1:0] res_pc_i,
-  input       [          XLEN-1:0] res_target_i,
+  input       [len5_pkg::XLEN-1:0] res_pc_i,
+  input       [len5_pkg::XLEN-1:0] res_target_i,
 
   output logic                                        hit_o,
   output logic [len5_pkg::XLEN-fetch_pkg::OFFSET-1:0] target_o
@@ -39,14 +39,14 @@ module btb #(
   localparam int unsigned BtbRows = 1 << BTB_BITS;
 
   typedef struct packed {
-    logic                            valid;
-    logic [XLEN-BTB_BITS-OFFSET-1:0] tag;
-    logic [XLEN-OFFSET-1:0]          target;
+    logic                                      valid;
+    logic [len5_pkg::XLEN-BTB_BITS-OFFSET-1:0] tag;
+    logic [len5_pkg::XLEN-OFFSET-1:0]          target;
   } btb_entry_t;
   btb_entry_t btb_d[BtbRows], btb_q[BtbRows];
 
   logic [BTB_BITS-1:0] addr_r, addr_w;
-  logic [XLEN-BTB_BITS-OFFSET-1:0] tag_r, tag_w;
+  logic [len5_pkg::XLEN-BTB_BITS-OFFSET-1:0] tag_r, tag_w;
 
   // --------------------------
   // Branch Target Buffer (BTB)

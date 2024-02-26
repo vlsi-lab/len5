@@ -5,7 +5,6 @@
 # Target application
 SUITE			?= embench 
 BENCHMARK 		?= crc32
-LINKER 			?= ../linker/len5-sim.ld
 BENCH_SRCS 			:= $(wildcard $(SUITE)/src/$(BENCHMARK)/*.c)
 BENCH_SRCS 			+= $(wildcard $(SUITE)/src/$(BENCHMARK)/*.S)
 BENCH_SRCS 			+= $(wildcard $(SUITE)/support/*.c)
@@ -17,14 +16,9 @@ endif
 BENCH_OBJS 			:= $(filter %.o,\
 				   $(patsubst %.c,$(BUILD_DIR)/%.o,$(BENCH_SRCS))\
 				   $(patsubst %.S,$(BUILD_DIR)/%.o,$(BENCH_SRCS)))
-ifeq ($(ISA_STRING), rv64im) # Disable div instructions
-	CFLAGS += -mno-div
-endif
 
 ###  RISC-V C toolchain
 # TODO: REMOVE -mstrict-align ONCE UNALIGNED ACCESS IS SUPPORTED
-LDFLAGS_PRE		:= -T ../$(LINKER) \
-				   -static
 
 LDFLAGS_POST	+= -lm # This MUST BE put post the c files to enable math benchmarks
 
@@ -36,6 +30,10 @@ LIB_INCS		:= $(wildcard ../device/base/*.h ../device/base/freestanding/*.h ../de
 
 ifeq ($(SUITE),  embench) # If embench suite, then include files are found in support dir
 LIB_INCS		+= $(wildcard ../benchmarks/$(SUITE)/support/*.h)
+endif
+
+ifeq ($(SUITE),  coremark) # If embench suite, then include files are found in support dir
+LIB_INCS		+= $(wildcard ../benchmarks/$(SUITE)/src/*.h)
 endif
 
 INC_FOLDERS     += $(sort $(dir $(LIB_INCS)))
@@ -57,6 +55,9 @@ LIB_OBJS		:= $(filter %.o,\
 
 .PHONY: embench
 embench: $(BUILD_DIR)/main.hex $(BUILD_DIR)/main.disasm
+
+.PHONY: coremark 
+coremark: $(BUILD_DIR)/main.hex $(BUILD_DIR)/main.disasm
 
 $(BUILD_DIR)/main.%: $(BUILD_DIR)/benchmarks/$(SUITE)/$(BENCHMARK)/main.%
 	cp $< $@
