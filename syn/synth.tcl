@@ -30,7 +30,7 @@ timing_loop_check "${REPORT_DIR}/timing_loop.rpt"
 set_clock_gating_style -minimum_bitwidth 3 -positive_edge_logic integrated:CKLNQD16LVT -control_point before
 
 # Check the design
-check_design > ${REPORT_DIR}/check_design.log
+check_design > ${REPORT_DIR}/check_design.rpt
 
 # Compile design
 compile_ultra -no_autoungroup -no_boundary_optimization -timing -gate_clock
@@ -39,9 +39,9 @@ compile_ultra -no_autoungroup -no_boundary_optimization -timing -gate_clock
 write -f ddc -hierarchy -output ${REPORT_DIR}/compiled.ddc
 
 # Write synthesized netlist
+suppress_message UCN-1
 change_names -rules verilog -hier
-# Check the design for potential problems
-check_design > ${REPORT_DIR}/check_design.rpt
+unsuppress_message UCN-1
 
 write -format verilog -hier -o ${REPORT_DIR}/netlist.v
 

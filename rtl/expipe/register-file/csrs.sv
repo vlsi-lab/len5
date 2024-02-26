@@ -296,22 +296,21 @@ module csrs (
     end
   end
 
-  // ---------
+  // -------- 
   // CSR WRITE
   // ---------
+  // privilege mode
+  // TODO: only M-mode is currently supported. Add the other modes.
+  assign priv_mode    = PRIV_MODE_M;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin : fcsr_reg
     if (!rst_ni) begin
       // CSR DEFAULT VALUES
       // ------------------
-
-      // priv mode
-      priv_mode    <= PRIV_MODE_M;
-
       // fcsr
       // fcsr <= '0;
       // mstatus
-      mstatus_mpp  <= PRIV_MODE_U;
+      mstatus_mpp  <= PRIV_MODE_M;  // change to U-mode when supported
       mstatus_mpie <= 1'b0;
       mstatus_mie  <= 1'b0;
       // mtvec

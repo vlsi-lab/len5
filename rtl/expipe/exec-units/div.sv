@@ -67,16 +67,16 @@ module div #(  // TODO: call div
         div_b = rs2_value_i;
       end
       DIV_DIVUW: begin
-        div_a = {{32{'0}}, rs1_value_i[31:0]};
-        div_b = {{32{'0}}, rs2_value_i[31:0]};
+        div_a = {{32{1'b0}}, rs1_value_i[31:0]};
+        div_b = {{32{1'b0}}, rs2_value_i[31:0]};
       end
       DIV_REMU: begin
         div_a = rs1_value_i;
         div_b = rs2_value_i;
       end
       DIV_REMUW: begin
-        div_a = {{32{'0}}, rs1_value_i[31:0]};
-        div_b = {{32{'0}}, rs2_value_i[31:0]};
+        div_a = {{32{1'b0}}, rs1_value_i[31:0]};
+        div_b = {{32{1'b0}}, rs2_value_i[31:0]};
       end
       default: except_raised_d = 1'b1;  // invalid operation
     endcase

@@ -11,6 +11,7 @@
 // File: issue_queue.sv
 // Author: Michele Caon
 // Date: 17/10/2019
+
 module issue_queue (
   input logic clk_i,
   input logic rst_ni,
@@ -40,11 +41,10 @@ module issue_queue (
   output logic                                        except_raised_o,
   output len5_pkg::except_code_t                      except_code_o
 );
-
   import len5_pkg::*;
   import expipe_pkg::*;
-  // DEFINITIONS
 
+  // DEFINITIONS
   // New instruction
   iq_entry_t new_instr, issued_instr;
 
@@ -61,7 +61,7 @@ module issue_queue (
 
   fifo #(
     .DATA_T(iq_entry_t),
-    .DEPTH (IQ_DEPTH)
+    .DEPTH (len5_config_pkg::IQ_DEPTH)
   ) u_issue_fifo (
     .clk_i  (clk_i),
     .rst_ni (rst_ni),

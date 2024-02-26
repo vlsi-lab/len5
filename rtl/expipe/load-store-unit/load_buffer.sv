@@ -393,7 +393,7 @@ module load_buffer #(
   // Address adder
   assign adder_valid_o            = curr_state[addr_idx] == LOAD_S_ADDR_REQ;
   assign adder_ready_o            = 1'b1;  // always ready to accept data from the adder
-  assign adder_req_o.tag          = {'0, addr_idx};
+  assign adder_req_o.tag          = {{BUFF_IDX_LEN-IdxW{1'b0}}, addr_idx};
   assign adder_req_o.ls_type      = data[addr_idx].load_type;
   assign adder_req_o.base         = data[addr_idx].rs1_value;
   assign adder_req_o.offs         = data[addr_idx].imm_addr_value;
@@ -414,7 +414,7 @@ module load_buffer #(
       assign mem_addr_o = data[mem_idx].imm_addr_value;
     end
   endgenerate
-  assign mem_tag_o = {'0, mem_idx};
+  assign mem_tag_o = {{BUFF_IDX_LEN-IdxW{1'b0}}, mem_idx};
   assign mem_we_o  = 1'b0;
 
   // Byte enable

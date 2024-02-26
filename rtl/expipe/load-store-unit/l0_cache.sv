@@ -22,7 +22,7 @@
  */
 module l0_cache #(
   /* Dependent parameters: do NOT override */
-  localparam int unsigned StIdxW = $clog2(len5_pkg::STBUFF_DEPTH),
+  localparam int unsigned StIdxW = $clog2(len5_config_pkg::STBUFF_DEPTH),
   localparam int unsigned TagW   = (len5_pkg::XLEN) - StIdxW
 ) (
   input logic clk_i,
