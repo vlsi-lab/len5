@@ -15,12 +15,20 @@ BUILD_DIR	   	?= $(realpath .)/build
 PROJECT  ?= hello_world
 SUITE   ?= embench
 BENCHMARK ?= crc32
+LINKER   ?= $(realpath sw/linker/len5-sim.ld)
 COPT   	 ?= -O0
 
 # RTL simulation
 FIRMWARE		?= $(BUILD_DIR)/main.hex
-MAX_CYCLES		?= 1000000
+MAX_CYCLES		?= 100000
 LOG_LEVEL		?= LOG_MEDIUM
+DUMP_TRACE		?= false
+
+# Regression tests
+TEST_DIRS		:= $(wildcard sw/applications/*/)
+TESTS			:= $(patsubst sw/applications/%/,%,$(TEST_DIRS))
+TESTS_EXCLUDE	:= timer
+TESTS			:= $(filter-out $(TESTS_EXCLUDE),$(TESTS))
 
 # VARIABLES
 # ---------
@@ -61,11 +69,31 @@ $(BUILD_DIR)/.verilator.lock: $(SIM_CORE_FILES) $(SIM_HDL_FILES) $(SIM_CPP_FILES
 
 # Run Verilator simulation
 .PHONY: verilator-sim
-verilator-sim: $(BUILD_DIR)/.verilator.lock | .check-fusesoc
+verilator-sim: $(BUILD_DIR)/.verilator.lock $(BUILD_DIR)/main.hex | .check-fusesoc
 	fusesoc run --no-export --target sim --tool verilator --run $(FUSESOC_FLAGS) polito:len5:len5 \
 		--log_level=$(LOG_LEVEL) \
 		--firmware=$(FIRMWARE) \
 		--max_cycles=$(MAX_CYCLES) \
+		--dump_trace=$(DUMP_TRACE) \
+		$(FUSESOC_ARGS)
+
+.PHONY: verilator-opt
+verilator-opt: $(BUILD_DIR)/.verilator.lock $(BUILD_DIR)/main.hex | .check-fusesoc
+	fusesoc run --no-export --target sim --tool verilator --run $(FUSESOC_FLAGS) polito:len5:len5 \
+		--log_level=$(LOG_LEVEL) \
+		--firmware=$(FIRMWARE) \
+		--max_cycles=$(MAX_CYCLES) \
+		--dump_waves=false \
+		$(FUSESOC_ARGS)
+
+$(BUILD_DIR)/sim-common/sim-trace.log: $(BUILD_DIR)/.verilator.lock $(BUILD_DIR)/main.hex
+	@echo "## Running simulation with Verilator..."
+	fusesoc run --no-export --target sim --tool verilator --run $(FUSESOC_FLAGS) polito:len5:len5 \
+		--log_level=$(LOG_LEVEL) \
+		--firmware=$(FIRMWARE) \
+		--max_cycles=$(MAX_CYCLES) \
+		--dump_trace=true \
+		--dump_waves=$(DUMP_WAVES) \
 		$(FUSESOC_ARGS)
 
 # Open dumped waveform with GTKWave
@@ -86,7 +114,18 @@ questasim-sim: | app .check-fusesoc $(BUILD_DIR)/
 .PHONY: app
 app: | $(BUILD_DIR)/
 	@echo "## Building application '$(PROJECT)'"
-	$(MAKE) -BC sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR) COPT=$(COPT)
+	$(MAKE) -BC sw app
+
+.PHONY: benchmark
+benchmark: 
+	@echo "## Building suite $(SUITE) benchmark $(BENCHMARK)"
+	$(MAKE) -BC sw benchmark SUITE=$(SUITE) BUILD_DIR=$(BUILD_DIR) BENCHMARK=$(BENCHMARK)
+
+.PHONY: run-benchmarks
+run-benchmarks: 
+	@echo "## Running suite $(SUITE)"
+	python3 scripts/benchmarks.py -s $(SUITE)
+	rm -rf build_*
 
 .PHONY: benchmark
 benchmark: 
@@ -113,17 +152,38 @@ run-helloworld-questasim: questasim-sim app-helloworld | .check-fusesoc
 	make run PLUSARGS="c firmware=../../../sw/applications/hello_world.hex"; \
 	cd ../../..;
 
+# Simulate the current application on Spike, in interactive mode (debug)
+.PHONY: spike-sim
+spike-sim: $(BUILD_DIR)/main.elf
+	@echo "## Running simulation with Spike..."
+	spike -m0xf000:0x100000,0x20000000:0x1000 -d $<
+
+# Simulate the current application on Spike in silent mode and generate the instruction execution trace
+.PHONY: spike-trace
+spike-trace: $(BUILD_DIR)/sim-common/spike-trace.log
+$(BUILD_DIR)/sim-common/spike-trace.log: $(BUILD_DIR)/main.elf | $(BUILD_DIR)/sim-common/
+	@echo "## Running simulation with Spike..."
+	spike --log=$@ -l -m0xf000:0x100000,0x20000000:0x1000 $<
+
+# Compare the execution traces from Spike and the Verilator simulation
+.PHONY: spike-check
+spike-check: $(BUILD_DIR)/sim-common/sim-trace.log $(BUILD_DIR)/sim-common/spike-trace.log
+	@echo "## Comparing Spike and Verilator traces..."
+	scripts/sim/cmp-trace.sh $^
+
 # Check that nothing is broken
 # ----------------------------
 .PHONE: check
 check: | .check-fusesoc
-	@echo "## Checking software build..."
-	$(MAKE) app PROJECT=hello_world BUILD_DIR=$(BUILD_DIR)
-	@echo "## Checking RTL..."
+	@echo "### Executing regression tests..."
+	@echo " ## Checking RTL..."
 	fusesoc run --no-export --target format polito:len5:len5
 	fusesoc run --no-export --target lint polito:len5:len5
-	$(MAKE) verilator-build
-	@echo "\033[1;32mSUCCESS: all checks passed!\033[0m"
+	@echo " ## Simulating test applications..."
+	$(foreach T, $(TESTS), eval $(MAKE) app PROJECT=$(T) COPT=-O0 && $(MAKE) spike-check || exit 1;)
+	$(foreach T, $(TESTS), eval $(MAKE) app PROJECT=$(T) COPT=-O1 && $(MAKE) spike-check || exit 1;)
+	$(foreach T, $(TESTS), eval $(MAKE) app PROJECT=$(T) COPT=-O2 && $(MAKE) spike-check || exit 1;)
+	@echo "\e[1;32m### SUCCESS: all checks passed!\e[0m"
 
 # Utilities
 # ---------
@@ -161,3 +221,11 @@ clean-app:
 .print:
 	@echo "SIM_HDL_FILES: $(SIM_HDL_FILES)"
 	@echo "SIM_CPP_FILES: $(SIM_CPP_FILES)"
+	@echo "TESTS: $(TESTS)"
+
+# Export variables for software linker script
+# -------------------------------------------
+export BUILD_DIR
+export PROJECT
+export LINKER
+export COPT

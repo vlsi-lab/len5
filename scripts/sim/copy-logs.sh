@@ -17,4 +17,11 @@ for file in $FILE_LIST; do
     ln -sr $file $ROOT_DIR/build/sim-common/
 done
 
+# Copy execution trace log, if any
+TRACE_FILE="$(dirname $1)/sim-trace.log"
+if [ -f $TRACE_FILE ]; then
+    rm -f $ROOT_DIR/build/sim-common/sim-trace.log
+    ln -sr $TRACE_FILE $ROOT_DIR/build/sim-common/
+fi
+
 exit 0
