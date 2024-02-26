@@ -1,0 +1,96 @@
+CAPI=2:
+# Copyright 2024 POLITO
+# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# File: len5_tb.core
+# Author: Mattia Mirigaldi
+# Date: 14/02/2024
+# Description: LEN5 top-level core file
+
+name: "polito:len5:alu-tb:0.1.0"
+description: "LEN5 tb files and targets"
+
+filesets:
+  rtl-alu:
+    depend:
+    - polito:len5:packages
+    - polito:len5:common
+    - polito:len5:expipe
+
+  verilator-tb:
+    depend:
+    - polito:len5:verilator-common
+    files:
+    - tb_components.cpp
+    - tb_components.hh: {is_include_file: true}
+    - alu_tb.cpp
+    file_type: cppSource
+
+scripts:
+  # Create log directory
+  prepare_dirs:
+    cmd:
+    - mkdir
+    - -p
+    - logs
+    - ../../sim-common
+
+  # Copy waveform dump
+  copy_waves:
+    cmd:
+    - cp
+    - logs/waves.fst
+    - ../../sim-common
+  
+targets:
+  # Default target
+  default: &default
+    filesets:
+    - rtl-alu
+    - verilator-tb
+    toplevel: alu
+
+  # RTL simulation
+  sim:
+    <<: *default
+    default_tool: verilator
+    hooks:
+      pre_run:
+      - prepare_dirs
+      post_run:
+      - copy_waves
+    parameters:
+    - tool_verilator ? (max_cycles)
+    - tool_verilator ? (log_level)
+    tools:
+      verilator:
+        mode: cc
+        exe: true
+        verilator_options:
+        - '--cc'
+        - '--assert'
+        - '--trace'
+        - '--trace-fst'
+        - '--trace-structs'
+        - '--trace-max-array 128'
+        - '--x-assign unique'
+        - '--x-initial unique'
+        - '--report-unoptflat'
+        - '--exe'
+        - 'alu_tb.cpp'
+        - '-Wall'
+        - '-Wpedantic'
+
+# Parameters
+parameters:
+  log_level:
+    datatype: str
+    description: |
+      Set the log level. Admitted values: LOG_NONE|LOG_LOW|LOG_MEDIUM|LOG_HIGH|LOG_FULL|LOG_DEBUG.
+      Errors and configuration messages are always printed.
+    paramtype: cmdlinearg
+  max_cycles:
+    datatype: int
+    description: Maximum number of simulation cycles (halt the simulation when reached).
+    paramtype: cmdlinearg

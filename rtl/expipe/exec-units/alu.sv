@@ -13,7 +13,7 @@
 // Date: 10/11/2021
 
 module alu #(
-  parameter bit SKIP_REG = 1'b0,  // make the ALU fully combinational
+  parameter bit SKIP_REG = 1'b1,  // make the ALU fully combinational
 
   // EU-specific parameters
   parameter int unsigned EU_CTL_LEN = 4
@@ -51,6 +51,7 @@ module alu #(
   logic [        XLEN-1:0] adder_b;
   logic                    adder_cin;  // carry-in
   logic [        XLEN-1:0] adder_res;
+  logic                    adder_cout;
   logic [        XLEN-1:0] adder_res_32;
 
   // Shifter
@@ -70,12 +71,15 @@ module alu #(
   assign rs1_32_sext = {{32{rs1_i[(XLEN>>1)-1]}}, rs1_i[(XLEN>>1)-1:0]};
   assign rs2_32_sext = {{32{rs2_i[(XLEN>>1)-1]}}, rs2_i[(XLEN>>1)-1:0]};
 
+  // Comparator
+  logic is_less;
+
   // Adder
   // -----
   // Adder operands multiplexer
   always_comb begin : adder_op_mux
     unique case (ctl_i)
-      ALU_SUB: begin
+      ALU_SUB, ALU_SLT, ALU_SLTU: begin
         adder_a   = rs1_i;
         adder_b   = ~rs2_i;
         adder_cin = 1'b1;
@@ -99,10 +103,10 @@ module alu #(
   end
 
   // 64-bit adder
-  assign adder_res    = adder_a + adder_b + {{XLEN - 1{1'b0}}, adder_cin};
+  assign {adder_cout, adder_res} = adder_a + adder_b + {{XLEN - 1{1'b0}}, adder_cin};
 
   // Result sign-extender for 32-bit operations
-  assign adder_res_32 = {{32{adder_res[(XLEN>>1)-1]}}, adder_res[(XLEN>>1)-1:0]};
+  assign adder_res_32            = {{32{adder_res[(XLEN>>1)-1]}}, adder_res[(XLEN>>1)-1:0]};
 
   // Shifter
   // -------
@@ -111,7 +115,7 @@ module alu #(
     unique case (ctl_i)
       ALU_SRL:  shifter_a = {1'b0, rs1_i};
       ALU_SRA:  shifter_a = {rs1_i[XLEN-1], rs1_i};
-      ALU_SLLW: shifter_a = {{33{1'b0}}, shifter_rs1_rev[XLEN-1:XLEN>>1]};
+      ALU_SLLW: shifter_a = {1'b0, shifter_rs1_rev[XLEN-1:(XLEN>>1)], {32{1'b0}}};
       ALU_SRLW: shifter_a = {{33{1'b0}}, rs1_i[(XLEN>>1)-1:0]};
       ALU_SRAW: shifter_a = {{33{rs1_i[(XLEN>>1)-1]}}, rs1_i[(XLEN>>1)-1:0]};
       default:  shifter_a = {1'b0, shifter_rs1_rev};  // ALU_SLL
@@ -131,7 +135,7 @@ module alu #(
   end
 
   // 65-bit arithmetic right barrel shifter
-  assign shifter_res = shifter_a >>> shifter_shamt;
+  assign shifter_res = $signed(shifter_a) >>> shifter_shamt;
 
   // Left shift reverse operand and result
   generate
@@ -145,24 +149,28 @@ module alu #(
     end
   endgenerate
 
+  // Comparisons
+  // ------------------
+  always_comb begin : comp_mux
+    unique case (ctl_i)
+      ALU_SLT: is_less = (rs1_i[63] != rs2_i[63]) ? rs1_i[63] : ~adder_cout;
+      default: is_less = ~adder_cout;  // ALU_SLTU
+    endcase
+  end
+
   // Result multiplexer
   // ------------------
   always_comb begin : result_mux
-    // Default values
-    result = '0;
-
     unique case (ctl_i)
-      ALU_ADDW, ALU_SUBW: result = adder_res_32;  // TODO: check
+      ALU_ADDW, ALU_SUBW: result = adder_res_32;
       ALU_AND: result = rs1_i & rs2_i;
       ALU_OR: result = rs1_i | rs2_i;
       ALU_XOR: result = rs1_i ^ rs2_i;
-      ALU_SLL, ALU_SLLW: result = shifter_res_rev;  // TODO: check
-      ALU_SRL, ALU_SRA, ALU_SRLW, ALU_SRAW: result = shifter_res[XLEN-1:0];  // TODO: check
-      ALU_SLT:
-      result = {
-        {XLEN - 1{1'b0}}, ($signed(rs1_i) < $signed(rs2_i))
-      };  // TODO: implement with adder res
-      ALU_SLTU: result = {{XLEN - 1{1'b0}}, (rs1_i < rs2_i)};  // TODO: implement with adder res
+      ALU_SLL: result = shifter_res_rev;
+      ALU_SLLW: result = {{32{shifter_res_rev[(XLEN>>1)-1]}}, shifter_res_rev[(XLEN>>1)-1:0]};
+      ALU_SRL, ALU_SRA, ALU_SRAW: result = shifter_res[XLEN-1:0];
+      ALU_SRLW: result = {{32{shifter_res[(XLEN>>1)-1]}}, shifter_res[(XLEN>>1)-1:0]};
+      ALU_SLT, ALU_SLTU: result = {63'b0, is_less};
       default: result = adder_res;  // ALU_ADD, ALU_SUB
     endcase
   end

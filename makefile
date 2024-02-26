@@ -41,7 +41,6 @@ SIM_CPP_FILES	:= $(shell find tb/verilator -type f -name "*.cpp" -o -name "*.hh"
 #######################
 # ----- TARGETS ----- #
 #######################
-
 # HDL source
 # ----------
 # Format code
@@ -127,17 +126,6 @@ run-benchmarks:
 	python3 scripts/benchmarks.py -s $(SUITE)
 	rm -rf build_*
 
-.PHONY: benchmark
-benchmark: 
-	@echo "## Building suite $(SUITE) benchmark $(BENCHMARK)"
-	$(MAKE) -BC sw benchmark SUITE=$(SUITE) BUILD_DIR=$(BUILD_DIR) BENCHMARK=$(BENCHMARK)
-
-.PHONY: run-benchmarks
-run-benchmarks: 
-	@echo "## Running suite $(SUITE)"
-	python3 scripts/benchmarks.py -s $(SUITE)
-	rm -rf build_*
-
 # Simple test application
 .PHONY: app-helloworld
 app-helloworld:
@@ -180,7 +168,7 @@ syn-asic: | .check-fusesoc
 # Check that nothing is broken
 # ----------------------------
 .PHONE: check
-check: | .check-fusesoc
+check: | check-alu .check-fusesoc
 	@echo "### Executing regression tests..."
 	@echo " ## Checking RTL..."
 	fusesoc run --no-export --target format polito:len5:len5
@@ -190,6 +178,13 @@ check: | .check-fusesoc
 	$(foreach T, $(TESTS), eval $(MAKE) app PROJECT=$(T) COPT=-O1 && $(MAKE) spike-check || exit 1;)
 	$(foreach T, $(TESTS), eval $(MAKE) app PROJECT=$(T) COPT=-O2 && $(MAKE) spike-check || exit 1;)
 	@echo "\e[1;32m### SUCCESS: all checks passed!\e[0m"
+
+.PHONY: check-alu
+check-alu: | .check-fusesoc
+	@echo "## Checking ALU RTL..."
+	fusesoc run --no-export --target sim --tool verilator polito:len5:alu-tb \
+		--log_level=LOG_LOW \
+		--max_cycles=1000000
 
 # Utilities
 # ---------
