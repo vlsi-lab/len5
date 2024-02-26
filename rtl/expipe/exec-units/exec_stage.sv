@@ -202,8 +202,9 @@ module exec_stage (
 
   // Integer multiplier and divider
   // ------------------------------
+  // Multiplier
   generate
-    if (LEN5_M_EN && !LEN5_D_EN) begin : gen_mult_unit  // TODO: unify flags and units
+    if (LEN5_M_EN) begin : gen_mult_unit  // TODO: unify flags and units
       mult_unit #(
         .EU_CTL_LEN(MAX_EU_CTL_LEN),
         .RS_DEPTH  (MULT_RS_DEPTH)
@@ -222,80 +223,40 @@ module exec_stage (
         .cdb_valid_o         (cdb_valid_o[EU_INT_MULT]),
         .cdb_data_i          (cdb_data_i),
         .cdb_data_o          (cdb_data_o[EU_INT_MULT])
-      );
-      assign issue_ready_o[EU_INT_DIV] = 1'b0;
-      assign cdb_valid_o[EU_INT_DIV]   = 1'b0;
-      assign cdb_data_o[EU_INT_DIV]    = '0;
-    end else if (LEN5_D_EN && !LEN5_M_EN) begin : gen_div_unit
-      div_unit #(
-        .EU_CTL_LEN(MAX_EU_CTL_LEN),
-        .RS_DEPTH  (DIV_RS_DEPTH)
-      ) u_div_unit (
-        .clk_i               (clk_i),
-        .rst_ni              (rst_ni),
-        .flush_i             (mis_flush_i),
-        .issue_valid_i       (issue_valid_i[EU_INT_DIV]),
-        .issue_ready_o       (issue_ready_o[EU_INT_DIV]),
-        .issue_eu_ctl_i      (issue_eu_ctl_i.div),
-        .issue_rs1_i         (issue_rs1_i),
-        .issue_rs2_i         (issue_rs2_i),
-        .issue_dest_rob_idx_i(issue_rob_idx_i),
-        .cdb_ready_i         (cdb_ready_i[EU_INT_DIV]),
-        .cdb_valid_i         (cdb_valid_i),
-        .cdb_valid_o         (cdb_valid_o[EU_INT_DIV]),
-        .cdb_data_i          (cdb_data_i),
-        .cdb_data_o          (cdb_data_o[EU_INT_DIV])
-      );
-      assign issue_ready_o[EU_INT_MULT] = 1'b0;
-      assign cdb_valid_o[EU_INT_MULT]   = 1'b0;
-      assign cdb_data_o[EU_INT_MULT]    = '0;
-    end else if (LEN5_D_EN && LEN5_M_EN) begin : gen_mult_div_unit
-      mult_unit #(
-        .EU_CTL_LEN(MAX_EU_CTL_LEN),
-        .RS_DEPTH  (MULT_RS_DEPTH)
-      ) u_mult_unit (
-        .clk_i               (clk_i),
-        .rst_ni              (rst_ni),
-        .flush_i             (mis_flush_i),
-        .issue_valid_i       (issue_valid_i[EU_INT_MULT]),
-        .issue_ready_o       (issue_ready_o[EU_INT_MULT]),
-        .issue_eu_ctl_i      (issue_eu_ctl_i.mult),
-        .issue_rs1_i         (issue_rs1_i),
-        .issue_rs2_i         (issue_rs2_i),
-        .issue_dest_rob_idx_i(issue_rob_idx_i),
-        .cdb_ready_i         (cdb_ready_i[EU_INT_MULT]),
-        .cdb_valid_i         (cdb_valid_i),
-        .cdb_valid_o         (cdb_valid_o[EU_INT_MULT]),
-        .cdb_data_i          (cdb_data_i),
-        .cdb_data_o          (cdb_data_o[EU_INT_MULT])
-      );
-
-      div_unit #(
-        .EU_CTL_LEN(MAX_EU_CTL_LEN),
-        .RS_DEPTH  (DIV_RS_DEPTH)
-      ) u_div_unit (
-        .clk_i               (clk_i),
-        .rst_ni              (rst_ni),
-        .flush_i             (mis_flush_i),
-        .issue_valid_i       (issue_valid_i[EU_INT_DIV]),
-        .issue_ready_o       (issue_ready_o[EU_INT_DIV]),
-        .issue_eu_ctl_i      (issue_eu_ctl_i.div),
-        .issue_rs1_i         (issue_rs1_i),
-        .issue_rs2_i         (issue_rs2_i),
-        .issue_dest_rob_idx_i(issue_rob_idx_i),
-        .cdb_ready_i         (cdb_ready_i[EU_INT_DIV]),
-        .cdb_valid_i         (cdb_valid_i),
-        .cdb_valid_o         (cdb_valid_o[EU_INT_DIV]),
-        .cdb_data_i          (cdb_data_i),
-        .cdb_data_o          (cdb_data_o[EU_INT_DIV])
       );
     end else begin : gen_no_mult_unit
       assign issue_ready_o[EU_INT_MULT] = 1'b0;
       assign cdb_valid_o[EU_INT_MULT]   = 1'b0;
       assign cdb_data_o[EU_INT_MULT]    = '0;
-      assign issue_ready_o[EU_INT_DIV]  = 1'b0;
-      assign cdb_valid_o[EU_INT_DIV]    = 1'b0;
-      assign cdb_data_o[EU_INT_DIV]     = '0;
+    end
+  endgenerate
+
+  // Divider
+  generate
+    if (LEN5_DIV_EN) begin : gen_div_unit
+      div_unit #(
+        .EU_CTL_LEN(MAX_EU_CTL_LEN),
+        .RS_DEPTH  (DIV_RS_DEPTH)
+      ) u_div_unit (
+        .clk_i               (clk_i),
+        .rst_ni              (rst_ni),
+        .flush_i             (mis_flush_i),
+        .issue_valid_i       (issue_valid_i[EU_INT_DIV]),
+        .issue_ready_o       (issue_ready_o[EU_INT_DIV]),
+        .issue_eu_ctl_i      (issue_eu_ctl_i.div),
+        .issue_rs1_i         (issue_rs1_i),
+        .issue_rs2_i         (issue_rs2_i),
+        .issue_dest_rob_idx_i(issue_rob_idx_i),
+        .cdb_ready_i         (cdb_ready_i[EU_INT_DIV]),
+        .cdb_valid_i         (cdb_valid_i),
+        .cdb_valid_o         (cdb_valid_o[EU_INT_DIV]),
+        .cdb_data_i          (cdb_data_i),
+        .cdb_data_o          (cdb_data_o[EU_INT_DIV])
+      );
+    end else begin : gen_no_div_unit
+      assign issue_ready_o[EU_INT_DIV] = 1'b0;
+      assign cdb_valid_o[EU_INT_DIV]   = 1'b0;
+      assign cdb_data_o[EU_INT_DIV]    = '0;
     end
   endgenerate
 

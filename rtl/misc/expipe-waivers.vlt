@@ -25,8 +25,10 @@ lint_off -rule UNDRIVEN -file "*/exec_stage.sv" -match "Bits of signal are not d
 lint_off -rule UNUSED -file "*/lzc.sv" -match "Bits of signal are not driven, nor used: 'sel_nodes'[63]"
 lint_off -rule UNUSED -file "*/lzc.sv" -match "Bits of signal are not driven, nor used: 'index_nodes'[383:378]"
 
+// Privilege mode in CSRs
+lint_off -rule CMPCONST -file "*/csrs.sv" -match "Comparison is constant due to limited range"
 
-// TODO: check if this is actually a combinational loop
+// Loop false positives
 lint_off -rule UNOPTFLAT -file "*/address_adder.sv" -match "Signal unoptimizable: Feedback to clock or circular logic: *align_except'"
 lint_off -rule UNOPTFLAT -file "*/lzc.sv" -match "Signal unoptimizable: Feedback to clock or circular logic: *index_nodes'"
 lint_off -rule UNOPTFLAT -file "*/lzc.sv" -match "Signal unoptimizable: Feedback to clock or circular logic: *sel_nodes'"

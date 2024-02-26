@@ -1,5 +1,6 @@
 # Clock period (in ns)
-set CLK_PERIOD 2
+#set CLK_PERIOD 2
+set CLK_PERIOD 0
 
 # Inputs delay
 # divide clk period by two
