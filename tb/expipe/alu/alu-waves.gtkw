@@ -1,0 +1,38 @@
+[*]
+[*] GTKWave Analyzer v3.3.114 (w)1999-2023 BSI
+[*] Sun Feb 25 15:42:20 2024
+[*]
+[dumpfile] "/home/sca.user/Desktop/len-5-integration/tb/expipe/build/sim-common/waves.fst"
+[dumpfile_mtime] "Sun Feb 25 14:58:37 2024"
+[dumpfile_size] 6095
+[savefile] "/home/sca.user/Desktop/len-5-integration/tb/expipe/alu-waves.gtkw"
+[timestart] 4
+[size] 1920 1034
+[pos] -196 -1286
+*-2.489660 9 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] TOP.
+[sst_width] 276
+[signals_width] 296
+[sst_expanded] 1
+[sst_vpaned_height] 309
+@28
+TOP.clk_i
+@25
+TOP.ctl_i[3:0]
+@100000028
+TOP.except_code_o[4:0]
+@28
+TOP.except_raised_o
+TOP.flush_i
+TOP.ready_i
+TOP.ready_o
+@22
+TOP.result_o[63:0]
+TOP.rs1_i[63:0]
+TOP.rs2_i[63:0]
+@28
+TOP.rst_ni
+TOP.valid_i
+TOP.valid_o
+[pattern_trace] 1
+[pattern_trace] 0

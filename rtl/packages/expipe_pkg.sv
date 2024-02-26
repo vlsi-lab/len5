@@ -131,7 +131,7 @@ package expipe_pkg;
     ALU_SRAW,
     ALU_SLT,   // set if less than
     ALU_SLTU   // set if less than (unsigned)
-  } alu_ctl_t;
+  } alu_ctl_t  /*verilator public*/;
 
   // Mult opcodes
   typedef enum logic [MAX_EU_CTL_LEN-1:0] {
