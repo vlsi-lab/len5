@@ -145,9 +145,6 @@ module tb_bare #(
     // Print FP extension information
     $display("[TB] D extension: %s", (LEN5_FP_EN) ? "YES" : "NO");
 
-    if (num_cycles <= 0) begin
-      $fatal("Maximum simulation cycles is lower or equal to 0. Exiting...");
-    end
 
   end
 
