@@ -104,32 +104,6 @@ module div #(  // TODO: call div
     .res_o(result)
   );
 
-
-
-  //////////////////////
-  // Word op register //
-  //////////////////////
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (~rst_ni) begin
-      word_op_q <= '0;
-    end else begin
-      word_op_q <= word_op_d;
-    end
-  end
-
-  //////////////////////
-  // Word op register //
-  //////////////////////
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (~rst_ni) begin
-      word_op_q <= 1'b0;
-    end else if (flush_i) begin
-      word_op_q <= 1'b0;
-    end else begin
-      word_op_q <= word_op_d;
-    end
-  end
-
   //////////////////////
   // Word op register //
   //////////////////////
