@@ -16,15 +16,15 @@ MEMORY
 {
   /* The testbench uses associative arrays, the memory is not allocated unless
   needed. */
-  ROM (rx)  : ORIGIN = 0x0, LENGTH = 8M
-  RAM (!rx) : ORIGIN = (ORIGIN(ROM) + LENGTH(ROM)), LENGTH = 128M
+  ROM (rx)  : ORIGIN = 0x10000, LENGTH = 256K
+  RAM (!rx) : ORIGIN = (ORIGIN(ROM) + LENGTH(ROM)), LENGTH = 768K
 }
 
 SECTIONS
 {
   /* Boot program counter (fixed entry point). The initial part of the ROM is
      used to store interrupt and exception vectors. */
-  PROVIDE(__boot_address = 0x180);
+  PROVIDE(__boot_address = ORIGIN(ROM) + 0x180);
 
   /* Define stack and heap size (used by custom crt0.s) */
   __stack_size = DEFINED(__stack_size) ? __stack_size : 64K;

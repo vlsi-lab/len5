@@ -253,8 +253,8 @@ module store_buffer #(
           if (save_addr && adder_ans_i.tag == i[IdxW-1:0]) begin
             sb_op[i] = STORE_OP_SAVE_ADDR;
             if (adder_ans_i.except_raised) next_state[i] = STORE_S_COMPLETED;
-            else if (!comm_mem_clear_i) next_state[i] = STORE_S_WAIT_ROB;
-            else next_state[i] = STORE_S_MEM_REQ;
+            else if (comm_mem_clear_i && mem_idx == i[IdxW-1:0]) next_state[i] = STORE_S_MEM_REQ;
+            else next_state[i] = STORE_S_WAIT_ROB;
           end else if (addr_idx == i[IdxW-1:0] && addr_accepted) next_state[i] = STORE_S_ADDR_WAIT;
           else next_state[i] = STORE_S_ADDR_REQ;
         end
@@ -262,12 +262,12 @@ module store_buffer #(
           if (save_addr && adder_ans_i.tag == i[IdxW-1:0]) begin
             sb_op[i] = STORE_OP_SAVE_ADDR;
             if (adder_ans_i.except_raised) next_state[i] = STORE_S_COMPLETED;
-            else if (!comm_mem_clear_i) next_state[i] = STORE_S_WAIT_ROB;
-            else next_state[i] = STORE_S_MEM_REQ;
+            else if (comm_mem_clear_i && mem_idx == i[IdxW-1:0]) next_state[i] = STORE_S_MEM_REQ;
+            else next_state[i] = STORE_S_WAIT_ROB;
           end else next_state[i] = STORE_S_ADDR_WAIT;
         end
         STORE_S_WAIT_ROB: begin
-          if (comm_mem_clear_i) next_state[i] = STORE_S_MEM_REQ;
+          if (comm_mem_clear_i && mem_idx == i[IdxW-1:0]) next_state[i] = STORE_S_MEM_REQ;
           else next_state[i] = STORE_S_WAIT_ROB;
         end
         STORE_S_MEM_REQ: begin  // wait for commit
@@ -404,7 +404,7 @@ module store_buffer #(
   // Load buffer
   assign lb_latest_valid_o        = active[latest_idx] & ~(mem_done & (mem_tag_i == latest_idx));
   assign lb_latest_idx_o          = latest_idx;
-  assign lb_oldest_completed_o    = mem_done;
+  assign lb_oldest_completed_o    = mem_done;  // check if mem_accepted is enough
   assign lb_oldest_idx_o          = mem_tag_i;
 
   // Level-zero cache

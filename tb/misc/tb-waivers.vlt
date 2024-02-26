@@ -9,7 +9,7 @@
 
 `verilator_config
 // Top-level parameter width
-lint_off -rule WIDTH -file "*/tb_bare.sv" -match "Operator VAR 'BOOT_PC' expects 64 bits on the Initial value, but Initial value's CONST '32'h180' generates 32 bits."
+lint_off -rule WIDTH -file "*/tb_bare.sv" -match "Operator VAR 'BOOT_PC' expects 64 bits on the Initial value, but Initial value's CONST '32'h*' generates 32 bits."
 lint_off -rule WIDTH -file "*/tb_bare.sv" -match "Operator VAR 'SERIAL_ADDR' expects 64 bits on the Initial value, but Initial value's CONST '32'h20000000' generates 32 bits."
 lint_off -rule WIDTH -file "*/tb_bare.sv" -match "Operator VAR 'EXIT_ADDR' expects 64 bits on the Initial value, but Initial value's CONST '32'h20000100' generates 32 bits."
 
@@ -20,6 +20,9 @@ lint_off -rule UNUSED -file "*/memory_class.svh" -match "Signal is not used: 're
 lint_off -rule UNUSED -file "*/memory_class.svh" -match "Signal is not used: 'read_line'"
 
 lint_off -rule UNUSED -file "*/memory_bare_emu.sv" -match "Signal is not used: 'mem_dump_file_i'"
+
+// Baremetal testbench
+lint_off -rule UNUSED -file "*/tb_bare.sv" -match "Signal is not used: 'cpu_data'"
 
 // Not used since always load doubleword from mem  
 lint_off -rule UNUSED -file "*/memory_bare_emu.sv" -match "Signal is not used: 'data_load_be_i'"
