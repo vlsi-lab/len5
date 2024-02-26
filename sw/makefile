@@ -66,7 +66,6 @@ export
 # Application build
 .PHONY: app
 app: $(BUILD_DIR)/main.hex $(BUILD_DIR)/main.disasm $(BUILD_DIR)/main.elf
-	echo $(OBJS)
 .PHONY: benchmark
 benchmark: $(LIB_OBJS) 
 	$(MAKE) -B -C benchmarks $(SUITE) BENCHMARK=$(BENCHMARK) SUITE=$(SUITE)

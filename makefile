@@ -13,9 +13,9 @@ BUILD_DIR	   	?= $(realpath .)/build
 
 # Software build configuration
 PROJECT  ?= hello_world
-LINKER   ?= $(realpath sw/linker/len5-sim.ld)
 SUITE   ?= embench
 BENCHMARK ?= crc32
+LINKER   ?= $(realpath sw/linker/len5-sim.ld)
 COPT   	 ?= -O0
 
 # RTL simulation
@@ -115,6 +115,17 @@ questasim-sim: | app .check-fusesoc $(BUILD_DIR)/
 app: | $(BUILD_DIR)/
 	@echo "## Building application '$(PROJECT)'"
 	$(MAKE) -BC sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR) COPT=$(COPT)
+
+.PHONY: benchmark
+benchmark: 
+	@echo "## Building suite $(SUITE) benchmark $(BENCHMARK)"
+	$(MAKE) -BC sw benchmark SUITE=$(SUITE) BUILD_DIR=$(BUILD_DIR) BENCHMARK=$(BENCHMARK)
+
+.PHONY: run-benchmarks
+run-benchmarks: 
+	@echo "## Running suite $(SUITE)"
+	python3 scripts/benchmarks.py -s $(SUITE)
+	rm -rf build_*
 
 .PHONY: benchmark
 benchmark: 
