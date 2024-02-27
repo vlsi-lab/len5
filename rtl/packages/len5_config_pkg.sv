@@ -116,6 +116,7 @@ package len5_config_pkg;
   // Enable M extension support
   // --------------------------
   localparam bit LEN5_M_EN = 1'b1;
+  localparam bit LEN5_MULT_SERIAL = 1'b0;
   localparam bit LEN5_DIV_EN = 1'b1;  // TODO: div available
 
   // Enable floating-point support

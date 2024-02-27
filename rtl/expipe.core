@@ -53,6 +53,7 @@ filesets:
     - expipe/exec-units/exec_stage.sv
     - expipe/exec-units/mult_unit.sv
     - expipe/exec-units/mult.sv
+    - expipe/exec-units/sermult.sv
     - expipe/exec-units/op_only_rs.sv
     - expipe/exec-units/op_only_unit.sv
    file_type : systemVerilogSource
