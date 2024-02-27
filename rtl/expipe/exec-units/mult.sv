@@ -12,11 +12,9 @@
 // Author: Flavia Guella
 // Date: 26/02/2024
 
-
-
 module mult #(
   parameter int unsigned PIPE_DEPTH = 4,  // number of pipeline levels (>0)
-
+  parameter bit SKIP_REG = 1'b1,  // skip output spillcell
   // EU-specific parameters
   parameter int unsigned EU_CTL_LEN = 4
 ) (
@@ -55,9 +53,9 @@ module mult #(
   logic     [     XLEN-1:0] pipe_result_d                        [PIPE_DEPTH];
   rob_idx_t                 pipe_rob_idx_d                       [PIPE_DEPTH];
   logic                     pipe_except_raised_d                 [PIPE_DEPTH];
-  //logic                     pipe_ready_d                 [PIPE_DEPTH];
   logic                     pipe_valid_d                         [PIPE_DEPTH];
-
+  // Ready signal from the spill cell
+  logic                     ready_spill;
 
   //////////////////////////////
   // MULT operators selection //
@@ -136,7 +134,7 @@ module mult #(
           pipe_result_d[i]        <= '0;
           pipe_rob_idx_d[i]       <= '0;
           pipe_except_raised_d[i] <= 1'b0;
-        end else if (pipe_valid_d[i-1] & ready_i) begin
+        end else if (pipe_valid_d[i-1] & ready_spill) begin
           pipe_result_d[i]        <= pipe_result_d[i-1];
           pipe_rob_idx_d[i]       <= pipe_rob_idx_d[i-1];
           pipe_except_raised_d[i] <= pipe_except_raised_d[i-1];
@@ -148,29 +146,26 @@ module mult #(
   ///////////////////////////////
   // Output handhsake register //
   ///////////////////////////////
-  //assign ready       = ready_i; // pipelined, always ready
+
   assign pipe_valid_d[0] = valid_i;
   // Generate PIPE_DEPTH-1 pipeline registers
   generate
     for (genvar i = 1; i < PIPE_DEPTH; i = i + 1) begin : gen_mult_hs_pipe_reg
       always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
-          //pipe_ready_d[i]        <= '0;
           pipe_valid_d[i] <= '0;
         end else if (flush_i) begin
-          //pipe_ready_d[i]        <= '0;
           pipe_valid_d[i] <= '0;
-        end else if (ready_i) begin
+        end else if (ready_spill) begin
           pipe_valid_d[i] <= pipe_valid_d[i-1];
-          //pipe_ready_d[i]        <= pipe_ready_d[i-1];
         end
       end
     end
   endgenerate
 
-  ///////////////////////
-  // Output spill cell //
-  ///////////////////////
+  // ---------------
+  // Output register
+  // ---------------
   // NOTE: use a spill cell to break the handshaking path
 
   // Interface data type
@@ -194,23 +189,21 @@ module mult #(
   // Output register
   spill_cell_flush #(
     .DATA_T(out_reg_data_t),
-    .SKIP  (1'b0)
+    .SKIP  (SKIP_REG)
   ) u_out_reg (
     .clk_i  (clk_i),
     .rst_ni (rst_ni),
     .flush_i(flush_i),
-    .valid_i(pipe_valid_d[PIPE_DEPTH-1]),
-    .ready_i(ready_i),
-    .valid_o(valid_o),
-    .ready_o(ready_o),
+    .valid_i(pipe_valid_d[PIPE_DEPTH-1]),  // valid from EU
+    .ready_i(ready_i),                     // ready from RS
+    .valid_o(valid_o),                     // valid to RS
+    .ready_o(ready_spill),                 // ready to EU
     .data_i (out_reg_data_in),
     .data_o (out_reg_data_out)
   );
 
-
-
-
-
+  // Output ready for RS
+  assign ready_o       = ready_spill;
 
   // Exception handling
   // ------------------
