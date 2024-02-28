@@ -42,6 +42,7 @@ int main(int argc, char* argv[])
     // Define command line options
     const option longopts[] = {
         {"max_cycles",  required_argument, NULL, 'c'},
+        {"dump_waves",  required_argument, NULL, 'w'},
         {"log_level",   required_argument, NULL, 'l'},
         {"help",        no_argument,       NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -49,6 +50,7 @@ int main(int argc, char* argv[])
 
     // Parse command line options
     // --------------------------
+    bool              dump_waves = false;
     unsigned long int max_cycles = ((unsigned long int) MAX_SIM_TIME) >> 1;
     int     opt;
     while ((opt = getopt_long(argc, argv, "l:w:t:h", longopts, NULL)) >= 0) {
@@ -58,6 +60,11 @@ int main(int argc, char* argv[])
                 break;
             case 'l':
                 logger.setLogLvl(optarg);
+                break;
+            case 'w':
+                if (!strcmp(optarg, "true") || !strcmp(optarg, "1")) {
+                    dump_waves = true;
+                }
                 break;
             case 'h':
                 printf("Usage: %s [OPTIONS]\n", argv[0]);
@@ -86,7 +93,7 @@ int main(int argc, char* argv[])
     
     // Create simulation context
     VerilatedContext *cntx = new VerilatedContext;
-    cntx->traceEverOn(true); // Enable wave tracing
+    if (dump_waves) cntx->traceEverOn(true); // Enable wave tracing
 
     // Pass the simulation context to the logger
     logger.setSimContext(cntx);
@@ -97,8 +104,10 @@ int main(int argc, char* argv[])
 
     // VCD file where to store waveforms
     VerilatedFstC* m_trace = new VerilatedFstC;
-    dut->trace(m_trace, 5); //Limit trace depth to 5
-    m_trace->open(FST_FILENAME);
+    if (dump_waves) {
+        dut->trace(m_trace, 5); //Limit trace depth to 5
+        m_trace->open(FST_FILENAME);
+    }
 
     // TB components
     Drv *drv = new Drv(dut);    // Driver

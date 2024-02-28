@@ -99,7 +99,6 @@ module mult_unit #(
 
       sermult #(
         .EU_CTL_LEN(EU_CTL_LEN)
-        //  .PIPE_DEPTH(MULT_PIPE_DEPTH)
       ) u_mult (
         .clk_i          (clk_i),
         .rst_ni         (rst_ni),

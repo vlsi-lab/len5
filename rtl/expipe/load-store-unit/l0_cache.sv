@@ -22,24 +22,27 @@
  */
 module l0_cache #(
   /* Dependent parameters: do NOT override */
-  localparam int unsigned StIdxW = $clog2(len5_config_pkg::STBUFF_DEPTH),
-  localparam int unsigned TagW   = (len5_pkg::XLEN) - StIdxW
+  localparam int unsigned StIdxW = $clog2(len5_config_pkg::STBUFF_DEPTH)
 ) (
   input logic clk_i,
   input logic rst_ni,
-  input logic flush_i,  // flush after exception
+  input logic flush_i, // flush after exception
+
+  // Store buffer
   input logic st_valid_i,  // store instruction valid
-  input logic [len5_pkg::XLEN-1:0] st_addr_i,  // store address
+  input logic [len5_pkg::ALEN-1:0] st_addr_i,  // store address
   input logic [StIdxW-1:0] st_idx_i,  // store buffer index
-  input logic [TagW-1:0] st_tag_i,  // cache store tag
   input logic st_cached_i,  // the store instruction is cached
-  input expipe_pkg::ldst_width_t st_width_i,  // cached store width
-  input logic [len5_pkg::XLEN-1:0] st_value_i,  // cached store value
-  input logic [len5_pkg::XLEN-1:0] ld_addr_i,  // load address
-  input expipe_pkg::ldst_width_t ld_width_i,  // load width
-  output logic [StIdxW-1:0] st_idx_o,  // store buffer tag
-  output logic ld_valid_o,  // forwarding succeeded
-  output logic [len5_pkg::XLEN-1:0] ld_value_o  // cached value
+  input logic [len5_pkg::ALEN-1:0] st_cached_addr_i,  // cached store address
+  input expipe_pkg::ldst_width_t st_cached_width_i,  // cached store width
+  input logic [len5_pkg::XLEN-1:0] st_cached_value_i,  // cached store value
+  output logic [StIdxW-1:0] st_idx_o,  // store buffer index
+
+  // Load buffer
+  input  logic                    [len5_pkg::ALEN-1:0] ld_addr_i,   // load address
+  input  expipe_pkg::ldst_width_t                      ld_width_i,  // load width
+  output logic                                         ld_valid_o,  // forwarding succeeded
+  output logic                    [len5_pkg::XLEN-1:0] ld_value_o   // cached value
 );
 
   import len5_config_pkg::*;
@@ -50,21 +53,17 @@ module l0_cache #(
   // Cache data
   typedef struct packed {
     logic              valid;
-    logic [TagW-1:0]   tag;
     logic [StIdxW-1:0] st_idx;
   } l0_cache_t;
   l0_cache_t [STBUFF_DEPTH-1:0] data;
 
   // Address and tag
   logic      [      StIdxW-1:0] st_idx;
-  logic      [        TagW-1:0] st_tag;
   logic      [      StIdxW-1:0] ld_idx;
-  logic      [        TagW-1:0] ld_tag;
 
   // Cache control
   logic                         addr_valid;
   logic                         cache_upd;
-  logic                         cache_hit;
   logic                         st_hit;
 
   // --------------------
@@ -74,26 +73,22 @@ module l0_cache #(
   // reserved.
   assign addr_valid = (st_addr_i & MMAP_MASK) == 64'h0;
   assign cache_upd  = st_valid_i & addr_valid;
-  assign st_idx     = st_addr_i[StIdxW-1:0];
-  assign st_tag     = st_addr_i[XLEN-1-:TagW];
+  assign st_idx     = st_addr_i[StIdxW+3-1:3];  // doubleword-indexed
   always_ff @(posedge clk_i or negedge rst_ni) begin : blockName
     if (!rst_ni) foreach (data[i]) data[i] <= 'h0;
     else if (flush_i) begin
       foreach (data[i]) data[i].valid <= 1'b0;
     end else if (cache_upd) begin
       data[st_idx].valid  <= 1'b1;
-      data[st_idx].tag    <= st_tag;
       data[st_idx].st_idx <= st_idx_i;
     end
   end
 
   // Load address found in cache
-  assign ld_idx     = ld_addr_i[StIdxW-1:0];
-  assign ld_tag     = ld_addr_i[XLEN-1-:TagW];
-  assign cache_hit  = data[ld_idx].valid & data[ld_idx].tag == ld_tag;
+  assign ld_idx     = ld_addr_i[StIdxW+3-1:3];
 
   // Cached instruction still valid in store buffer
-  assign st_hit     = st_cached_i & st_width_i == ld_width_i & st_tag_i == ld_tag;
+  assign st_hit     = st_cached_i & st_cached_width_i == ld_width_i & st_cached_addr_i == ld_addr_i;
 
   // --------------
   // OUTPUT NETWORK
@@ -104,6 +99,6 @@ module l0_cache #(
   // - the target address is found
   // - the target store instruction is still cached in the store buffer
   // - the pending load and the target store have the save width
-  assign ld_valid_o = cache_hit & st_hit;
-  assign ld_value_o = st_value_i;
+  assign ld_valid_o = st_hit;
+  assign ld_value_o = st_cached_value_i;
 endmodule
