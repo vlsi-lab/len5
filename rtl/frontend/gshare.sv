@@ -18,13 +18,13 @@ module gshare #(
   parameter int unsigned     HLEN     = 4,
   parameter fetch_pkg::c2b_t INIT_C2B = fetch_pkg::WNT
 ) (
-  input logic                      clk_i,
-  input logic                      rst_ni,
-  input logic                      flush_i,
-  input logic [len5_pkg::XLEN-1:0] curr_pc_i,
-  input logic                      res_valid_i,
-  input logic                      res_taken_i,
-  input logic [          HLEN-1:0] res_hist_i,
+  input logic            clk_i,
+  input logic            rst_ni,
+  input logic            flush_i,
+  input logic [HLEN-1:0] curr_hist_i,
+  input logic            res_valid_i,
+  input logic            res_taken_i,
+  input logic [HLEN-1:0] res_hist_i,
 
   output logic taken_o
 );
@@ -97,7 +97,7 @@ module gshare #(
   end
 
   // Assignments
-  assign index_r = history ^ curr_pc_i[HLEN+OFFSET-1:OFFSET];  // XOR hashing
+  assign index_r = history ^ curr_hist_i;  // XOR hashing
   assign index_w = history ^ res_hist_i;
   assign taken_o = pht_q[index_r][1];
 

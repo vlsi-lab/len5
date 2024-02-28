@@ -39,9 +39,9 @@ scripts:
   # Copy waveform dump
   copy_waves:
     cmd:
-    - cp
+    - bash
+    - ../../../scripts/sim/copy-logs.sh
     - logs/waves.fst
-    - ../../sim-common
   
 targets:
   # Default target
@@ -62,6 +62,7 @@ targets:
       - copy_waves
     parameters:
     - tool_verilator ? (max_cycles)
+    - tool_verilator ? (dump_waves)
     - tool_verilator ? (log_level)
     tools:
       verilator:
@@ -89,6 +90,11 @@ parameters:
     description: |
       Set the log level. Admitted values: LOG_NONE|LOG_LOW|LOG_MEDIUM|LOG_HIGH|LOG_FULL|LOG_DEBUG.
       Errors and configuration messages are always printed.
+    paramtype: cmdlinearg
+  dump_waves:
+    datatype: str
+    description: If 'true', dump waveforms
+    default: "true"
     paramtype: cmdlinearg
   max_cycles:
     datatype: int

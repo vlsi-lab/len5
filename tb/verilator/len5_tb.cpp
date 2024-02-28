@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
         dut->eval();
 
         // Dump waveforms
-        m_trace->dump(cntx->time());
+        if (dump_waves) m_trace->dump(cntx->time());
 
         // Increment simulation time
         cntx->timeInc(1);
@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Clean up and exit
-    m_trace->close();
+    if (dump_waves) m_trace->close();
     delete dut;
     delete m_trace;
     delete cntx;

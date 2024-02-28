@@ -10,7 +10,6 @@
 lint_off -rule UNUSED -file "*/btb.sv" -match "Bits of signal are not used: 'curr_pc_i'[1:0]"
 lint_off -rule UNUSED -file "*/btb.sv" -match "Bits of signal are not used: 'res_pc_i'[1:0]"
 lint_off -rule UNUSED -file "*/btb.sv" -match "Bits of signal are not used: 'res_target_i'[1:0]"
-lint_off -rule UNUSED -file "*/gshare.sv" -match "Bits of signal are not used: 'curr_pc_i'[63:6,1:0]"
 
 // Warning due to unused pin
 lint_off -rule PINCONNECTEMPTY -file "*/ras.sv" -match "Cell pin connected by name with empty reference: 'tc_o'"

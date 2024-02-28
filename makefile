@@ -12,11 +12,11 @@ MAKE           	?= make
 BUILD_DIR	   	?= $(realpath .)/build
 
 # Software build configuration
-PROJECT  ?= hello_world
-SUITE   ?= embench
-BENCHMARK ?= crc32
-LINKER   ?= $(realpath sw/linker/len5-sim.ld)
-COPT   	 ?= -O0
+PROJECT  		?= hello_world
+SUITE   		?= embench
+BENCHMARK 		?= crc32
+LINKER   		?= $(realpath sw/linker/len5-sim.ld)
+COPT   	 		?= -O0
 
 # RTL simulation
 FIRMWARE		?= $(BUILD_DIR)/main.hex
@@ -184,6 +184,7 @@ check-alu: | .check-fusesoc
 	@echo "## Checking ALU RTL..."
 	fusesoc run --no-export --target sim --tool verilator polito:len5:alu-tb \
 		--log_level=LOG_LOW \
+		--dump_waves=false \
 		--max_cycles=1000000
 
 # Utilities

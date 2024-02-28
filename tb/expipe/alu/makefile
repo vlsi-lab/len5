@@ -28,6 +28,7 @@ verilator-build: $(BUILD_DIR)/
 verilator-sim: | verilator-build
 	fusesoc --cores-root ../../../ run --no-export --target sim --tool verilator --run $(FUSESOC_FLAGS) polito:len5:alu-tb \
 		--log_level=$(LOG_LEVEL) \
+		--dump_waves=true \
 		--max_cycles=$(MAX_CYCLES)
 
 # Run Verilator simulation
@@ -35,6 +36,7 @@ verilator-sim: | verilator-build
 verilator-run:
 	fusesoc --cores-root ../../../ run --no-export --target sim --tool verilator --run $(FUSESOC_FLAGS) polito:len5:alu-tb \
 		--log_level=$(LOG_LEVEL) \
+		--dump_waves=true \
 		--max_cycles=$(MAX_CYCLES)
 
 # Open dumped waveform with GTKWave

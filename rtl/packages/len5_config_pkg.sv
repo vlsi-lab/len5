@@ -11,8 +11,6 @@
 // File: len5_config_pkg.sv
 // Author: Michele Caon
 // Date: 04/11/2021
-`ifndef LEN5_CONFIG_PKG_
-`define LEN5_CONFIG_PKG_
 
 package len5_config_pkg;
   // --------------------
@@ -148,5 +146,3 @@ package len5_config_pkg;
   // available in LEN5.
   localparam bit LEN5_CSR_HPMCOUNTERS_EN = 1'b1;
 endpackage
-
-`endif  /* LEN5_CONFIG_PKG */
