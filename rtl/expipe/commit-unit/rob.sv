@@ -47,10 +47,10 @@ module rob #(
   output logic                 sb_mem_clear_o, // store is clear to execute
 
   /* Commit stage */
-  output logic                   comm_valid_o,    // to downstream hardware
-  input  logic                   comm_ready_i,    // from downstream hardware
+  output logic                   comm_valid_o,  // to downstream hardware
+  input  logic                   comm_ready_i,  // from downstream hardware
   output expipe_pkg::rob_entry_t comm_data_o,
-  output expipe_pkg::rob_idx_t   comm_idx_o, // ROB head idx to update register status
+  output expipe_pkg::rob_idx_t   comm_idx_o,    // ROB head idx to update register status
 
   /* Common data bus (CDB) */
   input  logic                  cdb_valid_i,
@@ -98,10 +98,10 @@ module rob #(
   assign tail_cnt_clr = flush_i;
   assign clear_cnt_clr = flush_i;
   assign work_cnt_clr = flush_i;
-  assign head_reg_en = comm_valid_in_order & comm_ready_i; // in-order commit
+  assign head_reg_en = comm_valid_in_order & comm_ready_i;  // in-order commit
   assign tail_cnt_en = fifo_push;
   assign clear_cnt_en = mem_instr_clear;
-  assign work_cnt_en =  commit_valid & comm_ready_i; // in- OR out-of-order commit
+  assign work_cnt_en = commit_valid & comm_ready_i;  // in- OR out-of-order commit
 
   // Oldest instruction that is not "clear to commit"
   // NOTE: the instruction pointed by clear_idx can be committed if:
@@ -167,9 +167,7 @@ module rob #(
         if (fifo_push && tail_idx == i[$clog2(DEPTH)-1:0]) begin
           data_valid[i] <= 1'b1;
           data[i]       <= issue_data_i;
-        end else if ((fifo_pop) && commit_idx == i[$clog2(
-                DEPTH
-            )-1:0]) begin
+        end else if ((fifo_pop) && commit_idx == i[$clog2(DEPTH)-1:0]) begin
           data_valid[i] <= 1'b0;
           // CHECk non ci siamo devo guardare res_ready[work_idx] e comm_ready_i.
           //Forse non c'è bisogno di controllare instr_clear, se ho res_ready?
@@ -182,7 +180,8 @@ module rob #(
       end
 
       // Clear status update
-      if (data_valid[clear_idx]) begin
+      //if (data_valid[clear_idx]) begin
+      if (mem_instr_clear) begin
         data[clear_idx].mem_clear <= 1'b1;
       end
     end
@@ -205,7 +204,7 @@ module rob #(
   //  .count_o(head_idx),
   //  .tc_o   ()                            // not needed
   //);
-  always_ff @(posedge clk_i or negedge rst_ni) begin: head_index_register
+  always_ff @(posedge clk_i or negedge rst_ni) begin : head_index_register
     if (!rst_ni) begin
       head_idx <= 0;
     end else if (head_reg_clr) begin
@@ -275,7 +274,7 @@ module rob #(
   /* Commit stage */
   assign comm_valid_o = commit_valid;
   assign comm_data_o = comm_valid_in_order ? data[head_idx] :  data[work_idx] ;  // Give higher priority to in-order commit
-  assign comm_idx_o = commit_idx;    // Give higher priority to in-order commit
+  assign comm_idx_o = commit_idx;  // Give higher priority to in-order commit
   assign opfwd_rs1_valid_o = data_valid[issue_rs1_rob_idx_i];
   assign opfwd_rs1_ready_o = data[issue_rs1_rob_idx_i].res_ready;
   assign opfwd_rs1_value_o = data[issue_rs1_rob_idx_i].res_value;
