@@ -13,6 +13,7 @@
 
 module jump_early_dec (
   input  len5_pkg::instr_t       instr_i,
+  input  logic                   instr_valid_i,
   input  fetch_pkg::prediction_t mem_if_pred_i,
   input logic                   [len5_pkg::XLEN-1:0] early_jump_target_prediction_i,
   output fetch_pkg::prediction_t issue_pred_o,
@@ -29,7 +30,7 @@ module jump_early_dec (
   // ----------------
   logic is_jump; // For resource sharing, in case synopsys fails recognizing it
 
-  assign is_jump = ( instr_i.j.opcode == JAL[OPCODE_LEN-1:0] );
+  assign is_jump = ( instr_i.j.opcode == JAL[OPCODE_LEN-1:0] ) && instr_valid_i;
   // OUTPUTS
   assign early_jump_valid_o = is_jump;
   assign mem_flush_o = is_jump;

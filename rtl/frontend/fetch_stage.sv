@@ -135,7 +135,7 @@ module fetch_stage #(
   ) u_mem_if (
     .clk_i                (clk_i),
     .rst_ni               (rst_ni),
-    .flush_i              (flush_i),
+    .flush_i              (flush_i | early_jump_mem_flush_o),
     .fetch_valid_i        (pcgen_memif_valid),
     .fetch_ready_o        (memif_pcgen_ready),
     .fetch_pred_i         (curr_pred),
@@ -158,6 +158,7 @@ module fetch_stage #(
 
   // JUMP early-decoder
   jump_early_dec u_jump_early_dec (
+    .instr_valid_i (issue_valid_o),
     .instr_i              (fetched_instr),
     .early_jump_target_prediction_i(early_jump_target_prediction),
     .mem_if_pred_i         (mem_if_pred),

@@ -65,8 +65,6 @@ module pc_gen #(
       end else begin
         next_pc = adder_out;
       end
-    end else if (early_jump_valid_i) begin
-      next_pc = adder_out;
     end else if (pred_taken_i) begin
       next_pc = pred_target_i;
     end else begin
