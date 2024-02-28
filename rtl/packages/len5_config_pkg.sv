@@ -68,7 +68,7 @@ package len5_config_pkg;
   // EXECUTION PIPELINE
   // ------------------
   // ISSUE QUEUE
-  localparam int unsigned IQ_DEPTH = 2;  // number of entries in the issue queue (power of 2)
+  localparam int unsigned IQ_DEPTH = 10;  // number of entries in the issue queue (power of 2)
 
   // LOAD/STORE UNIT
   localparam int unsigned LDBUFF_DEPTH = 4;  // number of entries in the load buffer
