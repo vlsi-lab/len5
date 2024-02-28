@@ -31,6 +31,7 @@ module fetch_stage #(
   output logic                                         instr_we_o,
   input  logic                    [len5_pkg::ILEN-1:0] instr_rdata_i,
   output logic                    [len5_pkg::XLEN-1:0] instr_addr_o,
+  output logic                                         early_jump_mem_flush_o,
   input  logic                                         instr_except_raised_i,
   input  fetch_pkg::except_code_t                      instr_except_code_i,
 
@@ -67,6 +68,13 @@ module fetch_stage #(
   // Memory Interface <--> PC generator
   logic                   memif_pcgen_ready;
   logic                   pcgen_memif_valid;
+
+  // Jump early decoder
+  len5_pkg::instr_t fetched_instr;
+  logic early_jump_valid;
+  logic [len5_pkg::XLEN-1:0] early_jump_target, early_jump_target_prediction;
+  prediction_t mem_if_pred;
+
 
   // -------
   // MODULES
@@ -113,7 +121,10 @@ module fetch_stage #(
     .mem_ready_i         (memif_pcgen_ready),
     .valid_o             (pcgen_memif_valid),
     .bu_ready_o          (bu_pcgen_ready_o),
-    .pc_o                (curr_pc)
+    .pc_o                (curr_pc),
+    .early_jump_target_i (early_jump_target),
+    .early_jump_valid_i  (early_jump_valid),
+    .early_jump_target_prediction_o (early_jump_target_prediction)
   );
 
   // MEMORY INTERFACE
@@ -129,8 +140,8 @@ module fetch_stage #(
     .fetch_pred_i         (curr_pred),
     .issue_valid_o        (issue_valid_o),
     .issue_ready_i        (issue_ready_i),
-    .issue_instr_o        (issue_instr_o),
-    .issue_pred_o         (issue_pred_o),
+    .issue_instr_o        (fetched_instr),
+    .issue_pred_o         (mem_if_pred),
     .issue_except_raised_o(issue_except_raised_o),
     .issue_except_code_o  (issue_except_code_o),
     .instr_valid_i        (instr_valid_i),
@@ -144,4 +155,16 @@ module fetch_stage #(
     .instr_except_code_i  (instr_except_code_i)
   );
 
+  // JUMP early-decoder
+  jump_early_dec u_jump_early_dec (
+    .instr_i              (fetched_instr),
+    .early_jump_target_prediction_i(early_jump_target_prediction),
+    .mem_if_pred_i         (mem_if_pred),
+    .issue_pred_o         (issue_pred_o),
+    .early_jump_valid_o   (early_jump_valid),
+    .mem_flush_o          (early_jump_mem_flush_o),
+    .early_jump_target_o  (early_jump_target)
+    );
+    
+    assign issue_instr_o = fetched_instr;
 endmodule

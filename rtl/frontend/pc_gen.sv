@@ -23,32 +23,37 @@ module pc_gen #(
   input  logic                                        bu_res_valid_i,
   input  fetch_pkg::resolution_t                      bu_res_i,
   input  logic                   [len5_pkg::XLEN-1:0] pred_target_i,
+  input  logic                   [len5_pkg::XLEN-1:0] early_jump_target_i,
+  input  logic                                        early_jump_valid_i,
   input  logic                                        pred_taken_i,
   input  logic                                        mem_ready_i,
   output logic                                        valid_o,
   output logic                                        bu_ready_o,
-  output logic                   [len5_pkg::XLEN-1:0] pc_o
+  output logic                   [len5_pkg::XLEN-1:0] pc_o,
+  output logic                   [len5_pkg::XLEN-1:0] early_jump_target_prediction_o
 );
 
   import len5_pkg::*;
   import fetch_pkg::*;
   // INTERNAL SIGNALS
   // ----------------
-  logic [len5_pkg::XLEN-1:0] next_pc, add_pc, adder_out;
+  logic [len5_pkg::XLEN-1:0] next_pc, add_pc, adder_out, pc_offset;
 
   // -------------------
   // PC GENERATION LOGIC
   // -------------------
 
   // Mux + adder
+  assign pc_offset = (early_jump_valid_i && !(bu_res_valid_i && bu_res_i.mispredict)) ? early_jump_target_i : {32'b0, (ILEN >> 3)}; 
   assign add_pc    = (bu_res_valid_i && bu_res_i.mispredict) ? bu_res_i.pc : pc_o;
-  assign adder_out = add_pc + {32'b0, (ILEN >> 3)};
+  assign adder_out = add_pc + pc_offset;
 
   // Priority list for choosing the next PC value:
   // 1) Exception
   // 2) Misprediction
   // 3) Branch prediction
-  // 4) Default PC+4
+  // 4) Default PC+jump immediate
+  // 5) Default PC+4
   always_comb begin : pc_priority_enc
     if (comm_except_raised_i) begin
       next_pc = comm_except_pc_i;
@@ -77,4 +82,5 @@ module pc_gen #(
   // Output valid and ready
   assign valid_o    = rst_ni & !(bu_res_valid_i & bu_res_i.mispredict) & !comm_except_raised_i;
   assign bu_ready_o = mem_ready_i;
+  assign early_jump_target_prediction_o = next_pc;
 endmodule

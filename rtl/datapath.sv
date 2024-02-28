@@ -85,6 +85,7 @@ module datapath #(
   logic                    be_fe_except_raised;
   logic         [XLEN-1:0] be_fe_except_pc;
   logic                    fe_be_bu_pcgen_ready;
+  logic                    early_jump_mem_flush;
 
   // ---------
   // FRONT-END
@@ -106,6 +107,7 @@ module datapath #(
     .instr_we_o           (instr_we_o),
     .instr_rdata_i        (instr_rdata_i),
     .instr_addr_o         (instr_addr_o),
+    .early_jump_mem_flush_o(early_jump_mem_flush),
     .instr_except_raised_i(instr_except_raised_i),
     .instr_except_code_i  (instr_except_code_i),
     .issue_ready_i        (be_fe_ready),
@@ -180,6 +182,6 @@ module datapath #(
   // OUTPUT EVALUATION
   // -----------------
   // Memory misprediction flush
-  assign mem_flush_o = be_fe_mis_flush;
+  assign mem_flush_o = be_fe_mis_flush | early_jump_mem_flush;
 
 endmodule
