@@ -18,7 +18,8 @@ module jump_early_dec (
   output fetch_pkg::prediction_t issue_pred_o,
   output logic                   early_jump_valid_o,
   output logic                   mem_flush_o,
-  output logic                   [len5_pkg::XLEN-1:0] early_jump_target_o
+  output logic                   [len5_pkg::XLEN-1:0] early_jump_target_o,
+  output logic                   [len5_pkg::XLEN-1:0] early_jump_old_pc_o
 );
 
   import len5_pkg::*;
@@ -33,10 +34,11 @@ module jump_early_dec (
   assign early_jump_valid_o = is_jump;
   assign mem_flush_o = is_jump;
   // Get the offset to be added to the PC on 32 bits using sign extension
-  assign early_jump_target_o = {{(XLEN-U_IMM-1){instr_i.j.imm20[0]}}, instr_i.j.imm20, instr_i.j.imm19, instr_i.j.imm11, instr_i.j.imm10, 1'b0};
+  assign early_jump_target_o = XLEN'(signed'({instr_i.j.imm20, instr_i.j.imm19, instr_i.j.imm11, instr_i.j.imm10, 1'b0}));
 
   assign issue_pred_o.pc = mem_if_pred_i.pc;
   assign issue_pred_o.target = (is_jump) ? early_jump_target_prediction_i : mem_if_pred_i.target;
   assign issue_pred_o.taken = (is_jump) ? 1'b1 : mem_if_pred_i.taken;
+  assign early_jump_old_pc_o = mem_if_pred_i.pc;
 
 endmodule

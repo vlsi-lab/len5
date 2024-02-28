@@ -72,7 +72,7 @@ module fetch_stage #(
   // Jump early decoder
   len5_pkg::instr_t fetched_instr;
   logic early_jump_valid;
-  logic [len5_pkg::XLEN-1:0] early_jump_target, early_jump_target_prediction;
+  logic [len5_pkg::XLEN-1:0] early_jump_target, early_jump_target_prediction, early_jump_old_pc;
   prediction_t mem_if_pred;
 
 
@@ -124,7 +124,8 @@ module fetch_stage #(
     .pc_o                (curr_pc),
     .early_jump_target_i (early_jump_target),
     .early_jump_valid_i  (early_jump_valid),
-    .early_jump_target_prediction_o (early_jump_target_prediction)
+    .early_jump_target_prediction_o (early_jump_target_prediction),
+    .early_jump_old_pc_i (early_jump_old_pc)
   );
 
   // MEMORY INTERFACE
@@ -163,8 +164,9 @@ module fetch_stage #(
     .issue_pred_o         (issue_pred_o),
     .early_jump_valid_o   (early_jump_valid),
     .mem_flush_o          (early_jump_mem_flush_o),
-    .early_jump_target_o  (early_jump_target)
+    .early_jump_target_o  (early_jump_target),
+    .early_jump_old_pc_o  (early_jump_old_pc)
     );
-    
+
     assign issue_instr_o = fetched_instr;
 endmodule
