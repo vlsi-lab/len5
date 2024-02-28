@@ -93,7 +93,7 @@ module commit_stage (
   logic                   rob_reg_valid;
   logic                   reg_rob_ready;
   rob_entry_t             rob_reg_head_entry;
-  rob_idx_t               rob_reg_head_idx;
+  rob_idx_t               rob_reg_idx;
 
   // ROB <--> Operands forwarding logic
   logic                   rob_opfwd_rs1_valid;
@@ -169,7 +169,7 @@ module commit_stage (
     .comm_valid_o       (rob_reg_valid),
     .comm_ready_i       (reg_rob_ready),
     .comm_data_o        (rob_reg_head_entry),
-    .comm_head_idx_o    (rob_reg_head_idx),
+    .comm_idx_o         (rob_reg_idx),
     .cdb_valid_i        (cdb_valid_i),
     .cdb_data_i         (cdb_data_i),
     .cdb_ready_o        (cdb_ready_o)
@@ -180,7 +180,7 @@ module commit_stage (
   inreg_data_t inreg_data_in, inreg_data_out;
 
   assign inreg_data_in.data    = rob_reg_head_entry;
-  assign inreg_data_in.rob_idx = rob_reg_head_idx;
+  assign inreg_data_in.rob_idx = rob_reg_idx;
 
   // Input spill cell
   spill_cell_ext #(

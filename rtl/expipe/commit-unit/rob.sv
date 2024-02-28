@@ -50,7 +50,7 @@ module rob #(
   output logic                   comm_valid_o,    // to downstream hardware
   input  logic                   comm_ready_i,    // from downstream hardware
   output expipe_pkg::rob_entry_t comm_data_o,
-  output expipe_pkg::rob_idx_t   comm_head_idx_o, // ROB head idx to update register status
+  output expipe_pkg::rob_idx_t   comm_idx_o, // ROB head idx to update register status
 
   /* Common data bus (CDB) */
   input  logic                  cdb_valid_i,
@@ -66,9 +66,9 @@ module rob #(
   // INTERNAL SIGNALS
   // ----------------
   // Head and tail counters
-  logic [$clog2(DEPTH)-1:0] head_idx, tail_idx, clear_idx;
-  logic head_cnt_en, tail_cnt_en, clear_cnt_en;
-  logic head_cnt_clr, tail_cnt_clr, clear_cnt_clr;
+  logic [$clog2(DEPTH)-1:0] head_idx, tail_idx, clear_idx, work_idx, commit_idx;
+  logic head_reg_en, tail_cnt_en, clear_cnt_en, work_cnt_en;
+  logic head_reg_clr, tail_cnt_clr, clear_cnt_clr, work_cnt_clr;
 
   // FIFO data
   logic       data_valid[DEPTH];
@@ -77,25 +77,31 @@ module rob #(
   // FIFO control
   logic fifo_push, fifo_pop, update_res;
 
-  // Clear instruction
-  logic instr_clear, entry_clear, cdb_clear;
+  // Clear store instruction
+  logic mem_instr_clear, entry_clear, cdb_clear;
+
+  // Out of order commit
+  logic instr_waw;
+  logic comm_valid_in_order, comm_valid_out_order, commit_valid;
 
   // -----------------
   // FIFO CONTROL UNIT
   // -----------------
 
   // Push/pop/update control
-  assign fifo_push = issue_valid_i && issue_ready_o;
-  assign fifo_pop = comm_valid_o && comm_ready_i;
+  assign fifo_push = issue_valid_i & issue_ready_o;
+  assign fifo_pop = commit_valid & comm_ready_i;
   assign update_res = cdb_valid_i;
 
   // Counters control
-  assign head_cnt_clr = flush_i;
+  assign head_reg_clr = flush_i;
   assign tail_cnt_clr = flush_i;
   assign clear_cnt_clr = flush_i;
-  assign head_cnt_en = fifo_pop;
+  assign work_cnt_clr = flush_i;
+  assign head_reg_en = comm_valid_in_order & comm_ready_i; // in-order commit
   assign tail_cnt_en = fifo_push;
-  assign clear_cnt_en = instr_clear;
+  assign clear_cnt_en = mem_instr_clear;
+  assign work_cnt_en =  commit_valid & comm_ready_i; // in- OR out-of-order commit
 
   // Oldest instruction that is not "clear to commit"
   // NOTE: the instruction pointed by clear_idx can be committed if:
@@ -108,20 +114,44 @@ module rob #(
   // out-of-order execution of subsequent memory instructions unconditionally.
   assign entry_clear = ~data[clear_idx].except_raised &
                        (data[clear_idx].except_code != E_MISPREDICTION) &
-                       data[clear_idx].res_ready;
+                       data[clear_idx].res_ready; // check conditions 2),3), 4)
   assign cdb_clear   = cdb_valid_i &
                        cdb_data_i.rob_idx == clear_idx &
                        ~cdb_data_i.except_raised &
-                       (cdb_data_i.except_code != E_MISPREDICTION);
-  assign instr_clear = data_valid[clear_idx] & (~data[clear_idx].order_crit | entry_clear | cdb_clear);
+                       (cdb_data_i.except_code != E_MISPREDICTION); // check cdb is writing at clear_idx and 2),3)
+  assign mem_instr_clear = data_valid[clear_idx] & (~data[clear_idx].order_crit | entry_clear | cdb_clear);
+
+  // Clear ROB entry if next instruction is not critical
+  // All check made above + check whether the rd[head_idx]==rd[ooo_clear_idx], give instr_ooc_clear
+  // New counter should be enabled always when head_reg_en=1 + when head_reg_en=1 and instr_ooc_clear=1
+  // The head counter should have a further input (different from the enable (?)) to update it with an external value
+  // When head_reg_en==1, the head counter should be updated with the value of the ooc_clear_counter.
+  // Attenzione qui, perchè quando la head è pronta a committare, avrò il suo enable a 1, ma magari devo caricare un valore diverso da head+1
+  // Ha senso che head non sia piu un counter ma solo una cosa dove carico il vaore del clear reg
+
+  // Instruction at the head is not ready to commit.
+  // If it is 1) not speculative (mispredicted) 2) nor triggering exceptions, can enable out-of-order commit.
+  // CHECK devo controllare anche che sia valid??
+
+  // WAW check for out of order commit
+  assign instr_waw = (data[head_idx].rd_idx == data[work_idx].rd_idx);
+
+  // Commit valids
+  assign comm_valid_in_order = data_valid[head_idx] & data[head_idx].res_ready;
+  assign comm_valid_out_order = data_valid[work_idx] & data[work_idx].res_ready & data[work_idx].mem_clear & ~instr_waw;
+  assign commit_valid = comm_valid_in_order | comm_valid_out_order;
+
+  // Committing instruction index
+  assign commit_idx = comm_valid_in_order ? head_idx : work_idx;
 
   // -----------
   // FIFO UPDATE
   // -----------
   // NOTE: operations priority:
   // 1) push (from issue stage)
-  // 2) pop
-  // 3) update result (from CDB)
+  // 2) pop in order
+  // 3) pop out of order
+  // 4) update result (from CDB)
   always_ff @(posedge clk_i or negedge rst_ni) begin : p_fifo_update
     if (!rst_ni) begin
       foreach (data[i]) begin
@@ -137,8 +167,12 @@ module rob #(
         if (fifo_push && tail_idx == i[$clog2(DEPTH)-1:0]) begin
           data_valid[i] <= 1'b1;
           data[i]       <= issue_data_i;
-        end else if (fifo_pop && head_idx == i[$clog2(DEPTH)-1:0]) begin
+        end else if ((fifo_pop) && commit_idx == i[$clog2(
+                DEPTH
+            )-1:0]) begin
           data_valid[i] <= 1'b0;
+          // CHECk non ci siamo devo guardare res_ready[work_idx] e comm_ready_i.
+          //Forse non c'è bisogno di controllare instr_clear, se ho res_ready?
         end else if (update_res && cdb_data_i.rob_idx == i[ROB_IDX_LEN-1:0]) begin
           data[i].res_ready     <= 1'b1;
           data[i].res_value     <= cdb_data_i.res_value;
@@ -159,16 +193,27 @@ module rob #(
   // ------------
   // Head counter
   // Tracks the oldest instruction in the ROB
-  modn_counter #(
-    .N(DEPTH)
-  ) u_head_counter (
-    .clk_i  (clk_i),
-    .rst_ni (rst_ni),
-    .en_i   (head_cnt_en),
-    .clr_i  (head_cnt_clr),
-    .count_o(head_idx),
-    .tc_o   ()               // not needed
-  );
+  //modn_counter_load #(
+  //  .N(DEPTH)
+  //) u_head_counter (
+  //  .clk_i  (clk_i),
+  //  .rst_ni (rst_ni),
+  //  .en_i   (head_reg_en & work_cnt_en),
+  //  .en_l   (head_reg_en & ~work_cnt_en),
+  //  .load_value_i(work_idx),
+  //  .clr_i  (head_reg_clr),
+  //  .count_o(head_idx),
+  //  .tc_o   ()                            // not needed
+  //);
+  always_ff @(posedge clk_i or negedge rst_ni) begin: head_index_register
+    if (!rst_ni) begin
+      head_idx <= 0;
+    end else if (head_reg_clr) begin
+      head_idx <= 0;
+    end else if (head_reg_en) begin
+      head_idx <= work_idx;
+    end
+  end
 
   // Tail counter
   // Tracks the first available empty entry in the ROB
@@ -183,7 +228,7 @@ module rob #(
     .tc_o   ()               // not needed
   );
 
-  // Clear counter
+  // Clear counter for store instructions
   // Tracks the oldest instruction that is NOT "clear to commit"
   modn_counter #(
     .N(DEPTH)
@@ -195,6 +240,20 @@ module rob #(
     .count_o(clear_idx),
     .tc_o   ()                // not needed
   );
+
+  // Work counter for out-of-order commit
+  // Tracks the oldest instruction that is NOT "clear to commit"
+  modn_counter_one #(
+    .N(DEPTH)
+  ) u_work_counter (
+    .clk_i  (clk_i),
+    .rst_ni (rst_ni),
+    .en_i   (work_cnt_en),
+    .clr_i  (work_cnt_clr),
+    .count_o(work_idx),
+    .tc_o   ()               // not needed
+  );
+
 
   // --------------
   // OUTPUT CONTROL
@@ -210,12 +269,13 @@ module rob #(
   assign issue_tail_idx_o = tail_idx;
 
   /* Store buffer */
+  //assign sb_mem_clear_o    = data_valid[sb_mem_idx_i] & (data[sb_mem_idx_i].mem_clear | clear_idx == sb_mem_idx_i); remove clear_idx
   assign sb_mem_clear_o    = data_valid[sb_mem_idx_i] & (data[sb_mem_idx_i].mem_clear | clear_idx == sb_mem_idx_i);
 
   /* Commit stage */
-  assign comm_valid_o = data_valid[head_idx] & data[head_idx].res_ready;
-  assign comm_data_o = data[head_idx];
-  assign comm_head_idx_o = head_idx;
+  assign comm_valid_o = commit_valid;
+  assign comm_data_o = comm_valid_in_order ? data[head_idx] :  data[work_idx] ;  // Give higher priority to in-order commit
+  assign comm_idx_o = commit_idx;    // Give higher priority to in-order commit
   assign opfwd_rs1_valid_o = data_valid[issue_rs1_rob_idx_i];
   assign opfwd_rs1_ready_o = data[issue_rs1_rob_idx_i].res_ready;
   assign opfwd_rs1_value_o = data[issue_rs1_rob_idx_i].res_value;

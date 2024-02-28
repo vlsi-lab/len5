@@ -344,6 +344,7 @@ module issue_decoder (
         issue_type  = ISSUE_TYPE_JUMP;
         assigned_eu = EU_BRANCH_UNIT;
         eu_ctl.bu   = BU_JAL;
+        //order_crit  = 1'b0; // TODO: uncomment when early JAL handling is online
         imm_format  = IMM_TYPE_J;
       end
       JALR: begin
