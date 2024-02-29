@@ -18,6 +18,7 @@ filesets:
     - common/fifo_nohs.sv
     - common/fifo.sv
     - common/modn_counter.sv
+    - common/modn_counter_load.sv
     - common/one_hot_shift_reg.sv
     - common/prio_2way_arbiter.sv
     - common/prio_enc_inv.sv

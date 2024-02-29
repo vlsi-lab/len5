@@ -12,15 +12,17 @@
 // Author: Michele Caon
 // Date: 17/10/2019
 
-module modn_counter #(
+module modn_counter_load #(
   parameter int unsigned N = 16,
   parameter logic [$clog2(N)-1:0] INIT = '0  // initial value at reset and clear
 ) (
   // Input signals
-  input logic clk_i,
-  input logic rst_ni,  // Asynchronous reset
-  input logic en_i,
-  input logic clr_i,   // Synchronous clear
+  input logic                 clk_i,
+  input logic                 rst_ni,        // Asynchronous reset
+  input logic                 en_i,          // enable count
+  input logic                 en_l,          // enable load, synchronous load
+  input logic [$clog2(N)-1:0] load_value_i,  // value to load
+  input logic                 clr_i,         // Synchronous clear
 
   // Output signals
   output logic [$clog2(N)-1:0] count_o,  // Counter value
@@ -35,12 +37,13 @@ module modn_counter #(
     if (!rst_ni) begin
       count_o <= INIT;  // Asynchronous reset
     end else if (clr_i) begin
-      count_o <= INIT;  // Synchronous clear when requested
+      count_o <= INIT;  // Synchronous clear when requested or when reaching the threshold
+    end else if (en_l) begin
+      count_o <= load_value_i;
     end else if (en_i && tc_o) begin
       count_o <= '0;
     end else if (en_i) begin
       count_o <= count_o + 1;
     end
   end
-
 endmodule
