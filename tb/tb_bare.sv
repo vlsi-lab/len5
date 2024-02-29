@@ -213,7 +213,7 @@ module tb_bare #(
 
     if (exit_code_recv) begin
       // Get execution stats
-      cpu_data    <= tb_get_len5_data(num_instr_loads, num_data_loads, num_data_stores);
+      cpu_data    <= tb_len5_get_data(num_instr_loads, num_data_loads, num_data_stores);
       exit_cnt_en <= 1'b1;
     end
   end
@@ -233,7 +233,7 @@ module tb_bare #(
       end
 
       // Print execution report
-      tb_print_len5_report(cpu_data);
+      tb_len5_print_report(cpu_data);
 
       // Clean up and terminate simulation
       $fclose(trace_fd);
@@ -253,11 +253,12 @@ module tb_bare #(
   // Print the currently committing instruction and its program counter
   always_ff @(posedge clk_i) begin : trace_logger
     // Check if an instruction is committing
-    if (trace_en_i && tb_get_len5_committing()) begin
-      // Print the currently committing instruction and its program counter
-      $fdisplay(trace_fd, "core %3d: 0x%16h (0x%8h)", tb_get_len5_cpu_id(),
-                tb_get_len5_commit_pc(), tb_get_len5_commit_instr());
+    if (trace_en_i && tb_len5_get_committing()) begin
+      tb_len5_update_commit();
     end
+
+    // Dump committed instructions
+    tb_len5_dump_commit(trace_fd);
   end
 
   // -------

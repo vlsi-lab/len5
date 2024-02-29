@@ -1,54 +1,70 @@
 [*]
 [*] GTKWave Analyzer v3.3.118 (w)1999-2023 BSI
-[*] Sun Feb 25 16:06:10 2024
+[*] Thu Feb 29 00:09:26 2024
 [*]
-[dumpfile] "/home/michi/Documents/phd/poli/len-5-integration/build/polito_len5_len5_0.1.0/sim-verilator/logs/waves.fst"
-[dumpfile_mtime] "Sun Feb 25 15:45:29 2024"
-[dumpfile_size] 5353784
+[dumpfile] "/home/michi/Documents/phd/poli/len-5-integration/build/polito_len5_len5_0.1.1/sim-verilator/logs/waves.fst"
+[dumpfile_mtime] "Thu Feb 29 00:08:25 2024"
+[dumpfile_size] 6125813
 [savefile] "/home/michi/Documents/phd/poli/len-5-integration/tb/misc/verilator-waves.gtkw"
-[timestart] 56772
+[timestart] 13272
 [size] 2560 1393
-[pos] 2805 -419
-*-3.300000 56784 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -1 -132
+*-3.300000 10979 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.tb_bare.
-[treeopen] TOP.tb_bare.u_datapath.
-[treeopen] TOP.tb_bare.u_datapath.u_backend.
 [treeopen] TOP.tb_bare.u_datapath.u_backend.fetch_pred_i.
 [treeopen] TOP.tb_bare.u_datapath.u_backend.u_cdb.data_o.
 [treeopen] TOP.tb_bare.u_datapath.u_backend.u_cdb.rs_data_i(2).
-[treeopen] TOP.tb_bare.u_datapath.u_backend.u_commit_stage.
 [treeopen] TOP.tb_bare.u_datapath.u_backend.u_commit_stage.cdb_data_i.
-[treeopen] TOP.tb_bare.u_datapath.u_backend.u_commit_stage.comm_reg_data.
 [treeopen] TOP.tb_bare.u_datapath.u_backend.u_commit_stage.comm_reg_data.data.
-[treeopen] TOP.tb_bare.u_datapath.u_backend.u_commit_stage.issue_data_i.
 [treeopen] TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_comm_decoder.
 [treeopen] TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_commit_cu.
-[treeopen] TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.
-[treeopen] TOP.tb_bare.u_datapath.u_backend.u_exec_stage.
-[treeopen] TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.
-[treeopen] TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.gen_store_load_fwd.
+[treeopen] TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.data(3).
+[treeopen] TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.data(4).
 [treeopen] TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.gen_store_load_fwd.u_l0_cache.
-[treeopen] TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_load_buffer.
 [treeopen] TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_load_buffer.data(0).
 [treeopen] TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_load_buffer.issue_rs1_i.
-[treeopen] TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.
 [treeopen] TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.cdb_data_o.
+[treeopen] TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(0).
+[treeopen] TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(1).
 [treeopen] TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(2).
 [treeopen] TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(3).
 [treeopen] TOP.tb_bare.u_datapath.u_backend.u_issue_stage.comm_data_o.
 [treeopen] TOP.tb_bare.u_datapath.u_backend.u_issue_stage.u_issue_decoder.
 [treeopen] TOP.tb_bare.u_datapath.u_fetch_stage.u_bpu.u_gshare.
 [treeopen] TOP.tb_bare.u_datapath.u_fetch_stage.u_pc_gen.
-[treeopen] TOP.tb_bare.u_memory_bare_emu.
 [sst_width] 267
 [signals_width] 377
 [sst_expanded] 1
-[sst_vpaned_height] 559
+[sst_vpaned_height] 769
 @28
 TOP.tb_bare.u_datapath.clk_i
 TOP.tb_bare.u_datapath.rst_ni
-TOP.tb_bare.trace_en_i
+@800028
+TOP.tb_bare.buffer_valid[15:0]
+@28
+(0)TOP.tb_bare.buffer_valid[15:0]
+(1)TOP.tb_bare.buffer_valid[15:0]
+(2)TOP.tb_bare.buffer_valid[15:0]
+@29
+(3)TOP.tb_bare.buffer_valid[15:0]
+@28
+(4)TOP.tb_bare.buffer_valid[15:0]
+(5)TOP.tb_bare.buffer_valid[15:0]
+(6)TOP.tb_bare.buffer_valid[15:0]
+(7)TOP.tb_bare.buffer_valid[15:0]
+(8)TOP.tb_bare.buffer_valid[15:0]
+(9)TOP.tb_bare.buffer_valid[15:0]
+(10)TOP.tb_bare.buffer_valid[15:0]
+(11)TOP.tb_bare.buffer_valid[15:0]
+(12)TOP.tb_bare.buffer_valid[15:0]
+(13)TOP.tb_bare.buffer_valid[15:0]
+(14)TOP.tb_bare.buffer_valid[15:0]
+(15)TOP.tb_bare.buffer_valid[15:0]
+@1001200
+-group_end
+@22
+TOP.tb_bare.commit_idx[3:0]
 @c00200
 -FRONTEND
 @28
@@ -221,7 +237,7 @@ TOP.tb_bare.u_datapath.u_backend.u_issue_stage.u_issue_decoder.rs2_req_o
 @22
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.issue_valid_i[5:0]
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.issue_ready_o[5:0]
-@800200
+@c00200
 -LOAD BUFFER
 @28
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_load_buffer.flush_i
@@ -254,7 +270,7 @@ TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_load_buffer.sb
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_load_buffer.sb_latest_idx_i[2:0]
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_load_buffer.sb_oldest_completed_i
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_load_buffer.sb_oldest_idx_i[2:0]
-@800200
+@c00200
 -entries
 @100000028
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_load_buffer.curr_state(0)[3:0]
@@ -276,10 +292,10 @@ TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_load_buffer.cu
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_load_buffer.lb_op(3)[2:0]
 @22
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_load_buffer.data(3).dest_rob_idx[3:0]
-@1000200
+@1401200
 -entries
 -LOAD BUFFER
-@800200
+@c00200
 -STORE BUFFER
 @28
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.flush_i
@@ -307,7 +323,7 @@ TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.m
 @28
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.mem_valid_i
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.mem_ready_o
-@800200
+@c00200
 -entries
 @200
 -entry
@@ -316,6 +332,8 @@ TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.c
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.sb_op(0)[2:0]
 @22
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(0).dest_rob_idx[3:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(0).except_raised
 @200
 -entry
 @100000028
@@ -323,6 +341,12 @@ TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.c
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.sb_op(1)[2:0]
 @22
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(1).dest_rob_idx[3:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(1).except_raised
+@22
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(1).imm_addr_value[63:0]
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(1).rs2_value[63:0]
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(1).rs1_value[63:0]
 @200
 -entry
 @100000028
@@ -330,6 +354,8 @@ TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.c
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.sb_op(2)[2:0]
 @22
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(2).dest_rob_idx[3:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(2).except_raised
 @200
 -entry
 @100000028
@@ -337,6 +363,8 @@ TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.c
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.sb_op(3)[2:0]
 @22
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(3).dest_rob_idx[3:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(3).except_raised
 @200
 -entry
 @100000028
@@ -344,6 +372,8 @@ TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.c
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.sb_op(4)[2:0]
 @22
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(4).dest_rob_idx[3:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(4).except_raised
 @200
 -entry
 @100000028
@@ -351,6 +381,8 @@ TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.c
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.sb_op(5)[2:0]
 @22
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(5).dest_rob_idx[3:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(5).except_raised
 @200
 -entry
 @100000028
@@ -358,6 +390,8 @@ TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.c
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.sb_op(6)[2:0]
 @22
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(6).dest_rob_idx[3:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(6).except_raised
 @200
 -entry
 @100000028
@@ -365,10 +399,12 @@ TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.c
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.sb_op(7)[2:0]
 @22
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(7).dest_rob_idx[3:0]
-@1000200
+@28
+TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.u_store_buffer.data(7).except_raised
+@1401200
 -entries
 -STORE BUFFER
-@800200
+@c00200
 -L0 CACHE
 @28
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.gen_store_load_fwd.u_l0_cache.st_valid_i
@@ -458,7 +494,6 @@ TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.gen_store_load_f
 TOP.tb_bare.u_datapath.u_backend.u_exec_stage.u_load_store_unit.gen_store_load_fwd.u_l0_cache.data(7).tag[60:0]
 @1401200
 -entries
-@1000200
 -L0 CACHE
 @c00200
 -BRANCH UNIT
@@ -548,7 +583,13 @@ TOP.tb_bare.u_datapath.u_backend.u_cdb.rob_ready_i
 TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_commit_cu.curr_state[4:0]
 @22
 TOP.tb_bare.u_datapath.u_backend.u_commit_stage.comm_reg_data.data.instr_pc[63:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_commit_cu.valid_i
+@100000028
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_commit_cu.comm_type_i[3:0]
+@24
 TOP.tb_bare.u_datapath.u_backend.u_commit_stage.comm_reg_data.rob_idx[3:0]
+@22
 TOP.tb_bare.u_datapath.u_backend.u_commit_stage.comm_reg_data.data.instruction.raw[31:0]
 @28
 TOP.tb_bare.u_datapath.u_backend.u_commit_stage.comm_reg_data.data.order_crit
@@ -557,7 +598,7 @@ TOP.tb_bare.u_datapath.u_backend.u_commit_stage.comm_reg_data.data.res_ready
 TOP.tb_bare.u_datapath.u_backend.u_commit_stage.comm_reg_data.data.except_raised
 @100000028
 TOP.tb_bare.u_datapath.u_backend.u_commit_stage.comm_reg_data.data.except_code[4:0]
-@29
+@28
 TOP.tb_bare.u_datapath.u_backend.u_commit_stage.int_rf_valid_o
 @24
 TOP.tb_bare.u_datapath.u_backend.u_commit_stage.rd_idx_o[4:0]
@@ -591,12 +632,20 @@ TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.data(2).instr_pc[63:0]
 TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.data_valid(3)
 @22
 TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.data(3).instr_pc[63:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.data(3).except_raised
+@100000028
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.data(3).except_code[4:0]
 @200
 -entry 4
 @28
 TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.data_valid(4)
 @22
 TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.data(4).instr_pc[63:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.data(4).except_raised
+@100000028
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_rob.data(4).except_code[4:0]
 @200
 -entry 5
 @28
@@ -693,10 +742,24 @@ TOP.tb_bare.u_datapath.u_backend.u_commit_stage.cdb_data_i.res_value[63:0]
 TOP.tb_bare.u_datapath.u_backend.u_commit_stage.cdb_data_i.except_raised
 @100000028
 TOP.tb_bare.u_datapath.u_backend.u_commit_stage.cdb_data_i.except_code[4:0]
+@200
+-rob_reg_head_entry
+@22
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.rob_reg_idx[3:0]
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.rob_reg_head_entry.instr_pc[63:0]
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.u_comm_decoder.instruction_i.raw[31:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.rob_reg_head_entry.except_raised
+@100000028
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.rob_reg_head_entry.except_code[4:0]
+@28
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.rob_reg_head_entry.res_ready
+@22
+TOP.tb_bare.u_datapath.u_backend.u_commit_stage.rob_reg_head_entry.res_value[63:0]
 @1000200
 -OTHERS
 -COMMIT STAGE
-@800200
+@c00200
 -REGISTER FILE
 @22
 TOP.tb_bare.u_datapath.u_backend.u_int_rf.rf_data(1)[63:0]
@@ -730,8 +793,9 @@ TOP.tb_bare.u_datapath.u_backend.u_int_rf.rf_data(28)[63:0]
 TOP.tb_bare.u_datapath.u_backend.u_int_rf.rf_data(29)[63:0]
 TOP.tb_bare.u_datapath.u_backend.u_int_rf.rf_data(30)[63:0]
 TOP.tb_bare.u_datapath.u_backend.u_int_rf.rf_data(31)[63:0]
-@1000200
+@1401200
 -REGISTER FILE
+@1000200
 -BACKEND
 [pattern_trace] 1
 [pattern_trace] 0
