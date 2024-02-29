@@ -84,7 +84,9 @@ module datapath #(
   resolution_t             be_fe_res;
   logic                    be_fe_except_raised;
   logic         [XLEN-1:0] be_fe_except_pc;
+  logic         [XLEN-1:0] be_fe_ra_value;
   logic                    fe_be_bu_pcgen_ready;
+  logic                    early_jump_mem_flush;
 
   // ---------
   // FRONT-END
@@ -95,31 +97,33 @@ module datapath #(
     .BOOT_PC         (BOOT_PC),
     .MEMIF_FIFO_DEPTH(FETCH_MEMIF_FIFO_DEPTH)
   ) u_fetch_stage (
-    .clk_i                (clk_i),
-    .rst_ni               (rst_ni),
-    .flush_i              (be_fe_mis_flush),
-    .flush_bpu_i          (be_fe_except_flush),
-    .instr_valid_i        (instr_rvalid_i),
-    .instr_ready_i        (instr_gnt_i),
-    .instr_ready_o        (instr_rready_o),
-    .instr_valid_o        (instr_req_o),
-    .instr_we_o           (instr_we_o),
-    .instr_rdata_i        (instr_rdata_i),
-    .instr_addr_o         (instr_addr_o),
-    .instr_except_raised_i(instr_except_raised_i),
-    .instr_except_code_i  (instr_except_code_i),
-    .issue_ready_i        (be_fe_ready),
-    .issue_valid_o        (fe_be_valid),
-    .issue_instr_o        (fe_be_instr),
-    .issue_pred_o         (fe_be_pred),
-    .issue_except_raised_o(fe_be_except_raised),
-    .issue_except_code_o  (fe_be_except_code),
-    .bu_pcgen_ready_o     (fe_be_bu_pcgen_ready),
-    .bu_bpu_valid_i       (be_fe_bpu_valid),
-    .bu_pcgen_valid_i     (be_fe_pcgen_valid),
-    .bu_res_i             (be_fe_res),
-    .comm_except_raised_i (be_fe_except_raised),
-    .comm_except_pc_i     (be_fe_except_pc)
+    .clk_i                 (clk_i),
+    .rst_ni                (rst_ni),
+    .flush_i               (be_fe_mis_flush),
+    .flush_bpu_i           (be_fe_except_flush),
+    .instr_valid_i         (instr_rvalid_i),
+    .instr_ready_i         (instr_gnt_i),
+    .instr_ready_o         (instr_rready_o),
+    .instr_valid_o         (instr_req_o),
+    .instr_we_o            (instr_we_o),
+    .instr_rdata_i         (instr_rdata_i),
+    .instr_addr_o          (instr_addr_o),
+    .early_jump_mem_flush_o(early_jump_mem_flush),
+    .instr_except_raised_i (instr_except_raised_i),
+    .instr_except_code_i   (instr_except_code_i),
+    .issue_ready_i         (be_fe_ready),
+    .issue_valid_o         (fe_be_valid),
+    .issue_instr_o         (fe_be_instr),
+    .issue_pred_o          (fe_be_pred),
+    .issue_except_raised_o (fe_be_except_raised),
+    .issue_except_code_o   (fe_be_except_code),
+    .bu_pcgen_ready_o      (fe_be_bu_pcgen_ready),
+    .bu_bpu_valid_i        (be_fe_bpu_valid),
+    .bu_pcgen_valid_i      (be_fe_pcgen_valid),
+    .bu_res_i              (be_fe_res),
+    .comm_except_raised_i  (be_fe_except_raised),
+    .comm_except_pc_i      (be_fe_except_pc),
+    .rf_ra_value_i         (be_fe_ra_value)
   );
 
   // --------
@@ -143,6 +147,7 @@ module datapath #(
     .fetch_res_o          (be_fe_res),
     .fetch_except_raised_o(be_fe_except_raised),
     .fetch_except_pc_o    (be_fe_except_pc),
+    .fetch_ra_value_o     (be_fe_ra_value),
 
     .mem_load_valid_o        (data_load_req_o),
     .mem_load_ready_i        (data_load_gnt_i),
@@ -180,6 +185,6 @@ module datapath #(
   // OUTPUT EVALUATION
   // -----------------
   // Memory misprediction flush
-  assign mem_flush_o = be_fe_mis_flush;
+  assign mem_flush_o = be_fe_mis_flush | early_jump_mem_flush;
 
 endmodule

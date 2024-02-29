@@ -27,28 +27,44 @@ module pc_gen #(
   input  logic                                        mem_ready_i,
   output logic                                        valid_o,
   output logic                                        bu_ready_o,
-  output logic                   [len5_pkg::XLEN-1:0] pc_o
+  output logic                   [len5_pkg::XLEN-1:0] pc_o,
+  input  logic                                        early_jump_valid_i,
+  input  logic                   [len5_pkg::XLEN-1:0] early_jump_offs_i,
+  input  logic                   [len5_pkg::XLEN-1:0] early_jump_base_i,
+  output logic                   [len5_pkg::XLEN-1:0] early_jump_target_o
 );
 
   import len5_pkg::*;
   import fetch_pkg::*;
+
   // INTERNAL SIGNALS
   // ----------------
-  logic [len5_pkg::XLEN-1:0] next_pc, add_pc, adder_out;
+  logic [len5_pkg::XLEN-1:0] next_pc, add_pc_base, adder_out, add_pc_offset, add_pc_early_jump;
 
   // -------------------
   // PC GENERATION LOGIC
   // -------------------
+  // Target address operands mux
+  always_comb begin : tgt_addr_op_mux
+    if (early_jump_valid_i && !(bu_res_valid_i && bu_res_i.mispredict)) begin
+      add_pc_offset     = early_jump_base_i;
+      add_pc_early_jump = early_jump_offs_i;
+    end else begin
+      add_pc_offset     = {32'b0, (ILEN >> 3)};
+      add_pc_early_jump = pc_o;
+    end
+  end
 
   // Mux + adder
-  assign add_pc    = (bu_res_valid_i && bu_res_i.mispredict) ? bu_res_i.pc : pc_o;
-  assign adder_out = add_pc + {32'b0, (ILEN >> 3)};
+  assign add_pc_base = (bu_res_valid_i && bu_res_i.mispredict) ? bu_res_i.pc : add_pc_early_jump;
+  assign adder_out   = add_pc_base + add_pc_offset;
 
   // Priority list for choosing the next PC value:
   // 1) Exception
   // 2) Misprediction
   // 3) Branch prediction
-  // 4) Default PC+4
+  // 4) Default PC+jump immediate
+  // 5) Default PC+4
   always_comb begin : pc_priority_enc
     if (comm_except_raised_i) begin
       next_pc = comm_except_pc_i;
@@ -69,12 +85,13 @@ module pc_gen #(
   always_ff @(posedge clk_i or negedge rst_ni) begin : pc_reg
     if (!rst_ni) begin
       pc_o <= BOOT_PC;
-    end else if (mem_ready_i) begin
+    end else if (mem_ready_i || early_jump_valid_i) begin
       pc_o <= next_pc;
     end
   end : pc_reg
 
   // Output valid and ready
-  assign valid_o    = rst_ni & !(bu_res_valid_i & bu_res_i.mispredict) & !comm_except_raised_i;
+  assign valid_o = rst_ni & !(bu_res_valid_i & bu_res_i.mispredict) & !comm_except_raised_i;
   assign bu_ready_o = mem_ready_i;
+  assign early_jump_target_o = next_pc;
 endmodule

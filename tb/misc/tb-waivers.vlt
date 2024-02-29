@@ -42,3 +42,5 @@ lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected b
 lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'irq_id_o'"
 lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'fetch_enable_i'"
 lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'core_sleep_o'"
+
+lint_off -rule UNOPTFLAT -file "*/tb_bare.sv" -match "Signal unoptimizable: Feedback to clock or circular logic: 'tb_bare.dp2mem_flush'"

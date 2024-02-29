@@ -32,6 +32,9 @@ lint_off -rule CMPCONST -file "*/csrs.sv" -match "Comparison is constant due to 
 lint_off -rule UNOPTFLAT -file "*/address_adder.sv" -match "Signal unoptimizable: Feedback to clock or circular logic: *align_except'"
 lint_off -rule UNOPTFLAT -file "*/lzc.sv" -match "Signal unoptimizable: Feedback to clock or circular logic: *index_nodes'"
 lint_off -rule UNOPTFLAT -file "*/lzc.sv" -match "Signal unoptimizable: Feedback to clock or circular logic: *sel_nodes'"
+lint_off -rule UNOPTFLAT -file "*/datapath.sv" -match "Signal unoptimizable: Feedback to clock or circular logic: 'tb_bare.u_datapath.early_jump_mem_flush'"
+lint_off -rule UNOPTFLAT -file "*/tb_bare.sv" -match "Signal unoptimizable: Feedback to clock or circular logic: 'tb_bare.mem2dp_instr_valid'"
+lint_off -rule UNOPTFLAT -file "*/spill_cell_flush.sv" -match "Signal unoptimizable: Feedback to clock or circular logic: 'tb_bare.u_memory_bare_emu.u_ins_out_reg.gen_spill_cell_gen.b_sel'"
 
 // Warning due to not inhibit all high performance counters 
 lint_off -rule UNUSED -file "*/csrs.sv" -match "Bits of signal are not used: 'mcountinhibit'[31:7,1]"

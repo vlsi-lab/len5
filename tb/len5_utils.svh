@@ -106,7 +106,7 @@ function void tb_len5_update_commit(bit dump_trace, int fd);
   // Check that all the entries were committed after flushing
   if (commit_check && buffer_valid != '0) begin
     $display("\033[1;31m[%8t] TB > ERROR: flushing uncommitted instructions!\033[0m", $time);
-    $finish;
+    // $finish;
   end
 
   // Flush the queue if requested

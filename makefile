@@ -155,9 +155,20 @@ $(BUILD_DIR)/sim-common/spike-trace.log: $(BUILD_DIR)/main.elf | $(BUILD_DIR)/si
 
 # Compare the execution traces from Spike and the Verilator simulation
 .PHONY: spike-check
-spike-check: $(BUILD_DIR)/sim-common/sim-trace.log $(BUILD_DIR)/sim-common/spike-trace.log
+spike-check: $(BUILD_DIR)/.verilator.lock | $(BUILD_DIR)/sim-common/ .check-fusesoc
+	@echo "## Launching Verilator simulation..."
+	fusesoc run --no-export --target sim --tool verilator --run $(FUSESOC_FLAGS) polito:len5:len5 \
+		--log_level=$(LOG_LEVEL) \
+		--firmware=$(FIRMWARE) \
+		--max_cycles=$(MAX_CYCLES) \
+		--dump_waves=false \
+		--dump_trace=true \
+		$(FUSESOC_ARGS)
+	@echo "## Running Spike simulation..."
+	spike --log=$(BUILD_DIR)/sim-common/spike-trace.log -l -m0xf000:0x100000,0x20000000:0x1000 $(BUILD_DIR)/main.elf
 	@echo "## Comparing Spike and Verilator traces..."
-	scripts/sim/cmp-trace.sh $^
+	scripts/sim/cmp-trace.sh $(BUILD_DIR)/sim-common/sim-trace.log $(BUILD_DIR)/sim-common/spike-trace.log
+
 # Synthesis
 # ----------------------------
 .PHONE: syn-asic
