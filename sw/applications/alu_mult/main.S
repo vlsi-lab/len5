@@ -24,5 +24,11 @@ main:
     mulw t6,t3,t4    #t6=116640
     mulw  t4,t6,t6    #t4=
     mulw  t5,t2,t1    #t5=
-    
+
+    li t0, 719987712
+    bne t0, t4, J0 # if t0 != t5 then J0
+    li a0, 0 # return success
+    ret
+J0:
+    li a0, 1 # return failure
     ret
