@@ -42,7 +42,7 @@ module bpu #(
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
     .flush_i    (flush_i),
-    .curr_pc_i  (curr_pc_i),
+    .curr_hist_i(curr_pc_i[HLEN+OFFSET-1:OFFSET]),
     .res_valid_i(bu_res_valid_i),
     .res_taken_i(bu_res_i.taken),
     .res_hist_i (bu_res_i.pc[HLEN+OFFSET-1:OFFSET]),

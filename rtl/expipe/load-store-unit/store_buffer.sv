@@ -19,10 +19,9 @@
  *          to be directly connected to a memory module.
  */
 module store_buffer #(
-  parameter  int unsigned DEPTH  = 4,
+  parameter  int unsigned DEPTH = 4,
   // Dependent parameters: do NOT override
-  localparam int unsigned IdxW   = $clog2(DEPTH),
-  localparam int unsigned L0TagW = len5_pkg::XLEN - IdxW
+  localparam int unsigned IdxW  = $clog2(DEPTH)
 ) (
   input logic clk_i,
   input logic rst_ni,
@@ -63,11 +62,11 @@ module store_buffer #(
   output logic [IdxW-1:0] lb_oldest_idx_o,        // tag of the oldest active store
 
   // Level-zero cache control (store-to-load forwarding)
-  input  logic                    [          IdxW-1:0] l0_idx_i,     // requested entry
-  output logic                    [        L0TagW-1:0] l0_tag_o,     // cached store tag
-  output logic                                         l0_cached_o,  // the entry is cached
-  output expipe_pkg::ldst_width_t                      l0_width_o,   // cached value width
-  output logic                    [len5_pkg::XLEN-1:0] l0_value_o,   // cached value
+  input  logic                    [          IdxW-1:0] l0_idx_i,           // requested entry
+  output logic                                         l0_cached_o,        // the entry is cached
+  output logic                    [len5_pkg::ALEN-1:0] l0_cached_addr_o,   // cached store tag
+  output expipe_pkg::ldst_width_t                      l0_cached_width_o,  // cached value width
+  output logic                    [len5_pkg::XLEN-1:0] l0_cached_value_o,  // cached value
 
   // Memory system
   output logic                                                mem_valid_o,
@@ -410,15 +409,15 @@ module store_buffer #(
   // Level-zero cache
   generate
     if (LEN5_STORE_LOAD_FWD_EN != '0) begin : gen_l0_fwd
-      assign l0_tag_o = data[l0_idx_i].imm_addr_value[XLEN-1-:L0TagW];
       assign l0_cached_o  = curr_state[l0_idx_i] == STORE_S_CACHED | curr_state[l0_idx_i] == STORE_S_COMPLETED;
-      assign l0_width_o = data[l0_idx_i].store_type;
-      assign l0_value_o = data[l0_idx_i].rs2_value;
+      assign l0_cached_addr_o = data[l0_idx_i].imm_addr_value;
+      assign l0_cached_width_o = data[l0_idx_i].store_type;
+      assign l0_cached_value_o = data[l0_idx_i].rs2_value;
     end else begin : gen_l0_no_fwd
-      assign l0_tag_o    = '0;
-      assign l0_cached_o = '0;
-      assign l0_width_o  = '0;
-      assign l0_value_o  = '0;
+      assign l0_cached_o       = '0;
+      assign l0_cached_addr_o  = '0;
+      assign l0_cached_width_o = '0;
+      assign l0_cached_value_o = '0;
     end
   endgenerate
 
