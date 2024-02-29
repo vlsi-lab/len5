@@ -97,6 +97,30 @@ module issue_stage (
   import expipe_pkg::*;
 
   // INTERNAL SIGNALS
+  // ----------------
+  // Issue register data type
+  typedef struct packed {
+    logic [XLEN-1:0]        curr_pc;
+    instr_t                 instr;
+    logic                   skip_eu;
+    issue_eu_t              assigned_eu;
+    logic                   rs1_req;
+    logic [REG_IDX_LEN-1:0] rs1_idx;
+    logic                   rs1_is_pc;
+    logic                   rs2_req;
+    logic [REG_IDX_LEN-1:0] rs2_idx;
+    logic                   rs2_is_imm;
+    logic [XLEN-1:0]        imm_value;
+    logic [REG_IDX_LEN-1:0] rd_idx;
+    logic                   rd_upd;
+    eu_ctl_t                eu_ctl;
+    logic                   mem_crit;
+    logic                   order_crit;
+    logic                   pred_taken;
+    logic [XLEN-1:0]        pred_target;
+    logic                   except_raised;
+    except_code_t           except_code;
+  } issue_reg_t;
 
   // Instruction data
   logic [REG_IDX_LEN-1:0] instr_rs1_idx, instr_rs2_idx, instr_rd_idx;
@@ -124,11 +148,13 @@ module issue_stage (
   logic                        id_skip_eu;
   issue_eu_t                   id_assigned_eu;
   eu_ctl_t                     id_eu_ctl;
+  logic                        id_mem_crit;
   logic                        id_order_crit;
   logic                        id_rs1_req;
   logic                        id_rs1_is_pc;
   logic                        id_rs2_req;
   logic                        id_rs2_is_imm;
+  logic                        id_rd_upd;
   // logic               id_rs3_req;
   imm_format_t                 id_imm_format;
 
@@ -201,11 +227,13 @@ module issue_stage (
     .skip_eu_o    (id_skip_eu),
     .assigned_eu_o(id_assigned_eu),
     .eu_ctl_o     (id_eu_ctl),
+    .mem_crit_o   (id_mem_crit),
     .order_crit_o (id_order_crit),
     .rs1_req_o    (id_rs1_req),
     .rs1_is_pc_o  (id_rs1_is_pc),
     .rs2_req_o    (id_rs2_req),
     .rs2_is_imm_o (id_rs2_is_imm),
+    .rd_upd_o     (id_rd_upd),
     // .rs3_req_o     (id_rs3_req               ),
     .imm_format_o (id_imm_format)
   );
@@ -273,7 +301,9 @@ module issue_stage (
   assign ireg_data_in.rs2_is_imm = id_rs2_is_imm;
   assign ireg_data_in.imm_value = imm_value;
   assign ireg_data_in.rd_idx = instr_rd_idx;
+  assign ireg_data_in.rd_upd = id_rd_upd;
   assign ireg_data_in.eu_ctl = id_eu_ctl;
+  assign ireg_data_in.mem_crit = id_mem_crit;
   assign ireg_data_in.order_crit = id_order_crit;
   assign ireg_data_in.pred_taken = iq_data_out.pred_taken;
   assign ireg_data_in.pred_target = iq_data_out.pred_target;
@@ -478,6 +508,8 @@ module issue_stage (
   assign comm_data_o.res_ready     = cu_il_res_ready;
   assign comm_data_o.res_value     = (cu_il_res_sel_rs1) ? rs1_value : ireg_data_out.imm_value;
   assign comm_data_o.rd_idx        = ireg_data_out.rd_idx;
+  assign comm_data_o.rd_upd        = ireg_data_out.rd_upd;
+  assign comm_data_o.mem_crit      = ireg_data_out.mem_crit;
   assign comm_data_o.order_crit    = ireg_data_out.order_crit;
   assign comm_data_o.except_raised = ireg_data_out.except_raised;
   assign comm_data_o.except_code   = ireg_data_out.except_code;

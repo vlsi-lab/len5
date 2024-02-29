@@ -24,6 +24,8 @@
 #define MAX_SIM_TIME 1e7
 #define FST_FILENAME "logs/waves.fst"
 
+#define array_size(x) (sizeof(x) / sizeof(x[0]))
+
 // Testbench logger
 TbLogger logger;
 
@@ -40,6 +42,7 @@ int main(int argc, char* argv[])
     // Define command line options
     const option longopts[] = {
         {"max_cycles",  required_argument, NULL, 'c'},
+        {"dump_waves",  required_argument, NULL, 'w'},
         {"log_level",   required_argument, NULL, 'l'},
         {"help",        no_argument,       NULL, 'h'},
         {NULL, 0, NULL, 0}
@@ -47,6 +50,7 @@ int main(int argc, char* argv[])
 
     // Parse command line options
     // --------------------------
+    bool              dump_waves = false;
     unsigned long int max_cycles = ((unsigned long int) MAX_SIM_TIME) >> 1;
     int     opt;
     while ((opt = getopt_long(argc, argv, "l:w:t:h", longopts, NULL)) >= 0) {
@@ -56,6 +60,11 @@ int main(int argc, char* argv[])
                 break;
             case 'l':
                 logger.setLogLvl(optarg);
+                break;
+            case 'w':
+                if (!strcmp(optarg, "true") || !strcmp(optarg, "1")) {
+                    dump_waves = true;
+                }
                 break;
             case 'h':
                 printf("Usage: %s [OPTIONS]\n", argv[0]);
@@ -84,7 +93,7 @@ int main(int argc, char* argv[])
     
     // Create simulation context
     VerilatedContext *cntx = new VerilatedContext;
-    cntx->traceEverOn(true); // Enable wave tracing
+    if (dump_waves) cntx->traceEverOn(true); // Enable wave tracing
 
     // Pass the simulation context to the logger
     logger.setSimContext(cntx);
@@ -95,8 +104,10 @@ int main(int argc, char* argv[])
 
     // VCD file where to store waveforms
     VerilatedFstC* m_trace = new VerilatedFstC;
-    dut->trace(m_trace, 5); //Limit trace depth to 5
-    m_trace->open(FST_FILENAME);
+    if (dump_waves) {
+        dut->trace(m_trace, 5); //Limit trace depth to 5
+        m_trace->open(FST_FILENAME);
+    }
 
     // TB components
     Drv *drv = new Drv(dut);    // Driver
@@ -192,6 +203,27 @@ void rstDut(Valu *dut, vluint64_t sim_time)
     }
 }
 
+// Corner cases for the input transaction
+const vluint64_t corner_cases[] = {
+    0x0000000000000000, // zero
+    0x0000000000000001, // 64 bits min_positive
+    0x7FFFFFFFFFFFFFFF, // 64 bits max_positive
+    0x8000000000000000, // 64 bits min_negative
+    0xFFFFFFFFFFFFFFFF, // 64 bits max_negative
+    0x000000007FFFFFFF, // least 32 bits max_positive
+    0x0000000080000000, // least 32 bits min_negative
+    0x00000000FFFFFFFF, // least 32 bits max_negative
+    0x0000000100000000, // most 32 bits min_positive
+    0x7FFFFFFF00000000, // most 32 bits max_positive
+    0xFFFFFFFF00000000, // most 32 bits min_negative
+    0xAAAAAAAAAAAAAAAA, // 64 bits even
+    0x5555555555555555, // 64 bits odd
+    0x00000000AAAAAAAA, // least 32 bits even
+    0x0000000055555555, // least 32 bits odd
+    0xAAAAAAAA00000000, // most 32 bits even
+    0x5555555500000000 // most 32 bits odd
+};
+
 /* Generate an input transaction 
    Return a request object*/
 ReqTx *genReqTx()
@@ -215,8 +247,20 @@ ReqTx *genReqTx()
         req->flush = 1;
         return req;
     }
-
-    // Generate a valid transaction with 75% probability
+    // Corner case with 1% probability
+    if (p == 26)
+    {
+        req->valid = 1;
+        req->flush = 0;
+        req->rs1 = corner_cases[rand() % (array_size(corner_cases)-1)];
+        req->rs2 = corner_cases[rand() % (array_size(corner_cases)-1)];
+        // rob_ix assigned randomly, it does not have an actual effect on ALU 
+        req->rob_idx = rand() % (Valu_len5_config_pkg::ROB_DEPTH - 1);
+        p = rand() % 14;
+        req->alu_ctl= Valu_expipe_pkg::alu_ctl_t(p);
+        return req;
+    }
+    // Generate a valid transaction with 74% probability
     req->valid = 1;
     req->flush = 0;
     req->rs1 = vl_rand64();
@@ -227,3 +271,4 @@ ReqTx *genReqTx()
     req->alu_ctl= Valu_expipe_pkg::alu_ctl_t(p);
     return req;
 }
+

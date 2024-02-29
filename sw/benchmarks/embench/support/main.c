@@ -19,11 +19,11 @@ int __attribute__ ((used))
 main (int argc __attribute__ ((unused)),
       char *argv[] __attribute__ ((unused)))
 {
-  int i;
   volatile int result;
   int correct;
-  int mcycle_start, mcycle_stop;
-  int minstret_start, minstret_stop;
+  long unsigned int mcycle_start, mcycle_stop;
+  long unsigned int minstret_start, minstret_stop;
+  long unsigned int cycles, instr, ipc;
 
   initialise_benchmark ();
   warm_caches (WARMUP_HEAT);
@@ -38,10 +38,14 @@ main (int argc __attribute__ ((unused)),
   /* bmarks that use arrays will check a global array rather than int result */
   correct = verify_benchmark (result);
 
-  printf("Cycles: %d\n", mcycle_stop - mcycle_start);
-  printf("Instructions: %d\n", minstret_stop - minstret_start);
-  return (!correct);
+  cycles = mcycle_stop - mcycle_start;
+  instr = minstret_stop - minstret_start;
+  ipc = 1000 * instr / cycles;
+  printf("Cycles: %lu\n", cycles);
+  printf("Instructions: %lu\n", instr);
+  printf("IPC (x1000): %lu\n", ipc);
 
+  return (!correct);
 }				/* main () */
 
 

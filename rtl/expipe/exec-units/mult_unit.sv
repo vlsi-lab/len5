@@ -58,59 +58,122 @@ module mult_unit #(
   logic                          mult_rs_except_raised;
   except_code_t                  mult_rs_except_code;
 
-  // MULT reservation station
-  // -----------------------
-  arith_rs_serial #(
-    .DEPTH     (RS_DEPTH),
-    .EU_CTL_LEN(EU_CTL_LEN)
-  ) u_mult_rs (
-    .clk_i               (clk_i),
-    .rst_ni              (rst_ni),
-    .flush_i             (flush_i),
-    .issue_valid_i       (issue_valid_i),
-    .issue_ready_o       (issue_ready_o),
-    .issue_eu_ctl_i      (issue_eu_ctl_i),
-    .issue_rs1_i         (issue_rs1_i),
-    .issue_rs2_i         (issue_rs2_i),
-    .issue_dest_rob_idx_i(issue_dest_rob_idx_i),
-    .cdb_ready_i         (cdb_ready_i),
-    .cdb_valid_i         (cdb_valid_i),
-    .cdb_valid_o         (cdb_valid_o),
-    .cdb_data_i          (cdb_data_i),
-    .cdb_data_o          (cdb_data_o),
-    .eu_ready_i          (mult_rs_ready),
-    .eu_valid_i          (mult_rs_valid),
-    .eu_valid_o          (rs_mult_valid),
-    .eu_ready_o          (rs_mult_ready),
-    .eu_rob_idx_i        (mult_rs_rob_idx),
-    .eu_result_i         (mult_rs_result),
-    .eu_except_raised_i  (mult_rs_except_raised),
-    .eu_except_code_i    (mult_rs_except_code),
-    .eu_ctl_o            (rs_mult_ctl),
-    .eu_rs1_o            (rs_mult_rs1_value),
-    .eu_rs2_o            (rs_mult_rs2_value),
-    .eu_rob_idx_o        (rs_mult_rob_idx)
-  );
 
-  mult #(
-    .EU_CTL_LEN(EU_CTL_LEN)
-    //  .PIPE_DEPTH(MULT_PIPE_DEPTH)
-  ) u_mult (
-    .clk_i          (clk_i),
-    .rst_ni         (rst_ni),
-    .flush_i        (flush_i),
-    .valid_i        (rs_mult_valid),
-    .ready_i        (rs_mult_ready),
-    .valid_o        (mult_rs_valid),
-    .ready_o        (mult_rs_ready),
-    .ctl_i          (rs_mult_ctl),
-    .rob_idx_i      (rs_mult_rob_idx),
-    .rs1_value_i    (rs_mult_rs1_value),
-    .rs2_value_i    (rs_mult_rs2_value),
-    .rob_idx_o      (mult_rs_rob_idx),
-    .result_o       (mult_rs_result),
-    .except_raised_o(mult_rs_except_raised),
-    .except_code_o  (mult_rs_except_code)
-  );
+  generate
+    if (len5_config_pkg::LEN5_MULT_SERIAL) begin : gen_serial_mult_unit
 
+      // serial multiplier
+      // MULT reservation station
+      // -----------------------
+      arith_rs_serial #(
+        .DEPTH     (RS_DEPTH),
+        .EU_CTL_LEN(EU_CTL_LEN)
+      ) u_mult_rs (
+        .clk_i               (clk_i),
+        .rst_ni              (rst_ni),
+        .flush_i             (flush_i),
+        .issue_valid_i       (issue_valid_i),
+        .issue_ready_o       (issue_ready_o),
+        .issue_eu_ctl_i      (issue_eu_ctl_i),
+        .issue_rs1_i         (issue_rs1_i),
+        .issue_rs2_i         (issue_rs2_i),
+        .issue_dest_rob_idx_i(issue_dest_rob_idx_i),
+        .cdb_ready_i         (cdb_ready_i),
+        .cdb_valid_i         (cdb_valid_i),
+        .cdb_valid_o         (cdb_valid_o),
+        .cdb_data_i          (cdb_data_i),
+        .cdb_data_o          (cdb_data_o),
+        .eu_ready_i          (mult_rs_ready),
+        .eu_valid_i          (mult_rs_valid),
+        .eu_valid_o          (rs_mult_valid),
+        .eu_ready_o          (rs_mult_ready),
+        .eu_rob_idx_i        (mult_rs_rob_idx),
+        .eu_result_i         (mult_rs_result),
+        .eu_except_raised_i  (mult_rs_except_raised),
+        .eu_except_code_i    (mult_rs_except_code),
+        .eu_ctl_o            (rs_mult_ctl),
+        .eu_rs1_o            (rs_mult_rs1_value),
+        .eu_rs2_o            (rs_mult_rs2_value),
+        .eu_rob_idx_o        (rs_mult_rob_idx)
+      );
+
+      sermult #(
+        .EU_CTL_LEN(EU_CTL_LEN)
+      ) u_mult (
+        .clk_i          (clk_i),
+        .rst_ni         (rst_ni),
+        .flush_i        (flush_i),
+        .valid_i        (rs_mult_valid),
+        .ready_i        (rs_mult_ready),
+        .valid_o        (mult_rs_valid),
+        .ready_o        (mult_rs_ready),
+        .ctl_i          (rs_mult_ctl),
+        .rob_idx_i      (rs_mult_rob_idx),
+        .rs1_value_i    (rs_mult_rs1_value),
+        .rs2_value_i    (rs_mult_rs2_value),
+        .rob_idx_o      (mult_rs_rob_idx),
+        .result_o       (mult_rs_result),
+        .except_raised_o(mult_rs_except_raised),
+        .except_code_o  (mult_rs_except_code)
+      );
+
+    end else begin : gen_parallel_mult_unit
+
+      // pipelined multiplier
+      // MULT reservation station
+      // -----------------------
+      arith_rs #(
+        .DEPTH     (RS_DEPTH),
+        .EU_CTL_LEN(EU_CTL_LEN)
+      ) u_mult_rs (
+        .clk_i               (clk_i),
+        .rst_ni              (rst_ni),
+        .flush_i             (flush_i),
+        .issue_valid_i       (issue_valid_i),
+        .issue_ready_o       (issue_ready_o),
+        .issue_eu_ctl_i      (issue_eu_ctl_i),
+        .issue_rs1_i         (issue_rs1_i),
+        .issue_rs2_i         (issue_rs2_i),
+        .issue_dest_rob_idx_i(issue_dest_rob_idx_i),
+        .cdb_ready_i         (cdb_ready_i),
+        .cdb_valid_i         (cdb_valid_i),
+        .cdb_valid_o         (cdb_valid_o),
+        .cdb_data_i          (cdb_data_i),
+        .cdb_data_o          (cdb_data_o),
+        .eu_ready_i          (mult_rs_ready),
+        .eu_valid_i          (mult_rs_valid),
+        .eu_valid_o          (rs_mult_valid),
+        .eu_ready_o          (rs_mult_ready),
+        .eu_rob_idx_i        (mult_rs_rob_idx),
+        .eu_result_i         (mult_rs_result),
+        .eu_except_raised_i  (mult_rs_except_raised),
+        .eu_except_code_i    (mult_rs_except_code),
+        .eu_ctl_o            (rs_mult_ctl),
+        .eu_rs1_o            (rs_mult_rs1_value),
+        .eu_rs2_o            (rs_mult_rs2_value),
+        .eu_rob_idx_o        (rs_mult_rob_idx)
+      );
+
+      mult #(
+        .EU_CTL_LEN(EU_CTL_LEN),
+        .PIPE_DEPTH(MULT_PIPE_DEPTH)
+      ) u_mult (
+        .clk_i          (clk_i),
+        .rst_ni         (rst_ni),
+        .flush_i        (flush_i),
+        .valid_i        (rs_mult_valid),
+        .ready_i        (rs_mult_ready),
+        .valid_o        (mult_rs_valid),
+        .ready_o        (mult_rs_ready),
+        .ctl_i          (rs_mult_ctl),
+        .rob_idx_i      (rs_mult_rob_idx),
+        .rs1_value_i    (rs_mult_rs1_value),
+        .rs2_value_i    (rs_mult_rs2_value),
+        .rob_idx_o      (mult_rs_rob_idx),
+        .result_o       (mult_rs_result),
+        .except_raised_o(mult_rs_except_raised),
+        .except_code_o  (mult_rs_except_code)
+      );
+    end
+  endgenerate
 endmodule

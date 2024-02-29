@@ -37,31 +37,90 @@ typedef struct packed {
   longint unsigned write_req;
 } len5_data_t;
 
+// ----------------
+// GLOBAL VARIABLES
+// ----------------
+// Instruction reordering
+expipe_pkg::rob_entry_t [len5_config_pkg::ROB_DEPTH-1:0] commit_buffer;
+bit [len5_config_pkg::ROB_DEPTH-1:0] buffer_valid;
+expipe_pkg::rob_idx_t commit_idx = 0;
+logic flush_q, commit_check;
+
 // ---------
 // FUNCTIONS
 // ---------
 // Check if an instruction is committing
-function bit tb_get_len5_committing();
+function bit tb_len5_get_committing();
   return `TOP.u_backend.u_commit_stage.csr_comm_insn_o != expipe_pkg::COMM_CSR_INSTR_TYPE_NONE;
-endfunction: tb_get_len5_committing
+endfunction: tb_len5_get_committing
 
 // Get CPU ID (hart ID)
-function logic [len5_pkg::XLEN-1:0] tb_get_len5_cpu_id();
+function logic [len5_pkg::XLEN-1:0] tb_len5_get_cpu_id();
   return `TOP.u_backend.u_csrs.mhartid;
-endfunction: tb_get_len5_cpu_id
+endfunction: tb_len5_get_cpu_id
+
+// Get committing ROB entry
+function expipe_pkg::rob_entry_t tb_len5_get_commit_entry();
+  return `TOP.u_backend.u_commit_stage.comm_reg_data.data;
+endfunction: tb_len5_get_commit_entry
 
 // Get committing instruction program counter
-function logic [len5_pkg::XLEN-1:0] tb_get_len5_commit_pc();
+function logic [len5_pkg::XLEN-1:0] tb_len5_get_commit_pc();
   return `TOP.u_backend.u_commit_stage.comm_reg_data.data.instr_pc;
-endfunction: tb_get_len5_commit_pc
+endfunction: tb_len5_get_commit_pc
+
+// Get committing instruction ROB index
+function expipe_pkg::rob_idx_t tb_len5_get_commit_idx();
+  return `TOP.u_backend.u_commit_stage.comm_reg_data.rob_idx;
+endfunction: tb_len5_get_commit_idx
 
 // Get retiring instruction
-function logic [len5_pkg::ILEN-1:0] tb_get_len5_commit_instr();
+function logic [len5_pkg::ILEN-1:0] tb_len5_get_commit_instr();
   return `TOP.u_backend.u_commit_stage.comm_reg_data.data.instruction.raw;
-endfunction: tb_get_len5_commit_instr
+endfunction: tb_len5_get_commit_instr
+
+// Committed instruction dump
+// NOTE: call at every cycle to ensure no instruction is missed
+function void tb_len5_update_commit(bit dump_trace, int fd);
+  expipe_pkg::rob_idx_t rob_idx = tb_len5_get_commit_idx();
+
+  // Register new committing instruction
+  if (tb_len5_get_committing()) begin
+    commit_buffer[rob_idx] <= tb_len5_get_commit_entry();
+    buffer_valid[rob_idx] <= 1;
+  end
+  
+  for (expipe_pkg::rob_idx_t i = commit_idx; i != commit_idx - 1; i++) begin
+    if (buffer_valid[i]) begin
+      if (dump_trace) begin
+        $fdisplay(fd, "core %3d: 0x%16h (0x%8h)", tb_len5_get_cpu_id(),
+                commit_buffer[i].instr_pc, commit_buffer[i].instruction.raw);
+      end
+      buffer_valid[i] <= 0;
+    end else begin
+      commit_idx <= i[expipe_pkg::ROB_IDX_LEN-1:0];
+      break;
+    end
+  end
+
+  // Check that all the entries were committed after flushing
+  if (commit_check && buffer_valid != '0) begin
+    $display("\033[1;31m[%8t] TB > ERROR: flushing uncommitted instructions!\033[0m", $time);
+    $finish;
+  end
+
+  // Flush the queue if requested
+  if (flush_q) begin
+    commit_idx <= 0;
+  end
+
+  // Update flush signal on misprediction
+  flush_q      <= `TOP.u_backend.u_commit_stage.cu_mis_flush;
+  commit_check <= flush_q;
+endfunction: tb_len5_update_commit
 
 // Get stats from LEN5
-function len5_data_t tb_get_len5_data(longint unsigned mem_instr, longint unsigned mem_read, longint unsigned mem_write);
+function len5_data_t tb_len5_get_data(longint unsigned mem_instr, longint unsigned mem_read, longint unsigned mem_write);
   len5_data_t data;
   data.cpu_cycles = unsigned'(`TOP.u_backend.u_csrs.mcycle);
   data.retired_instr = unsigned'(`TOP.u_backend.u_csrs.minstret);
@@ -73,10 +132,10 @@ function len5_data_t tb_get_len5_data(longint unsigned mem_instr, longint unsign
   data.read_req = mem_read;
   data.write_req = mem_write;
   return data;
-endfunction: tb_get_len5_data
+endfunction: tb_len5_get_data
 
 // Print LEN5 report
-function void tb_print_len5_report(len5_data_t data);
+function void tb_len5_print_report(len5_data_t data);
   longint unsigned tot_jump_branch;
   longint unsigned tot_load_store;
   longint unsigned tot_mem;
@@ -102,6 +161,6 @@ function void tb_print_len5_report(len5_data_t data);
   $display("    - instruction fetches:                 %6d (%0.1f%%)", data.instr_req, real'(data.instr_req) * 100.0 / tot_mem);
   $display("    - read requests:                       %6d (%0.1f%%)", data.read_req, real'(data.read_req) * 100.0 / tot_mem);
   $display("    - write requests:                      %6d (%0.1f%%)", data.write_req, real'(data.write_req) * 100.0 / tot_mem);
-endfunction: tb_print_len5_report
+endfunction: tb_len5_print_report
 
 `endif // LEN5_UTILS_SVH

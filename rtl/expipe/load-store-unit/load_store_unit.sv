@@ -88,7 +88,6 @@ module load_store_unit #(
 
   // PARAMETERS
   localparam int unsigned StIdxW = $clog2(SB_DEPTH);
-  localparam int unsigned L0TagW = XLEN - StIdxW;
 
   // INTERNAL SIGNALS
   // ----------------
@@ -111,10 +110,10 @@ module load_store_unit #(
   logic                     sb_l0_valid;
   logic        [  XLEN-1:0] sb_l0_addr;
   logic        [StIdxW-1:0] sb_l0_idx;
-  logic        [L0TagW-1:0] sb_l0_tag;
+  logic        [  ALEN-1:0] sb_l0_cached_addr;
   logic                     sb_l0_cached;
-  ldst_width_t              sb_l0_width;
-  logic        [  XLEN-1:0] sb_l0_value;
+  ldst_width_t              sb_l0_cached_width;
+  logic        [  XLEN-1:0] sb_l0_cached_value;
   logic        [  XLEN-1:0] lb_l0_addr;
   ldst_width_t              lb_l0_width;
   logic        [StIdxW-1:0] l0_sb_idx;
@@ -205,10 +204,10 @@ module load_store_unit #(
     .adder_ans_i          (adder_sb_ans),
     .adder_req_o          (sb_adder_req),
     .l0_idx_i             (l0_sb_idx),
-    .l0_tag_o             (sb_l0_tag),
     .l0_cached_o          (sb_l0_cached),
-    .l0_width_o           (sb_l0_width),
-    .l0_value_o           (sb_l0_value),
+    .l0_cached_addr_o     (sb_l0_cached_addr),
+    .l0_cached_width_o    (sb_l0_cached_width),
+    .l0_cached_value_o    (sb_l0_cached_value),
     .mem_valid_o          (mem_store_valid_o),
     .mem_ready_i          (mem_store_ready_i),
     .mem_valid_i          (mem_store_valid_i),
@@ -264,21 +263,21 @@ module load_store_unit #(
       assign sb_l0_idx   = mem_store_tag_i;
       assign lb_l0_addr  = mem_load_addr_o;
       l0_cache u_l0_cache (
-        .clk_i      (clk_i),
-        .rst_ni     (rst_ni),
-        .flush_i    (except_flush_i),
-        .st_valid_i (sb_l0_valid),
-        .st_addr_i  (sb_l0_addr),
-        .st_idx_i   (sb_l0_idx),
-        .st_tag_i   (sb_l0_tag),
-        .st_cached_i(sb_l0_cached),
-        .st_width_i (sb_l0_width),
-        .st_value_i (sb_l0_value),
-        .ld_addr_i  (lb_l0_addr),
-        .ld_width_i (lb_l0_width),
-        .st_idx_o   (l0_sb_idx),
-        .ld_valid_o (l0_lb_valid),
-        .ld_value_o (l0_lb_value)
+        .clk_i            (clk_i),
+        .rst_ni           (rst_ni),
+        .flush_i          (except_flush_i),
+        .st_valid_i       (sb_l0_valid),
+        .st_addr_i        (sb_l0_addr),
+        .st_idx_i         (sb_l0_idx),
+        .st_cached_i      (sb_l0_cached),
+        .st_cached_addr_i (sb_l0_cached_addr),
+        .st_cached_width_i(sb_l0_cached_width),
+        .st_cached_value_i(sb_l0_cached_value),
+        .st_idx_o         (l0_sb_idx),
+        .ld_addr_i        (lb_l0_addr),
+        .ld_width_i       (lb_l0_width),
+        .ld_valid_o       (l0_lb_valid),
+        .ld_value_o       (l0_lb_value)
       );
     end else begin : gen_no_store_load_fwd
       assign sb_l0_valid = '0;

@@ -89,15 +89,17 @@ package expipe_pkg;
   typedef logic [ROB_IDX_LEN-1:0] rob_idx_t;
 
   typedef struct packed {
-    instr_t                 instruction;    // the instruction
-    logic [XLEN-1:0]        instr_pc;       // the program counter of the instruction
-    logic                   res_ready;      // the result of the instruction is ready
-    logic [XLEN-1:0]        res_value;      // the value of the result (from the EU)
-    logic [REG_IDX_LEN-1:0] rd_idx;         // the destination register (rd)
-    logic                   order_crit;     // no out-of-order memory commit allowed
-    logic                   except_raised;  // an exception has been raised
-    except_code_t           except_code;    // the exception code
-    logic                   mem_clear;      // clear to commit to memory out of order (stores only)
+    instr_t instruction;  // the instruction
+    logic [XLEN-1:0] instr_pc;  // the program counter of the instruction
+    logic res_ready;  // the result of the instruction is ready
+    logic [XLEN-1:0] res_value;  // the value of the result (from the EU)
+    logic [REG_IDX_LEN-1:0] rd_idx;  // the destination register (rd)
+    logic rd_upd;  // update the destination register (rd)
+    logic mem_crit;  // memory accesses shall wait for this instruction to complete
+    logic order_crit;  // no out-of-order commit allowed
+    logic except_raised;  // an exception has been raised
+    except_code_t except_code;  // the exception code
+    logic mem_clear;  // clear to commit to memory out of order (stores only)
   } rob_entry_t;
 
   // ----
@@ -228,28 +230,6 @@ MAX_EU_N
     EU_INT_DIV,
     EU_FPU
   } issue_eu_t;
-
-  // Issue register data
-  typedef struct packed {
-    logic [XLEN-1:0]        curr_pc;
-    instr_t                 instr;
-    logic                   skip_eu;
-    issue_eu_t              assigned_eu;
-    logic                   rs1_req;
-    logic [REG_IDX_LEN-1:0] rs1_idx;
-    logic                   rs1_is_pc;
-    logic                   rs2_req;
-    logic [REG_IDX_LEN-1:0] rs2_idx;
-    logic                   rs2_is_imm;
-    logic [XLEN-1:0]        imm_value;
-    logic [REG_IDX_LEN-1:0] rd_idx;
-    eu_ctl_t                eu_ctl;
-    logic                   order_crit;
-    logic                   pred_taken;
-    logic [XLEN-1:0]        pred_target;
-    logic                   except_raised;
-    except_code_t           except_code;
-  } issue_reg_t;
 
   // Immediate type
   typedef enum logic [2:0] {
