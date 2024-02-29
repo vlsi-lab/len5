@@ -36,7 +36,7 @@ package csr_pkg;
     CSR_OP_CSRRC,   // read-clear CSR
     CSR_OP_CSRRCI,  // read-clear CSR (immediate)
     CSR_OP_SYSTEM,  // automatic CSR access
-    CSR_OP_FP       // floating-point instruction
+    CSR_OP_NONE     // no CSR operation
   } csr_op_t;
 
   // ---------

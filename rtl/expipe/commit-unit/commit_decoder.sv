@@ -40,7 +40,7 @@ module commit_decoder (
   always_comb begin : comm_decoder
     // Default
     comm_type = COMM_TYPE_NONE;
-    csr_op    = CSR_OP_SYSTEM;
+    csr_op    = CSR_OP_NONE;
 
     // Hanle exceptions
     if (except_raised_i) comm_type = COMM_TYPE_EXCEPT;
