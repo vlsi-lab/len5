@@ -150,13 +150,13 @@ module rob #(
                           ~data[work_idx].order_crit &
                           data[work_idx].res_ready &
                           ~data[work_idx].except_raised &
-                          (data[clear_idx].except_code != E_MISPREDICTION) &
+                          (data[work_idx].except_code != E_MISPREDICTION) &
                           data[work_idx].mem_clear &
                           ~instr_waw;
 
   // Committing instruction selection
   assign commit_valid = comm_valid_in_order | comm_valid_ooo;
-  assign commit_idx = comm_valid_in_order ? head_idx : work_idx;
+  assign commit_idx = comm_valid_in_order ? head_idx : work_idx; // Give higher priority to in-order commit
 
   // -----------
   // FIFO UPDATE
@@ -183,8 +183,6 @@ module rob #(
           data[i]       <= issue_data_i;
         end else if ((fifo_pop) && commit_idx == i[$clog2(DEPTH)-1:0]) begin
           data_valid[i] <= 1'b0;
-          // CHECk non ci siamo devo guardare res_ready[work_idx] e comm_ready_i.
-          //Forse non c'è bisogno di controllare instr_clear, se ho res_ready?
         end else if (update_res && cdb_data_i.rob_idx == i[ROB_IDX_LEN-1:0]) begin
           data[i].res_ready     <= 1'b1;
           data[i].res_value     <= cdb_data_i.res_value;
@@ -267,13 +265,12 @@ module rob #(
   assign issue_tail_idx_o = tail_idx;
 
   // Store buffer
-  //assign sb_mem_clear_o    = data_valid[sb_mem_idx_i] & (data[sb_mem_idx_i].mem_clear | clear_idx == sb_mem_idx_i); remove clear_idx
   assign sb_mem_clear_o    = data_valid[sb_mem_idx_i] & (data[sb_mem_idx_i].mem_clear | clear_idx == sb_mem_idx_i);
 
   // Commit stage
   assign comm_valid_o = commit_valid;
   assign comm_data_o = comm_valid_in_order ? data[head_idx] :  data[work_idx] ;  // Give higher priority to in-order commit
-  assign comm_idx_o = commit_idx;  // Give higher priority to in-order commit
+  assign comm_idx_o = commit_idx;
   assign opfwd_rs1_valid_o = data_valid[issue_rs1_rob_idx_i];
   assign opfwd_rs1_ready_o = data[issue_rs1_rob_idx_i].res_ready;
   assign opfwd_rs1_value_o = data[issue_rs1_rob_idx_i].res_value;
