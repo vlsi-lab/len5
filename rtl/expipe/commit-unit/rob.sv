@@ -242,8 +242,9 @@ module rob #(
 
   // Work counter for out-of-order commit
   // Tracks the oldest instruction that is NOT "clear to commit"
-  modn_counter_one #(
-    .N(DEPTH)
+  modn_counter #(
+    .N   (DEPTH),
+    .INIT(1)
   ) u_work_counter (
     .clk_i  (clk_i),
     .rst_ni (rst_ni),

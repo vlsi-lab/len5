@@ -13,7 +13,8 @@
 // Date: 17/10/2019
 
 module modn_counter #(
-  parameter int unsigned N = 16
+  parameter int unsigned N = 16,
+  parameter logic [$clog2(N)-1:0] INIT = '0  // initial value at reset and clear
 ) (
   // Input signals
   input logic clk_i,
@@ -32,9 +33,11 @@ module modn_counter #(
   // Main counting process. The counter clears when reaching the threshold
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      count_o <= 0;  // Asynchronous reset
-    end else if (clr_i || (en_i && tc_o)) begin
-      count_o <= 0;  // Synchronous clear when requested or when reaching the threshold
+      count_o <= INIT;  // Asynchronous reset
+    end else if (clr_i) begin
+      count_o <= INIT;  // Synchronous clear when requested
+    end else if (en_i && tc_o) begin
+      count_o <= '0;
     end else if (en_i) begin
       count_o <= count_o + 1;
     end
