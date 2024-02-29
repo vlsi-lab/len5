@@ -253,12 +253,7 @@ module tb_bare #(
   // Print the currently committing instruction and its program counter
   always_ff @(posedge clk_i) begin : trace_logger
     // Check if an instruction is committing
-    if (trace_en_i && tb_len5_get_committing()) begin
-      tb_len5_update_commit();
-    end
-
-    // Dump committed instructions
-    tb_len5_dump_commit(trace_fd);
+    tb_len5_update_commit(trace_en_i, trace_fd);
   end
 
   // -------

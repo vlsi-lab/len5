@@ -80,21 +80,22 @@ function logic [len5_pkg::ILEN-1:0] tb_len5_get_commit_instr();
 endfunction: tb_len5_get_commit_instr
 
 // Committed instruction dump
-function void tb_len5_update_commit();
-  expipe_pkg::rob_idx_t rob_idx = tb_len5_get_commit_idx();
-  
-  // Update the commit buffer
-  commit_buffer[rob_idx] <= tb_len5_get_commit_entry();
-  buffer_valid[rob_idx] <= 1;
-endfunction: tb_len5_update_commit
-
-// Dump committed instruction in Spike-like format
 // NOTE: call at every cycle to ensure no instruction is missed
-function void tb_len5_dump_commit(int fd);
+function void tb_len5_update_commit(bit dump_trace, int fd);
+  expipe_pkg::rob_idx_t rob_idx = tb_len5_get_commit_idx();
+
+  // Register new committing instruction
+  if (tb_len5_get_committing()) begin
+    commit_buffer[rob_idx] <= tb_len5_get_commit_entry();
+    buffer_valid[rob_idx] <= 1;
+  end
+  
   for (expipe_pkg::rob_idx_t i = commit_idx; i != commit_idx - 1; i++) begin
     if (buffer_valid[i]) begin
-      $fdisplay(fd, "core %3d: 0x%16h (0x%8h)", tb_len5_get_cpu_id(),
+      if (dump_trace) begin
+        $fdisplay(fd, "core %3d: 0x%16h (0x%8h)", tb_len5_get_cpu_id(),
                 commit_buffer[i].instr_pc, commit_buffer[i].instruction.raw);
+      end
       buffer_valid[i] <= 0;
     end else begin
       commit_idx <= i[expipe_pkg::ROB_IDX_LEN-1:0];
@@ -115,7 +116,7 @@ function void tb_len5_dump_commit(int fd);
   // Update flush signal on misprediction
   flush_q      <= `TOP.u_backend.u_commit_stage.cu_mis_flush;
   commit_check <= flush_q;
-endfunction: tb_len5_dump_commit
+endfunction: tb_len5_update_commit
 
 // Get stats from LEN5
 function len5_data_t tb_len5_get_data(longint unsigned mem_instr, longint unsigned mem_read, longint unsigned mem_write);
