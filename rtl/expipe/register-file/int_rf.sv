@@ -28,7 +28,10 @@ module int_rf (
   input  logic [len5_pkg::REG_IDX_LEN-1:0] issue_rs1_idx_i,
   input  logic [len5_pkg::REG_IDX_LEN-1:0] issue_rs2_idx_i,
   output logic [       len5_pkg::XLEN-1:0] issue_rs1_value_o,
-  output logic [       len5_pkg::XLEN-1:0] issue_rs2_value_o
+  output logic [       len5_pkg::XLEN-1:0] issue_rs2_value_o,
+
+  // Data to the fetch stage
+  output logic [len5_pkg::XLEN-1:0] fetch_ra_value_o
 );
 
   import len5_pkg::XLEN;
@@ -69,4 +72,6 @@ module int_rf (
     else issue_rs2_value_o = '0;
   end
 
+  // Return address register (ra) for the fetch stage
+  assign fetch_ra_value_o = rf_data[1];
 endmodule

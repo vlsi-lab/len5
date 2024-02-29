@@ -61,12 +61,12 @@ package len5_config_pkg;
   // must be enabled (i.e., not skipped). Therefore, at least one of the
   // following switches must be commented in this case.
   localparam bit FETCH_REQ_SPILL_SKIP = 1'b1; // memory requests from the fetch unit are directly passed to the memory
-  localparam bit FETCH_ANS_SPILL_SKIP = 1'b0; // fetched instructions are directly passed to the issue stage
+  localparam bit FETCH_ANS_SPILL_SKIP = 1'b1; // fetched instructions are directly passed to the issue stage
 
   // EXECUTION PIPELINE
   // ------------------
   // ISSUE QUEUE
-  localparam int unsigned IQ_DEPTH = 10;  // number of entries in the issue queue (power of 2)
+  localparam int unsigned IQ_DEPTH = 2;  // number of entries in the issue queue (power of 2)
 
   // LOAD/STORE UNIT
   localparam int unsigned LDBUFF_DEPTH = 4;  // number of entries in the load buffer

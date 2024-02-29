@@ -23,32 +23,41 @@ module pc_gen #(
   input  logic                                        bu_res_valid_i,
   input  fetch_pkg::resolution_t                      bu_res_i,
   input  logic                   [len5_pkg::XLEN-1:0] pred_target_i,
-  input  logic                   [len5_pkg::XLEN-1:0] early_jump_target_i,
-  input  logic                   [len5_pkg::XLEN-1:0] early_jump_old_pc_i,
-  input  logic                                        early_jump_valid_i,
   input  logic                                        pred_taken_i,
   input  logic                                        mem_ready_i,
   output logic                                        valid_o,
   output logic                                        bu_ready_o,
   output logic                   [len5_pkg::XLEN-1:0] pc_o,
-  output logic                   [len5_pkg::XLEN-1:0] early_jump_target_prediction_o
+  input  logic                                        early_jump_valid_i,
+  input  logic                   [len5_pkg::XLEN-1:0] early_jump_offs_i,
+  input  logic                   [len5_pkg::XLEN-1:0] early_jump_base_i,
+  output logic                   [len5_pkg::XLEN-1:0] early_jump_target_o
 );
 
   import len5_pkg::*;
   import fetch_pkg::*;
+
   // INTERNAL SIGNALS
   // ----------------
-  logic [len5_pkg::XLEN-1:0] next_pc, add_pc, adder_out, pc_offset, add_pc_early_jump;
+  logic [len5_pkg::XLEN-1:0] next_pc, add_pc_base, adder_out, add_pc_offset, add_pc_early_jump;
 
   // -------------------
   // PC GENERATION LOGIC
   // -------------------
+  // Target address operands mux
+  always_comb begin : tgt_addr_op_mux
+    if (early_jump_valid_i && !(bu_res_valid_i && bu_res_i.mispredict)) begin
+      add_pc_offset     = early_jump_base_i;
+      add_pc_early_jump = early_jump_offs_i;
+    end else begin
+      add_pc_offset     = {32'b0, (ILEN >> 3)};
+      add_pc_early_jump = pc_o;
+    end
+  end
 
   // Mux + adder
-  assign pc_offset = (early_jump_valid_i && !(bu_res_valid_i && bu_res_i.mispredict)) ? early_jump_target_i : {32'b0, (ILEN >> 3)}; 
-  assign add_pc_early_jump = (early_jump_valid_i && !(bu_res_valid_i && bu_res_i.mispredict)) ? early_jump_old_pc_i : pc_o;
-  assign add_pc    = (bu_res_valid_i && bu_res_i.mispredict) ? bu_res_i.pc : add_pc_early_jump;
-  assign adder_out = add_pc + pc_offset;
+  assign add_pc_base = (bu_res_valid_i && bu_res_i.mispredict) ? bu_res_i.pc : add_pc_early_jump;
+  assign adder_out   = add_pc_base + add_pc_offset;
 
   // Priority list for choosing the next PC value:
   // 1) Exception
@@ -76,13 +85,13 @@ module pc_gen #(
   always_ff @(posedge clk_i or negedge rst_ni) begin : pc_reg
     if (!rst_ni) begin
       pc_o <= BOOT_PC;
-    end else if (mem_ready_i || early_jump_valid_i ) begin
+    end else if (mem_ready_i || early_jump_valid_i) begin
       pc_o <= next_pc;
     end
   end : pc_reg
 
   // Output valid and ready
-  assign valid_o    = rst_ni & !(bu_res_valid_i & bu_res_i.mispredict) & !comm_except_raised_i;
+  assign valid_o = rst_ni & !(bu_res_valid_i & bu_res_i.mispredict) & !comm_except_raised_i;
   assign bu_ready_o = mem_ready_i;
-  assign early_jump_target_prediction_o = next_pc;
+  assign early_jump_target_o = next_pc;
 endmodule
