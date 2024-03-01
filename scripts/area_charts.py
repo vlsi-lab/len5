@@ -26,6 +26,8 @@ if (args.submodules is None):
     print("Submodules file is required.")
     exit(1)
 
+TOTAL_AREA = 0
+
 data = {
     'Submodule': [],
     'Area': [],
@@ -49,6 +51,10 @@ with open(submodule_file, 'r') as subfp:
         area = {}
         for line in lines:
             parts = line.split()
+
+            if (len(parts) == 4 and parts[0] == "Total" and parts[1] == "cell" and parts[2] == "area:"):
+                TOTAL_AREA = float(parts[3])
+                continue
             
             if (len(parts) != 7):
                 continue
@@ -66,13 +72,27 @@ with open(submodule_file, 'r') as subfp:
             data['Combinational Area'].append(float(parts[3]))
             data['Non-Combinational Area'].append(float(parts[4]))
 
+data['Submodule'].append("others")
+data['Area'].append(0)
+data['Utilization Percentage'].append(0)
+data['Combinational Area'].append(0)
+data['Non-Combinational Area'].append(0)
+
 df = pd.DataFrame(data)
+
+# Compute remaining area and percentage
+remaining_area = TOTAL_AREA - df["Area"].sum()
+remaining_percentage = 100 - df["Utilization Percentage"].sum()
+row_index = df.loc[df['Submodule'] == 'others'].index[0]
+df.loc[row_index, 'Area'] = remaining_area
+df.loc[row_index, 'Utilization Percentage'] = remaining_percentage
+
 print(df)
 
 colors = ["#6d1a3680", "#6d1a36c0", "#6d1a36ff", "#00748080", "#007480c0", "#007480ff"]
 df_bars = df[["Submodule", "Utilization Percentage"]]
 
-ax = df_bars.plot(kind="pie", y='Utilization Percentage', labels=df_bars['Submodule'], title="Area Utilization per Submodule", figsize=(12, 5), legend=False, autopct='%1.1f%%')
+ax = df_bars.plot(kind="pie", y='Utilization Percentage', labels=df_bars['Submodule'], title=f"Total area: {TOTAL_AREA/1e6 : .2f} mm²", figsize=(12, 5), legend=False, autopct='%1.1f%%') 
 
 ax.set_ylabel("")
 
