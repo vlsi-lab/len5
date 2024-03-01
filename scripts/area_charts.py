@@ -8,6 +8,8 @@ parser.add_argument("--report_file",
                     help="Area report of LEN5")
 parser.add_argument("--chart_file",
                     help="Output PNG chart file")
+parser.add_argument("--submodules",
+                    help="Submodule file")
 
 args = parser.parse_args()
 
@@ -18,6 +20,11 @@ plt.rc("font", family="sans-serif")
 # Initialization
 report_file = args.report_file
 chart_file = args.chart_file
+submodule_file = args.submodules
+
+if (args.submodules is None):
+    print("Submodules file is required.")
+    exit(1)
 
 data = {
     'Submodule': [],
@@ -26,37 +33,38 @@ data = {
     'Combinational Area': [],
     'Non-Combinational Area': []
 }
+with open(submodule_file, 'r') as subfp:
 
-# Parse Area report
-with open(report_file, 'r') as fp:
-    lines = fp.readlines()
-    area = {}
-    for line in lines:
-        if ('/' in line or ':' in line):
+    # Parse Submodule file
+    sublines = subfp.readlines()
+    submodules = []
+    for line in sublines:
+        if (line[0] == '#'):
             continue
+        submodules.append(line.strip())
 
-        parts = line.split()
-
-        if (len(parts) != 7):
-            continue
-        
-        if (parts[0][0] != 'u'): # Skip non-submodule lines
-            continue
+    # Parse Area report
+    with open(report_file, 'r') as fp:
+        lines = fp.readlines()
+        area = {}
+        for line in lines:
+            parts = line.split()
             
-        if (float(parts[2]) < 1): # Skip submodules with less than 1% utilization
-            continue
-            
-        # Re-name submodule name to keep last u_... part
-        parts[0] = parts[0].split('u_')[-1]
+            if (len(parts) != 7):
+                continue
 
-        parts[0] = parts[0].replace('_rs', '')
-        parts[0] = parts[0].replace('arith', 'alu')
-        
-        data['Submodule'].append(str(parts[0]))
-        data['Area'].append(float(parts[1]))
-        data['Utilization Percentage'].append(float(parts[2]))
-        data['Combinational Area'].append(float(parts[3]))
-        data['Non-Combinational Area'].append(float(parts[4]))
+            if (parts[0] not in submodules):
+                continue
+               
+            # Re-name submodule name to keep last u_... part
+            parts[0] = parts[0].split('/')[-1]
+            parts[0] = parts[0].split('u_')[-1]
+
+            data['Submodule'].append(str(parts[0]))
+            data['Area'].append(float(parts[1]))
+            data['Utilization Percentage'].append(float(parts[2]))
+            data['Combinational Area'].append(float(parts[3]))
+            data['Non-Combinational Area'].append(float(parts[4]))
 
 df = pd.DataFrame(data)
 print(df)
@@ -64,10 +72,7 @@ print(df)
 colors = ["#6d1a3680", "#6d1a36c0", "#6d1a36ff", "#00748080", "#007480c0", "#007480ff"]
 df_bars = df[["Submodule", "Utilization Percentage"]]
 
-# Sort by utilization percentage and take the top len(colors)
-df_bars = df_bars.sort_values(by="Utilization Percentage", ascending=False).head(len(colors))
-
-ax = df_bars.plot(kind="pie", y='Utilization Percentage', labels=df_bars['Submodule'], title="Area Utilization per Submodule", figsize=(12, 5), colors=colors, legend=False, autopct='%1.1f%%')
+ax = df_bars.plot(kind="pie", y='Utilization Percentage', labels=df_bars['Submodule'], title="Area Utilization per Submodule", figsize=(12, 5), legend=False, autopct='%1.1f%%')
 
 ax.set_ylabel("")
 

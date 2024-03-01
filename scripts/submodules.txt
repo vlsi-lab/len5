@@ -1,0 +1,20 @@
+# Comment the submodules that should not be included
+u_backend/u_cdb
+#u_backend/u_commit_stage
+u_backend/u_commit_stage/u_rob
+u_backend/u_csrs
+u_backend/u_exec_stage/u_alu_unit
+u_backend/u_exec_stage/u_branch_unit
+u_backend/u_exec_stage/u_load_store_unit
+u_backend/u_int_regstat 
+u_backend/u_int_rf 
+u_backend/u_issue_stage
+u_fetch_stage
+u_fetch_stage/u_bpu
+u_fetch_stage/u_bpu/u_btb
+u_fetch_stage/u_bpu/u_gshare
+u_fetch_stage/u_mem_if
+u_fetch_stage/u_pc_gen
+#datapath
+#u_backend
+#u_backend/u_exec_stage
