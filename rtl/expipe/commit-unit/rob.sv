@@ -76,6 +76,7 @@ module rob #(
 
   // FIFO control
   logic fifo_push, fifo_pop, update_res;
+  logic rob_full;
 
   // Clear store instruction
   logic mem_instr_clear, entry_clear, cdb_clear;
@@ -91,6 +92,7 @@ module rob #(
   assign fifo_push = issue_valid_i & issue_ready_o;
   assign fifo_pop = commit_valid & comm_ready_i;
   assign update_res = cdb_valid_i;
+  assign rob_full = data_valid[tail_idx];
 
   // Counters control
   assign head_reg_clr = flush_i;
@@ -121,7 +123,7 @@ module rob #(
                        cdb_data_i.rob_idx == clear_idx &
                        ~cdb_data_i.except_raised &
                        (cdb_data_i.except_code != E_MISPREDICTION); // check cdb is writing at clear_idx and 2),3)
-  assign mem_instr_clear = data_valid[clear_idx] & (~data[clear_idx].mem_crit | entry_clear | cdb_clear);
+  assign mem_instr_clear = data_valid[clear_idx] & (~data[clear_idx].mem_crit | entry_clear | cdb_clear) & ((clear_idx != tail_idx) | ~rob_full);
 
   // In-order commit slot
   // --------------------
@@ -261,7 +263,7 @@ module rob #(
   assign cdb_ready_o = 1'b1;
 
   // Issue stage
-  assign issue_ready_o = !data_valid[tail_idx];
+  assign issue_ready_o = !rob_full;
   assign issue_tail_idx_o = tail_idx;
 
   // Store buffer
