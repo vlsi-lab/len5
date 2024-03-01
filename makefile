@@ -123,7 +123,7 @@ benchmark:
 .PHONY: run-benchmarks
 run-benchmarks: 
 	@echo "## Running suite $(SUITE)"
-	python3 scripts/benchmarks.py -s $(SUITE) -O=2 -P=300
+	python3 scripts/benchmarks.py -s $(SUITE) -O=2 -P=1000
 	rm -rf build_*
 
 # Simple test application
@@ -213,6 +213,13 @@ check-alu: | .check-fusesoc
 	@if [ ! `which gtkwave` ]; then \
 	printf -- "### ERROR: 'gtkwave' is not in PATH. Is the correct conda environment active?\n" >&2; \
 	exit 1; fi
+
+# Run plotting scripts
+.PHONY: charts
+charts: $(BUILD_DIR)/reports/area.rpt sw/benchmarks/embench/output/benchmarks.csv scripts/xheep_resultsO2.csv scripts/submodules.txt
+	mkdir -p $(BUILD_DIR)/charts
+	python3 scripts/area_charts.py --report_file=$(BUILD_DIR)/reports/area.rpt --chart_file=$(BUILD_DIR)/charts/area.png --submodule=scripts/submodules.txt  
+	python3 scripts/ipc_charts.py --len5_report_file=sw/benchmarks/embench/output/backup_bench.csv --xheep_report_file=scripts/xheep_resultsO2.csv --chart_file=$(BUILD_DIR)/charts/ipc_chart.png
 
 # Create new directories
 %/:
