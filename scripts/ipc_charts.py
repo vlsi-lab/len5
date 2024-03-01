@@ -32,9 +32,11 @@ df_x_heep.rename(columns=new_headers, inplace=True)
 
 df = pd.merge(df_len5, df_x_heep, on='Benchmark')
 df.sort_values(by='Benchmark', inplace=True)
+df['IPC Improvement'] =  df['LEN5 IPC'] / df['CV32E40P IPC']
+df['Latency Improvement'] =    df['CV32E40P Cycles'] / df['LEN5 Cycles']
 
 colors = ["#6d1a3680", "#6d1a36c0", "#6d1a36ff", "#00748080", "#007480c0", "#007480ff"]
-df_bars = df[["Benchmark", "LEN5 IPC", "CV32E40P IPC"]]
+df_bars = df[["Benchmark", "LEN5 IPC", "CV32E40P IPC", "IPC Improvement", "Latency Improvement"]]
 
 df_bars.plot(kind="bar", rot=0, x='Benchmark', title="Instructions per Clock Cycle comparison (higher is better)", ylabel="Instructions Per Cycle (IPC)", xlabel="Benchmark application", figsize=(12, 5), grid=False, width=0.8, color=colors)
 
@@ -49,7 +51,7 @@ plt.axhline(y=1, color="#3d3d3dff", linestyle="--")
 # plt.text(-0.62, 2, "CPU", color="#3d3d3dff", rotation=0, fontsize="small")
 
 # Set Y max value
-plt.gca().set_ylim([0, 1])
+# plt.gca().set_ylim([0, 1]) //TODO uncomment this if just IPC
 
 # Add 'x' to the y-axis step labels
 # plt.gca().yaxis.set_major_formatter(lambda x, pos: str(int(x)) + "x")
