@@ -123,7 +123,7 @@ benchmark:
 .PHONY: run-benchmarks
 run-benchmarks: 
 	@echo "## Running suite $(SUITE)"
-	python3 scripts/benchmarks.py -s $(SUITE) -O=3 -P=300
+	python3 scripts/benchmarks.py -s $(SUITE) -O=2 -P=300
 	rm -rf build_*
 
 # Simple test application

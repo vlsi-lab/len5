@@ -69,25 +69,24 @@ package len5_config_pkg;
   localparam int unsigned IQ_DEPTH = 2;  // number of entries in the issue queue (power of 2)
 
   // LOAD/STORE UNIT
-  localparam int unsigned LDBUFF_DEPTH = 4;  // number of entries in the load buffer
-  localparam int unsigned STBUFF_DEPTH = 8;  // number of entries in the store buffer
+  localparam int unsigned LDBUFF_DEPTH = 32;  // number of entries in the load buffer
+  localparam int unsigned STBUFF_DEPTH = 32;  // number of entries in the store buffer
   localparam bit LSU_SPILL_SKIP = 1'b1;  // make address adder fully combinational
 
   // ALU UNIT
-  localparam int unsigned ALU_RS_DEPTH = 4;
+  localparam int unsigned ALU_RS_DEPTH = 32;
   localparam bit ALU_SPILL_SKIP = 1'b1;  // make the ALU fully combinational
 
   // MULT/DIV UNIT
-  localparam int unsigned MULT_RS_DEPTH = 4;
-  localparam int unsigned DIV_RS_DEPTH = 4;
-  localparam int unsigned DIV_PIPE_DEPTH = 8;
+  localparam int unsigned MULT_RS_DEPTH = 32;
+  localparam int unsigned DIV_RS_DEPTH = 32;
 
   // BRANCH UNIT
-  localparam int unsigned BU_RS_DEPTH = 4;
+  localparam int unsigned BU_RS_DEPTH = 32;
   localparam bit BU_SPILL_SKIP = 1'b1;  // make the target address adder fully combinational
 
   // COMMIT STAGE
-  localparam int unsigned ROB_DEPTH  /* verilator public */ = 16;  // Number of entries in the ROB
+  localparam int unsigned ROB_DEPTH  /* verilator public */ = 32;  // Number of entries in the ROB
   localparam bit COMMIT_SPILL_SKIP = 1'b1;  // directly connect the commit CU to the ROB output
 
   // -----------------

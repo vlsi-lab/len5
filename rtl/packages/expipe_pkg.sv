@@ -60,7 +60,7 @@ package expipe_pkg;
 
   // MULT
   localparam int unsigned MULT_CTL_LEN = 3;  // integer multiplier operation control
-  localparam int unsigned MULT_PIPE_DEPTH = 5;
+  localparam int unsigned MULT_PIPE_DEPTH = 1;
 
   // DIV
   localparam int unsigned DIV_CTL_LEN = 2;  // integer divider operation control
