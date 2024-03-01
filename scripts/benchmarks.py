@@ -1,3 +1,4 @@
+import argparse
 import multiprocessing
 import sys
 import getopt
@@ -7,6 +8,7 @@ import time
 from typing import List, Dict
 
 PATIENCE=120
+OPT = None
 
 def benchmark_runner(num, suite, output_queue):
     """Function to simulate work and output to stdout."""
@@ -18,7 +20,7 @@ def benchmark_runner(num, suite, output_queue):
     subprocess.run(command, shell=True, capture_output=True, text=True)
 
     # First compile the benchmark
-    command = f"make benchmark COPT=-O1 BUILD_DIR={BUILD_DIR} BENCHMARK={num} SUITE={suite}"
+    command = f"make benchmark COPT=-O{OPT} BUILD_DIR={BUILD_DIR} BENCHMARK={num} SUITE={suite}"
     result = subprocess.run(command, capture_output=True, text=True, shell=True)
 
     # Basic error handling
@@ -145,22 +147,38 @@ def print_table_to_file_csv(table, suite):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Benchmark runner for LEN5")
+    parser.add_argument("-O",
+                        help="Benchmark Optimization level")
+    parser.add_argument("-P",
+                        help="Timeout for the simulation of each benchmark")
+    parser.add_argument("-s",
+                        help="Benchmark suite name")
+
+    args = parser.parse_args()
+
+    if (not args.O):
+        print("Optimization level MUST be explicitly set. Use -O <level> to set it.")
+        sys.exit(2)
+    else:
+        OPT = args.O
+    
+    if (not args.s):
+        print("Usage: python benchmarks.py -s <suite>")
+        sys.exit(2)
+    else:
+        SUITE = args.s
+
+    if (args.P):
+        PATIENCE = int(args.P)
+
     output_queue = multiprocessing.Queue()
     processes = []
     SUITE = "embench"
 
     table = init_table()
 
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "s:", ["suite="])
-    except getopt.GetoptError:
-        print("Usage: python benchmarks.py -s <suite>")
-        sys.exit(2)
     
-    for opt, arg in opts:
-        if opt in ("-s", "--suite"):
-            SUITE = arg
-
     benchmarks = get_benchmarks(SUITE)
 
     # Spawn multiple subprocesses
