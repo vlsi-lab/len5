@@ -186,7 +186,8 @@ module exec_stage (
   // -----------
   alu_unit #(
     .EU_CTL_LEN(MAX_EU_CTL_LEN),
-    .RS_DEPTH  (ALU_RS_DEPTH)
+    .RS_DEPTH  (ALU_RS_DEPTH),
+    .RR_ARBITER(ALU_RR_ARBITER)
   ) u_alu_unit (
     .clk_i               (clk_i),
     .rst_ni              (rst_ni),
@@ -211,7 +212,8 @@ module exec_stage (
     if (LEN5_M_EN) begin : gen_mult_unit  // TODO: unify flags and units
       mult_unit #(
         .EU_CTL_LEN(MAX_EU_CTL_LEN),
-        .RS_DEPTH  (MULT_RS_DEPTH)
+        .RS_DEPTH  (MULT_RS_DEPTH),
+        .RR_ARBITER(MULT_RR_ARBITER)
       ) u_mult_unit (
         .clk_i               (clk_i),
         .rst_ni              (rst_ni),
@@ -240,7 +242,8 @@ module exec_stage (
     if (LEN5_DIV_EN) begin : gen_div_unit
       div_unit #(
         .EU_CTL_LEN(MAX_EU_CTL_LEN),
-        .RS_DEPTH  (DIV_RS_DEPTH)
+        .RS_DEPTH  (DIV_RS_DEPTH),
+        .RR_ARBITER(DIV_RR_ARBITER)
       ) u_div_unit (
         .clk_i               (clk_i),
         .rst_ni              (rst_ni),

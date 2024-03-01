@@ -16,7 +16,8 @@ module mult_unit #(
   parameter int unsigned RS_DEPTH = 4,  // must be a power of 2,
 
   // EU-specific parameters
-  parameter int unsigned EU_CTL_LEN = 4
+  parameter int unsigned EU_CTL_LEN = 4,
+  parameter bit          RR_ARBITER = 1'b0
 ) (
   input logic clk_i,
   input logic rst_ni,
@@ -68,7 +69,8 @@ module mult_unit #(
       // -----------------------
       arith_rs_serial #(
         .DEPTH     (RS_DEPTH),
-        .EU_CTL_LEN(EU_CTL_LEN)
+        .EU_CTL_LEN(EU_CTL_LEN),
+        .RR_ARBITER(RR_ARBITER)
       ) u_mult_rs (
         .clk_i               (clk_i),
         .rst_ni              (rst_ni),
@@ -125,7 +127,8 @@ module mult_unit #(
       // -----------------------
       arith_rs #(
         .DEPTH     (RS_DEPTH),
-        .EU_CTL_LEN(EU_CTL_LEN)
+        .EU_CTL_LEN(EU_CTL_LEN),
+        .RR_ARBITER(RR_ARBITER)
       ) u_mult_rs (
         .clk_i               (clk_i),
         .rst_ni              (rst_ni),

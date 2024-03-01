@@ -79,11 +79,17 @@ package len5_config_pkg;
   // ALU UNIT
   localparam int unsigned ALU_RS_DEPTH = 8;
   localparam bit ALU_SPILL_SKIP = 1'b1;  // make the ALU fully combinational
+  localparam bit ALU_RR_ARBITER = 1'b1;  // round-robin arbiter for the reservation station
 
-  // MULT/DIV UNIT
+  // MULT UNIT
   localparam int unsigned MULT_RS_DEPTH = 8;
+  localparam bit LEN5_MULT_SERIAL = 1'b1;
+  localparam int unsigned MULT_PIPE_DEPTH = 1;  // pipeline stages (only if 'LEN5_MULT_SERIAL' is 0)
+  localparam bit MULT_RR_ARBITER = 1'b1;  // round-robin arbiter for the reservation station
+
+  // DIV UNIT
   localparam int unsigned DIV_RS_DEPTH = 4;
-  localparam int unsigned DIV_PIPE_DEPTH = 8;
+  localparam bit DIV_RR_ARBITER = 1'b1;  // round-robin arbiter for the reservation station
 
   // BRANCH UNIT
   localparam int unsigned BU_RS_DEPTH = 8;
@@ -117,8 +123,6 @@ package len5_config_pkg;
   // Enable M extension support
   // --------------------------
   localparam bit LEN5_M_EN = 1'b1;
-  localparam bit LEN5_MULT_SERIAL = 1'b1;
-  localparam int unsigned MULT_PIPE_DEPTH = 1;  // only used if 'LEN5_MULT_SERIAL' is 0
   localparam bit LEN5_DIV_EN = 1'b1;
 
   // Enable floating-point support
