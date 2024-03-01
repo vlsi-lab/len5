@@ -356,7 +356,7 @@ module issue_decoder (
       JALR: begin
         issue_type  = ISSUE_TYPE_JUMP;
         assigned_eu = EU_BRANCH_UNIT;
-        eu_ctl.bu   = BU_JALR;
+        eu_ctl.bu   = (instruction_i.j.rd == 5'b00001) ? BU_CALL : BU_JALR;
         rs1_req     = 1'b1;
         imm_format  = IMM_TYPE_I;
       end

@@ -15,12 +15,14 @@
 module updown_counter #(
   parameter int unsigned WIDTH = 4  // number of bits
 ) (
-  // Input signals
   input logic clk_i,
-  input logic rst_ni,  // Asynchronous reset
-  input logic en_i,
-  input logic clr_i,   // Synchronous clear
-  input logic up_dn_i, // 1: up, 0: down
+  input logic rst_ni, // Asynchronous reset
+
+  input logic             en_i,     // increment/decrement enable
+  input logic             clr_i,    // synchronous clear
+  input logic             dn_i,     // 0: up, 1: down
+  input logic             ld_i,     // synchronous load
+  input logic [WIDTH-1:0] ld_val_i, // value to load
 
   // Output signals
   output logic [WIDTH-1:0] count_o,
@@ -33,11 +35,13 @@ module updown_counter #(
   // Main counting process
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      count_o <= 0;  // Asynchronous reset
+      count_o <= '0;  // Asynchronous reset
     end else if (clr_i) begin
-      count_o <= 0;  // Synchronous clear
+      count_o <= '0;  // Synchronous clear
+    end else if (ld_i) begin
+      count_o <= ld_val_i;  // Synchronous load
     end else if (en_i) begin
-      if (up_dn_i) count_o <= count_o + 1;
+      if (!dn_i) count_o <= count_o + 1;
       else count_o <= count_o - 1;
     end
   end

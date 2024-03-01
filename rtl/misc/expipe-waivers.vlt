@@ -49,3 +49,4 @@ lint_off -rule PINCONNECTEMPTY -file "*/op_only_rs.sv" -match "Cell pin connecte
 lint_off -rule PINCONNECTEMPTY -file "*/load_buffer.sv" -match "Cell pin connected by name with empty reference: 'tc_o'"
 lint_off -rule PINCONNECTEMPTY -file "*/store_buffer.sv" -match "Cell pin connected by name with empty reference: 'tc_o'"
 lint_off -rule PINCONNECTEMPTY -file "*/int_regstat.sv" -match "Cell pin connected by name with empty reference: 'tc_o'"
+lint_off -rule PINCONNECTEMPTY -file "*/ras.sv" -match "Cell pin connected by name with empty reference: 'valid_o'"

@@ -56,6 +56,9 @@ package len5_config_pkg;
 
   // FETCH STAGE
   // -----------
+  // Return Address Stack (RAS) depth
+  localparam int unsigned RAS_DEPTH = 8;
+
   // Fetch memory interface
   // NOTE: if the memory is 0-latency, at least one of the fetch unit registers
   // must be enabled (i.e., not skipped). Therefore, at least one of the
@@ -66,28 +69,28 @@ package len5_config_pkg;
   // EXECUTION PIPELINE
   // ------------------
   // ISSUE QUEUE
-  localparam int unsigned IQ_DEPTH = 2;  // number of entries in the issue queue (power of 2)
+  localparam int unsigned IQ_DEPTH = 4;  // number of entries in the issue queue (power of 2)
 
   // LOAD/STORE UNIT
-  localparam int unsigned LDBUFF_DEPTH = 4;  // number of entries in the load buffer
-  localparam int unsigned STBUFF_DEPTH = 8;  // number of entries in the store buffer
+  localparam int unsigned LDBUFF_DEPTH = 8;  // number of entries in the load buffer
+  localparam int unsigned STBUFF_DEPTH = 16;  // number of entries in the store buffer
   localparam bit LSU_SPILL_SKIP = 1'b1;  // make address adder fully combinational
 
   // ALU UNIT
-  localparam int unsigned ALU_RS_DEPTH = 4;
+  localparam int unsigned ALU_RS_DEPTH = 8;
   localparam bit ALU_SPILL_SKIP = 1'b1;  // make the ALU fully combinational
 
   // MULT/DIV UNIT
-  localparam int unsigned MULT_RS_DEPTH = 4;
+  localparam int unsigned MULT_RS_DEPTH = 8;
   localparam int unsigned DIV_RS_DEPTH = 4;
   localparam int unsigned DIV_PIPE_DEPTH = 8;
 
   // BRANCH UNIT
-  localparam int unsigned BU_RS_DEPTH = 4;
+  localparam int unsigned BU_RS_DEPTH = 8;
   localparam bit BU_SPILL_SKIP = 1'b1;  // make the target address adder fully combinational
 
   // COMMIT STAGE
-  localparam int unsigned ROB_DEPTH  /* verilator public */ = 16;  // Number of entries in the ROB
+  localparam int unsigned ROB_DEPTH  /* verilator public */ = 32;  // Number of entries in the ROB
   localparam bit COMMIT_SPILL_SKIP = 1'b1;  // directly connect the commit CU to the ROB output
 
   // -----------------
@@ -114,8 +117,9 @@ package len5_config_pkg;
   // Enable M extension support
   // --------------------------
   localparam bit LEN5_M_EN = 1'b1;
-  localparam bit LEN5_MULT_SERIAL = 1'b0;
-  localparam bit LEN5_DIV_EN = 1'b1;  // TODO: div available
+  localparam bit LEN5_MULT_SERIAL = 1'b1;
+  localparam int unsigned MULT_PIPE_DEPTH = 1;  // only used if 'LEN5_MULT_SERIAL' is 0
+  localparam bit LEN5_DIV_EN = 1'b1;
 
   // Enable floating-point support
   // -----------------------------

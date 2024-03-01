@@ -40,6 +40,7 @@ module mult_unit #(
 );
 
   import len5_pkg::*;
+  import len5_config_pkg::*;
   import expipe_pkg::*;
 
   // Handshake from/to the execution unit
@@ -60,7 +61,7 @@ module mult_unit #(
 
 
   generate
-    if (len5_config_pkg::LEN5_MULT_SERIAL) begin : gen_serial_mult_unit
+    if (LEN5_MULT_SERIAL) begin : gen_serial_mult_unit
 
       // serial multiplier
       // MULT reservation station

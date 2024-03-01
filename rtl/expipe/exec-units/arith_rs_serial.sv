@@ -107,19 +107,19 @@ module arith_rs_serial #(
   // ----------------
   // New, execution, and CDB write pointers
   logic [RsIdxLen-1:0] new_idx, ex_idx, ex_idx_hold, cdb_idx;
-  logic empty[DEPTH], ready_ex[DEPTH], ready_cdb[DEPTH];
+  logic [DEPTH-1:0] empty, ready_ex, ready_cdb;
 
   // Arithmetic reservation station data
-  arith_rs_data_t data[DEPTH];
-  arith_state_t curr_state[DEPTH], next_state[DEPTH];
+  arith_rs_data_t [DEPTH-1:0] data;
+  arith_state_t [DEPTH-1:0] curr_state, next_state;
 
   // Reservation station control
   logic insert, remove, ex_accepted, save_res;
-  logic fwd_rs1_eu[DEPTH], fwd_rs2_eu[DEPTH];
-  logic fwd_rs1_cdb[DEPTH], fwd_rs2_cdb[DEPTH];
-  logic fwd_rs1[DEPTH], fwd_rs2[DEPTH];
+  logic [DEPTH-1:0] fwd_rs1_eu, fwd_rs2_eu;
+  logic [DEPTH-1:0] fwd_rs1_cdb, fwd_rs2_cdb;
+  logic [DEPTH-1:0] fwd_rs1, fwd_rs2;
   logic insert_fwd_rs1, insert_fwd_rs2;
-  arith_op_t arith_op[DEPTH];
+  arith_op_t [DEPTH-1:0] arith_op;
 
   // Ready signals for the selectors
   always_comb begin : p_enc_signals

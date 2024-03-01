@@ -24,6 +24,7 @@ module branch_unit #(
   output logic                   fe_bpu_valid_o,
   output logic                   fe_pcgen_valid_o,
   output fetch_pkg::resolution_t fe_res_o,
+  output logic                   fe_call_confirm_o,
 
   // Issue Stage
   input  logic                                         issue_valid_i,
@@ -94,7 +95,8 @@ module branch_unit #(
 
   // Resolution register
   logic        cu_res_reg_en;
-  resolution_t res_d;
+  resolution_t res_q;
+  logic call_confirm_d, call_confirm_q;
 
   // ------------
   // BRANCH LOGIC
@@ -112,9 +114,14 @@ module branch_unit #(
       BU_BGEU: res_taken = (rs_bu_rs1 >= rs_bu_rs2);
       BU_JAL:  res_taken = 1'b1;
       BU_JALR: res_taken = 1'b1;
+      BU_CALL: res_taken = 1'b1;
       default: res_taken = 1'b0;
     endcase
   end
+
+  // Call execution confirmation
+  // ---------------------------
+  assign call_confirm_d   = rs_bu_branch_type == BU_CALL;
 
   // Branch target computation
   // -------------------------
@@ -168,13 +175,14 @@ module branch_unit #(
   // Resolution register
   // -------------------
   always_ff @(posedge clk_i or negedge rst_ni) begin : res_reg
-    if (!rst_ni) res_d <= '0;
-    else if (flush_i) res_d <= '0;
+    if (!rst_ni) res_q <= '0;
+    else if (flush_i) res_q <= '0;
     else if (cu_res_reg_en) begin
-      res_d.pc         <= rs_bu_curr_pc;
-      res_d.target     <= res_target;
-      res_d.taken      <= res_taken;
-      res_d.mispredict <= res_mispredicted;
+      res_q.pc         <= rs_bu_curr_pc;
+      res_q.target     <= res_target;
+      res_q.taken      <= res_taken;
+      res_q.mispredict <= res_mispredicted;
+      call_confirm_q   <= call_confirm_d;
     end
   end
 
@@ -241,6 +249,6 @@ module branch_unit #(
   // -----------------
   // OUTPUT EVALUATION
   // -----------------
-  assign fe_res_o = res_d;
-
+  assign fe_res_o          = res_q;
+  assign fe_call_confirm_o = call_confirm_q;
 endmodule

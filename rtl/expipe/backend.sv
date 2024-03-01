@@ -15,21 +15,21 @@ module backend (
   input logic rst_ni,
 
   // Frontend
-  input logic fetch_valid_i,
-  output logic fetch_ready_o,
-  input logic [len5_pkg::ILEN-1:0] fetch_instr_i,
-  input fetch_pkg::prediction_t fetch_pred_i,
-  input logic fetch_except_raised_i,
-  input len5_pkg::except_code_t fetch_except_code_i,
-  input logic fetch_pcgen_ready_i,
-  output logic fetch_bpu_valid_o,
-  output logic fetch_pcgen_valid_o,
-  output logic fetch_mis_flush_o,
-  output logic fetch_except_flush_o,
-  output fetch_pkg::resolution_t fetch_res_o,
-  output logic fetch_except_raised_o,
-  output logic [len5_pkg::XLEN-1:0] fetch_except_pc_o,
-  output logic [len5_pkg::XLEN-1:0] fetch_ra_value_o,  // TODO: replace with RAS
+  input  logic                                        fetch_valid_i,
+  output logic                                        fetch_ready_o,
+  input  logic                   [len5_pkg::ILEN-1:0] fetch_instr_i,
+  input  fetch_pkg::prediction_t                      fetch_pred_i,
+  input  logic                                        fetch_except_raised_i,
+  input  len5_pkg::except_code_t                      fetch_except_code_i,
+  input  logic                                        fetch_pcgen_ready_i,
+  output logic                                        fetch_bpu_valid_o,
+  output logic                                        fetch_pcgen_valid_o,
+  output logic                                        fetch_mis_flush_o,
+  output logic                                        fetch_except_flush_o,
+  output fetch_pkg::resolution_t                      fetch_res_o,
+  output logic                                        fetch_call_confirm_o,
+  output logic                                        fetch_except_raised_o,
+  output logic                   [len5_pkg::XLEN-1:0] fetch_except_pc_o,
 
   /* Memory system */
   output logic                                                mem_load_valid_o,
@@ -327,8 +327,7 @@ module backend (
     .issue_rs1_idx_i  (il_intrf_rs1_idx),
     .issue_rs2_idx_i  (il_intrf_rs2_idx),
     .issue_rs1_value_o(intrf_il_rs1_value),
-    .issue_rs2_value_o(intrf_il_rs2_value),
-    .fetch_ra_value_o (fetch_ra_value_o)
+    .issue_rs2_value_o(intrf_il_rs2_value)
   );
 
   // Floating-point register status register
@@ -380,10 +379,11 @@ module backend (
     .mis_flush_i   (ex_mis_flush),
     .except_flush_i(except_flush),
 
-    .fe_pcgen_ready_i(fetch_pcgen_ready_i),
-    .fe_bpu_valid_o  (fetch_bpu_valid_o),
-    .fe_pcgen_valid_o(fetch_pcgen_valid_o),
-    .fe_res_o        (fetch_res_o),
+    .fe_pcgen_ready_i (fetch_pcgen_ready_i),
+    .fe_bpu_valid_o   (fetch_bpu_valid_o),
+    .fe_pcgen_valid_o (fetch_pcgen_valid_o),
+    .fe_res_o         (fetch_res_o),
+    .fe_call_confirm_o(fetch_call_confirm_o),
 
     .issue_valid_i      (il_ex_valid),
     .issue_ready_o      (ex_issue_ready),
