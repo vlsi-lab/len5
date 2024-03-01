@@ -14,7 +14,8 @@
 
 module mult #(
   parameter int unsigned PIPE_DEPTH = 4,  // number of pipeline levels (>0)
-  parameter bit SKIP_REG = 1'b1,  // skip output spillcell
+  parameter bit SKIP_IN_REG = 1'b1,  // slip input register
+  parameter bit SKIP_OUT_REG = 1'b1,  // skip output spillcell
   // EU-specific parameters
   parameter int unsigned EU_CTL_LEN = 4
 ) (
@@ -78,7 +79,7 @@ module mult #(
 
     unique case (ctl_q)
       MULT_MUL: begin
-        s[0]   = rs1_value_q[XLEN-1]; // sign extension
+        s[0]   = rs1_value_q[XLEN-1];  // sign extension
         s[1]   = rs2_value_q[XLEN-1];
         mult_a = {s[0], rs1_value_q};
         mult_b = {s[1], rs2_value_q};
@@ -92,20 +93,20 @@ module mult #(
         result = {{(XLEN >> 1) {result_full[(XLEN>>1)-1]}}, result_full[(XLEN>>1)-1:0]};
       end
       MULT_MULH: begin
-        s[0]   = rs1_value_q[XLEN-1]; // sign extension
+        s[0]   = rs1_value_q[XLEN-1];  // sign extension
         s[1]   = rs2_value_q[XLEN-1];
         mult_a = {s[0], rs1_value_q};
         mult_b = {s[1], rs2_value_q};
         result = result_full[(XLEN<<1)-1:XLEN];
       end
       MULT_MULHU: begin
-        mult_a = {s[0], rs1_value_q}; // unsigned
+        mult_a = {s[0], rs1_value_q};  // unsigned
         mult_b = {s[1], rs2_value_q};
         result = result_full[(XLEN<<1)-1:XLEN];
       end
       MULT_MULHSU: begin
-        s[0]   = rs1_value_q[XLEN-1]; // sign extension
-        s[1]   = 1'b0;                // unsigned
+        s[0]   = rs1_value_q[XLEN-1];  // sign extension
+        s[1]   = 1'b0;  // unsigned
         mult_a = {s[0], rs1_value_q};
         mult_b = {s[1], rs2_value_q};
         result = result_full[(XLEN<<1)-1:XLEN];
@@ -123,31 +124,41 @@ module mult #(
   /////////////////////
   // Input Registers //
   /////////////////////
-  always_ff @(posedge clk_i or negedge rst_ni) begin : mult_input_reg
-    if (!rst_ni) begin
-      rs1_value_q <= '0;
-      rs2_value_q <= '0;
-      ctl_q       <= '0;
-      rob_idx_q   <= '0;
-      valid_q     <= '0;
-      //ready_q     <= '0;
-    end else if (flush_i) begin
-      rs1_value_q <= '0;
-      rs2_value_q <= '0;
-      ctl_q       <= '0;
-      rob_idx_q   <= '0;
-      valid_q     <= '0;
-      //ready_q     <= '0;
-    end else begin
-      rs1_value_q <= rs1_value_i;
-      rs2_value_q <= rs2_value_i;
-      ctl_q       <= ctl_i;
-      rob_idx_q   <= rob_idx_i;
-      valid_q     <= valid_i;
-      //ready_q     <= ready_i;
-    end
-  end
 
+  generate
+    if (SKIP_IN_REG) begin : gen_in_reg
+      assign rs1_value_q = rs1_value_i;
+      assign rs2_value_q = rs2_value_i;
+      assign ctl_q       = ctl_i;
+      assign rob_idx_q   = rob_idx_i;
+      assign valid_q     = valid_i;
+    end else begin : gen_out_reg
+      always_ff @(posedge clk_i or negedge rst_ni) begin : mult_input_reg
+        if (!rst_ni) begin
+          rs1_value_q <= '0;
+          rs2_value_q <= '0;
+          ctl_q       <= '0;
+          rob_idx_q   <= '0;
+          valid_q     <= '0;
+          //ready_q     <= '0;
+        end else if (flush_i) begin
+          rs1_value_q <= '0;
+          rs2_value_q <= '0;
+          ctl_q       <= '0;
+          rob_idx_q   <= '0;
+          valid_q     <= '0;
+          //ready_q     <= '0;
+        end else begin
+          rs1_value_q <= rs1_value_i;
+          rs2_value_q <= rs2_value_i;
+          ctl_q       <= ctl_i;
+          rob_idx_q   <= rob_idx_i;
+          valid_q     <= valid_i;
+          //ready_q     <= ready_i;
+        end
+      end
+    end
+  endgenerate
 
   ////////////////////////
   // PIPELINE REGISTERS //
@@ -225,7 +236,7 @@ module mult #(
   // Output register
   spill_cell_flush #(
     .DATA_T(out_reg_data_t),
-    .SKIP  (SKIP_REG)
+    .SKIP  (SKIP_OUT_REG)
   ) u_out_reg (
     .clk_i  (clk_i),
     .rst_ni (rst_ni),
