@@ -123,7 +123,8 @@ module rob #(
                        cdb_data_i.rob_idx == clear_idx &
                        ~cdb_data_i.except_raised &
                        (cdb_data_i.except_code != E_MISPREDICTION); // check cdb is writing at clear_idx and 2),3)
-  assign mem_instr_clear = data_valid[clear_idx] & (~data[clear_idx].mem_crit | entry_clear | cdb_clear) & ((clear_idx != tail_idx) | ~rob_full | (commit_valid & comm_ready_i));
+  assign mem_instr_clear = data_valid[clear_idx] & (~data[clear_idx].mem_crit | entry_clear | cdb_clear) &
+                           ((clear_idx != tail_idx) | ~rob_full | (commit_valid & comm_ready_i));
 
   // In-order commit slot
   // --------------------
