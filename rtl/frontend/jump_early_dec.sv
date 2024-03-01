@@ -118,9 +118,6 @@ module jump_early_dec (
 
   // Output network
   // --------------
-  // Get the offset to be added to the PC on 32 bits using sign extension
-  assign early_jump_base_o = mem_if_pred_i.pc;
-
   // Target address multiplexer
   always_comb begin : target_addr_mux
     unique case (jump_type)

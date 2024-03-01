@@ -57,6 +57,13 @@ module mult #(
   // Ready signal from the spill cell
   logic                     ready_spill;
 
+  // Input registers
+  logic [XLEN-1:0] rs1_value_q, rs2_value_q;
+  logic     [EU_CTL_LEN-1:0] ctl_q;
+  rob_idx_t                  rob_idx_q;
+  logic                      valid_q;  //, ready_q;
+
+
   //////////////////////////////
   // MULT operators selection //
   //////////////////////////////
@@ -65,42 +72,42 @@ module mult #(
     // Default values
     result        = '0;
     s[1:0]        = 2'b00;  //unsigned by default
-    mult_a        = {s[0], rs1_value_i};
-    mult_b        = {s[1], rs2_value_i};
+    mult_a        = {s[0], rs1_value_q};
+    mult_b        = {s[1], rs2_value_q};
     except_raised = 1'b0;
 
-    unique case (ctl_i)
+    unique case (ctl_q)
       MULT_MUL: begin
-        s[0]   = rs1_value_i[XLEN-1];
-        s[1]   = rs2_value_i[XLEN-1];
-        mult_a = {s[0], rs1_value_i};
-        mult_b = {s[1], rs2_value_i};
+        s[0]   = rs1_value_q[XLEN-1]; // sign extension
+        s[1]   = rs2_value_q[XLEN-1];
+        mult_a = {s[0], rs1_value_q};
+        mult_b = {s[1], rs2_value_q};
         result = result_full[XLEN-1:0];
       end
       MULT_MULW: begin
-        s[0]   = rs1_value_i[(XLEN>>1)-1];  //not used
-        s[1]   = rs2_value_i[(XLEN>>1)-1];
-        mult_a = {s[0], {(XLEN >> 1) {rs1_value_i[(XLEN>>1)-1]}}, rs1_value_i[(XLEN>>1)-1:0]};
-        mult_b = {s[1], {(XLEN >> 1) {rs2_value_i[(XLEN>>1)-1]}}, rs2_value_i[(XLEN>>1)-1:0]};
+        s[0]   = rs1_value_q[(XLEN>>1)-1];  // sign extension of the halfword
+        s[1]   = rs2_value_q[(XLEN>>1)-1];
+        mult_a = {s[0], {(XLEN >> 1) {rs1_value_q[(XLEN>>1)-1]}}, rs1_value_q[(XLEN>>1)-1:0]};
+        mult_b = {s[1], {(XLEN >> 1) {rs2_value_q[(XLEN>>1)-1]}}, rs2_value_q[(XLEN>>1)-1:0]};
         result = {{(XLEN >> 1) {result_full[(XLEN>>1)-1]}}, result_full[(XLEN>>1)-1:0]};
       end
       MULT_MULH: begin
-        s[0]   = rs1_value_i[XLEN-1];
-        s[1]   = rs2_value_i[XLEN-1];
-        mult_a = {s[0], rs1_value_i};
-        mult_b = {s[1], rs2_value_i};
+        s[0]   = rs1_value_q[XLEN-1]; // sign extension
+        s[1]   = rs2_value_q[XLEN-1];
+        mult_a = {s[0], rs1_value_q};
+        mult_b = {s[1], rs2_value_q};
         result = result_full[(XLEN<<1)-1:XLEN];
       end
       MULT_MULHU: begin
-        mult_a = {s[0], rs1_value_i};
-        mult_b = {s[1], rs2_value_i};
+        mult_a = {s[0], rs1_value_q}; // unsigned
+        mult_b = {s[1], rs2_value_q};
         result = result_full[(XLEN<<1)-1:XLEN];
       end
       MULT_MULHSU: begin
-        s[0]   = rs1_value_i[XLEN-1];
-        s[1]   = 1'b0;
-        mult_a = {s[0], rs1_value_i};
-        mult_b = {s[1], rs2_value_i};
+        s[0]   = rs1_value_q[XLEN-1]; // sign extension
+        s[1]   = 1'b0;                // unsigned
+        mult_a = {s[0], rs1_value_q};
+        mult_b = {s[1], rs2_value_q};
         result = result_full[(XLEN<<1)-1:XLEN];
       end
       default: except_raised = 1'b1;
@@ -111,7 +118,35 @@ module mult #(
   ////////////////
   // Multiplier //
   ////////////////
-  assign result_full             = $signed(mult_a) * $signed(mult_b);
+  assign result_full = $signed(mult_a) * $signed(mult_b);
+
+  /////////////////////
+  // Input Registers //
+  /////////////////////
+  always_ff @(posedge clk_i or negedge rst_ni) begin : mult_input_reg
+    if (!rst_ni) begin
+      rs1_value_q <= '0;
+      rs2_value_q <= '0;
+      ctl_q       <= '0;
+      rob_idx_q   <= '0;
+      valid_q     <= '0;
+      //ready_q     <= '0;
+    end else if (flush_i) begin
+      rs1_value_q <= '0;
+      rs2_value_q <= '0;
+      ctl_q       <= '0;
+      rob_idx_q   <= '0;
+      valid_q     <= '0;
+      //ready_q     <= '0;
+    end else begin
+      rs1_value_q <= rs1_value_i;
+      rs2_value_q <= rs2_value_i;
+      ctl_q       <= ctl_i;
+      rob_idx_q   <= rob_idx_i;
+      valid_q     <= valid_i;
+      //ready_q     <= ready_i;
+    end
+  end
 
 
   ////////////////////////
@@ -119,7 +154,7 @@ module mult #(
   ////////////////////////
 
   assign pipe_result_d[0]        = result;
-  assign pipe_rob_idx_d[0]       = rob_idx_i;
+  assign pipe_rob_idx_d[0]       = rob_idx_q;
   assign pipe_except_raised_d[0] = except_raised;
 
   // Generate PIPE_DEPTH-1 pipeline registers
@@ -147,8 +182,9 @@ module mult #(
   // Output handhsake register //
   ///////////////////////////////
 
-  assign pipe_valid_d[0] = valid_i;
+  assign pipe_valid_d[0] = valid_q;
   // Generate PIPE_DEPTH-1 pipeline registers
+  // Propagate the valid signal to be synchronized with the result
   generate
     for (genvar i = 1; i < PIPE_DEPTH; i = i + 1) begin : gen_mult_hs_pipe_reg
       always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -194,10 +230,10 @@ module mult #(
     .clk_i  (clk_i),
     .rst_ni (rst_ni),
     .flush_i(flush_i),
-    .valid_i(pipe_valid_d[PIPE_DEPTH-1]),  // valid from EU
-    .ready_i(ready_i),                     // ready from RS
-    .valid_o(valid_o),                     // valid to RS
-    .ready_o(ready_spill),                 // ready to EU
+    .valid_i(pipe_valid_d[PIPE_DEPTH-1]),  // valid from EU (downstream)
+    .ready_i(ready_i),                     // ready from RS (upstream), CHECK if ready_i or ready_q
+    .valid_o(valid_o),                     // valid to RS (upstream)
+    .ready_o(ready_spill),                 // ready to EU (downstream)
     .data_i (out_reg_data_in),
     .data_o (out_reg_data_out)
   );
