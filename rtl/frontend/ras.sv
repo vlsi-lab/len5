@@ -27,12 +27,13 @@ module ras #(
   input logic flush_i,
 
   // LIFO control
-  input  logic                      push_i,      // push a new return address
-  input  logic                      pop_i,       // pop the last return address
-  input  logic                      confirm_i,   // confirm a resolved call
-  input  logic [len5_pkg::ALEN-1:0] ret_addr_i,  // new return address
-  output logic                      valid_o,     // return address valid
-  output logic [len5_pkg::ALEN-1:0] ret_addr_o   // last return address
+  input  logic                      push_i,          // push a new return address
+  input  logic                      pop_i,           // pop the last return address
+  input  logic                      call_confirm_i,  // confirm a resolved call
+  input  logic                      ret_confirm_i,   // confirm a resolved return
+  input  logic [len5_pkg::ALEN-1:0] ret_addr_i,      // new return address
+  output logic                      valid_o,         // return address valid
+  output logic [len5_pkg::ALEN-1:0] ret_addr_o       // last return address
 );
 
   import len5_pkg::*;
@@ -41,20 +42,20 @@ module ras #(
   // INTERNAL SIGNALS
   // ----------------
   // Return addresses
-  logic [DEPTH-1:0][ ALEN-1:0] ras_addr;
-  logic [DEPTH-1:0]            ras_valid;
-  logic [DEPTH-1:0]            ras_confirmed;
+  logic [DEPTH-1:0][ALEN-1:0] ras_addr;
+  logic [DEPTH-1:0]           ras_valid;
+  logic [DEPTH-1:0]           ras_confirmed;
 
   // RAS pointers
-  logic [IdxW-1:0] last_idx, new_idx, confirmed_idx, spec_idx;
+  logic [IdxW-1:0] last_idx, new_idx, confirmed_last_idx, confirmed_new_idx;
   logic last_valid;
   logic ras_full;
-  logic all_confirmed;
+  logic ras_confirmed_full;
 
   // --------------------------
   // RETURN ADDRESS LIFO BUFFER
   // --------------------------
-  // LIFO address update
+  // LIFO speculative entries update
   always_ff @(posedge clk_i or negedge rst_ni) begin : lifo_upd
     if (!rst_ni) begin
       ras_valid <= '0;
@@ -63,7 +64,12 @@ module ras #(
     end else begin
       if (push_i && pop_i) begin
         ras_addr[last_idx] <= ret_addr_i;
-      end else if (push_i && !ras_full) begin
+      end else if (push_i && ras_full) begin
+        // Start over
+        // TODO: find a better solution (e.g., use couters instead of encoders)
+        ras_addr[new_idx] <= ret_addr_i;
+        ras_valid         <= {{DEPTH - 1{1'b0}}, 1'b1};
+      end else if (push_i) begin
         ras_addr[new_idx]  <= ret_addr_i;
         ras_valid[new_idx] <= 1'b1;
       end else if (pop_i) begin
@@ -72,22 +78,25 @@ module ras #(
     end
   end
 
-  // LIFO speculation update
-  assign all_confirmed = ras_valid == ras_confirmed;
+  // LIFO confirmed entries update
   always_ff @(posedge clk_i or negedge rst_ni) begin : lifo_spec
     if (!rst_ni) begin
       ras_confirmed <= '0;
-    end else begin
-      if (all_confirmed && pop_i) begin
-        ras_confirmed[confirmed_idx] <= 1'b0;
-      end else if (confirm_i) begin
-        ras_confirmed[spec_idx] <= 1'b1;
+    end else if (push_i && !pop_i && ras_full) begin
+      // Start over
+      ras_confirmed <= '0;
+    end else if (call_confirm_i ^ ret_confirm_i) begin
+      if (call_confirm_i && !ras_confirmed_full) begin
+        ras_confirmed[confirmed_new_idx] <= 1'b1;
+      end else if (ret_confirm_i) begin
+        ras_confirmed[confirmed_last_idx] <= 1'b0;
       end
     end
   end
 
   // Full
-  assign ras_full = &ras_valid;
+  assign ras_full           = &ras_valid;
+  assign ras_confirmed_full = &ras_confirmed;
 
   // RAS indexes
   // -----------
@@ -115,8 +124,8 @@ module ras #(
     .N(DEPTH)
   ) prio_enc_confirmed (
     .lines_i(ras_confirmed),
-    .enc_o  (confirmed_idx),
-    .valid_o()                // not used
+    .enc_o  (confirmed_last_idx),
+    .valid_o()                     // not used
   );
 
   // Latest confirmed entry
@@ -125,8 +134,8 @@ module ras #(
     .INV(1'b1)
   ) prio_enc_spec (
     .lines_i(~ras_confirmed),
-    .enc_o  (spec_idx),
-    .valid_o()                 // not used
+    .enc_o  (confirmed_new_idx),
+    .valid_o()                    // not used
   );
 
   // -----------------

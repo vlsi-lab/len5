@@ -83,6 +83,7 @@ module datapath #(
   logic                    be_fe_pcgen_valid;
   resolution_t             be_fe_res;
   logic                    be_fe_call_confirm;
+  logic                    be_fe_ret_confirm;
   logic                    be_fe_except_raised;
   logic         [XLEN-1:0] be_fe_except_pc;
   logic                    fe_be_bu_pcgen_ready;
@@ -122,6 +123,7 @@ module datapath #(
     .bu_pcgen_valid_i      (be_fe_pcgen_valid),
     .bu_res_i              (be_fe_res),
     .bu_call_confirm_i     (be_fe_call_confirm),
+    .bu_ret_confirm_i      (be_fe_ret_confirm),
     .comm_except_raised_i  (be_fe_except_raised),
     .comm_except_pc_i      (be_fe_except_pc)
   );
@@ -146,6 +148,7 @@ module datapath #(
     .fetch_except_flush_o (be_fe_except_flush),
     .fetch_res_o          (be_fe_res),
     .fetch_call_confirm_o (be_fe_call_confirm),
+    .fetch_ret_confirm_o  (be_fe_ret_confirm),
     .fetch_except_raised_o(be_fe_except_raised),
     .fetch_except_pc_o    (be_fe_except_pc),
 

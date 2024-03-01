@@ -57,7 +57,7 @@ module int_regstat #(
   always_comb begin : busy_cnt_control
     foreach (busy_cnt[i]) begin
       busy_cnt_en[i] = 1'b0;
-      busy_cnt_dn[i] = 1'b0;
+      busy_cnt_dn[i] = 1'b1;
     end
 
     if (!skip_cnt_upd) begin
@@ -100,8 +100,8 @@ module int_regstat #(
         .en_i    (busy_cnt_en[i]),
         .clr_i   (busy_cnt_clr),
         .dn_i    (busy_cnt_dn[i]),
-        .ld_i    (1'b0),  // not used
-        .ld_val_i('0),    // not used
+        .ld_i    (1'b0),            // not used
+        .ld_val_i('0),              // not used
         .count_o (busy_cnt[i]),
         .tc_o    ()                 // not needed
       );

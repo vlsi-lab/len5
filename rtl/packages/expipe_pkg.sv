@@ -165,7 +165,8 @@ package expipe_pkg;
     BU_BGEU = 'h5,
     BU_JAL  = 'h6,
     BU_JALR = 'h7,
-    BU_CALL = 'h8
+    BU_CALL = 'h8,
+    BU_RET  = 'h9
   } branch_ctl_t;
 
   // Load-store unit control

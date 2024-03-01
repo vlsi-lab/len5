@@ -59,7 +59,7 @@ module cdb_arbiter (
   // VALID PRIORITY ENCODER
   // ----------------------
   prio_enc #(
-    .N(MAX_EU_N - 1),
+    .N  (MAX_EU_N - 1),
     .INV(1'b1)
   ) vaild_prio_enc (
     .lines_i(mux_valid),

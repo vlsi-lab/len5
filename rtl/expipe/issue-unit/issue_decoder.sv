@@ -43,6 +43,9 @@ module issue_decoder (
   import csr_pkg::*;
   import instr_pkg::*;
 
+  // Parameters
+  localparam logic [ILEN-1:0] RET = {12'b0, 5'b00001, 3'b000, 5'b00000, JALR[OPCODE_LEN-1:0]};
+
   // INTERNAL SIGNALS
   // ----------------
   // Exceptions
@@ -349,14 +352,14 @@ module issue_decoder (
       JAL: begin
         issue_type  = ISSUE_TYPE_JUMP;
         assigned_eu = EU_BRANCH_UNIT;
-        eu_ctl.bu   = BU_JAL;
+        eu_ctl.bu   = (instruction_i.j.rd == 5'b00001) ? BU_CALL : BU_JAL;
         mem_crit    = 1'b0;
         imm_format  = IMM_TYPE_J;
       end
       JALR: begin
         issue_type  = ISSUE_TYPE_JUMP;
         assigned_eu = EU_BRANCH_UNIT;
-        eu_ctl.bu   = (instruction_i.j.rd == 5'b00001) ? BU_CALL : BU_JALR;
+        eu_ctl.bu   = (instruction_i.raw == RET) ? BU_RET : BU_JALR;
         rs1_req     = 1'b1;
         imm_format  = IMM_TYPE_I;
       end

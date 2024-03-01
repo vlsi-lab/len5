@@ -28,6 +28,7 @@ module backend (
   output logic                                        fetch_except_flush_o,
   output fetch_pkg::resolution_t                      fetch_res_o,
   output logic                                        fetch_call_confirm_o,
+  output logic                                        fetch_ret_confirm_o,
   output logic                                        fetch_except_raised_o,
   output logic                   [len5_pkg::XLEN-1:0] fetch_except_pc_o,
 
@@ -227,10 +228,8 @@ module backend (
 
     .fetch_valid_i        (fetch_valid_i),
     .fetch_ready_o        (fetch_ready_o),
-    .fetch_curr_pc_i      (fetch_pred_i.pc),
+    .fetch_pred_i         (fetch_pred_i),
     .fetch_instr_i        (fetch_instr_i),
-    .fetch_pred_target_i  (fetch_pred_i.target),
-    .fetch_pred_taken_i   (fetch_pred_i.taken),
     .fetch_except_raised_i(fetch_except_raised_i),
     .fetch_except_code_i  (fetch_except_code_i),
 
@@ -384,6 +383,7 @@ module backend (
     .fe_pcgen_valid_o (fetch_pcgen_valid_o),
     .fe_res_o         (fetch_res_o),
     .fe_call_confirm_o(fetch_call_confirm_o),
+    .fe_ret_confirm_o (fetch_ret_confirm_o),
 
     .issue_valid_i      (il_ex_valid),
     .issue_ready_o      (ex_issue_ready),

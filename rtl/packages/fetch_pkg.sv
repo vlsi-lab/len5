@@ -49,6 +49,7 @@ package fetch_pkg;
   // prediction structure
   typedef struct packed {
     logic [XLEN-1:0] pc;
+    logic            hit;
     logic [XLEN-1:0] target;
     logic            taken;
   } prediction_t;

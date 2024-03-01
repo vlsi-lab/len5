@@ -69,7 +69,7 @@ package len5_config_pkg;
   // EXECUTION PIPELINE
   // ------------------
   // ISSUE QUEUE
-  localparam int unsigned IQ_DEPTH = 4;  // number of entries in the issue queue (power of 2)
+  localparam int unsigned IQ_DEPTH = 2;  // number of entries in the issue queue (power of 2)
 
   // LOAD/STORE UNIT
   localparam int unsigned LDBUFF_DEPTH = 8;  // number of entries in the load buffer
@@ -90,7 +90,7 @@ package len5_config_pkg;
   localparam bit BU_SPILL_SKIP = 1'b1;  // make the target address adder fully combinational
 
   // COMMIT STAGE
-  localparam int unsigned ROB_DEPTH  /* verilator public */ = 32;  // Number of entries in the ROB
+  localparam int unsigned ROB_DEPTH  /* verilator public */ = 16;  // Number of entries in the ROB
   localparam bit COMMIT_SPILL_SKIP = 1'b1;  // directly connect the commit CU to the ROB output
 
   // -----------------

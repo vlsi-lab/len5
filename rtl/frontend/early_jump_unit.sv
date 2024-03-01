@@ -24,11 +24,12 @@ module early_jump_unit (
   input  fetch_pkg::prediction_t                      mem_if_pred_i,
   input  logic                   [len5_pkg::XLEN-1:0] early_jump_target_i,
   input  logic                                        call_confirm_i,
+  input  logic                                        ret_confirm_i,
   output fetch_pkg::prediction_t                      issue_pred_o,
   output logic                                        early_jump_valid_o,
   output logic                                        mem_flush_o,
-  output logic                   [len5_pkg::XLEN-1:0] early_jump_offs_o,
-  output logic                   [len5_pkg::XLEN-1:0] early_jump_base_o
+  output logic                   [len5_pkg::XLEN-1:0] early_jump_base_o,
+  output logic                   [len5_pkg::XLEN-1:0] early_jump_offs_o
 );
 
   import len5_pkg::*;
@@ -62,6 +63,9 @@ module early_jump_unit (
   // Target address
   logic [ALEN-1:0] early_jump_base, early_jump_offs, ras_addr;
 
+  // Link address
+  logic [ALEN-1:0] link_addr;
+
   // RAS control
   logic ras_push, ras_pop;
   logic ras_addr_valid;
@@ -81,9 +85,9 @@ module early_jump_unit (
   // jal instruction decoder
   always_comb begin : is_jump_dec
     unique case (jump_type)
-      JUMP_TYPE_CALL: target_valid = ras_addr_valid;
+      JUMP_TYPE_RET:  target_valid = ras_addr_valid;
       JUMP_TYPE_NONE: target_valid = 1'b0;
-      default:        target_valid = 1'b1;
+      default:        target_valid = ~mem_if_pred_i.hit;  // JUMP_TYPE_JAL, JUMP_TYPE_CALL
     endcase
   end
 
@@ -152,19 +156,24 @@ module early_jump_unit (
     endcase
   end
 
+  // Link address adder
+  // TODO: can we share another adder, like the one in the branch unit?
+  assign link_addr = mem_if_pred_i.pc + {32'b0, (ILEN >> 3)};
+
   // RAS LIFO buffer
   ras #(
     .DEPTH(RAS_DEPTH)
   ) u_ras (
-    .clk_i     (clk_i),
-    .rst_ni    (rst_ni),
-    .flush_i   (flush_i),
-    .push_i    (ras_push),
-    .pop_i     (ras_pop),
-    .confirm_i (call_confirm_i),
-    .ret_addr_i(early_jump_target_i),
-    .valid_o   (ras_addr_valid),
-    .ret_addr_o(ras_addr)
+    .clk_i         (clk_i),
+    .rst_ni        (rst_ni),
+    .flush_i       (flush_i),
+    .push_i        (ras_push),
+    .pop_i         (ras_pop),
+    .call_confirm_i(call_confirm_i),
+    .ret_confirm_i (ret_confirm_i),
+    .ret_addr_i    (link_addr),
+    .valid_o       (ras_addr_valid),
+    .ret_addr_o    (ras_addr)
   );
 
   // Output network
@@ -191,6 +200,7 @@ module early_jump_unit (
 
   // Prediction for the execution stage
   assign issue_pred_o.pc     = mem_if_pred_i.pc;
+  assign issue_pred_o.hit    = target_valid | mem_if_pred_i.hit;
   assign issue_pred_o.target = (target_valid) ? early_jump_target_i : mem_if_pred_i.target;
   assign issue_pred_o.taken  = target_valid | mem_if_pred_i.taken;
 endmodule
