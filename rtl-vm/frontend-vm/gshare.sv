@@ -14,7 +14,6 @@
 
 import len5_pkg::*;
 
-/* verilator lint_off BLKLOOPINIT */
 module gshare #(
     parameter int unsigned HLEN = 4
 ) (
@@ -108,4 +107,3 @@ module gshare #(
   assign taken_o = pht_q[index_r][1];
 
 endmodule
-/* verilator lint_on BLKLOOPINIT */

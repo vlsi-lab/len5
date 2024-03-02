@@ -11,10 +11,6 @@
 // File: btb.sv
 // Author: Marco Andorno
 // Date: 2/8/2019
-`ifndef BTB_SV
-`define BTB_SV
-
-/* verilator lint_off BLKLOOPINIT */
 
 module btb #(
   parameter int unsigned BTB_BITS = 4
@@ -91,5 +87,3 @@ module btb #(
   assign target_o = btb_q[addr_r].target;
 
 endmodule
-/* verilator lint_on BLKLOOPINIT */
-`endif
