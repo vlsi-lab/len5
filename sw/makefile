@@ -21,8 +21,12 @@ INC_DIRS_GCC	:= $(addprefix -I ,$(INCLUDE_DIRS))
 # TODO: REMOVE -mstrict-align ONCE UNALIGNED ACCESS IS SUPPORTED
 RISCV_EXE_PREFIX           	?= riscv64-unknown-elf
 ISA_STRING					?= rv64im
+GCC_VERSION					:= $(shell $(RISCV_EXE_PREFIX)-gcc -dumpversion)
+ifeq ($(shell expr $(GCC_VERSION) \>= 12), 1)
+	ISA_STRING				+= zicsr
+endif
 ABI_STRING					?= lp64
-COPT						?= -O0
+COPT						?= -O2
 CDEFS						?= -DSPIKE_EXIT
 CFLAGS			:= -march=$(ISA_STRING) \
 				   -mabi=$(ABI_STRING) \
