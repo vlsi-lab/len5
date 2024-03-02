@@ -66,9 +66,10 @@ module ras #(
         ras_addr[last_idx] <= ret_addr_i;
       end else if (push_i && ras_full) begin
         // Start over
-        // TODO: find a better solution (e.g., use couters instead of encoders)
-        ras_addr[new_idx] <= ret_addr_i;
-        ras_valid         <= {{DEPTH - 1{1'b0}}, 1'b1};
+        for (int unsigned i = 0; i < DEPTH-1; i++) begin
+          ras_addr[i] <= ras_addr[i+1];
+        end
+        ras_addr[DEPTH-1] <= ret_addr_i;
       end else if (push_i) begin
         ras_addr[new_idx]  <= ret_addr_i;
         ras_valid[new_idx] <= 1'b1;
@@ -84,7 +85,7 @@ module ras #(
       ras_confirmed <= '0;
     end else if (push_i && !pop_i && ras_full) begin
       // Start over
-      ras_confirmed <= '0;
+      ras_confirmed <= {1'b0, ras_confirmed[DEPTH-1:1]};
     end else if (call_confirm_i ^ ret_confirm_i) begin
       if (call_confirm_i && !ras_confirmed_full) begin
         ras_confirmed[confirmed_new_idx] <= 1'b1;
