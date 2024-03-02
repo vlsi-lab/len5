@@ -38,7 +38,6 @@ CFLAGS			:= -march=$(ISA_STRING) \
 				   -fdata-sections \
 				   -fno-builtin \
 				   $(COPT) \
-				   -g \
 				   -Wall
 LDFLAGS_PRE		:= -T $(LINKER) \
 				   -static
