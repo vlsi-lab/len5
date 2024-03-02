@@ -13,10 +13,11 @@
 // Date: 19/08/2022
 
 module arith_rs #(
-  parameter int unsigned DEPTH = 4,  // must be a power of 2
-  parameter int unsigned EU_CTL_LEN = 4,
+  parameter  int unsigned DEPTH      = 4,             // must be a power of 2
+  parameter  int unsigned EU_CTL_LEN = 4,
+  parameter  bit          RR_ARBITER = 1'b0,
   // Dependent parameters: do NOT override
-  localparam int unsigned RsIdxLen = $clog2(DEPTH)
+  localparam int unsigned RsIdxLen   = $clog2(DEPTH)
 ) (
   input logic clk_i,
   input logic rst_ni,
@@ -330,14 +331,12 @@ module arith_rs #(
   assign issue_ready_o            = curr_state[new_idx] == ARITH_S_EMPTY;
 
   // CDB
-  assign cdb_valid_o              = curr_state[cdb_idx] == ARITH_S_COMPLETED;
   assign cdb_data_o.rob_idx       = data[cdb_idx].dest_rob_idx;
   assign cdb_data_o.res_value     = data[cdb_idx].res_value;
   assign cdb_data_o.except_raised = data[cdb_idx].except_raised;
   assign cdb_data_o.except_code   = data[cdb_idx].except_code;
 
   // Execution unit
-  assign eu_valid_o               = curr_state[ex_idx] == ARITH_S_EX_REQ;
   assign eu_ready_o               = 1'b1;
   assign eu_ctl_o                 = data[ex_idx].eu_ctl;
   assign eu_rs1_o                 = data[ex_idx].rs1_value;
@@ -347,6 +346,7 @@ module arith_rs #(
   // ---------------
   // ENTRY SELECTORS
   // ---------------
+  // NOTE: round-robin arbiters mitigate starvation at increased area cost
 
   // New entry
   prio_enc #(
@@ -357,23 +357,57 @@ module arith_rs #(
     .valid_o()
   );
 
-  // Execution
-  prio_enc #(
-    .N(DEPTH)
-  ) ex_sel (
-    .lines_i(ready_ex),
-    .enc_o  (ex_idx),
-    .valid_o()
-  );
+  generate
+    if (RR_ARBITER) begin : gen_rr_arbiters
+      // Execution
+      rr_arbiter #(
+        .N(DEPTH)
+      ) u_ex_sel (
+        .clk_i   (clk_i),
+        .rst_ni  (rst_ni),
+        .flush_i (flush_i),
+        .valid_i (ready_ex),
+        .ready_o (),            // eu_ready_i used instead
+        .valid_o (eu_valid_o),
+        .ready_i (1'b1),
+        .served_o(ex_idx)
+      );
 
-  // CDB access
-  prio_enc #(
-    .N(DEPTH)
-  ) cdb_sel (
-    .lines_i(ready_cdb),
-    .enc_o  (cdb_idx),
-    .valid_o()
-  );
+      // CDB access
+      rr_arbiter #(
+        .N(DEPTH)
+      ) u_cdb_sel (
+        .clk_i   (clk_i),
+        .rst_ni  (rst_ni),
+        .flush_i (flush_i),
+        .valid_i (ready_cdb),
+        .ready_o (),             // cdb_ready_i used instead
+        .valid_o (cdb_valid_o),
+        .ready_i (1'b1),
+        .served_o(cdb_idx)
+      );
+    end else begin : gen_prio_arbiters
+      // Execution
+      prio_enc #(
+        .N(DEPTH)
+      ) u_ex_sel (
+        .lines_i(ready_ex),
+        .enc_o  (ex_idx),
+        .valid_o()
+      );
+      assign eu_valid_o = curr_state[ex_idx] == ARITH_S_EX_REQ;
+
+      // CDB access
+      prio_enc #(
+        .N(DEPTH)
+      ) u_cdb_sel (
+        .lines_i(ready_cdb),
+        .enc_o  (cdb_idx),
+        .valid_o()
+      );
+      assign cdb_valid_o = curr_state[cdb_idx] == ARITH_S_COMPLETED;
+    end
+  endgenerate
 
   // ----------
   // ASSERTIONS

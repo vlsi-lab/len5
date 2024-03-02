@@ -12,9 +12,6 @@
 // Author: Michele Caon
 // Date: 17/10/2019
 
-`ifndef EXPIPE_PKG
-`define EXPIPE_PKG
-
 package expipe_pkg;
   // Import global constants
   import len5_config_pkg::*;
@@ -223,8 +220,8 @@ package expipe_pkg;
   typedef enum logic [$clog2(
 MAX_EU_N
 )-1:0] {
-    EU_LOAD_BUFFER,
     EU_STORE_BUFFER,
+    EU_LOAD_BUFFER,
     EU_BRANCH_UNIT,
     EU_INT_ALU,
     EU_INT_MULT,
@@ -326,5 +323,3 @@ MAX_EU_N
   } comm_csr_instr_t;
 
 endpackage
-
-`endif

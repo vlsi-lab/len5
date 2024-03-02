@@ -136,9 +136,9 @@ module store_buffer #(
   // INTERNAL SIGNALS
   // ----------------
   // Head, tail, and address calculation counters
-  logic [IdxW-1:0] head_idx, tail_idx, addr_idx, mem_idx;
-  logic head_cnt_en, tail_cnt_en, addr_cnt_en, mem_cnt_en;
-  logic head_cnt_clr, tail_cnt_clr, addr_cnt_clr, mem_cnt_clr;
+  logic [IdxW-1:0] head_idx, tail_idx, addr_idx, clear_idx, mem_idx;
+  logic head_cnt_en, tail_cnt_en, addr_cnt_en, clear_cnt_en, mem_cnt_en;
+  logic head_cnt_clr, tail_cnt_clr, addr_cnt_clr, clear_cnt_clr, mem_cnt_clr;
 
   // Latest store idx
   logic     [ IdxW-1:0] latest_idx;
@@ -158,23 +158,25 @@ module store_buffer #(
   // -----------------
 
   // Push, pop, save controls
-  assign push          = issue_valid_i & issue_ready_o;
-  assign pop           = cdb_valid_o & cdb_ready_i;
-  assign save_rs       = cdb_valid_i;
+  assign push = issue_valid_i & issue_ready_o;
+  assign pop = cdb_valid_o & cdb_ready_i;
+  assign save_rs = cdb_valid_i;
   assign addr_accepted = adder_valid_o & adder_ready_i;
-  assign save_addr     = adder_valid_i & adder_ready_o;
-  assign mem_accepted  = mem_valid_o & mem_ready_i;
-  assign mem_done      = mem_valid_i & mem_ready_o;
+  assign save_addr = adder_valid_i & adder_ready_o;
+  assign mem_accepted = mem_valid_o & mem_ready_i;
+  assign mem_done = mem_valid_i & mem_ready_o;
 
   // Counters control
-  assign head_cnt_clr  = flush_i;
-  assign tail_cnt_clr  = flush_i;
-  assign addr_cnt_clr  = flush_i;
-  assign mem_cnt_clr   = flush_i;
-  assign head_cnt_en   = pop;
-  assign tail_cnt_en   = push;
-  assign addr_cnt_en   = addr_accepted;
-  assign mem_cnt_en    = mem_accepted;
+  assign head_cnt_clr = flush_i;
+  assign tail_cnt_clr = flush_i;
+  assign addr_cnt_clr = flush_i;
+  assign clear_cnt_clr = flush_i;
+  assign mem_cnt_clr = flush_i;
+  assign head_cnt_en = pop;
+  assign tail_cnt_en = push;
+  assign addr_cnt_en = addr_accepted;
+  assign clear_cnt_en  = (save_addr | (curr_state[clear_idx] == STORE_S_WAIT_ROB)) & comm_mem_clear_i;
+  assign mem_cnt_en = mem_accepted;
 
   // Active entries
   generate
@@ -252,7 +254,7 @@ module store_buffer #(
           if (save_addr && adder_ans_i.tag == i[IdxW-1:0]) begin
             sb_op[i] = STORE_OP_SAVE_ADDR;
             if (adder_ans_i.except_raised) next_state[i] = STORE_S_COMPLETED;
-            else if (comm_mem_clear_i && mem_idx == i[IdxW-1:0]) next_state[i] = STORE_S_MEM_REQ;
+            else if (comm_mem_clear_i && clear_idx == i[IdxW-1:0]) next_state[i] = STORE_S_MEM_REQ;
             else next_state[i] = STORE_S_WAIT_ROB;
           end else if (addr_idx == i[IdxW-1:0] && addr_accepted) next_state[i] = STORE_S_ADDR_WAIT;
           else next_state[i] = STORE_S_ADDR_REQ;
@@ -261,12 +263,12 @@ module store_buffer #(
           if (save_addr && adder_ans_i.tag == i[IdxW-1:0]) begin
             sb_op[i] = STORE_OP_SAVE_ADDR;
             if (adder_ans_i.except_raised) next_state[i] = STORE_S_COMPLETED;
-            else if (comm_mem_clear_i && mem_idx == i[IdxW-1:0]) next_state[i] = STORE_S_MEM_REQ;
+            else if (comm_mem_clear_i && clear_idx == i[IdxW-1:0]) next_state[i] = STORE_S_MEM_REQ;
             else next_state[i] = STORE_S_WAIT_ROB;
           end else next_state[i] = STORE_S_ADDR_WAIT;
         end
         STORE_S_WAIT_ROB: begin
-          if (comm_mem_clear_i && mem_idx == i[IdxW-1:0]) next_state[i] = STORE_S_MEM_REQ;
+          if (comm_mem_clear_i && clear_idx == i[IdxW-1:0]) next_state[i] = STORE_S_MEM_REQ;
           else next_state[i] = STORE_S_WAIT_ROB;
         end
         STORE_S_MEM_REQ: begin  // wait for commit
@@ -382,7 +384,7 @@ module store_buffer #(
   endgenerate
 
   // Commit stage
-  assign comm_mem_idx_o           = data[mem_idx].dest_rob_idx;
+  assign comm_mem_idx_o           = data[clear_idx].dest_rob_idx;
 
   // CDB
   // NOTE: save memory address in result field for exception handling (mtval)
@@ -479,6 +481,18 @@ module store_buffer #(
     .clr_i  (addr_cnt_clr),
     .count_o(addr_idx),
     .tc_o   ()               // not needed
+  );
+
+  // Clear check counter
+  modn_counter #(
+    .N(DEPTH)
+  ) u_clear_counter (
+    .clk_i  (clk_i),
+    .rst_ni (rst_ni),
+    .en_i   (clear_cnt_en),
+    .clr_i  (clear_cnt_clr),
+    .count_o(clear_idx),
+    .tc_o   ()                // not needed
   );
 
   // Memory access counter pointing to the next store performing a memory

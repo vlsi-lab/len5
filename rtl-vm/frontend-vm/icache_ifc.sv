@@ -76,7 +76,6 @@ module icache_ifc (
     end
   end
 
-  /* verilator lint_off CASEINCOMPLETE */
   // State update
   always_comb begin
     // Defaults
@@ -166,5 +165,4 @@ module icache_ifc (
       end
     endcase
   end
-  /* verilator lint_on CASEINCOMPLETE */
 endmodule

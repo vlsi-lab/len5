@@ -14,7 +14,6 @@
 
 import len5_pkg::*;
 
-/* verilator lint_off BLKLOOPINIT */
 module btb #(
     parameter int unsigned BTB_BITS = 4
 ) (
@@ -86,4 +85,3 @@ module btb #(
   assign target_o = btb_q[addr_r].target;
 
 endmodule
-/* verilator lint_on BLKLOOPINIT */

@@ -12,8 +12,6 @@
 // Author: Marco Andorno
 // Date: 26/07/2019
 
-/* verilator lint_off BLKLOOPINIT */
-
 module gshare #(
   parameter int unsigned     HLEN     = 4,
   parameter fetch_pkg::c2b_t INIT_C2B = fetch_pkg::WNT
@@ -102,4 +100,3 @@ module gshare #(
   assign taken_o = pht_q[index_r][1];
 
 endmodule
-/* verilator lint_on BLKLOOPINIT */
