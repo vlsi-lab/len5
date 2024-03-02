@@ -123,7 +123,8 @@ module rob #(
                        cdb_data_i.rob_idx == clear_idx &
                        ~cdb_data_i.except_raised &
                        (cdb_data_i.except_code != E_MISPREDICTION); // check cdb is writing at clear_idx and 2),3)
-  assign mem_instr_clear = data_valid[clear_idx] & (~data[clear_idx].mem_crit | entry_clear | cdb_clear) & ((clear_idx != tail_idx) | ~rob_full);
+  assign mem_instr_clear = data_valid[clear_idx] & (~data[clear_idx].mem_crit | entry_clear | cdb_clear) &
+                           ((clear_idx != tail_idx) | ~rob_full | (commit_valid & comm_ready_i));
 
   // In-order commit slot
   // --------------------
@@ -156,7 +157,7 @@ module rob #(
                           data[work_idx].mem_clear &
                           ~instr_waw;
 
-  // Committing instruction selection
+  // Committing instruction selection (head has priority)
   assign commit_valid = comm_valid_in_order | comm_valid_ooo;
   assign commit_idx = comm_valid_in_order ? head_idx : work_idx; // Give higher priority to in-order commit
 

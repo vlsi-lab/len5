@@ -48,13 +48,12 @@ module fetch_stage #(
   input  logic                   bu_bpu_valid_i,
   input  logic                   bu_pcgen_valid_i,
   input  fetch_pkg::resolution_t bu_res_i,
+  input  logic                   bu_call_confirm_i,
+  input  logic                   bu_ret_confirm_i,
 
   // From commit unit
   input logic                      comm_except_raised_i,
-  input logic [len5_pkg::ALEN-1:0] comm_except_pc_i,
-
-  // From integer register file
-  input logic [len5_pkg::XLEN-1:0] rf_ra_value_i
+  input logic [len5_pkg::ALEN-1:0] comm_except_pc_i
 );
 
   import len5_pkg::ALEN;
@@ -126,7 +125,7 @@ module fetch_stage #(
     .bu_res_valid_i      (bu_pcgen_valid_i),
     .bu_res_i            (bu_res_i),
     .pred_target_i       (curr_pred.target),
-    .pred_taken_i        (curr_pred.taken),
+    .pred_taken_i        (curr_pred.hit & curr_pred.taken),
     .mem_ready_i         (memif_pcgen_ready),
     .valid_o             (pcgen_memif_valid),
     .bu_ready_o          (bu_pcgen_ready_o),
@@ -166,7 +165,7 @@ module fetch_stage #(
   );
 
   // JUMP early-decoder
-  jump_early_dec u_jump_early_dec (
+  early_jump_unit u_early_jump_unit (
     .clk_i              (clk_i),
     .rst_ni             (rst_ni),
     .flush_i            (flush_i),
@@ -174,7 +173,8 @@ module fetch_stage #(
     .instr_i            (fetched_instr),
     .issue_ready_i      (issue_ready_i),
     .early_jump_target_i(early_jump_target),
-    .rf_ra_value_i      (rf_ra_value_i),
+    .call_confirm_i     (bu_call_confirm_i),
+    .ret_confirm_i      (bu_ret_confirm_i),
     .mem_if_pred_i      (mem_if_pred),
     .issue_pred_o       (issue_pred_o),
     .early_jump_valid_o (early_jump_valid),

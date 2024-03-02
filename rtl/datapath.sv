@@ -82,9 +82,10 @@ module datapath #(
   logic                    be_fe_bpu_valid;
   logic                    be_fe_pcgen_valid;
   resolution_t             be_fe_res;
+  logic                    be_fe_call_confirm;
+  logic                    be_fe_ret_confirm;
   logic                    be_fe_except_raised;
   logic         [XLEN-1:0] be_fe_except_pc;
-  logic         [XLEN-1:0] be_fe_ra_value;
   logic                    fe_be_bu_pcgen_ready;
   logic                    early_jump_mem_flush;
 
@@ -121,9 +122,10 @@ module datapath #(
     .bu_bpu_valid_i        (be_fe_bpu_valid),
     .bu_pcgen_valid_i      (be_fe_pcgen_valid),
     .bu_res_i              (be_fe_res),
+    .bu_call_confirm_i     (be_fe_call_confirm),
+    .bu_ret_confirm_i      (be_fe_ret_confirm),
     .comm_except_raised_i  (be_fe_except_raised),
-    .comm_except_pc_i      (be_fe_except_pc),
-    .rf_ra_value_i         (be_fe_ra_value)
+    .comm_except_pc_i      (be_fe_except_pc)
   );
 
   // --------
@@ -145,9 +147,10 @@ module datapath #(
     .fetch_mis_flush_o    (be_fe_mis_flush),
     .fetch_except_flush_o (be_fe_except_flush),
     .fetch_res_o          (be_fe_res),
+    .fetch_call_confirm_o (be_fe_call_confirm),
+    .fetch_ret_confirm_o  (be_fe_ret_confirm),
     .fetch_except_raised_o(be_fe_except_raised),
     .fetch_except_pc_o    (be_fe_except_pc),
-    .fetch_ra_value_o     (be_fe_ra_value),
 
     .mem_load_valid_o        (data_load_req_o),
     .mem_load_ready_i        (data_load_gnt_i),

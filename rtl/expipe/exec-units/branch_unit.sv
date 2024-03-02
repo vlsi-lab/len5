@@ -24,6 +24,8 @@ module branch_unit #(
   output logic                   fe_bpu_valid_o,
   output logic                   fe_pcgen_valid_o,
   output fetch_pkg::resolution_t fe_res_o,
+  output logic                   fe_call_confirm_o,
+  output logic                   fe_ret_confirm_o,
 
   // Issue Stage
   input  logic                                         issue_valid_i,
@@ -94,7 +96,10 @@ module branch_unit #(
 
   // Resolution register
   logic        cu_res_reg_en;
-  resolution_t res_d;
+  logic        cu_confirm_en;
+  resolution_t res_q;
+  logic call_confirm_d, call_confirm_q;
+  logic ret_confirm_d, ret_confirm_q;
 
   // ------------
   // BRANCH LOGIC
@@ -112,16 +117,34 @@ module branch_unit #(
       BU_BGEU: res_taken = (rs_bu_rs1 >= rs_bu_rs2);
       BU_JAL:  res_taken = 1'b1;
       BU_JALR: res_taken = 1'b1;
+      BU_CALL: res_taken = 1'b1;
+      BU_RET:  res_taken = 1'b1;
       default: res_taken = 1'b0;
     endcase
   end
 
+  // Call execution confirmation
+  // ---------------------------
+  assign call_confirm_d = rs_bu_valid & (rs_bu_branch_type == BU_CALL);
+  assign ret_confirm_d  = rs_bu_valid & (rs_bu_branch_type == BU_RET);
+
   // Branch target computation
   // -------------------------
-  // NOTE: set the target LSB to zero as per JAL/JALR specs
-  assign adder_op         = (rs_bu_branch_type == BU_JALR) ? rs_bu_rs1 : rs_bu_curr_pc;
+  // Adder operand multiplexer
+  always_comb begin : adder_op_mux
+    unique case (rs_bu_branch_type)
+      BU_JALR, BU_RET: begin
+        // NOTE: set the target LSB to zero as per JAL/JALR specs
+        adder_op = rs_bu_rs1;
+        res_lsb  = 1'b0;
+      end
+      default: begin
+        adder_op = rs_bu_curr_pc;
+        res_lsb  = adder_out[0];
+      end
+    endcase
+  end
   assign adder_out        = rs_bu_imm + adder_op;
-  assign res_lsb          = (rs_bu_branch_type == BU_JALR) ? 1'b0 : adder_out[0];
   assign res_target       = {adder_out[XLEN-1:1], res_lsb};
 
   // Link address adder
@@ -168,13 +191,15 @@ module branch_unit #(
   // Resolution register
   // -------------------
   always_ff @(posedge clk_i or negedge rst_ni) begin : res_reg
-    if (!rst_ni) res_d <= '0;
-    else if (flush_i) res_d <= '0;
+    if (!rst_ni) res_q <= '0;
+    else if (flush_i) res_q <= '0;
     else if (cu_res_reg_en) begin
-      res_d.pc         <= rs_bu_curr_pc;
-      res_d.target     <= res_target;
-      res_d.taken      <= res_taken;
-      res_d.mispredict <= res_mispredicted;
+      res_q.pc         <= rs_bu_curr_pc;
+      res_q.target     <= res_target;
+      res_q.taken      <= res_taken;
+      res_q.mispredict <= res_mispredicted;
+      call_confirm_q   <= call_confirm_d;
+      ret_confirm_q    <= ret_confirm_d;
     end
   end
 
@@ -191,7 +216,8 @@ module branch_unit #(
     .fe_bpu_valid_o  (fe_bpu_valid_o),
     .fe_pcgen_valid_o(fe_pcgen_valid_o),
     .issue_mis_o     (issue_mis_o),
-    .bu_mis_reg_en_o (cu_res_reg_en)
+    .bu_mis_reg_en_o (cu_res_reg_en),
+    .bu_confirm_en_o (cu_confirm_en)
   );
 
   // -------------------------------
@@ -241,6 +267,7 @@ module branch_unit #(
   // -----------------
   // OUTPUT EVALUATION
   // -----------------
-  assign fe_res_o = res_d;
-
+  assign fe_res_o          = res_q;
+  assign fe_call_confirm_o = call_confirm_q & cu_confirm_en;
+  assign fe_ret_confirm_o  = ret_confirm_q & cu_confirm_en;
 endmodule

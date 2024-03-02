@@ -20,10 +20,8 @@ module issue_stage (
   // Fetch unit
   input  logic                                        fetch_valid_i,
   output logic                                        fetch_ready_o,
-  input  logic                   [len5_pkg::XLEN-1:0] fetch_curr_pc_i,
   input  logic                   [len5_pkg::ILEN-1:0] fetch_instr_i,
-  input  logic                   [len5_pkg::XLEN-1:0] fetch_pred_target_i,
-  input  logic                                        fetch_pred_taken_i,
+  input  fetch_pkg::prediction_t                      fetch_pred_i,
   input  logic                                        fetch_except_raised_i,
   input  len5_pkg::except_code_t                      fetch_except_code_i,
   output logic                                        fetch_mis_flush_o,
@@ -192,10 +190,10 @@ module issue_stage (
   // Assemble new queue entry with the data from the fetch unit
 
   assign iq_flush                = flush_i | cu_mis_flush;
-  assign new_instr.curr_pc       = fetch_curr_pc_i;
+  assign new_instr.curr_pc       = fetch_pred_i.pc;
   assign new_instr.instruction   = fetch_instr_i;
-  assign new_instr.pred_target   = fetch_pred_target_i;
-  assign new_instr.pred_taken    = fetch_pred_taken_i;
+  assign new_instr.pred_target   = fetch_pred_i.target;
+  assign new_instr.pred_taken    = fetch_pred_i.hit & fetch_pred_i.taken;
   assign new_instr.except_raised = fetch_except_raised_i;
   assign new_instr.except_code   = fetch_except_code_i;
 

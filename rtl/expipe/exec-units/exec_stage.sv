@@ -23,6 +23,8 @@ module exec_stage (
   output logic                   fe_bpu_valid_o,
   output logic                   fe_pcgen_valid_o,
   output fetch_pkg::resolution_t fe_res_o,
+  output logic                   fe_call_confirm_o,
+  output logic                   fe_ret_confirm_o,
 
   // ISSUE STAGE
   input logic [len5_config_pkg::MAX_EU_N-1:0] issue_valid_i,  // valid to each RS
@@ -156,6 +158,8 @@ module exec_stage (
     .fe_bpu_valid_o      (fe_bpu_valid_o),
     .fe_pcgen_valid_o    (fe_pcgen_valid_o),
     .fe_res_o            (fe_res_o),
+    .fe_call_confirm_o   (fe_call_confirm_o),
+    .fe_ret_confirm_o    (fe_ret_confirm_o),
     .issue_valid_i       (issue_valid_i[EU_BRANCH_UNIT]),
     .issue_ready_o       (issue_ready_o[EU_BRANCH_UNIT]),
     .issue_branch_type_i (issue_eu_ctl_i.bu),

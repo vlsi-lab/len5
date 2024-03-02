@@ -8,10 +8,12 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
+// File: early_jump_unit.sv
+// Author: Vincenzo Petrolo
+//         Michele Caon
+// Date: 28/02/2024
 
-/* verilator lint_off UNUSED */
-
-module jump_early_dec (
+module early_jump_unit (
   input logic clk_i,
   input logic rst_ni,
   input logic flush_i,
@@ -21,15 +23,17 @@ module jump_early_dec (
   input  logic                                        issue_ready_i,
   input  fetch_pkg::prediction_t                      mem_if_pred_i,
   input  logic                   [len5_pkg::XLEN-1:0] early_jump_target_i,
-  input  logic                   [len5_pkg::XLEN-1:0] rf_ra_value_i,
+  input  logic                                        call_confirm_i,
+  input  logic                                        ret_confirm_i,
   output fetch_pkg::prediction_t                      issue_pred_o,
   output logic                                        early_jump_valid_o,
   output logic                                        mem_flush_o,
-  output logic                   [len5_pkg::XLEN-1:0] early_jump_offs_o,
-  output logic                   [len5_pkg::XLEN-1:0] early_jump_base_o
+  output logic                   [len5_pkg::XLEN-1:0] early_jump_base_o,
+  output logic                   [len5_pkg::XLEN-1:0] early_jump_offs_o
 );
 
   import len5_pkg::*;
+  import len5_config_pkg::RAS_DEPTH;
   import instr_pkg::JAL;
   import instr_pkg::JALR;
 
@@ -41,6 +45,7 @@ module jump_early_dec (
   // JUMP type
   typedef enum logic [1:0] {
     JUMP_TYPE_JAL,
+    JUMP_TYPE_CALL,
     JUMP_TYPE_RET,
     JUMP_TYPE_NONE
   } jump_type_t;
@@ -53,31 +58,45 @@ module jump_early_dec (
     WAIT_ISSUE
   } fsm_state_t;
   fsm_state_t curr_state, next_state;
-  logic is_jump;  // For resource sharing, in case synopsys fails recognizing it
+  logic target_valid;  // For resource sharing, in case synopsys fails recognizing it
 
   // Target address
-  logic [ALEN-1:0] early_jump_base, early_jump_offs;
+  logic [ALEN-1:0] early_jump_base, early_jump_offs, ras_addr;
+
+  // Link address
+  logic [ALEN-1:0] link_addr;
+
+  // RAS control
+  logic ras_push, ras_pop;
+  logic ras_addr_valid;
 
   // --------------------
   // FINITE STATE MACHINE
   // --------------------
   // Jump instruction decoder
   always_comb begin : jump_dec
-    // TODO: replace with RAS once it is implemented
     if (instr_i.raw == RET) jump_type = JUMP_TYPE_RET;
+    else if (instr_i.j.opcode == JAL[OPCODE_LEN-1:0] && instr_i.j.rd == 5'b00001)
+      jump_type = JUMP_TYPE_CALL;
     else if (instr_i.j.opcode == JAL[OPCODE_LEN-1:0]) jump_type = JUMP_TYPE_JAL;
     else jump_type = JUMP_TYPE_NONE;
   end
 
   // jal instruction decoder
-  assign is_jump = jump_type != JUMP_TYPE_NONE;
+  always_comb begin : is_jump_dec
+    unique case (jump_type)
+      JUMP_TYPE_RET:  target_valid = ras_addr_valid;
+      JUMP_TYPE_NONE: target_valid = 1'b0;
+      default:        target_valid = ~mem_if_pred_i.hit;  // JUMP_TYPE_JAL, JUMP_TYPE_CALL
+    endcase
+  end
 
   // State transition logic
   always_comb begin : fsm_state_net
     unique case (curr_state)
       RESET:   next_state = IDLE;
       IDLE: begin
-        if (instr_valid_i && is_jump) begin
+        if (instr_valid_i && target_valid) begin
           if (!issue_ready_i) next_state = WAIT_ISSUE;
           else next_state = IDLE;
         end else next_state = IDLE;
@@ -98,8 +117,8 @@ module jump_early_dec (
 
     unique case (curr_state)
       IDLE: begin
-        early_jump_valid_o = is_jump & instr_valid_i;
-        mem_flush_o        = is_jump & instr_valid_i & issue_ready_i;
+        early_jump_valid_o = instr_valid_i & target_valid;
+        mem_flush_o        = instr_valid_i & target_valid & issue_ready_i;
       end
       WAIT_ISSUE: begin
         early_jump_valid_o = 1'b1;
@@ -116,6 +135,47 @@ module jump_early_dec (
     else curr_state <= next_state;
   end
 
+  // --------------------
+  // RETURN ADDRESS STACK
+  // --------------------
+  // RAS control
+  always_comb begin : ras_ctl
+    unique case (jump_type)
+      JUMP_TYPE_CALL: begin
+        ras_push = instr_valid_i & issue_ready_i;
+        ras_pop  = 1'b0;
+      end
+      JUMP_TYPE_RET: begin
+        ras_push = 1'b0;
+        ras_pop  = instr_valid_i & issue_ready_i;
+      end
+      default: begin
+        ras_push = 1'b0;
+        ras_pop  = 1'b0;
+      end
+    endcase
+  end
+
+  // Link address adder
+  // TODO: can we share another adder, like the one in the branch unit?
+  assign link_addr = mem_if_pred_i.pc + {32'b0, (ILEN >> 3)};
+
+  // RAS LIFO buffer
+  ras #(
+    .DEPTH(RAS_DEPTH)
+  ) u_ras (
+    .clk_i         (clk_i),
+    .rst_ni        (rst_ni),
+    .flush_i       (flush_i),
+    .push_i        (ras_push),
+    .pop_i         (ras_pop),
+    .call_confirm_i(call_confirm_i),
+    .ret_confirm_i (ret_confirm_i),
+    .ret_addr_i    (link_addr),
+    .valid_o       (ras_addr_valid),
+    .ret_addr_o    (ras_addr)
+  );
+
   // Output network
   // --------------
   // Target address multiplexer
@@ -123,7 +183,7 @@ module jump_early_dec (
     unique case (jump_type)
       JUMP_TYPE_RET: begin
         early_jump_base = '0;
-        early_jump_offs = rf_ra_value_i;
+        early_jump_offs = ras_addr;
       end
       default: begin
         early_jump_base = mem_if_pred_i.pc;
@@ -140,6 +200,7 @@ module jump_early_dec (
 
   // Prediction for the execution stage
   assign issue_pred_o.pc     = mem_if_pred_i.pc;
-  assign issue_pred_o.target = (is_jump) ? early_jump_target_i : mem_if_pred_i.target;
-  assign issue_pred_o.taken  = is_jump | mem_if_pred_i.taken;
+  assign issue_pred_o.hit    = target_valid | mem_if_pred_i.hit;
+  assign issue_pred_o.target = (target_valid) ? early_jump_target_i : mem_if_pred_i.target;
+  assign issue_pred_o.taken  = target_valid | mem_if_pred_i.taken;
 endmodule

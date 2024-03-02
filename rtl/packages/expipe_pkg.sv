@@ -60,7 +60,6 @@ package expipe_pkg;
 
   // MULT
   localparam int unsigned MULT_CTL_LEN = 3;  // integer multiplier operation control
-  localparam int unsigned MULT_PIPE_DEPTH = 1;
 
   // DIV
   localparam int unsigned DIV_CTL_LEN = 2;  // integer divider operation control
@@ -165,7 +164,9 @@ package expipe_pkg;
     BU_BLTU = 'h4,
     BU_BGEU = 'h5,
     BU_JAL  = 'h6,
-    BU_JALR = 'h7
+    BU_JALR = 'h7,
+    BU_CALL = 'h8,
+    BU_RET  = 'h9
   } branch_ctl_t;
 
   // Load-store unit control

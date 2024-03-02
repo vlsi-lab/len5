@@ -21,7 +21,6 @@ filesets:
     - common/modn_counter_load.sv
     - common/one_hot_shift_reg.sv
     - common/prio_2way_arbiter.sv
-    - common/prio_enc_inv.sv
     - common/prio_enc.sv
     - common/sign_extender.sv
     - common/spill_cell_cu.sv

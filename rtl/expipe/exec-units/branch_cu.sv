@@ -29,7 +29,8 @@ module branch_cu (
   output logic fe_bpu_valid_o,    // send the resolution to the BPU
   output logic fe_pcgen_valid_o,  // reset the program counter
   output logic issue_mis_o,       // notify issue about the mispred.
-  output logic bu_mis_reg_en_o
+  output logic bu_mis_reg_en_o,
+  output logic bu_confirm_en_o
 );
   // INTERNAL SIGNALS
   // ----------------
@@ -82,6 +83,8 @@ module branch_cu (
     fe_bpu_valid_o   = 1'b0;
     fe_pcgen_valid_o = 1'b0;
     bu_mis_reg_en_o  = 1'b0;
+    bu_confirm_en_o  = 1'b0;
+
     case (curr_state)
       IDLE: begin
         bu_mis_reg_en_o = 1'b1;
@@ -89,6 +92,7 @@ module branch_cu (
       UPD_FE: begin
         bu_mis_reg_en_o = 1'b1;
         fe_bpu_valid_o  = 1'b1;
+        bu_confirm_en_o = 1'b1;
       end
       MIS: begin
         issue_mis_o = 1'b1;

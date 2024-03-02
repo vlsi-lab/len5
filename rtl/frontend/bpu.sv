@@ -34,7 +34,7 @@ module bpu #(
   logic                   gshare_taken;
   logic [XLEN-OFFSET-1:0] btb_target;
 
-  // Module instantiations
+  // Gshare branch predictor
   gshare #(
     .HLEN    (HLEN),
     .INIT_C2B(INIT_C2B)
@@ -49,6 +49,8 @@ module bpu #(
     .taken_o    (gshare_taken)
   );
 
+  // Branch Target Buffer (BTB)
+  assign btb_del_entry = bu_res_i.mispredict & ~bu_res_i.taken;
   btb #(
     .BTB_BITS(BTB_BITS)
   ) u_btb (
@@ -64,9 +66,10 @@ module bpu #(
     .target_o    (btb_target)
   );
 
-  // Assignments
-  assign btb_del_entry = bu_res_i.mispredict & ~bu_res_i.taken;  // Why delete?
+  // Output network
+  // --------------
   assign pred_o.pc     = curr_pc_i;
-  assign pred_o.taken  = gshare_taken & btb_hit;
+  assign pred_o.hit    = btb_hit;
+  assign pred_o.taken  = gshare_taken;
   assign pred_o.target = {btb_target, 2'b00};
 endmodule

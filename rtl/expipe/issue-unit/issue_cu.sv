@@ -67,13 +67,10 @@ module issue_cu (
     S_STALL,         // wait for the resume signal from commit
     S_WFI            // wait for interrupt (TODO)
   } cu_state_t;
-  cu_state_t curr_state, v_next_state, e_next_state, next_state;
+  cu_state_t curr_state, v_next_state, next_state;
 
   // Execution/commit stage ready
   logic downstream_ready;
-
-  // Exceptional state request
-  logic except_state_req;
 
   // ------------
   // CONTROL UNIT
@@ -85,12 +82,13 @@ module issue_cu (
   // Downstream hardware ready
   assign downstream_ready = ex_ready_i & comm_ready_i;
 
-  // Next state on valid instruction
+  // Next state decoder
+  // NOTE: flush requests from the commit stage have priority
   always_comb begin : cu_v_next_state
-    if (iq_except_raised_i) begin
-      v_next_state = S_FETCH_EXCEPT;
-    end else if (ex_mis_i) begin
+    if (ex_mis_i) begin
       v_next_state = S_FLUSH;
+    end else if (iq_except_raised_i) begin
+      v_next_state = S_FETCH_EXCEPT;
     end else begin
       case (issue_type_i)
         ISSUE_TYPE_NONE:   v_next_state = S_ISSUE_NONE;
@@ -107,18 +105,6 @@ module issue_cu (
         default:           v_next_state = S_RESET;
       endcase
     end
-  end
-
-  // Next state on special cases
-  // Exceptional states are handled with priority to the oldest event:
-  // 1) Flush from the commit stage (e.g., on exception)
-  // 2) Branch/jump misprediction from the execution stage
-  // 3) Exception during instruction fetch
-  assign except_state_req = flush_i | ex_mis_i | iq_except_raised_i;
-  always_comb begin : cu_e_next_state
-    if (flush_i) e_next_state = S_IDLE;
-    else if (ex_mis_i) e_next_state = S_FLUSH;
-    else e_next_state = S_FETCH_EXCEPT;
   end
 
   // State progression
@@ -279,7 +265,8 @@ module issue_cu (
   // State update
   always_ff @(posedge clk_i or negedge rst_ni) begin : cu_state_upd
     if (!rst_ni) curr_state <= S_RESET;
-    else if (except_state_req) curr_state <= e_next_state;
+    else if (flush_i) curr_state <= S_IDLE;
+    else if (ex_mis_i) curr_state <= S_FLUSH;
     else curr_state <= next_state;
   end
 

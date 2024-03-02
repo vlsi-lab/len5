@@ -56,6 +56,9 @@ package len5_config_pkg;
 
   // FETCH STAGE
   // -----------
+  // Return Address Stack (RAS) depth
+  localparam int unsigned RAS_DEPTH = 8;
+
   // Fetch memory interface
   // NOTE: if the memory is 0-latency, at least one of the fetch unit registers
   // must be enabled (i.e., not skipped). Therefore, at least one of the
@@ -113,8 +116,9 @@ package len5_config_pkg;
   // Enable M extension support
   // --------------------------
   localparam bit LEN5_M_EN = 1'b1;
-  localparam bit LEN5_MULT_SERIAL = 1'b0;
-  localparam bit LEN5_DIV_EN = 1'b1;  // TODO: div available
+  localparam bit LEN5_MULT_SERIAL = 1'b1;
+  localparam int unsigned MULT_PIPE_DEPTH = 1;  // only used if 'LEN5_MULT_SERIAL' is 0
+  localparam bit LEN5_DIV_EN = 1'b1;
 
   // Enable floating-point support
   // -----------------------------

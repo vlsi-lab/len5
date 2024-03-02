@@ -42,7 +42,7 @@ module int_regstat #(
   // ----------------
   logic     busy_rob_idx_upd;
   rob_idx_t busy_rob_idx     [1:REG_NUM-1];  // newest ROB entry that is going to write rd
-  logic busy_cnt_en[1:REG_NUM-1], busy_cnt_up[1:REG_NUM-1];
+  logic busy_cnt_en[1:REG_NUM-1], busy_cnt_dn[1:REG_NUM-1];
   logic busy_cnt_clr;
   logic [REGSTAT_CNT_W-1:0] busy_cnt[1:REG_NUM-1];  // number of in-flight instructions writing rd
   logic skip_cnt_upd;
@@ -57,13 +57,13 @@ module int_regstat #(
   always_comb begin : busy_cnt_control
     foreach (busy_cnt[i]) begin
       busy_cnt_en[i] = 1'b0;
-      busy_cnt_up[i] = 1'b0;
+      busy_cnt_dn[i] = 1'b1;
     end
 
     if (!skip_cnt_upd) begin
       if (issue_valid_i) begin
         busy_cnt_en[issue_rd_idx_i] = 1'b1;
-        busy_cnt_up[issue_rd_idx_i] = issue_valid_i;
+        busy_cnt_dn[issue_rd_idx_i] = ~issue_valid_i;
       end
       if (comm_valid_i) begin
         busy_cnt_en[comm_rd_idx_i] = comm_valid_i;
@@ -95,13 +95,15 @@ module int_regstat #(
       updown_counter #(
         .WIDTH(REGSTAT_CNT_W)
       ) u_rob_cnt (
-        .clk_i  (clk_i),
-        .rst_ni (rst_ni),
-        .en_i   (busy_cnt_en[i]),
-        .clr_i  (busy_cnt_clr),
-        .up_dn_i(busy_cnt_up[i]),
-        .count_o(busy_cnt[i]),
-        .tc_o   ()                 // not needed
+        .clk_i   (clk_i),
+        .rst_ni  (rst_ni),
+        .en_i    (busy_cnt_en[i]),
+        .clr_i   (busy_cnt_clr),
+        .dn_i    (busy_cnt_dn[i]),
+        .ld_i    (1'b0),            // not used
+        .ld_val_i('0),              // not used
+        .count_o (busy_cnt[i]),
+        .tc_o    ()                 // not needed
       );
     end
   endgenerate

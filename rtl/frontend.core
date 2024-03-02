@@ -18,7 +18,7 @@ filesets:
     - frontend/btb.sv
     - frontend/gshare.sv
     - frontend/ras.sv
-    - frontend/jump_early_dec.sv
+    - frontend/early_jump_unit.sv
    file_type: systemVerilogSource
 
  verilator-waivers:

@@ -15,24 +15,38 @@
 // NOTE: Synopsys should be able to synthesize a performance-optimised priority encoder from simple behavioural code
 
 module prio_enc #(
-  parameter int unsigned N = 8
+  parameter int unsigned N = 8,
+  parameter bit INV = 1'b0  // 0: MSB has the highest priority, 1: LSB has the highest priority
 ) (
-  input  logic                 lines_i[N],
+  input  logic [        N-1:0] lines_i,
   output logic [$clog2(N)-1:0] enc_o,
   output logic                 valid_o
 );
   generate
     // If there's only one input, the index is always 0
-    if (N == 1) begin : gen_prio_enc_gen
+    if (N == 1) begin : gen_no_prio_enc
       assign valid_o = lines_i[0];
       assign enc_o   = 0;
-    end else begin : gen_prio_enc_gen
+    end else if (INV) begin : gen_prio_enc_inv
       // The priority decreases with the input index: lines_i[0] has the highest priority and lines_i[N] the lowest
       always_comb begin : prio_enc_logic
         enc_o   = 0;
         valid_o = 1'b0;
 
-        for (int i = N - 1; i >= 0; i = i - 1) begin
+        for (int i = N - 1; i >= 0; i--) begin
+          if (lines_i[i]) begin
+            enc_o   = i[$clog2(N)-1:0];
+            valid_o = 1'b1;
+          end
+        end
+      end
+    end else begin : gen_prio_enc
+      // The priority increases with the input index: lines_i[N-1] has the highest priority and lines_i[0] the lowest
+      always_comb begin : prio_enc_logic
+        enc_o   = 0;
+        valid_o = 1'b0;
+
+        for (int i = 0; i < N; i++) begin
           if (lines_i[i]) begin
             enc_o   = i[$clog2(N)-1:0];
             valid_o = 1'b1;
