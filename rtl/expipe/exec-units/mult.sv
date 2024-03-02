@@ -170,7 +170,7 @@ module mult #(
 
   // Generate PIPE_DEPTH-1 pipeline registers
   generate
-    for (genvar i = 1; i < PIPE_DEPTH; i = i + 1) begin : gen_mult_pipe_reg
+    for (genvar i = 1; i <= PIPE_DEPTH; i = i + 1) begin : gen_mult_pipe_reg
       always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
           pipe_result_d[i]        <= '0;
