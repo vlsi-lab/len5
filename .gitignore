@@ -68,3 +68,7 @@ scripts/*.log
 reports
 results.txt
 build*
+*.png
+*.jpg
+*.pdf
+*.csv

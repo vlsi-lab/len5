@@ -23,6 +23,12 @@ This runs HDL code linting and formatting, builds the test projects from `sw/app
    ```
    Each benchmark suite, contains several tests. The available suites are:
       - [embench](https://www.embench.org/)
+   
+   To generate charts, run:
+   ```bash
+   make charts
+   ```
+   The output charts will be stored in the configured build directory.
 
 
 3. Run the RTL simulation using Verilator
