@@ -143,7 +143,7 @@ module load_buffer #(
 
   // Byte selector/sign extender
   logic [$clog2(XLEN>>3)-1:0] byte_offs;
-  logic [           XLEN-1:0] read_data;
+  logic [           XLEN-1:0] cdb_data;
 
   // -----------------
   // FIFO CONTROL UNIT
@@ -338,7 +338,7 @@ module load_buffer #(
             data[i].except_code    <= adder_ans_i.except_code;
           end
           LOAD_OP_SAVE_MEM: begin  // save loaded value
-            data[i].value <= read_data;
+            data[i].value <= mem_rdata_i;
           end
           LOAD_OP_SAVE_CACHED: begin  // save cached store value
             data[i].value <= l0_value_i;
@@ -386,7 +386,7 @@ module load_buffer #(
   // CDB
   assign cdb_valid_o              = curr_state[head_idx] == LOAD_S_COMPLETED;
   assign cdb_data_o.rob_idx       = data[head_idx].dest_rob_idx;
-  assign cdb_data_o.res_value     = data[head_idx].value;
+  assign cdb_data_o.res_value     = cdb_data;  // from sign extender/byte selector
   assign cdb_data_o.except_raised = data[head_idx].except_raised;
   assign cdb_data_o.except_code   = data[head_idx].except_code;
 
@@ -439,19 +439,19 @@ module load_buffer #(
   //       requested data from the fetched doubleword.
   generate
     if (ONLY_DOUBLEWORD_MEM_ACCESSES != 0) begin : gen_byte_selector
-      assign byte_offs = data[mem_tag_i].imm_addr_value[2:0];
+      assign byte_offs = data[head_idx].imm_addr_value[2:0];
       byte_selector u_byte_selector (
-        .type_i  (data[mem_tag_i].load_type),
+        .type_i  (data[head_idx].load_type),
         .byte_off(byte_offs),
-        .data_i  (mem_rdata_i),
-        .data_o  (read_data)
+        .data_i  (data[head_idx].value),
+        .data_o  (cdb_data)
       );
     end else begin : gen_sign_extender
       assign byte_offs = '0;
       sign_extender u_sign_extender (
-        .type_i(data[mem_tag_i[IdxW-1:0]].load_type),
-        .data_i(mem_rdata_i),
-        .data_o(read_data)
+        .type_i(data[head_idx].load_type),
+        .data_i(data[head_idx].value),
+        .data_o(cdb_data)
       );
     end
   endgenerate
