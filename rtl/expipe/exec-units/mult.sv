@@ -14,7 +14,7 @@
 
 module mult #(
   parameter int unsigned PIPE_DEPTH = 4,  // number of pipeline levels (>0)
-  parameter bit SKIP_IN_REG = 1'b1,  // slip input register
+  parameter bit SKIP_IN_REG = 1'b0,  // skip input register
   parameter bit SKIP_OUT_REG = 1'b1,  // skip output spillcell
   // EU-specific parameters
   parameter int unsigned EU_CTL_LEN = 4
@@ -51,10 +51,10 @@ module mult #(
   logic     [(XLEN<<1)-1:0] result_full;
   logic                     except_raised;
   // Pipeline registers
-  logic     [     XLEN-1:0] pipe_result_d                        [PIPE_DEPTH];
-  rob_idx_t                 pipe_rob_idx_d                       [PIPE_DEPTH];
-  logic                     pipe_except_raised_d                 [PIPE_DEPTH];
-  logic                     pipe_valid_d                         [PIPE_DEPTH];
+  logic     [     XLEN-1:0] pipe_result_d                        [PIPE_DEPTH:0];
+  rob_idx_t                 pipe_rob_idx_d                       [PIPE_DEPTH:0];
+  logic                     pipe_except_raised_d                 [PIPE_DEPTH:0];
+  logic                     pipe_valid_d                         [PIPE_DEPTH:0];
   // Ready signal from the spill cell
   logic                     ready_spill;
 
@@ -197,7 +197,7 @@ module mult #(
   // Generate PIPE_DEPTH-1 pipeline registers
   // Propagate the valid signal to be synchronized with the result
   generate
-    for (genvar i = 1; i < PIPE_DEPTH; i = i + 1) begin : gen_mult_hs_pipe_reg
+    for (genvar i = 1; i <= PIPE_DEPTH; i = i + 1) begin : gen_mult_hs_pipe_reg
       always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
           pipe_valid_d[i] <= '0;
