@@ -66,7 +66,7 @@ module ras #(
         ras_addr[last_idx] <= ret_addr_i;
       end else if (push_i && ras_full) begin
         // Start over
-        for (int unsigned i = 0; i < DEPTH-1; i++) begin
+        for (int unsigned i = 0; i < DEPTH - 1; i++) begin
           ras_addr[i] <= ras_addr[i+1];
         end
         ras_addr[DEPTH-1] <= ret_addr_i;

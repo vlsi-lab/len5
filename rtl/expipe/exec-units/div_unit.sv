@@ -93,7 +93,8 @@ module div_unit #(
   );
 
   div #(  // TODO: call div
-    .EU_CTL_LEN(EU_CTL_LEN)
+    .EU_CTL_LEN (EU_CTL_LEN),
+    .SKIP_IN_REG(1'b0)
   ) u_div (
     .clk_i          (clk_i),
     .rst_ni         (rst_ni),

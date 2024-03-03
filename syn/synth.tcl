@@ -32,8 +32,20 @@ set_clock_gating_style -minimum_bitwidth 3 -positive_edge_logic integrated:CKLNQ
 # Check the design
 check_design > ${REPORT_DIR}/check_design.rpt
 
+# Perform retiming
+#set_optimize_registers true -clock CLK ;#-design ${TOP_MODULE}
 # Compile design
 compile_ultra -no_autoungroup -no_boundary_optimization -timing -gate_clock
+#compile_ultra -timing -gate_clock
+#compile_ultra -retime -timing -gate_clock
+
+
+## timing report before retiming
+report_timing -nosplit -max_paths 10 > ${REPORT_DIR}/timing_no_retiming.rpt
+## area report before retiming
+report_area -hier -nosplit > ${REPORT_DIR}/area_no_retiming.rpt
+## Perform retiming and incremental compile
+optimize_registers -minimum_period_only -print_critical_loop -clock CLK
 
 # Store compiled netlist + constraints
 write -f ddc -hierarchy -output ${REPORT_DIR}/compiled.ddc

@@ -189,7 +189,7 @@ WIDTH
         if (div_res_zero_q | op_b_zero_q | op_b_neg_one_q) begin
           out_vld_o = 1'b1;
           if (out_rdy_i) begin
-            if (in_vld_i) begin
+            if (in_vld_i) begin  // move directly to DIVIDE state if a new operation comes
               // CVA6: there is a cycle delay until the valid signal is asserted by the id stage
               // Ara:  we need a stable handshake
               in_rdy_o = (STABLE_HANDSHAKE) ? 1'b1 : 1'b0;
@@ -207,7 +207,7 @@ WIDTH
         out_vld_o = 1'b1;
 
         if (out_rdy_i) begin
-          if (in_vld_i) begin
+          if (in_vld_i) begin   // move directly to DIVIDE state if a new operation comes, do not go through idle
             // CVA6: there is a cycle delay until the valid signal is asserted by the id stage
             // Ara:  we need a stable handshake
             in_rdy_o = (STABLE_HANDSHAKE) ? 1'b1 : 1'b0;
