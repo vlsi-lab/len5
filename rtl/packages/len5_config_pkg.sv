@@ -64,20 +64,20 @@ package len5_config_pkg;
   // must be enabled (i.e., not skipped). Therefore, at least one of the
   // following switches must be commented in this case.
   localparam bit FETCH_REQ_SPILL_SKIP = 1'b1; // memory requests from the fetch unit are directly passed to the memory
-  localparam bit FETCH_ANS_SPILL_SKIP = 1'b1; // fetched instructions are directly passed to the issue stage
+  localparam bit FETCH_ANS_SPILL_SKIP = 1'b0; // fetched instructions are directly passed to the issue stage
 
   // EXECUTION PIPELINE
   // ------------------
   // ISSUE QUEUE
-  localparam int unsigned IQ_DEPTH = 2;  // number of entries in the issue queue (power of 2)
+  localparam int unsigned IQ_DEPTH = 4;  // number of entries in the issue queue (power of 2)
 
   // LOAD/STORE UNIT
-  localparam int unsigned LDBUFF_DEPTH = 4;  // number of entries in the load buffer
-  localparam int unsigned STBUFF_DEPTH = 8;  // number of entries in the store buffer
+  localparam int unsigned LDBUFF_DEPTH = 8;  // number of entries in the load buffer
+  localparam int unsigned STBUFF_DEPTH = 16;  // number of entries in the store buffer
   localparam bit LSU_SPILL_SKIP = 1'b1;  // make address adder fully combinational
 
   // ALU UNIT
-  localparam int unsigned ALU_RS_DEPTH = 4;
+  localparam int unsigned ALU_RS_DEPTH = 8;
   localparam bit ALU_SPILL_SKIP = 1'b1;  // make the ALU fully combinational
   localparam bit ALU_RR_ARBITER = 1'b1;  // round-robin arbiter for the reservation station
 
@@ -96,7 +96,7 @@ package len5_config_pkg;
   localparam bit BU_SPILL_SKIP = 1'b1;  // make the target address adder fully combinational
 
   // COMMIT STAGE
-  localparam int unsigned ROB_DEPTH  /* verilator public */ = 16;  // Number of entries in the ROB
+  localparam int unsigned ROB_DEPTH  /* verilator public */ = 32;  // Number of entries in the ROB
   localparam bit COMMIT_SPILL_SKIP = 1'b1;  // directly connect the commit CU to the ROB output
 
   // -----------------
@@ -137,11 +137,8 @@ package len5_config_pkg;
   // load buffer, store buffer, branch unit, ALU, MULT, DIV
   localparam int unsigned MAX_EU_N = 6;
 
-  // Reservation stations
-  // --------------------
-  // If defined, the arbiters of the shared virtual address adder, the DTLB and the DCACHE will give the highest priority to the store buffer in case of conflict. This might slightly increase the forwarding hit ration from the store buffer to the load buffer, while decreasing the latency of loads execution.
-  localparam bit ENABLE_STORE_PRIO_2WAY_ARBITER = 1'b1;
-
+  // Memory
+  // ------
   // If defined, instantiate a byte selector in the load buffer. All memory
   // accesses are aligned on 64 bits, and the selector picks the correct
   // word/halfword/byte from it the fetched doubleword.

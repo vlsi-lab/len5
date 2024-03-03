@@ -51,10 +51,10 @@ module mult #(
   logic     [(XLEN<<1)-1:0] result_full;
   logic                     except_raised;
   // Pipeline registers
-  logic     [     XLEN-1:0] pipe_result_d                        [PIPE_DEPTH:0];
-  rob_idx_t                 pipe_rob_idx_d                       [PIPE_DEPTH:0];
-  logic                     pipe_except_raised_d                 [PIPE_DEPTH:0];
-  logic                     pipe_valid_d                         [PIPE_DEPTH:0];
+  logic     [     XLEN-1:0] pipe_result_d                        [PIPE_DEPTH+1];
+  rob_idx_t                 pipe_rob_idx_d                       [PIPE_DEPTH+1];
+  logic                     pipe_except_raised_d                 [PIPE_DEPTH+1];
+  logic                     pipe_valid_d                         [PIPE_DEPTH+1];
   // Ready signal from the spill cell
   logic                     ready_spill;
 

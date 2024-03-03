@@ -45,7 +45,7 @@ module tb_bare #(
   // the number of its pipeline stages, plus the two internal registers of
   // the output spill cell, if implemented. The fetch stage must buffer the
   // same number of requests.
-  localparam bit MemEmuSkipInstrOutReg = 1'b0;
+  localparam bit MemEmuSkipInstrOutReg = 1'b1;
   localparam int unsigned FetchMemIfFifoDepth = MemPipeNum + ((MemEmuSkipInstrOutReg) ? 0 : 2);
 
   // INTERNAL SIGNALS
