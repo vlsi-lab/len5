@@ -5,7 +5,7 @@ import len5_pkg::*;
 module Front_end_tb;
 
     logic clk_i;
-	logic rst_n_i;
+	logic rst_ni;
 	logic flush_i;
 
     logic [XLEN-1:0]  addr_o;
@@ -34,7 +34,7 @@ always #5 clk_i = ~clk_i;
 initial begin
     //$monitor("Time = %0t -- instruction = 0x%8x, fetch ready = %0b", $time, instruction_i, fetch_ready_o);
     clk_i = 1;
-    rst_n_i = 1;
+    rst_ni = 1;
     flush_i = 0;
     except_i = 0;
     except_pc_i = 'h0;
@@ -52,8 +52,8 @@ initial begin
 
 
         // reset
-    #2 rst_n_i = 0;
-    #10 rst_n_i = 1;
+    #2 rst_ni = 0;
+    #10 rst_ni = 1;
 
     #10 issue_ready_i = 1;
     #20 issue_ready_i = 0;
@@ -67,7 +67,7 @@ initial begin
     #10 flush_i = 0;
     #10 except_pc_i = 'h0000000000000002;
 
-    #600 $finish;
+    #600 $finish();
 end
 
 // ---
@@ -77,7 +77,7 @@ end
 front_end #(.HLEN(4),.BTB_BITS(4)) u_Front_end
 (
   	.clk_i    (clk_i),
-    .rst_n_i  (rst_n_i),
+    .rst_ni  (rst_ni),
     .flush_i  (flush_i),
 
   // From/to i-cache
@@ -99,7 +99,7 @@ front_end #(.HLEN(4),.BTB_BITS(4)) u_Front_end
 
   // For pc_gen from or to back end
   .except_i			(except_i),
-  .except_pc_i		(except_pc_i)   
+  .except_pc_i		(except_pc_i)
 );
-    
+
 endmodule

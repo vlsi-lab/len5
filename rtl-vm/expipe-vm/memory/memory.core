@@ -1,0 +1,128 @@
+CAPI=2:
+# Copyright 2024 POLITO
+# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+name: "polito:len5:memory:0.1.0"
+description: "LEN5 memory components"
+
+filesets:
+ dcache_rtl:
+   depend:
+    - polito:len5:packages
+   files:
+    - dcache/d0/d0_arbiter.sv
+    - dcache/d0/d0_cache_ctrl.sv
+    - dcache/d0/d0_data_sel_block.sv
+    - dcache/d0/d0_req_encoder.sv
+    - dcache/d0/d0_scheduler.sv
+    - dcache/d0/dcache_L1_d0.sv
+    - dcache/d1/d1_comp_block.sv
+    - dcache/d1/d1_ctrl.sv
+    - dcache/d1/d1_d0_data_sel.sv
+    - dcache/d1/d1_dirty_vec_one_hotter.sv
+    - dcache/d1/d1_L2_req_arbiter.sv
+    - dcache/d1/d1_L2_req_data_sel.sv
+    - dcache/d1/d1_replacement_block.sv
+    - dcache/d1/d1_stall_replay_cu.sv
+    - dcache/d1/d1_wbb_mshr_ctrl_L2_side.sv
+    - dcache/d1/d1_wbb_tag_gen.sv
+    - dcache/d1/dcache_L1_d1.sv
+    - dcache/d1/dcache_mshr.sv
+    - dcache/d1/dcache_wb_victim_buffer.sv
+    - dcache/d1/decoder.sv
+    - dcache/d1/mux.sv
+    - dcache/d1/one_hot_encoder.sv
+    - dcache/dcache_L1_full.sv
+    - dcache/dcache_L1_system_with_ssram.sv
+    - dcache/dcache_L1_system.sv
+    - dcache/dcache_rst_block.sv
+    - dcache/updateL2_block.sv
+   file_type : systemVerilogSource
+
+ dtlb_rtl:
+   depend:
+    - polito:len5:packages
+   files:
+    - dtlb/dtlb_L1.sv
+    - dtlb/dtlb_replacement_block.sv
+   file_type: systemVerilogSource
+
+ icache_rtl:
+   depend:
+    - polito:len5:packages
+   files:
+    - icache/icache_comparison_block.sv
+    - icache/icache_ctrl_en.sv
+    - icache/icache_data_sel.sv
+    - icache/icache_flush_cnt.sv
+    - icache/icache_L1_with_ssram.sv
+    - icache/icache_L1.sv
+    - icache/icache_mem_ctrl.sv
+    - icache/icache_moore_cu.sv
+    - icache/icache_replacement_block.sv
+   file_type: systemVerilogSource
+
+ itlb_rtl:
+   depend:
+    - polito:len5:packages
+   files:
+    - itlb/itlb_ctrl.sv
+    - itlb/itlb_L1.sv
+    - itlb/itlb_moore_cu.sv
+    - itlb/itlb_replacement_block.sv
+    - l1_tlb_arbiter/tlb_arbiter.sv
+   file_type: systemVerilogSource
+
+ l2_tlb_rtl:
+   depend:
+    - polito:len5:packages
+   files:
+    - l2_tlb/l2_tlb_flush_unit.sv
+    - l2_tlb/l2_tlb_mshr.sv
+    - l2_tlb/l2_tlb_replacement_unit.sv
+    - l2_tlb/l2_tlb_t0.sv
+    - l2_tlb/l2_tlb_t1.sv
+    - l2_tlb/l2_tlb_with_ssram.sv
+    - l2_tlb/l2_tlb.sv
+    - l2c_arbiter/l2c_arbiter.sv
+   file_type: systemVerilogSource
+
+ pwm_tpc_rtl:
+   depend:
+    - polito:len5:packages
+   files:
+    - ptw_tpc/mmu_cache.sv
+    - ptw_tpc/mmuc_update_ctrl.sv
+    - ptw_tpc/pte_checker.sv
+    - ptw_tpc/ptw_cu.sv
+    - ptw_tpc/ptw_MMU.sv
+    - ptw_tpc/ptw.sv
+    - ptw_tpc/tpc_comp_block.sv
+    - ptw_tpc/tpc_regfile.sv
+   file_type: systemVerilogSource
+
+ mem_system_rtl:
+   depend:
+    - polito:len5:packages
+   files:
+    - memory_system.sv
+   file_type: systemVerilogSource
+
+ mem_system_sram_rtl:
+   depend:
+    - polito:len5:packages
+   files:
+    - memory_system_with_ssram.sv
+   file_type: systemVerilogSource
+
+targets:
+    default:
+        filesets:
+        - dcache_rtl
+        - icache_rtl
+        - itlb_rtl
+        - l2_tlb_rtl
+        - pwm_tpc_rtl
+        - mem_system_rtl
+        - mem_system_sram_rtl

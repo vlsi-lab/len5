@@ -1,0 +1,31 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{
+  // Name of the vendored-in project
+  name: "embench",
+
+  // Target directory: typically equal to the name
+  // All imported code is copied into this directory
+  target_dir: "embench/src",
+
+  // Git upstream source code repository
+  upstream: {
+    // Upstream Git repository URL. HTTPS URLs are preferred.
+    url: "https://github.com/embench/embench-iot",
+    // Upstream revision or branch. Can be a commit hash or a branch name.
+    rev: "embench-1.0",
+  },
+
+  // Optional: Pick specific files or subdirectories from upstream and
+  // specify where to put them.
+  mapping: [
+    {from: 'src', to: '.', patch_dir:"src_patch"},
+  ],
+
+  patch_dir: "patches",
+
+  exclude_from_upstream: [
+    "src/huffbench/.gitignore", # they have a .gitignore here, not necessary
+  ]
+}

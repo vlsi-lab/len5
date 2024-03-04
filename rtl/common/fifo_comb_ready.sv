@@ -1,0 +1,184 @@
+// Copyright 2022 Politecnico di Torino.
+// Copyright and related rights are licensed under the Solderpad Hardware
+// License, Version 2.0 (the "License"); you may not use this file except in
+// compliance with the License. You may obtain a copy of the License at
+// http://solderpad.org/licenses/SHL-2.0. Unless required by applicable law
+// or agreed to in writing, software, hardware and materials distributed under
+// this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations under the License.
+//
+// File: fifo_comb_ready.sv
+// Author: Michele Caon
+// Date: 12/07/2022
+
+/**
+ * @brief FIFO queue with combinational output ready
+ *
+ * @details FIFO queue handled with head and tail counters. The output ready
+ *          signal depends on the input ready signal, therefore possibly
+ *          increasing the critical path. Use with caution.
+ */
+
+module fifo_comb_ready #(
+  parameter type DATA_T = logic [8:0],
+  parameter int  DEPTH  = 4
+) (
+  /* Clock and reset */
+  input logic clk_i,
+  input logic rst_ni,
+  input logic flush_i,
+
+  /* Handshaking */
+  input  logic valid_i,  // from upstream hardware
+  input  logic ready_i,  // from downstream hardware
+  output logic valid_o,  // to downstream hardware
+  output logic ready_o,  // to upstream hardware
+
+  /* Data */
+  input  DATA_T data_i,
+  output DATA_T data_o
+);
+
+  // INTERNAL SIGNALS
+  // ----------------
+
+  // Head and tail counters
+  logic [$clog2(DEPTH)-1:0] head_cnt, tail_cnt;
+  logic head_cnt_en, tail_cnt_en;
+  logic head_cnt_clr, tail_cnt_clr;
+
+  // FIFO data
+  DATA_T data      [DEPTH];
+  logic  data_valid[DEPTH];
+
+  // FIFO control
+  logic fifo_push, fifo_pop;
+
+  // ----------------------
+  // HEAD AND TAIL COUNTERS
+  // ----------------------
+
+  modn_counter #(
+    .N(DEPTH)
+  ) u_head_counter (
+    .clk_i  (clk_i),
+    .rst_ni (rst_ni),
+    .en_i   (head_cnt_en),
+    .clr_i  (head_cnt_clr),
+    .count_o(head_cnt),
+    .tc_o   ()               // not needed
+  );
+
+  modn_counter #(
+    .N(DEPTH)
+  ) u_tail_counter (
+    .clk_i  (clk_i),
+    .rst_ni (rst_ni),
+    .en_i   (tail_cnt_en),
+    .clr_i  (tail_cnt_clr),
+    .count_o(tail_cnt),
+    .tc_o   ()               // not needed
+  );
+
+  // -----------------
+  // FIFO CONTROL UNIT
+  // -----------------
+
+  // Push/pop control
+  assign fifo_push    = valid_i && ready_o;
+  assign fifo_pop     = valid_o && ready_i;
+
+  // Counters control
+  assign head_cnt_clr = flush_i;
+  assign tail_cnt_clr = flush_i;
+  assign head_cnt_en  = fifo_pop;
+  assign tail_cnt_en  = fifo_push;
+
+  // -----------
+  // FIFO UPDATE
+  // -----------
+  always_ff @(posedge clk_i or negedge rst_ni) begin : fifo_update
+    if (!rst_ni) begin
+      foreach (data[i]) begin
+        data_valid[i] <= 1'b0;
+        data[i]       <= '0;
+      end
+    end else if (flush_i) begin
+      foreach (data[i]) begin
+        data_valid[i] <= 1'b0;  // clearing valid is enough
+      end
+    end else begin
+      if (fifo_push) begin
+        data[tail_cnt]       <= data_i;
+        data_valid[tail_cnt] <= 1'b1;
+      end
+      if (fifo_pop && (head_cnt != tail_cnt)) begin
+        data_valid[head_cnt] <= 1'b0;
+      end
+    end
+  end
+
+  // --------------
+  // OUTPUT CONTROL
+  // --------------
+
+  // NOTE: output valid when head entry is valid
+  //       output ready when tail entry is or will be empty
+  assign valid_o = data_valid[head_cnt];
+  assign ready_o = !data_valid[tail_cnt] || (valid_o && ready_i);
+  assign data_o  = data[head_cnt];
+
+  // ----------
+  // ASSERTIONS
+  // ----------
+`ifndef SYNTHESIS
+`ifndef VERILATOR
+  property p_fifo_push;
+    @(posedge clk_i) disable iff (!rst_ni || flush_i) valid_i && ready_o |-> ##1 valid_o ##0 data_valid[$past(
+        tail_cnt
+    )] == 1'b1 ##0 data[$past(
+        tail_cnt
+    )] == $past(
+        data_i
+    );
+  endproperty
+  a_fifo_push :
+  assert property (p_fifo_push)
+  else
+    $error(
+        "valid_o: %b | past data_valid: %b | past data: %h | past data_i: %h",
+        valid_o,
+        data_valid[$past(
+            tail_cnt
+        )],
+        data[$past(
+            tail_cnt
+        )],
+        $past(
+            data_i
+        )
+    );
+
+  property p_fifo_pop;
+    @(posedge clk_i) disable iff (!rst_ni || flush_i) valid_o && ready_i |-> ##1 ready_o == 1'b1 ##0
+        ($past(
+        tail_cnt
+    ) != $past(
+        head_cnt
+    )) |-> ##0 data_valid[$past(
+        head_cnt
+    )] == 1'b0;
+  endproperty
+  a_fifo_pop :
+  assert property (p_fifo_pop);
+
+  property p_ready_n;
+    @(posedge clk_i) disable iff (!rst_ni | flush_i) !ready_i && valid_o |-> ##1 valid_o;
+  endproperty
+  a_ready_n :
+  assert property (p_ready_n);
+`endif  /* VERILATOR */
+`endif  /* SYNTHESIS */
+
+endmodule

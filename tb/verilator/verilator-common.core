@@ -1,0 +1,24 @@
+CAPI=2:
+# Copyright 2024 POLITO
+# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# File: len5_tb.core
+# Author: Mattia Mirigaldi
+# Date: 14/02/2024
+# Description: LEN5 tb common verilator core file
+name: "polito:len5:verilator-common:0.1.0"
+description: "LEN5 tb common verilator core file"
+
+filesets:
+  verilator-common:
+    files:
+    - tb_macros.cpp
+    - tb_macros.hh: {is_include_file: true}
+    file_type: cppSource
+
+targets:
+  # Default target
+  default: &default
+    filesets:
+    - verilator-common  

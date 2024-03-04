@@ -12,20 +12,16 @@
 // Author: Matteo Perotti, Michele Caon
 // Date: 10/11/2019
 // Description: memory emulator
-// Details: it accesses to a file with sparse addresses and data. This way, it 
-//          can emulate a large memory. The file should begin with the lowest 
+// Details: it accesses to a file with sparse addresses and data. This way, it
+//          can emulate a large memory. The file should begin with the lowest
 //          address and end with the highest.
-
-/* UVM report functions */
-`include "uvm_macros.svh"
-import uvm_pkg::*;
 
 // Parent class
 `include "memory_class.svh"
 
 class memory_file_class #(
     parameter WWIDTH = 32,
-    parameter AWIDTH = 64    
+    parameter AWIDTH = 64
 ) extends memory_class;
     // PROPERTIES
     // ----------
@@ -47,15 +43,15 @@ class memory_file_class #(
 
         /* Check address aligment */
         if (addr[1:0] != 2'b00) begin
-            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 32 bits", addr))
+            $error("Address 0x%h is NOT aligned on 32 bits", addr);
             return 1;
         end
 
         // Search the requested address
-        if ($rewind(this.fd)) `uvm_fatal("MEMFILE", "$rewind() failed");
+        if ($rewind(this.fd)) $error("$rewind() failed");
         while (!$feof(this.fd)) begin
             if (ScanMemLine(read_addr, w) != 0) return 1;
-            if (read_addr == addr) begin 
+            if (read_addr == addr) begin
                 this.word_buf = w;  // save the word content
                 return 0;
             end
@@ -69,7 +65,7 @@ class memory_file_class #(
     function bit FileReadW(logic [AWIDTH-1:0] addr);
         // Check the address alignment
         if (addr[1:0] != 2'b00) begin
-            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 32 bits", addr))
+            $error("Address 0x%h is NOT aligned on 32 bits", addr);
             return 1;
         end
 
@@ -77,10 +73,10 @@ class memory_file_class #(
 
         // Find the requested word in memory
         if (FileFindW(addr)) begin
-            `uvm_error("MEMREAD", $sformatf("Cannot find word at address 0x%h", addr));
+            $error("Cannot find word at address 0x%h", addr);
             return 1;
         end
-        
+
         CloseMemFile();
 
         // Save the read word
@@ -96,7 +92,7 @@ class memory_file_class #(
 
         // Check address alignment
         if (addr[2:0] != 3'b000) begin
-            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 64 bits", addr))
+            $error("Address 0x%h is NOT aligned on 64 bits", addr);
             return 1; // exit
         end
 
@@ -104,14 +100,14 @@ class memory_file_class #(
 
         // Read lower word
         if (FileFindW(addr)) begin
-            `uvm_error("MEMREAD", $sformatf("Cannot find word at address 0x%h", addr));
+            $error("Cannot find word at address 0x%h", addr);
             return 1;
         end
         dw[WWIDTH-1:0]  = this.word_buf;
-        
+
         // Read upper word
         if (FileFindW(addr | 64'h04)) begin
-            `uvm_error("MEMREAD", $sformatf("Cannot find word at address 0x%h", addr | 64'h4));
+            $error("Cannot find word at address 0x%h", addr | 64'h4);
             return 1;
         end
         dw[DWWIDTH-1:WWIDTH]    = this.word_buf;
@@ -121,7 +117,7 @@ class memory_file_class #(
         // Save accessed double word
         this.read_doubleword    = dw;
 
-        // Return 
+        // Return
         return 0;
     endfunction: FileReadDW
 
@@ -131,7 +127,7 @@ class memory_file_class #(
 
         /* Check address aligment */
         if (addr[5:0] != 9'b000000) begin
-            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 32 bits", addr))
+            $error("Address 0x%h is NOT aligned on 32 bits", addr);
             return 1;
         end
 
@@ -140,7 +136,7 @@ class memory_file_class #(
         /* Read sixteen words from the memory */
         for (int i = 0; i < LWIDTH/WWIDTH; i++) begin
             if (FileFindW(addr + (i << 2))) begin
-                `uvm_error("MEMREAD", $sformatf("Cannot find word at address 0x%h", addr + (i << 2)));
+                $error("Cannot find word at address 0x%h", addr + (i << 2));
                 return 1;
             end
             line[WWIDTH*i +: WWIDTH] = this.word_buf;
@@ -169,7 +165,7 @@ class memory_file_class #(
 
         // Check address alignment
         if (addr[1:0] != 2'b00) begin
-            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 32 bits", addr))
+            $error("Address 0x%h is NOT aligned on 32 bits", addr);
             return 1; // exit
         end
 
@@ -182,7 +178,7 @@ class memory_file_class #(
         if (!FileFindW(addr)) begin
             // Go back one line
             if ($fseek(this.fd, -this.file_line.len(), 1)) begin
-                `uvm_fatal("MEMFILE", "fseek() failed");
+                $fatal("fseek() failed");
             end
             // Update the line content
             $fwrite(this.fd, line_buf);
@@ -198,7 +194,7 @@ class memory_file_class #(
     function bit FileWriteDW(logic [AWIDTH-1:0] addr, logic [DWWIDTH-1:0] data);
         /* Check address alignment */
         if (addr[2:0] != 3'b000) begin
-            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 64 bits", addr))
+            $error("Address 0x%h is NOT aligned on 64 bits", addr);
             return 1; // exit
         end
 
@@ -214,7 +210,7 @@ class memory_file_class #(
     function bit FileWriteLine(logic [AWIDTH-1:0] addr, logic [LWIDTH-1:0] data);
         /* Check address aligment */
         if (addr[5:0] != 9'b000000) begin
-            `uvm_error("MISALIGNED", $sformatf("Address 0x%h is NOT aligned on 512 bits", addr))
+            $error("Address 0x%h is NOT aligned on 512 bits", addr);
             return 1;
         end
 

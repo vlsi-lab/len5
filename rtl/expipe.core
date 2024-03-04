@@ -1,0 +1,103 @@
+CAPI=2:
+# Copyright 2024 POLITO
+# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+name: "polito:len5:expipe:0.1.1"
+description: " LEN5 CPU execution pipeline components"
+
+filesets:
+ rf-rtl:
+   depend:
+    - polito:len5:packages
+   files:
+    - expipe/register-file/int_regstat.sv
+    - expipe/register-file/int_rf.sv
+    - expipe/register-file/csrs.sv
+   file_type : systemVerilogSource
+
+ cdb-rtl:
+   depend:
+    - polito:len5:packages
+   files:
+    - expipe/cdb/cdb_arbiter.sv
+    - expipe/cdb/cdb.sv
+   file_type : systemVerilogSource
+
+ commit-rtl:
+   depend:
+    - polito:len5:packages
+    - polito:len5:frontend
+   files:
+    - expipe/commit-unit/commit_decoder.sv
+    - expipe/commit-unit/commit_stage.sv
+    - expipe/commit-unit/rob.sv
+    - expipe/commit-unit/commit_cu.sv
+   file_type : systemVerilogSource
+
+ exec-rtl:
+   depend:
+    - polito:len5:packages
+   files:
+    - expipe/exec-units/alu_unit.sv
+    - expipe/exec-units/alu.sv
+    - expipe/exec-units/arith_rs.sv
+    - expipe/exec-units/arith_rs_serial.sv
+    - expipe/exec-units/branch_cu.sv
+    - expipe/exec-units/branch_rs.sv
+    - expipe/exec-units/branch_unit.sv
+    - expipe/exec-units/div_unit.sv
+    - expipe/exec-units/div.sv
+    - expipe/exec-units/serdiv.sv
+    - expipe/exec-units/lzc.sv
+    - expipe/exec-units/exec_stage.sv
+    - expipe/exec-units/mult_unit.sv
+    - expipe/exec-units/mult.sv
+    - expipe/exec-units/sermult.sv
+    - expipe/exec-units/op_only_rs.sv
+    - expipe/exec-units/op_only_unit.sv
+   file_type : systemVerilogSource
+
+ issue-rtl:
+   depend:
+    - polito:len5:packages
+   files:
+    - expipe/issue-unit/issue_cu.sv
+    - expipe/issue-unit/issue_decoder.sv
+    - expipe/issue-unit/issue_queue.sv
+    - expipe/issue-unit/issue_stage.sv
+   file_type : systemVerilogSource
+
+ lsu-rtl:
+   depend:
+    - polito:len5:packages
+   files:
+    - expipe/load-store-unit/address_adder.sv
+    - expipe/load-store-unit/l0_cache.sv
+    - expipe/load-store-unit/load_buffer.sv
+    - expipe/load-store-unit/store_buffer.sv
+    - expipe/load-store-unit/load_store_unit.sv
+    - expipe/backend.sv
+   file_type : systemVerilogSource
+
+ verilator-waivers:
+   files:
+    - misc/expipe-waivers.vlt
+   file_type: vlt
+
+targets:
+    default:
+        filesets:
+        - cdb-rtl
+        - commit-rtl
+        - exec-rtl
+        - issue-rtl
+        - lsu-rtl
+        - rf-rtl
+        - tool_verilator ? (verilator-waivers)
+
+
+
+
+
+

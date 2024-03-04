@@ -1,0 +1,52 @@
+// Copyright 2024 Politecnico di Torino.
+// Copyright and related rights are licensed under the Solderpad Hardware
+// License, Version 2.0 (the "License"); you may not use this file except in
+// compliance with the License. You may obtain a copy of the License at
+// http://solderpad.org/licenses/SHL-2.0. Unless required by applicable law
+// or agreed to in writing, software, hardware and materials distributed under
+// this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations under the License.
+//
+// File: tb-waivers.vlt
+// Author: Mattia Mirigaldi
+// Date: 12/02/2024
+// Description: Verilator waivers for LEN5
+
+`verilator_config
+// Top-level parameter width
+lint_off -rule WIDTH -file "*/tb_bare.sv" -match "Operator VAR 'BOOT_PC' expects 64 bits on the Initial value, but Initial value's CONST '32'h*' generates 32 bits."
+lint_off -rule WIDTH -file "*/tb_bare.sv" -match "Operator VAR 'SERIAL_ADDR' expects 64 bits on the Initial value, but Initial value's CONST '32'h20000000' generates 32 bits."
+lint_off -rule WIDTH -file "*/tb_bare.sv" -match "Operator VAR 'EXIT_ADDR' expects 64 bits on the Initial value, but Initial value's CONST '32'h20000100' generates 32 bits."
+
+// Signals not used inside class but used outside when declared an object of the class
+lint_off -rule UNUSED -file "*/memory_class.svh" -match "Signal is not used: 'read_halfword'"
+lint_off -rule UNUSED -file "*/memory_class.svh" -match "Signal is not used: 'read_word'"
+lint_off -rule UNUSED -file "*/memory_class.svh" -match "Signal is not used: 'read_doubleword'"
+lint_off -rule UNUSED -file "*/memory_class.svh" -match "Signal is not used: 'read_line'"
+
+lint_off -rule UNUSED -file "*/memory_bare_emu.sv" -match "Signal is not used: 'mem_dump_file_i'"
+
+// Baremetal testbench
+lint_off -rule UNUSED -file "*/tb_bare.sv" -match "Signal is not used: 'cpu_data'"
+
+// Not used since always load doubleword from mem  
+lint_off -rule UNUSED -file "*/memory_bare_emu.sv" -match "Signal is not used: 'data_load_be_i'"
+
+// Warnings due to generate (PIPE_NUM may be 0)
+lint_off -rule UNUSED -file "*/memory_bare_emu.sv" -match "Signal is not used: 'instr_pipe_en'"
+lint_off -rule UNUSED -file "*/memory_bare_emu.sv" -match "Signal is not used: 'data_load_pipe_en'"
+lint_off -rule UNUSED -file "*/memory_bare_emu.sv" -match "Signal is not used: 'data_store_pipe_en'"
+
+// Pins not used
+lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'instr_we_o'"
+lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'data_load_we_o'"
+
+// Pins not used, but will be used in future versions
+lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'irq_i'"
+lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'irq_ack_o'"
+lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'irq_id_o'"
+lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'fetch_enable_i'"
+lint_off -rule PINCONNECTEMPTY -file "*/tb_bare.sv" -match "Cell pin connected by name with empty reference: 'core_sleep_o'"
+
+lint_off -rule UNOPTFLAT -file "*/tb_bare.sv" -match "Signal unoptimizable: Feedback to clock or circular logic: 'tb_bare.dp2mem_flush'"

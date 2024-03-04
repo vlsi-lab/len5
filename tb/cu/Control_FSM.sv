@@ -21,28 +21,28 @@ module Control
 (
 	// From :TB
   	input   logic             	clk_i,
-  	input   logic             	rst_n_i,
+  	input   logic             	rst_ni,
 	// To all
   	output  logic             	flush_i,
 
 	// For back end :CU
   	output  satp_mode_t       	vm_mode_i,
 
-	// To the main control :CU 
+	// To the main control :CU
   	input  	logic             	main_cu_stall_o,
 	input   logic [ILEN-1:0] 	ins_in,
 	output  logic 				stall,
 
   	// From/to i-cache  :I$
  	input  	logic             	data_ready_o,
-  	
+
 	// For pc_gen from or to back end// Input from intruction cache :I$
   	input   logic             	except_i,
   	input   logic [XLEN-1:0]  	except_pc_i,
 
   	// Data from intruction fetch unit cache // Fix_it from backend i.e., input from data cahce :D$
   	input   logic             	except_raised_i,
-  	input   except_code_t     	except_code_i,
+  	input  len5_pkg::except_code_t     	except_code_i,
 
 	input   logic 				commit_head_cnt,
 
@@ -50,7 +50,7 @@ module Control
    	output  logic               abort_i,
    	output  logic               clr_l1tlb_mshr_i,
    	output  logic               clr_l2tlb_mshr_i,
-   	output  logic               clear_dmshr_dregs_i, 
+   	output  logic               clear_dmshr_dregs_i,
 
 	// Update Block <-> d-Cache Updating Unit
   	output  logic               synch_l1dc_l2c_i,
@@ -68,18 +68,18 @@ module Control
   	output  tlb_flush_e         L2TLB_flush_type_i,
   	output  asid_t              flush_asid_i,
  	output  vpn_t               flush_page_i,
-	
+
 	// LSQ <-> d-TLB
   	input 	logic               dtlb_lsq_req_rdy_o,
 
   	// LSQ <-> d-Cache
  	input 	logic               l1dc_lsq_req_rdy_o,
- 
+
   	// L2 Cache Arbiter <-> L2 Cache Emulator
 	output 	l2arb_l2c_req_t     l2arb_l2c_req_o,
   	input   logic               l2c_l2arb_req_rdy_i,
   	input   l2c_l2arb_ans_t     l2c_l2arb_ans_i,
-  	output 	logic               l2arb_l2c_ans_rdy_o 
+  	output 	logic               l2arb_l2c_ans_rdy_o
 );
 
 	logic [OPCODE_LEN -1:0]        instr_opcode;
@@ -90,7 +90,7 @@ module Control
     assign instr_funct3     = 	ins_in[14 -: FUNCT3_LEN];
 
 	assign vmem_on_i  		= 	1;		// Virtual memory is on
-	assign sum_bit_i  		= 	1;		// For user mode 
+	assign sum_bit_i  		= 	1;		// For user mode
   	assign mxr_bit_i  		= 	0;		// Only readible
  	assign priv_mode_i  	= 	U;		// User
   	assign priv_mode_ls_i  	= 	U;		// User
@@ -101,9 +101,9 @@ module Control
   	state_t present_state, next_state;
 
   // State transition
-  	always_ff @ (posedge clk_i or negedge rst_n_i) begin
+  	always_ff @ (posedge clk_i or negedge rst_ni) begin
     // Async reset
-    	if (!rst_n_i) begin
+    	if (!rst_ni) begin
       		present_state 	<= 	RESET;
     	//end else begin
     	//if (flush_i) begin
@@ -181,7 +181,7 @@ module Control
 		abort_i  				= 	0;
    		clr_l1tlb_mshr_i  		= 	0;
    		clr_l2tlb_mshr_i  		= 	0;
-   		clear_dmshr_dregs_i 	= 	0; 
+   		clear_dmshr_dregs_i 	= 	0;
 		synch_l1dc_l2c_i  		= 	0;
 		L1TLB_flush_type_i		= 	NoFlush;
   		L2TLB_flush_type_i  	= 	NoFlush;
@@ -195,7 +195,7 @@ module Control
 			abort_i  				= 	0;
    			clr_l1tlb_mshr_i  		= 	1;
    			clr_l2tlb_mshr_i  		= 	1;
-   			clear_dmshr_dregs_i 	= 	1; 
+   			clear_dmshr_dregs_i 	= 	1;
 			synch_l1dc_l2c_i  		= 	0;
 			L1TLB_flush_type_i		= 	FlushAll;//NoFlush;
   			L2TLB_flush_type_i  	= 	FlushAll;//NoFlush;
@@ -203,7 +203,7 @@ module Control
  			flush_page_i  			= 	'd0;
       	end
 
-      	OP_STATE: begin  
+      	OP_STATE: begin
 			if ((instr_opcode == `OPCODE_FENCE) && (instr_funct3 == `FUNCT3_FENCE_I)) begin
             		clr_l1tlb_mshr_i  		= 	1;
 					clr_l2tlb_mshr_i  		= 	1;
@@ -218,7 +218,7 @@ module Control
             		abort_i  				= 	0;
    					clr_l1tlb_mshr_i  		= 	0;
    					clr_l2tlb_mshr_i  		= 	0;
-   					clear_dmshr_dregs_i 	= 	0; 
+   					clear_dmshr_dregs_i 	= 	0;
 					synch_l1dc_l2c_i  		= 	0;
     		end
       	end
@@ -237,18 +237,18 @@ module Control
 					flush_i 				= 	0;
 			end
 			case (except_code_i)
-				E_INSTR_PAGE_FAULT,E_I_ADDR_MISALIGNED,E_I_ACCESS_FAULT: begin 
+				E_INSTR_PAGE_FAULT,E_I_ADDR_MISALIGNED,E_I_ACCESS_FAULT: begin
 					clr_l1tlb_mshr_i  		= 	1;
 					clr_l2tlb_mshr_i  		= 	1;
 				end
-				E_LD_PAGE_FAULT,E_LD_ADDR_MISALIGNED,E_LD_ACCESS_FAULT,E_ST_PAGE_FAULT,E_ST_ADDR_MISALIGNED,E_ST_ACCESS_FAULT: begin 
+				E_LD_PAGE_FAULT,E_LD_ADDR_MISALIGNED,E_LD_ACCESS_FAULT,E_ST_PAGE_FAULT,E_ST_ADDR_MISALIGNED,E_ST_ACCESS_FAULT: begin
 					clear_dmshr_dregs_i 	= 	1;
-				end	
-        		E_ILLEGAL_INSTRUCTION: begin 
+				end
+        		E_ILLEGAL_INSTRUCTION: begin
 					abort_i  				= 	1;
 					//stall	 				= 	1;
 				end
-				E_ENV_CALL_SMODE,E_ENV_CALL_MMODE: begin 
+				E_ENV_CALL_SMODE,E_ENV_CALL_MMODE: begin
 					if (!l2c_update_done_o) begin
 						synch_l1dc_l2c_i  		= 	1;
 					end else begin
@@ -258,11 +258,11 @@ module Control
 				end
 				default: begin
 					//stall	 				= 	0;
-					//flush_i	 			= 	0; 
+					//flush_i	 			= 	0;
 					abort_i  				= 	0;
    					clr_l1tlb_mshr_i  		= 	0;
    					clr_l2tlb_mshr_i  		= 	0;
-   					clear_dmshr_dregs_i 	= 	0; 
+   					clear_dmshr_dregs_i 	= 	0;
 					synch_l1dc_l2c_i  		= 	0;
 				end
       	end
