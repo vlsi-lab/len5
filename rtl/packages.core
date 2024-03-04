@@ -21,7 +21,7 @@ filesets:
 
   verilator-waivers:
     files:
-    - packages/packages-waivers.vlt
+    - misc/packages-waivers.vlt
     file_type: vlt
 
 targets:
