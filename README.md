@@ -1,5 +1,7 @@
-# LEN5-core - Active repository
-![logo](./doc/logo/len5-logo-full.png)
+# LEN5-core
+<p align="center">
+<img src =doc/logo/len5-logo-full.png />
+</p>
 
 ## Contributing
 Before creating a merge request with the changes that you would like to merge, launch the following target:

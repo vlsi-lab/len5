@@ -2,20 +2,23 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="108.09039mm"
    height="59.454536mm"
    viewBox="0 0 108.09039 59.454536"
    version="1.1"
    id="svg8"
-   inkscape:version="0.92.4 5da689c313, 2019-01-14"
-   sodipodi:docname="len5-logo-full.svg">
+   inkscape:version="1.3.2 (091e20ef0f, 2023-11-25)"
+   sodipodi:docname="len5-logo-full.svg"
+   inkscape:export-filename="len5-logo-full.png"
+   inkscape:export-xdpi="302.46304"
+   inkscape:export-ydpi="302.46304"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -25,9 +28,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.8"
-     inkscape:cx="223.61317"
-     inkscape:cy="97.099287"
+     inkscape:zoom="1.0584302"
+     inkscape:cx="150.22247"
+     inkscape:cy="118.57183"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -35,16 +38,23 @@
      fit-margin-left="1"
      fit-margin-right="1"
      fit-margin-bottom="1"
-     inkscape:window-width="1920"
-     inkscape:window-height="1027"
-     inkscape:window-x="0"
-     inkscape:window-y="0"
-     inkscape:window-maximized="1">
+     inkscape:window-width="1274"
+     inkscape:window-height="677"
+     inkscape:window-x="3202"
+     inkscape:window-y="722"
+     inkscape:window-maximized="0"
+     inkscape:showpageshadow="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050">
     <inkscape:grid
        type="xygrid"
        id="grid96"
        originx="-36.024638"
-       originy="-213.48801" />
+       originy="-213.48801"
+       spacingy="1"
+       spacingx="1"
+       units="mm"
+       visible="false" />
   </sodipodi:namedview>
   <metadata
      id="metadata5">
@@ -357,7 +367,7 @@
        transform="rotate(-71.850722)" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:21.16666667px;line-height:0;font-family:Nunito;-inkscape-font-specification:'Nunito, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr;text-anchor:start;fill:#283272;fill-opacity:1;stroke:#283272;stroke-width:0.26458332;stroke-opacity:1;"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:21.1667px;line-height:0;font-family:Nunito;-inkscape-font-specification:'Nunito, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#283272;fill-opacity:1;stroke:#283272;stroke-width:0.264583;stroke-opacity:1"
        x="90.112328"
        y="51.394249"
        id="text2227"
@@ -367,8 +377,8 @@
          id="tspan2225"
          x="90.112328"
          y="51.394249"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:21.16666667px;font-family:Nunito;-inkscape-font-specification:'Nunito, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr;text-anchor:start;fill:#283272;fill-opacity:1;stroke:#283272;stroke-width:0.26458332;stroke-opacity:1;">LEN<tspan
-   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:21.16666667px;font-family:Nunito;-inkscape-font-specification:'Nunito, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr;text-anchor:start;fill:#f3ab0d;fill-opacity:1;stroke:#f3ab0d;stroke-opacity:1;"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:21.1667px;font-family:Nunito;-inkscape-font-specification:'Nunito, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#283272;fill-opacity:1;stroke:#283272;stroke-width:0.264583;stroke-opacity:1">LEN<tspan
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:21.1667px;font-family:Nunito;-inkscape-font-specification:'Nunito, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#f3ab0d;fill-opacity:1;stroke:#f3ab0d;stroke-opacity:1"
    id="tspan903">5</tspan></tspan></text>
   </g>
 </svg>

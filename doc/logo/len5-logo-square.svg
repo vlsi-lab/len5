@@ -2,23 +2,23 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="59.45454mm"
    height="59.45454mm"
    viewBox="0 0 59.454539 59.45454"
    version="1.1"
    id="svg8"
-   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   inkscape:version="1.3.2 (091e20ef0f, 2023-11-25)"
    sodipodi:docname="len5-logo-square.svg"
-   inkscape:export-filename="/home/michi/Documents/git-projects/len5-core/doc/logo/len5-logo-square.png"
+   inkscape:export-filename="len5-logo-square.png"
    inkscape:export-xdpi="302.46301"
-   inkscape:export-ydpi="302.46301">
+   inkscape:export-ydpi="302.46301"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
   <defs
      id="defs2">
     <clipPath
@@ -43,8 +43,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8284271"
-     inkscape:cx="45.225606"
-     inkscape:cy="91.503279"
+     inkscape:cx="45.254834"
+     inkscape:cy="91.393552"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -52,17 +52,24 @@
      fit-margin-left="1"
      fit-margin-right="1"
      fit-margin-bottom="1"
-     inkscape:window-width="1920"
-     inkscape:window-height="1016"
-     inkscape:window-x="0"
-     inkscape:window-y="27"
-     inkscape:window-maximized="1"
-     inkscape:snap-grids="false">
+     inkscape:window-width="1274"
+     inkscape:window-height="677"
+     inkscape:window-x="3202"
+     inkscape:window-y="722"
+     inkscape:window-maximized="0"
+     inkscape:snap-grids="false"
+     inkscape:showpageshadow="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050">
     <inkscape:grid
        type="xygrid"
        id="grid96"
        originx="-36.024638"
-       originy="-213.48801" />
+       originy="-213.48801"
+       spacingy="1"
+       spacingx="1"
+       units="mm"
+       visible="true" />
   </sodipodi:namedview>
   <metadata
      id="metadata5">
