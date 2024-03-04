@@ -1,5 +1,5 @@
 # LEN5-core - Active repository
-![logo](/doc/logo/len5-logo-full.png)
+![logo](./doc/logo/len5-logo-full.png)
 
 ## Contributing
 Before creating a merge request with the changes that you would like to merge, launch the following target:
