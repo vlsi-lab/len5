@@ -138,20 +138,6 @@ targets:
         - 'len5_tb.cpp'
         - '-Wall'
         - '-Wpedantic'
-  
-  synth_asic:
-    <<: *default
-    default_tool: design_compiler
-    description: Synthesize the design using Synopsys Design Compiler
-    hooks:
-      post_build: # Generic hook to copy the results after synthesis
-      - syn-copy-results
-    tools:
-      design_compiler:
-        script_dir: ../../../syn
-        report_dir: reports
-        dc_script: synth.tcl
-        jobs: 2
 
   # Format HDL with Verible
   format:

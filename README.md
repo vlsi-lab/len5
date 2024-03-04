@@ -62,10 +62,11 @@ The trace is saved in `build/sim-common/sim-trace.log`
 The `spike-check` target can be used to compare the trace logs from Spike and the RTL simulation and produce a summary of the differences (using `diff`). This target is also used by `make check` to verify that the simulation trace matches the one from the RTL simulation.
 
 ## TODO
-- [ ] Improve this file with info and instructions
 - [x] Fix RTL simulation
+- [x] Map some benchmark
+- [ ] Improve this file with info and instructions
 - [ ] Support interrupts
 - [ ] Improve support for CSR instruction
 - [ ] Add OBI bus bridge
-- [x] Map some benchmark
 - [ ] Implement multiple issue (ideally 4-way)
+- [ ] Complete OS support
