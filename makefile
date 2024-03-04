@@ -136,7 +136,7 @@ app-helloworld:
 .PHONY: app-helloworld-questasim
 run-helloworld-questasim: questasim-sim app-helloworld | .check-fusesoc
 	@echo "## Running helloworld application"
-	cd ./build/vlsi_polito_len5_0/sim-modelsim; \
+	cd $(BUILD_DIR)/vlsi_polito_len5_0/sim-modelsim; \
 	make run PLUSARGS="c firmware=../../../sw/applications/hello_world.hex"; \
 	cd ../../..;
 
@@ -223,7 +223,7 @@ clean: clean-app clean-sim
 
 .PHONY: clean-sim
 clean-sim:
-	@rm -rf build
+	@rm -rf $(BUILD_DIR)
 
 .PHONY: clean-app
 clean-app:
