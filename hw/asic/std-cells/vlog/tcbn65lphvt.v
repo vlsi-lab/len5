@@ -1,1 +1,0 @@
-/software/dk/tsmc65/digital/Front_End/verilog/tcbn65lp_200a/tcbn65lp.v

@@ -169,13 +169,6 @@ spike-check: $(BUILD_DIR)/.verilator.lock | $(BUILD_DIR)/sim-common/ .check-fuse
 	@echo "## Comparing Spike and Verilator traces..."
 	scripts/sim/cmp-trace.sh $(BUILD_DIR)/sim-common/sim-trace.log $(BUILD_DIR)/sim-common/spike-trace.log
 
-# Synthesis
-# ----------------------------
-.PHONE: syn-asic
-syn-asic: | .check-fusesoc
-	@echo "## Running ASIC synthesis..."
-	fusesoc run --no-export --target synth_asic --tool design_compiler polito:len5:len5
-
 # Check that nothing is broken
 # ----------------------------
 .PHONE: check
@@ -216,9 +209,8 @@ check-alu: | .check-fusesoc
 
 # Run plotting scripts
 .PHONY: charts
-charts: $(BUILD_DIR)/reports/area.rpt sw/benchmarks/embench/output/benchmarks.csv scripts/xheep_resultsO2.csv scripts/submodules.txt
+charts: w/benchmarks/embench/output/benchmarks.csv scripts/xheep_resultsO2.csv
 	mkdir -p $(BUILD_DIR)/charts
-	python3 scripts/area_charts.py --report_file=$(BUILD_DIR)/reports/area.rpt --chart_file=$(BUILD_DIR)/charts/area.png --submodule=scripts/submodules.txt  
 	python3 scripts/ipc_charts.py --len5_report_file=sw/benchmarks/embench/output/backup_bench.csv --xheep_report_file=scripts/xheep_resultsO2.csv --chart_file=$(BUILD_DIR)/charts/ipc_chart.png
 
 # Create new directories
