@@ -16,7 +16,7 @@ PROJECT  		?= hello_world
 SUITE   		?= embench
 BENCHMARK 		?= crc32
 LINKER   		?= $(realpath sw/linker/len5-sim.ld)
-COPT   	 		?= -O0
+COPT   	 		?= -O2
 
 # RTL simulation
 FIRMWARE		?= $(BUILD_DIR)/main.hex
