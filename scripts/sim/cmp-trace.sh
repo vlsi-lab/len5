@@ -46,14 +46,25 @@ sed 's/core [ ]*[0-9]*: //g' $SPIKE_TRACE_STRIPPED > $SPIKE_TRACE_STRIPPED.tmp
 # Only keep the PC, the raw instruction, the eventual destination register and its result
 sed -i '1d; n; d' $SIM_TRACE.tmp
 sed -i '1d; n; d' $SPIKE_TRACE_STRIPPED.tmp
+
 awk '{if ($4=="x0" || $4=="") {print $2, $3} else {print $2, $3, $4, $5}}' $SIM_TRACE.tmp > $SIM_TRACE.tmp2
 awk '{if (substr($4,1,1) == "x") {print $2, $3, $4, $5} else {print $2, $3}}' $SPIKE_TRACE_STRIPPED.tmp > $SPIKE_TRACE_STRIPPED.tmp2
+
 # Append line number to each line in both trace files
 awk '{print NR, $0}' $SIM_TRACE.tmp2 > $SIM_TRACE.tmp
 awk '{print NR, $0}' $SPIKE_TRACE_STRIPPED.tmp2 > $SPIKE_TRACE_STRIPPED.tmp
 # Remove every line after matching "jump pc+0", or the last instruction in Spike exit function
-sed -i '/(0x0000006f)/,$d' $SIM_TRACE.tmp
-sed -i '/(0x0000006f)/,$d' $SPIKE_TRACE_STRIPPED.tmp
+if grep -q "(0x0000006f)" $SIM_TRACE.tmp; then
+    sed -i '/(0x0000006f)/,$d' $SIM_TRACE.tmp
+else
+    echo "## WARNING : No jump pc+0 found in simulation trace"
+fi
+
+if grep -q "(0x0000006f)" $SPIKE_TRACE_STRIPPED.tmp; then
+    sed -i '/(0x0000006f)/,$d' $SPIKE_TRACE_STRIPPED.tmp
+else
+    echo "## WARNING : No jump pc+0 found in Spike trace"
+fi
 
 # Check correctness
 # -----------------

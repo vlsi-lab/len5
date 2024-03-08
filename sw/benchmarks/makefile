@@ -82,10 +82,10 @@ $(BUILD_DIR)/main.elf: $(BENCH_OBJS) $(LIB_OBJS)
 $(BUILD_DIR)/%.o: ./%.c
 	@mkdir -p $(@D)
 	echo $(CFLAGS)
-	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(INC_FOLDERS_GCC) -c $< -o $@
+	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(CDEFS) $(INC_FOLDERS_GCC) -c $< -o $@
 $(BUILD_DIR)/%.o: %.S
 	@mkdir -p $(@D)
-	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(INC_FOLDERS_GCC) -c $< -o $@
+	$(RISCV_EXE_PREFIX)-gcc $(CFLAGS) $(CDEFS) $(INC_FOLDERS_GCC) -c $< -o $@
 
 # Utils
 # -----

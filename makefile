@@ -110,15 +110,23 @@ questasim-sim: | app .check-fusesoc $(BUILD_DIR)/
 # --------
 # Application from 'sw/applications'
 # NOTE: the -B option to make forces recompilation everytime, which is needed since PROJECT is user-defined
-.PHONY: app
+.PHONY: app app-spike
 app: | $(BUILD_DIR)/
 	@echo "## Building application '$(PROJECT)'"
 	$(MAKE) -BC sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR) COPT=$(COPT)
 
-.PHONY: benchmark
-benchmark: 
+app-spike: | $(BUILD_DIR)/
+	@echo "## Building application '$(PROJECT)' with Spike support"
+	$(MAKE) -BC sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR) COPT=$(COPT) CDEFS=-DSPIKE_CHECK
+
+.PHONY: benchmark benchmark-spike
+benchmark:
 	@echo "## Building suite $(SUITE) benchmark $(BENCHMARK)"
 	$(MAKE) -BC sw benchmark SUITE=$(SUITE) BUILD_DIR=$(BUILD_DIR) BENCHMARK=$(BENCHMARK)
+
+benchmark-spike:
+	@echo "## Building suite $(SUITE) benchmark $(BENCHMARK)"
+	$(MAKE) -BC sw benchmark SUITE=$(SUITE) BUILD_DIR=$(BUILD_DIR) BENCHMARK=$(BENCHMARK) CDEFS=-DSPIKE_CHECK
 
 .PHONY: run-benchmarks
 run-benchmarks: 
