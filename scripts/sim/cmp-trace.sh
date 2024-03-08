@@ -11,14 +11,17 @@ SIM_TRACE=$1
 SPIKE_TRACE=$2
 
 DIFF_FILE=$(dirname $SIM_TRACE)/trace.diff
+SCRIPT_DIR=$(dirname $0)
 
 # Scan simulation trace line by line
 # Format: 'core   <num>: <addr> (<instr>)'
+#         'core   <num>: <opt_level> <addr> (<instr>) Rd: <reg> Rd_Value: <val>'  
 
 # Strip trace files
 # -----------------
 # Create stripped version of Spike trace file to match the format above
-SPIKE_TRACE_BASE=$(basename ${SPIKE_TRACE%%.*})
+FILENAME_PATH=${SPIKE_TRACE##*/}
+SPIKE_TRACE_BASE=${FILENAME_PATH%%.*}
 SPIKE_TRACE_EXT=${SPIKE_TRACE##*.}
 SPIKE_TRACE_STRIPPED=$(dirname $SPIKE_TRACE)/$SPIKE_TRACE_BASE-stripped.$SPIKE_TRACE_EXT
 
@@ -27,8 +30,8 @@ sed '/>>>>/d' $SPIKE_TRACE > $SPIKE_TRACE_STRIPPED
 [ $? -ne 0 ] && { echo "ERROR: Failed to process $SPIKE_TRACE"; exit 1; }
 echo "### Stripped Spike trace saved to $SPIKE_TRACE_STRIPPED"
 
-# Delete the first 5 lines from Spike trace
-sed -i '1,5d' $SPIKE_TRACE_STRIPPED
+# Delete the first 5 instructions from Spike trace
+sed -i '1,10d' $SPIKE_TRACE_STRIPPED
 [ $? -ne 0 ] && { echo "ERROR: Failed to process $SPIKE_TRACE_STRIPPED"; exit 1; }
 
 # Remove the 'core <num>:' part from both trace files
@@ -37,13 +40,20 @@ sed 's/core [ ]*[0-9]*: //g' $SIM_TRACE > $SIM_TRACE.tmp
 sed 's/core [ ]*[0-9]*: //g' $SPIKE_TRACE_STRIPPED > $SPIKE_TRACE_STRIPPED.tmp
 [ $? -ne 0 ] && { echo "ERROR: Failed to process $SPIKE_TRACE_STRIPPED"; exit 1; }
 
-# Only keep the first two columns from both trace files
-awk '{print $1, $2}' $SIM_TRACE.tmp > $SIM_TRACE.tmp2
-awk '{print $1, $2}' $SPIKE_TRACE_STRIPPED.tmp > $SPIKE_TRACE_STRIPPED.tmp2
-
+# Trace of an instruction is print on two lines
+# First line : instruction commited
+# Second line : commit log
+# Only keep the PC, the raw instruction, the eventual destination register and its result
+sed -i '1d; n; d' $SIM_TRACE.tmp
+sed -i '1d; n; d' $SPIKE_TRACE_STRIPPED.tmp
+awk '{if ($4=="x0" || $4=="") {print $2, $3} else {print $2, $3, $4, $5}}' $SIM_TRACE.tmp > $SIM_TRACE.tmp2
+awk '{if (substr($4,1,1) == "x") {print $2, $3, $4, $5} else {print $2, $3}}' $SPIKE_TRACE_STRIPPED.tmp > $SPIKE_TRACE_STRIPPED.tmp2
 # Append line number to each line in both trace files
 awk '{print NR, $0}' $SIM_TRACE.tmp2 > $SIM_TRACE.tmp
 awk '{print NR, $0}' $SPIKE_TRACE_STRIPPED.tmp2 > $SPIKE_TRACE_STRIPPED.tmp
+# Remove every line after matching "jump pc+0", or the last instruction in Spike exit function
+sed -i '/(0x0000006f)/,$d' $SIM_TRACE.tmp
+sed -i '/(0x0000006f)/,$d' $SPIKE_TRACE_STRIPPED.tmp
 
 # Check correctness
 # -----------------
@@ -69,6 +79,8 @@ else
 fi
 
 # Compare the two trace files
+sed -i 's/[[:space:]]*$//' $SIM_TRACE.tmp
+sed -i 's/[[:space:]]*$//' $SPIKE_TRACE_STRIPPED.tmp
 diff $SIM_TRACE.tmp $SPIKE_TRACE_STRIPPED.tmp > $DIFF_FILE
 echo "### Execution trace comparison saved to $DIFF_FILE"
 
@@ -85,6 +97,6 @@ else
 fi
 
 # Remove temporary files
-rm $SIM_TRACE.tmp2 $SPIKE_TRACE_STRIPPED.tmp2 $SIM_TRACE.tmp $SPIKE_TRACE_STRIPPED.tmp
+#rm $SIM_TRACE.tmp2 $SPIKE_TRACE_STRIPPED.tmp2 $SIM_TRACE.tmp $SPIKE_TRACE_STRIPPED.tmp
 
 exit $EXIT_CODE

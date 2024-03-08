@@ -22,7 +22,7 @@ COPT   	 		?= -O0
 FIRMWARE		?= $(BUILD_DIR)/main.hex
 MAX_CYCLES		?= 100000
 LOG_LEVEL		?= LOG_MEDIUM
-DUMP_TRACE		?= false
+DUMP_TRACE		?= true
 
 # Regression tests
 TEST_DIRS		:= $(wildcard sw/applications/*/)
@@ -151,7 +151,7 @@ spike-sim: $(BUILD_DIR)/main.elf
 spike-trace: $(BUILD_DIR)/sim-common/spike-trace.log
 $(BUILD_DIR)/sim-common/spike-trace.log: $(BUILD_DIR)/main.elf | $(BUILD_DIR)/sim-common/
 	@echo "## Running simulation with Spike..."
-	spike --log=$@ -l -m0xf000:0x100000,0x20000000:0x1000 $<
+	spike --log-commits --log=$@ -l -m0xf000:0x100000,0x20000000:0x1000 $<
 
 # Compare the execution traces from Spike and the Verilator simulation
 .PHONY: spike-check
@@ -165,7 +165,7 @@ spike-check: $(BUILD_DIR)/.verilator.lock | $(BUILD_DIR)/sim-common/ .check-fuse
 		--dump_trace=true \
 		$(FUSESOC_ARGS)
 	@echo "## Running Spike simulation..."
-	spike --log=$(BUILD_DIR)/sim-common/spike-trace.log -l -m0xf000:0x100000,0x20000000:0x1000 $(BUILD_DIR)/main.elf
+	spike --log-commits --log=$(BUILD_DIR)/sim-common/spike-trace.log -l -m0xf000:0x100000,0x20000000:0x1000 $(BUILD_DIR)/main.elf
 	@echo "## Comparing Spike and Verilator traces..."
 	scripts/sim/cmp-trace.sh $(BUILD_DIR)/sim-common/sim-trace.log $(BUILD_DIR)/sim-common/spike-trace.log
 
