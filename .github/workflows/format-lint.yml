@@ -1,0 +1,17 @@
+name: Lint and format
+on:
+  [push, pull_request]
+jobs:
+  lint-format:
+    name: Lint and format the code
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/vlsi-lab/len5-docker-ci:latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: lint
+      run: |
+        make lint
+    - name: format
+      run: |
+        make format
