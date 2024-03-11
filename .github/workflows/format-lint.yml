@@ -1,7 +1,6 @@
+name: Lint and format
 on:
-  push:
-    branches:
-    - main
+  [push, pull_request]
 jobs:
   lint-format:
     name: Lint and format the code
