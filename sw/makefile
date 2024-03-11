@@ -28,7 +28,7 @@ else
 endif
 ABI_STRING					?= lp64
 COPT						?= -O2
-CDEFS						?= -DSPIKE_EXIT
+CDEFS						?= # SPIKE_CHECK if using Spike
 CFLAGS			:= -march=$(ISA_STRING) \
 				   -mabi=$(ABI_STRING) \
 				   -mstrict-align \
