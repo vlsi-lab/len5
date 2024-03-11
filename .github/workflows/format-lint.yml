@@ -5,7 +5,9 @@ on:
 jobs:
   lint-format:
     name: Lint and format the code
-    runs-on: ghcr.io/vlsi-lab/len5-docker-ci:latest
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/vlsi-lab/len5-docker-ci:latest
     steps:
     - uses: actions/checkout@v1
     - name: lint
