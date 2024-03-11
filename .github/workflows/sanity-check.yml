@@ -10,4 +10,5 @@ jobs:
     - uses: actions/checkout@v1
     - name: check
       run: |
+        git config --global --add safe.directory /__w/len5/len5
         make check
