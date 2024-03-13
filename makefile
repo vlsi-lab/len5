@@ -110,23 +110,26 @@ questasim-sim: | app .check-fusesoc $(BUILD_DIR)/
 # --------
 # Application from 'sw/applications'
 # NOTE: the -B option to make forces recompilation everytime, which is needed since PROJECT is user-defined
+# The SPIKE_CHECK flag disables CSR instructions, since values differs between Spike and Verilator simulation 
+
 .PHONY: app app-spike
 app: | $(BUILD_DIR)/
 	@echo "## Building application '$(PROJECT)'"
 	$(MAKE) -BC sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR) COPT=$(COPT)
 
-app-spike: | $(BUILD_DIR)/
-	@echo "## Building application '$(PROJECT)' with Spike support"
-	$(MAKE) -BC sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR) COPT=$(COPT) CDEFS=-DSPIKE_CHECK
+$(BUILD_DIR)/spike/main.elf: app-spike
+app-spike: | $(BUILD_DIR)/spike/
+	@echo "## Building application '$(PROJECT)' with support for Spike"
+	$(MAKE) -BC sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR)/spike COPT=$(COPT) CDEFS=-DSPIKE_CHECK
 
 .PHONY: benchmark benchmark-spike
 benchmark:
 	@echo "## Building suite $(SUITE) benchmark $(BENCHMARK)"
 	$(MAKE) -BC sw benchmark SUITE=$(SUITE) BUILD_DIR=$(BUILD_DIR) BENCHMARK=$(BENCHMARK)
 
-benchmark-spike:
+benchmark-spike: | $(BUILD_DIR)/spike/
 	@echo "## Building suite $(SUITE) benchmark $(BENCHMARK)"
-	$(MAKE) -BC sw benchmark SUITE=$(SUITE) BUILD_DIR=$(BUILD_DIR) BENCHMARK=$(BENCHMARK) CDEFS=-DSPIKE_CHECK
+	$(MAKE) -BC sw benchmark SUITE=$(SUITE) BUILD_DIR=$(BUILD_DIR)/spike BENCHMARK=$(BENCHMARK) CDEFS=-DSPIKE_CHECK
 
 .PHONY: run-benchmarks
 run-benchmarks: 
@@ -150,14 +153,14 @@ run-helloworld-questasim: questasim-sim app-helloworld | .check-fusesoc
 
 # Simulate the current application on Spike, in interactive mode (debug)
 .PHONY: spike-sim
-spike-sim: $(BUILD_DIR)/main.elf
+spike-sim: $(BUILD_DIR)/spike/main.elf
 	@echo "## Running simulation with Spike..."
 	spike -m0xf000:0x100000,0x20000000:0x1000 -d $<
 
 # Simulate the current application on Spike in silent mode and generate the instruction execution trace
 .PHONY: spike-trace
 spike-trace: $(BUILD_DIR)/sim-common/spike-trace.log
-$(BUILD_DIR)/sim-common/spike-trace.log: $(BUILD_DIR)/main.elf | $(BUILD_DIR)/sim-common/
+$(BUILD_DIR)/sim-common/spike-trace.log: $(BUILD_DIR)/spike/main.elf | $(BUILD_DIR)/sim-common/
 	@echo "## Running simulation with Spike..."
 	spike --log-commits --log=$@ -l -m0xf000:0x100000,0x20000000:0x1000 $<
 
@@ -167,13 +170,13 @@ spike-check: $(BUILD_DIR)/.verilator.lock | $(BUILD_DIR)/sim-common/ .check-fuse
 	@echo "## Launching Verilator simulation..."
 	fusesoc run --no-export --target sim --tool verilator --run $(FUSESOC_FLAGS) polito:len5:len5 \
 		--log_level=$(LOG_LEVEL) \
-		--firmware=$(FIRMWARE) \
+		--firmware=$(BUILD_DIR)/spike/main.hex \
 		--max_cycles=$(MAX_CYCLES) \
 		--dump_waves=false \
 		--dump_trace=true \
 		$(FUSESOC_ARGS)
 	@echo "## Running Spike simulation..."
-	spike --log-commits --log=$(BUILD_DIR)/sim-common/spike-trace.log -l -m0xf000:0x100000,0x20000000:0x1000 $(BUILD_DIR)/main.elf
+	spike --log-commits --log=$(BUILD_DIR)/sim-common/spike-trace.log -l -m0xf000:0x100000,0x20000000:0x1000 $(BUILD_DIR)/spike/main.elf
 	@echo "## Comparing Spike and Verilator traces..."
 	scripts/sim/cmp-trace.sh $(BUILD_DIR)/sim-common/sim-trace.log $(BUILD_DIR)/sim-common/spike-trace.log
 
@@ -186,9 +189,9 @@ check: | check-alu .check-fusesoc
 	fusesoc run --no-export --target format polito:len5:len5
 	fusesoc run --no-export --target lint polito:len5:len5
 	@echo " ## Simulating test applications..."
-	$(foreach T, $(TESTS), eval $(MAKE) app PROJECT=$(T) COPT=-O0 && $(MAKE) spike-check || exit 1;)
-	$(foreach T, $(TESTS), eval $(MAKE) app PROJECT=$(T) COPT=-O1 && $(MAKE) spike-check || exit 1;)
-	$(foreach T, $(TESTS), eval $(MAKE) app PROJECT=$(T) COPT=-O2 && $(MAKE) spike-check || exit 1;)
+	$(foreach T, $(TESTS), eval $(MAKE) spike-check PROJECT=$(T) COPT=-O0 || exit 1;)
+	$(foreach T, $(TESTS), eval $(MAKE) spike-check PROJECT=$(T) COPT=-O1 || exit 1;)
+	$(foreach T, $(TESTS), eval $(MAKE) spike-check PROJECT=$(T) COPT=-O2 || exit 1;)
 	@echo "\e[1;32m### SUCCESS: all checks passed!\e[0m"
 
 .PHONY: check-alu
