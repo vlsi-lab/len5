@@ -30,7 +30,11 @@ TESTS			:= $(patsubst sw/applications/%/,%,$(TEST_DIRS))
 TESTS_EXCLUDE	:= timer alu_mult alu_div #TODO fix
 TESTS			:= $(filter-out $(TESTS_EXCLUDE),$(TESTS))
 
-# VARIABLES
+# Embench benchmarks
+EMBENCH_DIR		:= sw/benchmarks/embench/src/	
+EMBENCH_TESTS	:= $(shell find $(EMBENCH_DIR) -type d -exec basename {} \;)
+EMBENCH_TESTS	:= $(filter-out src, $(EMBENCH_TESTS))
+BENCHMARK_DIR_NAME=$(basename $BENCHMARK_DIR_PATH)
 # ---------
 # RTL simulation files
 SIM_CORE_FILES 	:= $(shell find . -type f -name "*.core")
@@ -172,7 +176,7 @@ spike-check: $(BUILD_DIR)/.verilator.lock | $(BUILD_DIR)/sim-common/ .check-fuse
 		--log_level=$(LOG_LEVEL) \
 		--firmware=$(BUILD_DIR)/spike/main.hex \
 		--max_cycles=$(MAX_CYCLES) \
-		--dump_waves=false \
+		--dump_waves=true \
 		--dump_trace=true \
 		$(FUSESOC_ARGS)
 	@echo "## Running Spike simulation..."
@@ -189,10 +193,13 @@ check: | check-alu .check-fusesoc
 	fusesoc run --no-export --target format polito:len5:len5
 	fusesoc run --no-export --target lint polito:len5:len5
 	@echo " ## Simulating test applications..."
-	$(foreach T, $(TESTS), eval $(MAKE) spike-check PROJECT=$(T) COPT=-O0 || exit 1;)
-	$(foreach T, $(TESTS), eval $(MAKE) spike-check PROJECT=$(T) COPT=-O1 || exit 1;)
-	$(foreach T, $(TESTS), eval $(MAKE) spike-check PROJECT=$(T) COPT=-O2 || exit 1;)
+	$(foreach T, $(TESTS), eval $(MAKE) app-spike PROJECT=$(T) COPT=-O0 && $(MAKE) spike-check  || exit 1;)
+	$(foreach T, $(TESTS), eval $(MAKE) app-spike PROJECT=$(T) COPT=-O1 && $(MAKE) spike-check  || exit 1;)
+	$(foreach T, $(TESTS), eval $(MAKE) app-spike PROJECT=$(T) COPT=-O2 && $(MAKE) spike-check  || exit 1;)
 	@echo "\e[1;32m### SUCCESS: all checks passed!\e[0m"
+	@echo "### Running embench benchmark..."
+	@echo "### NOTE: Rember to set appropriate MAX_CYCLES" 
+	util/test-benchmark-suite.sh embench $(EMBENCH_DIR) $(MAX_CYCLES)
 
 .PHONY: check-alu
 check-alu: | .check-fusesoc

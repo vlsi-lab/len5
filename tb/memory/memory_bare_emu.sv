@@ -100,6 +100,7 @@ module memory_bare_emu #(
   logic            [len5_pkg::XLEN-1:0] data_load_addr_q;
   logic            [len5_pkg::XLEN-1:0] data_store_addr_q;
 
+  // To load combinatorily the data from the memory
   // Memory object
   memory_class                          mem;
   int i_ret, dl_ret, ds_ret;  // memory emulator return value
@@ -196,6 +197,7 @@ module memory_bare_emu #(
 
   // DATA LOAD REQUEST
   // -----------------
+
   always_ff @(posedge clk_i) begin : p_data_load_mem_req
     data_load_pipe_valid[0]             <= data_load_valid_i;
     data_load_pipe_reg[0].tag           <= data_load_tag_i;
@@ -264,7 +266,7 @@ module memory_bare_emu #(
 
   // DATA STORE REQUEST
   // ------------------
-  always_ff @(posedge clk_i) begin : p_data_store_mem_req
+  always_ff @(negedge clk_i) begin : p_data_store_mem_req
     data_store_pipe_valid[0]             <= data_store_valid_i;
     data_store_pipe_reg[0].tag           <= data_store_tag_i;
     data_store_pipe_reg[0].except_raised <= 1'b0;
