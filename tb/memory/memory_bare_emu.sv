@@ -101,6 +101,7 @@ module memory_bare_emu #(
   logic            [len5_pkg::XLEN-1:0] data_store_addr_q;
 
   // To load combinatorily the data from the memory
+  logic            [len5_pkg::XLEN-1:0] sampled_data;
   // Memory object
   memory_class                          mem;
   int i_ret, dl_ret, ds_ret;  // memory emulator return value
@@ -197,6 +198,31 @@ module memory_bare_emu #(
 
   // DATA LOAD REQUEST
   // -----------------
+  always_comb begin : sample_load_data
+    if (data_load_valid_i) begin  // Memory always ready to answer (data_load_ready_o = 1)
+      case (data_load_be_i)
+        8'b0000_0001: begin
+          dl_ret       = mem.ReadB(data_load_addr_i);
+          sampled_data = {56'h0, mem.read_byte};
+        end
+        8'b0000_0011: begin
+          dl_ret       = mem.ReadHW(data_load_addr_i);
+          sampled_data = {48'h0, mem.read_halfword};
+        end
+        8'b0000_1111: begin
+          dl_ret       = mem.ReadW(data_load_addr_i);
+          sampled_data = {32'h0, mem.read_word};
+        end
+        8'b1111_1111: begin
+          dl_ret       = mem.ReadDW(data_load_addr_i);
+          sampled_data = mem.read_doubleword;
+        end
+        default: begin
+          $fatal("Unsupported data load request");
+        end
+      endcase
+    end
+  end
 
   always_ff @(posedge clk_i) begin : p_data_load_mem_req
     data_load_pipe_valid[0]             <= data_load_valid_i;
@@ -204,30 +230,10 @@ module memory_bare_emu #(
     data_load_pipe_reg[0].read          <= 'h0;
     data_load_pipe_reg[0].except_raised <= 1'b0;
     data_load_pipe_reg[0].except_code   <= E_UNKNOWN;
-
-    if (data_load_valid_i) begin  // Memory always ready to answer (data_load_ready_o = 1)
-      data_load_addr_q <= data_load_addr_i;
-      case (data_load_be_i)
-        8'b0000_0001: begin
-          dl_ret                     <= mem.ReadB(data_load_addr_i);
-          data_load_pipe_reg[0].read <= {56'h0, mem.read_byte};
-        end
-        8'b0000_0011: begin
-          dl_ret                     <= mem.ReadHW(data_load_addr_i);
-          data_load_pipe_reg[0].read <= {48'h0, mem.read_halfword};
-        end
-        8'b0000_1111: begin
-          dl_ret                     <= mem.ReadW(data_load_addr_i);
-          data_load_pipe_reg[0].read <= {32'h0, mem.read_word};
-        end
-        8'b1111_1111: begin
-          dl_ret                     <= mem.ReadDW(data_load_addr_i);
-          data_load_pipe_reg[0].read <= mem.read_doubleword;
-        end
-        default: begin
-          $fatal("Unsupported data load request");
-        end
-      endcase
+    // Memory always ready to answer (data_load_ready_o set to '1')
+    if (data_load_valid_i) begin
+      data_load_addr_q           <= data_load_addr_i;
+      data_load_pipe_reg[0].read <= sampled_data;
     end
   end
 
@@ -266,12 +272,15 @@ module memory_bare_emu #(
 
   // DATA STORE REQUEST
   // ------------------
-  always_ff @(negedge clk_i) begin : p_data_store_mem_req
+  always_ff @(posedge clk_i) begin : p_data_store_mem_rsp
     data_store_pipe_valid[0]             <= data_store_valid_i;
     data_store_pipe_reg[0].tag           <= data_store_tag_i;
     data_store_pipe_reg[0].except_raised <= 1'b0;
     data_store_pipe_reg[0].except_code   <= E_UNKNOWN;
+  end
 
+  // Memory write performed at the negative edge of the clock to avoid race conditions
+  always_ff @(negedge clk_i) begin : p_data_store_mem_req
     if (data_store_valid_i && data_store_we_i) begin
       data_store_addr_q <= data_store_addr_i;
       case (data_store_be_i)
