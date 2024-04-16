@@ -31,7 +31,7 @@ typedef struct packed {
   longint unsigned retired_load;
   longint unsigned retired_store;
 
-  // Memory requests
+  // Memory requests0x0000000000050800
   longint unsigned instr_req;
   longint unsigned read_req;
   longint unsigned write_req;
@@ -42,6 +42,7 @@ typedef struct packed {
 // ----------------
 // Instruction reordering
 expipe_pkg::rob_entry_t [len5_config_pkg::ROB_DEPTH-1:0] commit_buffer;
+bit [len5_config_pkg::ROB_DEPTH-1:0] rf_valid;
 bit [len5_config_pkg::ROB_DEPTH-1:0] buffer_valid;
 expipe_pkg::rob_idx_t commit_idx = 0;
 logic flush_q, commit_check;
@@ -53,6 +54,11 @@ logic flush_q, commit_check;
 function bit tb_len5_get_committing();
   return `TOP.u_backend.u_commit_stage.csr_comm_insn_o != expipe_pkg::COMM_CSR_INSTR_TYPE_NONE;
 endfunction: tb_len5_get_committing
+
+// Check if the instruction is writing back to RF
+function bit tb_len5_get_rf_valid();
+  return `TOP.u_backend.u_commit_stage.int_rf_valid_o;
+endfunction: tb_len5_get_rf_valid
 
 // Get CPU ID (hart ID)
 function logic [len5_pkg::XLEN-1:0] tb_len5_get_cpu_id();
@@ -87,7 +93,8 @@ function void tb_len5_update_commit(bit dump_trace, int fd);
   // Register new committing instruction
   if (tb_len5_get_committing()) begin
     commit_buffer[rob_idx] <= tb_len5_get_commit_entry();
-    buffer_valid[rob_idx] <= 1;
+    rf_valid[rob_idx]      <= tb_len5_get_rf_valid();
+    buffer_valid[rob_idx]  <= 1'b1;
   end
   
   for (expipe_pkg::rob_idx_t i = commit_idx; i != commit_idx - 1; i++) begin
@@ -95,6 +102,13 @@ function void tb_len5_update_commit(bit dump_trace, int fd);
       if (dump_trace) begin
         $fdisplay(fd, "core %3d: 0x%16h (0x%8h)", tb_len5_get_cpu_id(),
                 commit_buffer[i].instr_pc, commit_buffer[i].instruction.raw);
+        if (rf_valid[i]) begin
+          $fdisplay(fd, "core %3d: %2d 0x%16h (0x%16h) x%1d 0x%16h", tb_len5_get_cpu_id(), 
+                commit_buffer[i].rd_idx, commit_buffer[i].instr_pc, commit_buffer[i].instruction.raw, commit_buffer[i].rd_idx, commit_buffer[i].res_value); 
+        end else begin 
+          $fdisplay(fd, "core %3d: %2d 0x%16h (0x%16h)", tb_len5_get_cpu_id(), 
+          commit_buffer[i].rd_idx, commit_buffer[i].instr_pc, commit_buffer[i].instruction.raw); 
+        end
       end
       buffer_valid[i] <= 0;
     end else begin

@@ -22,7 +22,7 @@ COPT   	 		?= -O2
 FIRMWARE		?= $(BUILD_DIR)/main.hex
 MAX_CYCLES		?= 100000
 LOG_LEVEL		?= LOG_MEDIUM
-DUMP_TRACE		?= false
+DUMP_TRACE		?= true
 
 # Regression tests
 TEST_DIRS		:= $(wildcard sw/applications/*/)
@@ -30,7 +30,11 @@ TESTS			:= $(patsubst sw/applications/%/,%,$(TEST_DIRS))
 TESTS_EXCLUDE	:= timer alu_mult alu_div #TODO fix
 TESTS			:= $(filter-out $(TESTS_EXCLUDE),$(TESTS))
 
-# VARIABLES
+# Embench benchmarks
+EMBENCH_DIR		:= sw/benchmarks/embench/src/	
+EMBENCH_TESTS	:= $(shell find $(EMBENCH_DIR) -type d -exec basename {} \;)
+EMBENCH_TESTS	:= $(filter-out src, $(EMBENCH_TESTS))
+BENCHMARK_DIR_NAME=$(basename $BENCHMARK_DIR_PATH)
 # ---------
 # RTL simulation files
 SIM_CORE_FILES 	:= $(shell find . -type f -name "*.core")
@@ -110,15 +114,26 @@ questasim-sim: | app .check-fusesoc $(BUILD_DIR)/
 # --------
 # Application from 'sw/applications'
 # NOTE: the -B option to make forces recompilation everytime, which is needed since PROJECT is user-defined
-.PHONY: app
+# The SPIKE_CHECK flag disables CSR instructions, since values differs between Spike and Verilator simulation 
+
+.PHONY: app app-spike
 app: | $(BUILD_DIR)/
 	@echo "## Building application '$(PROJECT)'"
 	$(MAKE) -BC sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR) COPT=$(COPT)
 
-.PHONY: benchmark
-benchmark: 
+$(BUILD_DIR)/spike/main.elf: app-spike
+app-spike: | $(BUILD_DIR)/spike/
+	@echo "## Building application '$(PROJECT)' with support for Spike"
+	$(MAKE) -BC sw app PROJECT=$(PROJECT) BUILD_DIR=$(BUILD_DIR)/spike COPT=$(COPT) CDEFS=-DSPIKE_CHECK
+
+.PHONY: benchmark benchmark-spike
+benchmark:
 	@echo "## Building suite $(SUITE) benchmark $(BENCHMARK)"
 	$(MAKE) -BC sw benchmark SUITE=$(SUITE) BUILD_DIR=$(BUILD_DIR) BENCHMARK=$(BENCHMARK)
+
+benchmark-spike: | $(BUILD_DIR)/spike/
+	@echo "## Building suite $(SUITE) benchmark $(BENCHMARK)"
+	$(MAKE) -BC sw benchmark SUITE=$(SUITE) BUILD_DIR=$(BUILD_DIR)/spike BENCHMARK=$(BENCHMARK) CDEFS=-DSPIKE_CHECK
 
 .PHONY: run-benchmarks
 run-benchmarks: 
@@ -142,16 +157,16 @@ run-helloworld-questasim: questasim-sim app-helloworld | .check-fusesoc
 
 # Simulate the current application on Spike, in interactive mode (debug)
 .PHONY: spike-sim
-spike-sim: $(BUILD_DIR)/main.elf
+spike-sim: $(BUILD_DIR)/spike/main.elf
 	@echo "## Running simulation with Spike..."
 	spike -m0xf000:0x100000,0x20000000:0x1000 -d $<
 
 # Simulate the current application on Spike in silent mode and generate the instruction execution trace
 .PHONY: spike-trace
 spike-trace: $(BUILD_DIR)/sim-common/spike-trace.log
-$(BUILD_DIR)/sim-common/spike-trace.log: $(BUILD_DIR)/main.elf | $(BUILD_DIR)/sim-common/
+$(BUILD_DIR)/sim-common/spike-trace.log: $(BUILD_DIR)/spike/main.elf | $(BUILD_DIR)/sim-common/
 	@echo "## Running simulation with Spike..."
-	spike --log=$@ -l -m0xf000:0x100000,0x20000000:0x1000 $<
+	spike --log-commits --log=$@ -l -m0xf000:0x100000,0x20000000:0x1000 $<
 
 # Compare the execution traces from Spike and the Verilator simulation
 .PHONY: spike-check
@@ -159,13 +174,13 @@ spike-check: $(BUILD_DIR)/.verilator.lock | $(BUILD_DIR)/sim-common/ .check-fuse
 	@echo "## Launching Verilator simulation..."
 	fusesoc run --no-export --target sim --tool verilator --run $(FUSESOC_FLAGS) polito:len5:len5 \
 		--log_level=$(LOG_LEVEL) \
-		--firmware=$(FIRMWARE) \
+		--firmware=$(BUILD_DIR)/spike/main.hex \
 		--max_cycles=$(MAX_CYCLES) \
-		--dump_waves=false \
+		--dump_waves=true \
 		--dump_trace=true \
 		$(FUSESOC_ARGS)
 	@echo "## Running Spike simulation..."
-	spike --log=$(BUILD_DIR)/sim-common/spike-trace.log -l -m0xf000:0x100000,0x20000000:0x1000 $(BUILD_DIR)/main.elf
+	spike --log-commits --log=$(BUILD_DIR)/sim-common/spike-trace.log -l -m0xf000:0x100000,0x20000000:0x1000 $(BUILD_DIR)/spike/main.elf
 	@echo "## Comparing Spike and Verilator traces..."
 	scripts/sim/cmp-trace.sh $(BUILD_DIR)/sim-common/sim-trace.log $(BUILD_DIR)/sim-common/spike-trace.log
 
@@ -178,10 +193,13 @@ check: | check-alu .check-fusesoc
 	fusesoc run --no-export --target format polito:len5:len5
 	fusesoc run --no-export --target lint polito:len5:len5
 	@echo " ## Simulating test applications..."
-	$(foreach T, $(TESTS), eval $(MAKE) app PROJECT=$(T) COPT=-O0 && $(MAKE) spike-check || exit 1;)
-	$(foreach T, $(TESTS), eval $(MAKE) app PROJECT=$(T) COPT=-O1 && $(MAKE) spike-check || exit 1;)
-	$(foreach T, $(TESTS), eval $(MAKE) app PROJECT=$(T) COPT=-O2 && $(MAKE) spike-check || exit 1;)
+	$(foreach T, $(TESTS), eval $(MAKE) app-spike PROJECT=$(T) COPT=-O0 && $(MAKE) spike-check  || exit 1;)
+	$(foreach T, $(TESTS), eval $(MAKE) app-spike PROJECT=$(T) COPT=-O1 && $(MAKE) spike-check  || exit 1;)
+	$(foreach T, $(TESTS), eval $(MAKE) app-spike PROJECT=$(T) COPT=-O2 && $(MAKE) spike-check  || exit 1;)
 	@echo "\e[1;32m### SUCCESS: all checks passed!\e[0m"
+	@echo "### Running embench benchmark..."
+	@echo "### NOTE: Rember to set appropriate MAX_CYCLES" 
+	util/test-benchmark-suite.sh embench $(EMBENCH_DIR) $(MAX_CYCLES)
 
 .PHONY: check-alu
 check-alu: | .check-fusesoc

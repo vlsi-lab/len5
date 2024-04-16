@@ -405,7 +405,7 @@ module store_buffer #(
   // Load buffer
   assign lb_latest_valid_o        = active[latest_idx] & ~(mem_done & (mem_tag_i == latest_idx));
   assign lb_latest_idx_o          = latest_idx;
-  assign lb_oldest_completed_o    = mem_done;  // check if mem_accepted is enough
+  assign lb_oldest_completed_o    = mem_done;  // TODO : check if mem_accepted is enough
   assign lb_oldest_idx_o          = mem_tag_i;
 
   // Level-zero cache

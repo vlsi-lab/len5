@@ -44,10 +44,10 @@ extern char __heap_bottom[];
 extern char __heap_top[];
 static char *brk = __heap_bottom;
 
-#ifdef SPIKE_EXIT
+#ifdef SPIKE_CHECK
 // Spike exit function
 extern void tohost_exit(int code);
-#endif
+#endif // SPIKE_CHECK
 
 // FUNCTION DEFINITIONS
 // --------------------
@@ -103,7 +103,7 @@ int _execve(const char *name, char *const argv[], char *const env[])
 void _exit(int exit_status)
 {
     EXIT_REG = exit_status;
-#ifdef SPIKE_EXIT
+#ifdef SPIKE_CHECK
     tohost_exit(exit_status);
 #endif
     asm volatile("wfi");
