@@ -8,7 +8,7 @@ Before creating a merge request with the changes that you would like to merge, l
 ```bash
 make check
 ```
-This runs HDL code linting and formatting, builds the test projects from `sw/applications`/`, builds the hardware simulation model with Verilator, and runs the RTL simulation on every test application compiled with different optimization levels. If this target fails, it means that _you broke something and shall dive deeper to understand what and why_. When this is the case, an RTL simulation alongside a Spike simulation with traces enabled is good starting point.
+This runs HDL code linting and formatting, builds the test projects from `sw/applications/`, builds the hardware simulation model with Verilator, and runs the RTL simulation on every test application compiled with different optimization levels. If this target fails, it means that _you broke something and shall dive deeper to understand what and why_. When this is the case, an RTL simulation alongside a Spike simulation with traces enabled is good starting point.
 
 ## Quick Start
 1. Compile the RTL simulation model using Verilator:
