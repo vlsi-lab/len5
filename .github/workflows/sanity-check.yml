@@ -1,0 +1,14 @@
+name: Sanity check
+on: [pull_request]
+jobs:
+  run-all-check:
+    name: Run all the checks
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/vlsi-lab/len5-docker-ci:latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: check
+      run: |
+        git config --global --add safe.directory /__w/len5/len5
+        make check
